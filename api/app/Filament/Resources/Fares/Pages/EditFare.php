@@ -1,0 +1,19 @@
+<?php
+
+namespace App\Filament\Resources\Fares\Pages;
+
+use App\Filament\Resources\Fares\FareResource;
+use Filament\Actions\DeleteAction;
+use Filament\Resources\Pages\EditRecord;
+
+class EditFare extends EditRecord
+{
+    protected static string $resource = FareResource::class;
+
+    protected function getHeaderActions(): array
+    {
+        return [
+            DeleteAction::make(),
+        ];
+    }
+}

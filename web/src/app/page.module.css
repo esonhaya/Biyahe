@@ -1,0 +1,44 @@
+.page { min-height: 100vh; background: #f7f5ef; color: #153b45; }
+.hero, .exploration, .routeSection { width: min(1120px, calc(100% - 32px)); margin: 0 auto; }
+.hero { padding: 42px 0 34px; }
+.brandRow { display: flex; align-items: center; gap: 12px; }
+.brandMark { width: 44px; height: 44px; display: grid; place-items: center; border-radius: 14px; background: #e07a5f; color: #fff; font-weight: 800; font-size: 1.4rem; }
+.eyebrow { margin: 0; color: #d3624d; font-size: .72rem; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; }
+.brandRow h1 { margin: 1px 0 0; color: #153b45; font-size: 1.45rem; letter-spacing: .12em; }
+.intro { max-width: 620px; margin: 38px 0 24px; font-size: clamp(2.3rem, 7vw, 5.6rem); font-weight: 700; line-height: .98; letter-spacing: -.06em; }
+.searchCard { position: relative; display: grid; grid-template-columns: 1fr 1fr auto; gap: 12px; padding: 18px; border: 1px solid #dfded7; border-radius: 20px; background: #fff; box-shadow: 0 16px 45px rgba(21, 59, 69, .08); }
+.searchField { position: relative; }
+.searchField label { display: block; margin: 0 0 6px; color: #658087; font-size: .75rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; }
+.searchField input { width: 100%; border: 1px solid #d4dcd9; border-radius: 10px; padding: 13px 12px; color: #153b45; background: #fbfcfa; font: inherit; outline: none; }
+.searchField input:focus { border-color: #176b87; box-shadow: 0 0 0 3px rgba(23, 107, 135, .12); }
+.suggestions { position: absolute; z-index: 3; top: 72px; right: 0; left: 0; overflow: hidden; border: 1px solid #d4dcd9; border-radius: 10px; background: #fff; box-shadow: 0 12px 30px rgba(21, 59, 69, .14); }
+.suggestions button { display: flex; width: 100%; flex-direction: column; gap: 3px; border: 0; padding: 10px 12px; text-align: left; color: #153b45; background: #fff; cursor: pointer; font: inherit; }
+.suggestions button:hover { background: #eef5f3; }
+.suggestions small, .patternList small { color: #6d858b; font-size: .72rem; }
+.primaryButton { align-self: end; border: 0; border-radius: 10px; padding: 14px 22px; color: #fff; background: #176b87; font: inherit; font-weight: 800; cursor: pointer; }
+.primaryButton:hover { background: #10556d; }
+.status { grid-column: 1 / -1; margin: 0; color: #6d858b; font-size: .82rem; }
+.exploration, .routeSection { padding: 42px 0 0; }
+.sectionHeading { display: flex; align-items: end; justify-content: space-between; gap: 12px; }
+.sectionHeading h2 { margin: 6px 0 0; color: #153b45; font-size: clamp(1.8rem, 4vw, 2.8rem); letter-spacing: -.04em; }
+.sectionCopy { max-width: 670px; margin: 12px 0 18px; color: #5d777e; line-height: 1.6; }
+.fixtureBadge { border: 1px solid #e6b9ac; border-radius: 999px; padding: 7px 10px; color: #b75542; font-size: .68rem; font-weight: 800; letter-spacing: .09em; }
+.mapPanel { position: relative; overflow: hidden; border: 1px solid #d8ddd7; border-radius: 20px; background: #dce8e4; }
+.map-frame { min-height: 430px; width: 100%; }
+.map-loading { display: grid; place-items: center; color: #5d777e; }
+.mapLegend { position: absolute; right: 12px; bottom: 12px; display: flex; flex-wrap: wrap; gap: 9px; border-radius: 10px; padding: 8px 10px; color: #153b45; background: rgba(255, 255, 255, .9); font-size: .72rem; }
+.mapLegend span { display: flex; align-items: center; gap: 5px; }
+.mapLegend i { display: inline-block; width: 8px; height: 8px; border-radius: 50%; }
+.placeDot { background: #e07a5f; }.stopDot { background: #176b87; }.routeDot { background: #e07a5f; width: 18px !important; height: 3px !important; border-radius: 0 !important; }
+.infoCard { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 12px; border: 1px solid #dfded7; border-radius: 14px; padding: 14px 16px; background: #fff; }
+.infoCard h3 { margin: 4px 0 0; font-size: 1rem; }.infoCard p { margin: 0; color: #5d777e; font-size: .86rem; line-height: 1.45; }.infoCard button { border: 0; color: #176b87; background: transparent; cursor: pointer; font-weight: 700; }
+.cardKicker { color: #d3624d !important; font-size: .64rem !important; font-weight: 800; letter-spacing: .09em; }
+.routeGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin-top: 18px; }
+.routeCard { display: grid; grid-template-columns: auto 1fr; gap: 12px; border: 1px solid #dfded7; border-radius: 16px; padding: 16px; background: #fff; }
+.routeCode { align-self: start; border-radius: 8px; padding: 7px 8px; color: #fff; background: #153b45; font-size: .78rem; font-weight: 800; }
+.routeCard h3 { margin: 0; font-size: 1.05rem; }.routeCard p { margin: 5px 0 0; color: #6d858b; font-size: .8rem; }
+.patternList { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 7px; }
+.patternList button { display: flex; min-width: 120px; flex-direction: column; gap: 3px; border: 1px solid #d4dcd9; border-radius: 9px; padding: 8px 10px; text-align: left; color: #153b45; background: #fbfcfa; cursor: pointer; font: inherit; font-size: .78rem; }
+.patternList button:hover, .patternActive { border-color: #e07a5f !important; background: #fff5f1 !important; }
+.emptyState { margin: 18px 0; color: #6d858b; }.footer { display: flex; justify-content: space-between; gap: 16px; width: min(1120px, calc(100% - 32px)); margin: 60px auto 0; border-top: 1px solid #d8ddd7; padding: 18px 0 28px; color: #799096; font-size: .74rem; }
+@media (max-width: 700px) { .hero { padding-top: 28px; }.searchCard { grid-template-columns: 1fr; }.primaryButton { width: 100%; }.suggestions { top: 72px; }.map-frame { min-height: 360px; }.routeGrid { grid-template-columns: 1fr; }.infoCard { align-items: start; flex-direction: column; }.footer { flex-direction: column; } }
