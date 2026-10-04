@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Support\Trust;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -24,10 +25,7 @@ class RouteResource extends JsonResource
                 'name' => $this->vehicleType->name,
             ]),
             'patterns' => RoutePatternResource::collection($this->whenLoaded('patterns')),
-            'verification' => [
-                'state' => $this->verification_state?->value ?? $this->verification_state,
-                'is_demo' => (bool) $this->is_demo,
-            ],
+            'verification' => Trust::status($this->resource),
             'provenance' => new ProvenanceSourceResource($this->whenLoaded('provenanceSource')),
         ];
     }

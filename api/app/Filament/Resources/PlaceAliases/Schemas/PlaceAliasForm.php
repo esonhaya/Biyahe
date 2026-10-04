@@ -18,6 +18,10 @@ class PlaceAliasForm
                 Select::make('place_id')
                     ->relationship('place', 'name')
                     ->required(),
+                TextInput::make('stable_id')
+                    ->disabled()
+                    ->dehydrated(false)
+                    ->helperText('Assigned by the dataset importer; do not change manually.'),
                 TextInput::make('alias')
                     ->required()
                     ->live(onBlur: true)

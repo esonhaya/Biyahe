@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Cities\Tables;
 
+use App\Filament\Support\VerificationTableFilters;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
@@ -19,6 +20,9 @@ class CitiesTable
                     ->searchable(),
                 TextColumn::make('slug')
                     ->searchable(),
+                TextColumn::make('stable_id')
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('country_code')
                     ->searchable(),
                 IconColumn::make('is_active')
@@ -40,9 +44,7 @@ class CitiesTable
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
-            ->filters([
-                //
-            ])
+            ->filters(VerificationTableFilters::make())
             ->recordActions([
                 EditAction::make(),
             ])

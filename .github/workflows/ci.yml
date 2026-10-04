@@ -1,0 +1,91 @@
+name: Biyahe CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgis/postgis:16-3.4
+        env:
+          POSTGRES_DB: biyahe
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d biyahe"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      APP_ENV: testing
+      DB_CONNECTION: pgsql
+      DB_HOST: 127.0.0.1
+      DB_PORT: 5432
+      DB_DATABASE: biyahe
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mbstring, xml, ctype, iconv, intl, pdo_pgsql, pgsql
+          coverage: none
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.9'
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - name: Install backend dependencies
+        working-directory: api
+        run: composer install --no-interaction --no-progress --prefer-dist
+
+      - name: Install frontend dependencies
+        working-directory: web
+        run: npm ci
+
+      - name: Migrate and seed PostGIS database
+        working-directory: api
+        run: php artisan migrate:fresh --seed --force --no-interaction
+
+      - name: Validate reviewed dataset
+        working-directory: api
+        run: php artisan biyahe:data:validate cebu-central-network-2026-10-05.json
+
+      - name: Dry-run reviewed dataset import
+        working-directory: api
+        run: php artisan biyahe:data:import cebu-central-network-2026-10-05.json --dry-run
+
+      - name: Run backend and PostGIS tests
+        working-directory: api
+        run: php artisan test --compact
+
+      - name: Run Biyahe Doctor
+        working-directory: api
+        run: php artisan biyahe:doctor
+
+      - name: Lint frontend
+        working-directory: web
+        run: npm run lint
+
+      - name: Typecheck frontend
+        working-directory: web
+        run: npm run typecheck
+
+      - name: Build frontend
+        working-directory: web
+        run: npm run build

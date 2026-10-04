@@ -19,6 +19,11 @@ class RoutePatternStopsTable
                     ->searchable(),
                 TextColumn::make('stop.name')
                     ->searchable(),
+                TextColumn::make('provenanceSource.title')
+                    ->searchable(),
+                TextColumn::make('stable_id')
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('sequence')
                     ->numeric()
                     ->sortable(),

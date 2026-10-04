@@ -56,7 +56,7 @@ export default function Home() {
   const [destinationOptions, setDestinationOptions] = useState<Place[]>([]);
   const [selectedPattern, setSelectedPattern] = useState<RoutePattern | null>(null);
   const [selectedStop, setSelectedStop] = useState<Stop | null>(null);
-  const [message, setMessage] = useState("Loading the Cebu development fixture…");
+  const [message, setMessage] = useState("Loading the reviewed Cebu network slice…");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -66,7 +66,7 @@ export default function Home() {
         setPlaces(loadedPlaces);
         setStops(loadedStops);
         setRoutes(loadedRoutes);
-        setMessage("Explore demo records only — no real service is claimed.");
+        setMessage("Reviewed places and stops are shown with route associations still marked UNVERIFIED.");
       })
       .catch(() => setMessage("The API is not connected. Start the Laravel API to browse transport data."))
       .finally(() => setLoading(false));
@@ -108,7 +108,7 @@ export default function Home() {
     setMessage(
       origin && destination
         ? "Journey planning is intentionally deferred. Browse a route pattern and its ordered stops instead."
-        : "Choose both a starting place and destination; route planning is not implemented in Batch 001.",
+        : "Choose both a starting place and destination; journey planning is intentionally deferred.",
     );
   }
 
@@ -148,9 +148,9 @@ export default function Home() {
             <p className={styles.eyebrow}>First service area</p>
             <h2 id="explore-heading">Explore Cebu</h2>
           </div>
-          <span className={styles.fixtureBadge}>DEMO FIXTURE</span>
+          <span className={styles.fixtureBadge}>REVIEW SLICE</span>
         </div>
-        <p className={styles.sectionCopy}>Places, boarding points, route directions, and geometry are here to test the foundation. They are not verified public-transport instructions.</p>
+        <p className={styles.sectionCopy}>Place and stop geography is reviewed against OpenStreetMap. Route geometry and service stop ordering remain explicitly UNVERIFIED until owner review.</p>
         <div className={styles.mapPanel}>
           <MapView places={places} stops={stops} selectedPattern={selectedPattern} onStopSelect={setSelectedStop} />
           <div className={styles.mapLegend}><span><i className={styles.placeDot} /> places</span><span><i className={styles.stopDot} /> stops</span><span><i className={styles.routeDot} /> selected pattern</span></div>
@@ -162,6 +162,14 @@ export default function Home() {
             <button type="button" onClick={() => setSelectedStop(null)}>Dismiss</button>
           </div>
         )}
+        {selectedPattern?.stops && (
+          <div className={styles.infoCard}>
+            <div><p className={styles.cardKicker}>ORDERED PATTERN STOPS</p><h3>{selectedPattern.name}</h3></div>
+            <ol>
+              {selectedPattern.stops.map((patternStop) => <li key={patternStop.sequence}>{patternStop.sequence}. {patternStop.stop.name}</li>)}
+            </ol>
+          </div>
+        )}
       </section>
 
       <section className={styles.routeSection} aria-labelledby="routes-heading">
@@ -171,7 +179,7 @@ export default function Home() {
             {routes.map((route) => (
               <article className={styles.routeCard} key={route.id}>
                 <div className={styles.routeCode}>{route.code}</div>
-                <div><h3>{route.name}</h3><p>{route.vehicle_type?.name ?? "Transport service"} · {route.patterns?.length ?? 0} pattern(s)</p></div>
+                <div><h3>{route.name}</h3><p>{route.vehicle_type?.name ?? "Transport service"} · {route.patterns?.length ?? 0} pattern(s) · {route.verification.state}</p></div>
                 <div className={styles.patternList}>
                   {route.patterns?.map((pattern) => (
                     <button type="button" key={pattern.id} className={selectedPattern?.id === pattern.id ? styles.patternActive : ""} onClick={() => showPattern(pattern)}>
@@ -185,7 +193,7 @@ export default function Home() {
         )}
       </section>
 
-      <footer className={styles.footer}><span>BIYAHE Batch 001</span><span>Verified local knowledge is the destination.</span></footer>
+      <footer className={styles.footer}><span>BIYAHE Batch 002</span><span>Verified local knowledge is the destination.</span></footer>
     </main>
   );
 }

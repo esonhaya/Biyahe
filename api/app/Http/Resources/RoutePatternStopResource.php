@@ -16,6 +16,7 @@ class RoutePatternStopResource extends JsonResource
             'instruction' => $this->instruction,
             'service_metadata' => $this->service_metadata,
             'stop' => new StopResource($this->whenLoaded('stop')),
+            'provenance' => new ProvenanceSourceResource($this->whenLoaded('provenanceSource')),
         ];
     }
 }

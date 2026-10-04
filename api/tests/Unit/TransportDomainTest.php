@@ -8,7 +8,9 @@ use App\Models\Route;
 use App\Models\RoutePattern;
 use App\Models\RoutePatternStop;
 use App\Models\Stop;
+use App\Support\Geo;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use InvalidArgumentException;
 use Tests\TestCase;
 
 class TransportDomainTest extends TestCase
@@ -35,7 +37,29 @@ class TransportDomainTest extends TestCase
 
         $sharedStop = Stop::where('code', 'DEMO-D')->firstOrFail();
         $this->assertGreaterThanOrEqual(2, RoutePatternStop::where('stop_id', $sharedStop->id)->count());
-        $this->assertSame(VerificationState::DRAFT, RoutePattern::firstOrFail()->verification_state);
+        $this->assertSame(
+            VerificationState::DRAFT,
+            RoutePattern::whereHas('route', fn ($query) => $query->where('code', 'DEMO-04L'))->firstOrFail()->verification_state,
+        );
         $this->assertSame('PHP', Fare::firstOrFail()->currency);
+    }
+
+    public function test_geographic_values_keep_latitude_longitude_and_geojson_order(): void
+    {
+        $this->assertSame('SRID=4326;POINT(123.8854 10.3157)', Geo::pointWkt(10.3157, 123.8854));
+        $this->assertSame(
+            ['lat' => 10.3157, 'lng' => 123.8854],
+            Geo::parsePoint('SRID=4326;POINT(123.8854 10.3157)'),
+        );
+        $this->assertSame(
+            'SRID=4326;MULTILINESTRING((123.8854 10.3157,123.893 10.3074))',
+            Geo::multiLineStringWkt([
+                'type' => 'MultiLineString',
+                'coordinates' => [[[123.8854, 10.3157], [123.893, 10.3074]]],
+            ]),
+        );
+
+        $this->expectException(InvalidArgumentException::class);
+        Geo::pointWkt(123.8854, 10.3157);
     }
 }

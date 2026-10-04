@@ -14,8 +14,11 @@ use App\Models\RoutePattern;
 use App\Models\RoutePatternStop;
 use App\Models\Stop;
 use App\Models\VehicleType;
+use App\Services\Data\DatasetImporter;
+use App\Services\Data\DatasetValidator;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Str;
+use RuntimeException;
 
 class DatabaseSeeder extends Seeder
 {
@@ -200,5 +203,12 @@ class DatabaseSeeder extends Seeder
                 ],
             );
         }
+
+        $dataset = app(DatasetValidator::class)->validate(database_path('data/cebu-central-network-2026-10-05.json'));
+        if (! $dataset->isValid() || $dataset->data === null) {
+            throw new RuntimeException('The reviewed Cebu dataset failed validation while seeding.');
+        }
+
+        app(DatasetImporter::class)->import($dataset->data);
     }
 }

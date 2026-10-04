@@ -27,7 +27,7 @@ class RoutePattern extends Model
 
     public function setGeometryAttribute(mixed $value): void
     {
-        $this->attributes['geometry'] = is_array($value) ? json_encode($value, JSON_THROW_ON_ERROR) : $value;
+        $this->attributes['geometry'] = is_array($value) ? Geo::multiLineStringWkt($value) : $value;
     }
 
     public function getGeometryGeoJsonAttribute(): ?array

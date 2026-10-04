@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Resources\RouteResource;
 use App\Models\Route;
+use App\Support\Trust;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -22,12 +23,18 @@ class RouteController
                 }
             },
         ])->orderBy('routes.code');
+        Trust::apply($query, $request, 'routes');
         if (! $request->boolean('include_inactive')) {
             $query->where('routes.is_active', true);
         }
         if ($request->filled('city')) {
             $city = (string) $request->query('city');
-            $query->whereHas('city', fn (Builder $builder) => $builder->where('slug', $city)->orWhereKey($city));
+            $query->whereHas('city', function (Builder $builder) use ($city): void {
+                $builder->where('slug', $city);
+                if (ctype_digit($city)) {
+                    $builder->orWhereKey((int) $city);
+                }
+            });
         }
         if ($request->filled('vehicle_type')) {
             $query->whereHas('vehicleType', fn (Builder $builder) => $builder->where('code', strtoupper((string) $request->query('vehicle_type'))));
@@ -42,8 +49,11 @@ class RouteController
         return RouteResource::collection($query->paginate(min(max((int) $request->query('per_page', 20), 1), 100))->withQueryString());
     }
 
-    public function show(Route $route): RouteResource
+    public function show(Request $request, Route $route): RouteResource
     {
+        $query = Route::query();
+        Trust::apply($query, $request, 'routes');
+        $route = $query->findOrFail($route->id);
         $route->load([
             'city',
             'operator',

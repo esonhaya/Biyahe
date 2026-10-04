@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Operators\Tables;
 
+use App\Filament\Support\VerificationTableFilters;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
@@ -19,6 +20,9 @@ class OperatorsTable
                     ->searchable(),
                 TextColumn::make('slug')
                     ->searchable(),
+                TextColumn::make('stable_id')
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 IconColumn::make('is_active')
                     ->boolean(),
                 TextColumn::make('verification_state')
@@ -37,9 +41,7 @@ class OperatorsTable
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
-            ->filters([
-                //
-            ])
+            ->filters(VerificationTableFilters::make())
             ->recordActions([
                 EditAction::make(),
             ])

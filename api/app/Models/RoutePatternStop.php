@@ -31,4 +31,9 @@ class RoutePatternStop extends Model
     {
         return $this->belongsTo(Stop::class);
     }
+
+    public function provenanceSource(): BelongsTo
+    {
+        return $this->belongsTo(ProvenanceSource::class);
+    }
 }

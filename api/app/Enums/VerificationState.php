@@ -5,6 +5,7 @@ namespace App\Enums;
 enum VerificationState: string
 {
     case DRAFT = 'DRAFT';
+    case UNVERIFIED = 'UNVERIFIED';
     case VERIFIED = 'VERIFIED';
     case STALE = 'STALE';
     case RETIRED = 'RETIRED';

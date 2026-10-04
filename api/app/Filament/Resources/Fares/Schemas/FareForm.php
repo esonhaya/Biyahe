@@ -2,7 +2,7 @@
 
 namespace App\Filament\Resources\Fares\Schemas;
 
-use App\Enums\VerificationState;
+use App\Filament\Support\VerificationStateField;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
@@ -30,6 +30,10 @@ class FareForm
                     ->relationship('destinationStop', 'name'),
                 Select::make('provenance_source_id')
                     ->relationship('provenanceSource', 'title'),
+                TextInput::make('stable_id')
+                    ->disabled()
+                    ->dehydrated(false)
+                    ->helperText('Assigned by the dataset importer; do not change manually.'),
                 TextInput::make('fare_class')
                     ->required()
                     ->default('REGULAR'),
@@ -49,11 +53,9 @@ class FareForm
                 DatePicker::make('effective_from')
                     ->required(),
                 DatePicker::make('effective_until'),
-                Select::make('verification_state')
-                    ->options(VerificationState::class)
-                    ->default('DRAFT')
-                    ->required(),
+                VerificationStateField::make(),
                 Toggle::make('is_demo')
+                    ->live()
                     ->required(),
                 Textarea::make('notes')
                     ->columnSpanFull(),

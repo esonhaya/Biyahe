@@ -13,9 +13,19 @@ class BiyaheDoctorTest extends TestCase
     {
         $this->seed();
 
-        $this->artisan('biyahe:doctor')
-            ->expectsOutputToContain('postgis')
-            ->expectsOutputToContain('BLOCKED_BY_ENVIRONMENT')
+        $artisan = $this->artisan('biyahe:doctor')
+            ->expectsOutputToContain('postgis');
+
+        if (config('database.default') === 'pgsql') {
+            $artisan
+                ->expectsOutputToContain('PASS')
+                ->assertExitCode(0);
+
+            return;
+        }
+
+        $artisan
+            ->expectsOutputToContain('BLOCKED')
             ->assertExitCode(2);
     }
 }

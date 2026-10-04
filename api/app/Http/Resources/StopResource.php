@@ -3,6 +3,7 @@
 namespace App\Http\Resources;
 
 use App\Support\Geo;
+use App\Support\Trust;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -22,10 +23,7 @@ class StopResource extends JsonResource
             'boarding_notes' => $this->boarding_notes,
             'city' => new CityResource($this->whenLoaded('city')),
             'nearby_place' => new PlaceResource($this->whenLoaded('nearbyPlace')),
-            'verification' => [
-                'state' => $this->verification_state?->value ?? $this->verification_state,
-                'is_demo' => (bool) $this->is_demo,
-            ],
+            'verification' => Trust::status($this->resource),
             'provenance' => new ProvenanceSourceResource($this->whenLoaded('provenanceSource')),
             'distance_meters' => isset($this->distance_meters) ? round((float) $this->distance_meters, 2) : null,
         ];

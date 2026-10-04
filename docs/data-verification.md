@@ -1,24 +1,57 @@
 # Data verification
 
-## Lifecycle
+## States
 
-- DRAFT is new or unconfirmed information. It must not be presented as a
-  verified commuter instruction.
-- VERIFIED means a reviewer checked the fact against recorded provenance.
-- STALE means previously verified information may have changed and needs
-  rechecking.
-- RETIRED means the record is no longer current while its history remains
-  auditable.
+Every transport entity has a verification_state and an independent is_demo
+flag:
 
-Important places, stops, routes, patterns, and fare records should point to a
-provenance source with a source type, title, publisher when known, URL when
-available, and access date. A link alone is not proof of verification.
+- DRAFT: new or incomplete work. It is not trusted commuter guidance.
+- UNVERIFIED: a real-world lead or plausible association with recorded
+  provenance, but insufficient evidence for a trusted claim.
+- VERIFIED: a reviewer checked the fact against the recorded source and
+  method. Demo records can never use this state.
+- STALE: previously checked information whose source is outside the review
+  freshness policy or needs rechecking.
+- RETIRED: no longer current; retained for audit history and excluded from
+  default public queries.
+- DEMO: not a verification state. is_demo=true identifies artificial fixture
+  data and keeps it separate from production-like records.
+
+The API excludes demo and retired records by default. trusted_only=1 further
+restricts collections to non-demo VERIFIED records. Responses expose
+verification.state, verification.is_demo, and verification.trusted so a
+client cannot mistake an unverified record for trusted guidance.
+
+## Provenance
+
+Important places, stops, routes, patterns, and fare records must point to a
+ProvenanceSource when they are not demo data. A source records the practical
+evidence trail:
+
+- source type and title;
+- publisher and optional URL/reference;
+- checked_at and optional effective dates;
+- license;
+- verification method and reviewer/process;
+- notes.
+
+A URL is optional because observations, printed notices, or direct
+administrative checks may not have one. A URL alone is not proof of
+verification.
+
+## Review workflow
+
+1. Research the fact and record the source before importing it.
+2. Use DRAFT while the record is incomplete.
+3. Use UNVERIFIED for a plausible but not yet proven route, pattern, or
+   service association.
+4. Use VERIFIED only after checking the fact, source date, and method.
+5. Move changed information to STALE, then recheck or RETIRED it.
+6. Run php artisan biyahe:doctor before publishing a reviewed dataset.
+
+The Filament owner/admin panel exposes state, demo, stable ID, provenance, and
+review filters. The VERIFIED option is disabled for demo records in the form;
+Doctor remains the authoritative integrity backstop.
 
 Community accounts, reputation, submissions, and moderation queues are not
-implemented in Batch 001. The authenticated admin is the controlled editing
-surface; a reviewer should check evidence before changing a record to
-VERIFIED.
-
-The seeded records use a DEMO_FIXTURE source, DRAFT verification, and
-is_demo=true. They exist to exercise relationships, ordering, spatial
-rendering, and admin forms; they are not real Cebu transport claims.
+implemented yet.

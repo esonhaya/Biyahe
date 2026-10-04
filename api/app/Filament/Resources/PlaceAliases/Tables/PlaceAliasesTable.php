@@ -21,6 +21,11 @@ class PlaceAliasesTable
                     ->searchable(),
                 TextColumn::make('normalized_alias')
                     ->searchable(),
+                TextColumn::make('provenanceSource.title')
+                    ->searchable(),
+                TextColumn::make('stable_id')
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 IconColumn::make('is_active')
                     ->boolean(),
                 TextColumn::make('created_at')

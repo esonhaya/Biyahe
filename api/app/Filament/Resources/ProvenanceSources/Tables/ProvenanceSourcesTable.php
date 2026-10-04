@@ -18,11 +18,21 @@ class ProvenanceSourcesTable
                     ->searchable(),
                 TextColumn::make('title')
                     ->searchable(),
+                TextColumn::make('stable_id')
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('publisher')
                     ->searchable(),
                 TextColumn::make('accessed_at')
                     ->date()
                     ->sortable(),
+                TextColumn::make('checked_at')
+                    ->date()
+                    ->sortable(),
+                TextColumn::make('license')
+                    ->searchable(),
+                TextColumn::make('verified_by')
+                    ->searchable(),
                 TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()

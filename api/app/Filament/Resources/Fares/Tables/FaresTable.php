@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Fares\Tables;
 
+use App\Filament\Support\VerificationTableFilters;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
@@ -27,6 +28,13 @@ class FaresTable
                     ->searchable(),
                 TextColumn::make('provenanceSource.title')
                     ->searchable(),
+                TextColumn::make('provenanceSource.checked_at')
+                    ->date()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('stable_id')
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('fare_class')
                     ->searchable(),
                 TextColumn::make('amount')
@@ -60,9 +68,7 @@ class FaresTable
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
-            ->filters([
-                //
-            ])
+            ->filters(VerificationTableFilters::make())
             ->recordActions([
                 EditAction::make(),
             ])

@@ -8,16 +8,20 @@ final class Geo
 {
     public static function pointWkt(float $latitude, float $longitude): string
     {
-        if ($latitude < -90 || $latitude > 90 || $longitude < -180 || $longitude > 180) {
-            throw new InvalidArgumentException('Coordinates are outside the WGS 84 range.');
-        }
+        self::assertCoordinates($latitude, $longitude);
 
-        return sprintf('SRID=4326;POINT(%F %F)', $longitude, $latitude);
+        return sprintf('SRID=4326;POINT(%s %s)', self::formatCoordinate($longitude), self::formatCoordinate($latitude));
     }
 
     public static function parsePoint(mixed $value): ?array
     {
-        if (is_array($value) && isset($value['lat'], $value['lng'])) {
+        if (is_array($value) && isset($value['lat'], $value['lng']) && is_numeric($value['lat']) && is_numeric($value['lng'])) {
+            try {
+                self::assertCoordinates((float) $value['lat'], (float) $value['lng']);
+            } catch (InvalidArgumentException) {
+                return null;
+            }
+
             return ['lat' => (float) $value['lat'], 'lng' => (float) $value['lng']];
         }
 
@@ -26,11 +30,23 @@ final class Geo
         }
 
         $decoded = json_decode($value, true);
-        if (is_array($decoded) && isset($decoded['coordinates'][0], $decoded['coordinates'][1])) {
+        if (is_array($decoded) && isset($decoded['coordinates'][0], $decoded['coordinates'][1]) && is_numeric($decoded['coordinates'][0]) && is_numeric($decoded['coordinates'][1])) {
+            try {
+                self::assertCoordinates((float) $decoded['coordinates'][1], (float) $decoded['coordinates'][0]);
+            } catch (InvalidArgumentException) {
+                return null;
+            }
+
             return ['lat' => (float) $decoded['coordinates'][1], 'lng' => (float) $decoded['coordinates'][0]];
         }
 
-        if (preg_match('/POINT(?:\s+Z)?\s*\(\s*(-?\d+(?:\.\d+)?)\s+(-?\d+(?:\.\d+)?)\s*\)/i', $value, $matches)) {
+        if (preg_match('/POINT(?:\s+Z)?\s*\(\s*(-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)\s+(-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)\s*\)/i', $value, $matches)) {
+            try {
+                self::assertCoordinates((float) $matches[2], (float) $matches[1]);
+            } catch (InvalidArgumentException) {
+                return null;
+            }
+
             return ['lat' => (float) $matches[2], 'lng' => (float) $matches[1]];
         }
 
@@ -52,17 +68,24 @@ final class Geo
             return $decoded;
         }
 
-        if (preg_match('/MULTILINESTRING\s*\(\((.*)\)\)/i', $value, $matches)) {
+        if (preg_match('/MULTILINESTRING\s*\((.*)\)/is', $value, $matches)) {
             $lines = [];
-            foreach (preg_split('/\)\s*,\s*\(/', $matches[1]) ?: [] as $line) {
+            preg_match_all('/\(([^()]*)\)/', $matches[1], $lineMatches);
+            foreach ($lineMatches[1] ?? [] as $line) {
                 $coordinates = [];
                 foreach (explode(',', $line) as $pair) {
-                    $parts = preg_split('/\s+/', trim($pair));
-                    if (count($parts) >= 2) {
+                    $parts = preg_split('/\s+/', trim($pair)) ?: [];
+                    if (count($parts) >= 2 && is_numeric($parts[0]) && is_numeric($parts[1])) {
+                        try {
+                            self::assertCoordinates((float) $parts[1], (float) $parts[0]);
+                        } catch (InvalidArgumentException) {
+                            return null;
+                        }
+
                         $coordinates[] = [(float) $parts[0], (float) $parts[1]];
                     }
                 }
-                if ($coordinates !== []) {
+                if (count($coordinates) >= 2) {
                     $lines[] = $coordinates;
                 }
             }
@@ -71,6 +94,36 @@ final class Geo
         }
 
         return null;
+    }
+
+    public static function multiLineStringWkt(array $geometry): string
+    {
+        if (($geometry['type'] ?? null) !== 'MultiLineString' || ! is_array($geometry['coordinates'] ?? null) || $geometry['coordinates'] === []) {
+            throw new InvalidArgumentException('Route geometry must be a non-empty GeoJSON MultiLineString.');
+        }
+
+        $lines = [];
+        foreach ($geometry['coordinates'] as $line) {
+            if (! is_array($line) || count($line) < 2) {
+                throw new InvalidArgumentException('Each route geometry line must contain at least two coordinates.');
+            }
+
+            $coordinates = [];
+            foreach ($line as $coordinate) {
+                if (! is_array($coordinate) || ! isset($coordinate[0], $coordinate[1]) || ! is_numeric($coordinate[0]) || ! is_numeric($coordinate[1])) {
+                    throw new InvalidArgumentException('Route geometry coordinates must be [longitude, latitude].');
+                }
+
+                $longitude = (float) $coordinate[0];
+                $latitude = (float) $coordinate[1];
+                self::assertCoordinates($latitude, $longitude);
+                $coordinates[] = self::formatCoordinate($longitude).' '.self::formatCoordinate($latitude);
+            }
+
+            $lines[] = '('.implode(',', $coordinates).')';
+        }
+
+        return 'SRID=4326;MULTILINESTRING('.implode(',', $lines).')';
     }
 
     public static function distanceMeters(float $latitudeA, float $longitudeA, float $latitudeB, float $longitudeB): float
@@ -82,5 +135,17 @@ final class Geo
             + cos(deg2rad($latitudeA)) * cos(deg2rad($latitudeB)) * sin($longitudeDelta / 2) ** 2;
 
         return 2 * $earthRadius * asin(min(1, sqrt($a)));
+    }
+
+    private static function assertCoordinates(float $latitude, float $longitude): void
+    {
+        if (! is_finite($latitude) || ! is_finite($longitude) || $latitude < -90 || $latitude > 90 || $longitude < -180 || $longitude > 180) {
+            throw new InvalidArgumentException('Coordinates are outside the WGS 84 range. Use latitude/longitude points and [longitude, latitude] GeoJSON coordinates.');
+        }
+    }
+
+    private static function formatCoordinate(float $coordinate): string
+    {
+        return rtrim(rtrim(sprintf('%.8F', $coordinate), '0'), '.');
     }
 }

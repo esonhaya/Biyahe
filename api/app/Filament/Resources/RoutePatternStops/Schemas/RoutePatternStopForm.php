@@ -20,6 +20,12 @@ class RoutePatternStopForm
                 Select::make('stop_id')
                     ->relationship('stop', 'name')
                     ->required(),
+                Select::make('provenance_source_id')
+                    ->relationship('provenanceSource', 'title'),
+                TextInput::make('stable_id')
+                    ->disabled()
+                    ->dehydrated(false)
+                    ->helperText('Assigned by the dataset importer; do not change manually.'),
                 TextInput::make('sequence')
                     ->required()
                     ->numeric()

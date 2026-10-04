@@ -1,4 +1,4 @@
-export type VerificationState = "DRAFT" | "VERIFIED" | "STALE" | "RETIRED";
+export type VerificationState = "DRAFT" | "UNVERIFIED" | "VERIFIED" | "STALE" | "RETIRED";
 
 export type LocationPoint = {
   lat: number;
@@ -11,6 +11,13 @@ export type Provenance = {
   publisher: string | null;
   url: string | null;
   accessed_at: string | null;
+  checked_at: string | null;
+  effective_from: string | null;
+  effective_until: string | null;
+  license: string | null;
+  verification_method: string | null;
+  verified_by: string | null;
+  notes: string | null;
 };
 
 export type City = {
@@ -19,8 +26,7 @@ export type City = {
   slug: string;
   country_code: string;
   is_active: boolean;
-  verification_state: VerificationState;
-  is_demo: boolean;
+  verification: { state: VerificationState; is_demo: boolean; trusted: boolean };
 };
 
 export type Place = {
@@ -32,7 +38,7 @@ export type Place = {
   location: LocationPoint | null;
   city?: City;
   aliases?: { id: number; alias: string; is_active: boolean }[];
-  verification: { state: VerificationState; is_demo: boolean };
+  verification: { state: VerificationState; is_demo: boolean; trusted: boolean };
   provenance?: Provenance;
 };
 
@@ -46,7 +52,8 @@ export type Stop = {
   boarding_notes: string | null;
   city?: City;
   nearby_place?: Place;
-  verification: { state: VerificationState; is_demo: boolean };
+  verification: { state: VerificationState; is_demo: boolean; trusted: boolean };
+  provenance?: Provenance;
   distance_meters?: number | null;
 };
 
@@ -57,6 +64,7 @@ export type RoutePatternStop = {
   instruction: string | null;
   service_metadata: Record<string, unknown> | null;
   stop: Stop;
+  provenance?: Provenance;
 };
 
 export type RoutePattern = {
@@ -70,7 +78,8 @@ export type RoutePattern = {
   } | null;
   route?: { id: number; code: string; name: string };
   stops?: RoutePatternStop[];
-  verification: { state: VerificationState; is_demo: boolean };
+  verification: { state: VerificationState; is_demo: boolean; trusted: boolean };
+  provenance?: Provenance;
 };
 
 export type Route = {
@@ -82,7 +91,8 @@ export type Route = {
   operator?: { id: number; name: string };
   vehicle_type?: { code: string; name: string };
   patterns?: RoutePattern[];
-  verification: { state: VerificationState; is_demo: boolean };
+  verification: { state: VerificationState; is_demo: boolean; trusted: boolean };
+  provenance?: Provenance;
 };
 
 type ApiPage<T> = {

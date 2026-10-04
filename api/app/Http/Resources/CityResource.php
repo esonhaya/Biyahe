@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Support\Trust;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -15,8 +16,7 @@ class CityResource extends JsonResource
             'slug' => $this->slug,
             'country_code' => $this->country_code,
             'is_active' => (bool) $this->is_active,
-            'verification_state' => $this->verification_state?->value ?? $this->verification_state,
-            'is_demo' => (bool) $this->is_demo,
+            'verification' => Trust::status($this->resource),
         ];
     }
 }

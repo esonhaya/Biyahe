@@ -12,8 +12,16 @@ Biyahe transport data.
 - MapLibre is the open-source renderer that draws the configured style and
   BIYAHE overlays.
 - BIYAHE transport data comes from the API and includes place points, stop
-  points, and a selected route-pattern MultiLineString.
+  points, selected route-pattern MultiLineStrings, direction labels, and
+  ordered pattern stops.
 
-The initial viewport is Cebu City. The displayed geometry is artificial demo
-geometry and does not claim a real jeepney or bus path. A future deployment
-can replace the style and tile source without changing the transport model.
+The initial viewport is Cebu City. The Batch 002 review slice shows
+OSM-derived place and stop geography, plus OSM-derived route-member geometry.
+The route and pattern service associations are visibly marked UNVERIFIED;
+they are not presented as trusted journey instructions. Demo overlays are
+excluded unless a development request explicitly includes them.
+
+The map is a data-review surface, not a journey planner. Reviewers should use
+it to spot longitude/latitude reversals, geometry gaps, direction anomalies,
+and stop-order mistakes. A future deployment can replace the style and tile
+source without changing the transport model.

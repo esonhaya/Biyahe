@@ -14,7 +14,12 @@ class ProvenanceSource extends Model
 
     protected function casts(): array
     {
-        return ['accessed_at' => 'date'];
+        return [
+            'accessed_at' => 'date',
+            'checked_at' => 'date',
+            'effective_from' => 'date',
+            'effective_until' => 'date',
+        ];
     }
 
     public function cities(): HasMany

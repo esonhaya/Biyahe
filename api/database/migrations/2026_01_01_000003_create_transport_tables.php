@@ -193,8 +193,9 @@ return new class extends Migration
             DB::statement('ALTER TABLE fares ADD CONSTRAINT fares_effective_dates_valid CHECK (effective_until IS NULL OR effective_until >= effective_from)');
             DB::statement('ALTER TABLE fares ADD CONSTRAINT fares_distance_range_valid CHECK (max_distance_km IS NULL OR min_distance_km IS NULL OR max_distance_km >= min_distance_km)');
             foreach (['cities', 'operators', 'places', 'stops', 'routes', 'route_patterns', 'fares'] as $table) {
-                DB::statement("ALTER TABLE {$table} ADD CONSTRAINT {$table}_verification_state_valid CHECK (verification_state IN ('DRAFT', 'VERIFIED', 'STALE', 'RETIRED'))");
+                DB::statement("ALTER TABLE {$table} ADD CONSTRAINT {$table}_verification_state_valid CHECK (verification_state IN ('DRAFT', 'UNVERIFIED', 'VERIFIED', 'STALE', 'RETIRED'))");
             }
+            DB::statement('CREATE INDEX route_patterns_geometry_gix ON route_patterns USING GIST (geometry)');
         }
     }
 

@@ -2,7 +2,7 @@
 
 namespace App\Filament\Resources\RoutePatterns\Schemas;
 
-use App\Enums\VerificationState;
+use App\Filament\Support\VerificationStateField;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
@@ -22,17 +22,19 @@ class RoutePatternForm
                     ->relationship('provenanceSource', 'title'),
                 TextInput::make('name')
                     ->required(),
+                TextInput::make('stable_id')
+                    ->disabled()
+                    ->dehydrated(false)
+                    ->helperText('Assigned by the dataset importer; do not change manually.'),
                 TextInput::make('direction')
                     ->required(),
                 Textarea::make('service_notes')
                     ->columnSpanFull(),
                 Toggle::make('is_active')
                     ->required(),
-                Select::make('verification_state')
-                    ->options(VerificationState::class)
-                    ->default('DRAFT')
-                    ->required(),
+                VerificationStateField::make(),
                 Toggle::make('is_demo')
+                    ->live()
                     ->required(),
                 Textarea::make('geometry')
                     ->label('Route geometry WKT (WGS 84)')

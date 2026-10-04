@@ -31,6 +31,8 @@ class PatternStopsRelationManager extends RelationManager
                 Select::make('stop_id')
                     ->relationship('stop', 'name')
                     ->required(),
+                Select::make('provenance_source_id')
+                    ->relationship('provenanceSource', 'title'),
                 TextInput::make('sequence')
                     ->required()
                     ->numeric()

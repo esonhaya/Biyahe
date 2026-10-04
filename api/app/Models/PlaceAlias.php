@@ -21,4 +21,9 @@ class PlaceAlias extends Model
     {
         return $this->belongsTo(Place::class);
     }
+
+    public function provenanceSource(): BelongsTo
+    {
+        return $this->belongsTo(ProvenanceSource::class);
+    }
 }

@@ -3,6 +3,7 @@
 namespace App\Http\Resources;
 
 use App\Support\Geo;
+use App\Support\Trust;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -24,10 +25,7 @@ class RoutePatternResource extends JsonResource
                 'name' => $this->route->name,
             ]),
             'stops' => RoutePatternStopResource::collection($this->whenLoaded('patternStops')),
-            'verification' => [
-                'state' => $this->verification_state?->value ?? $this->verification_state,
-                'is_demo' => (bool) $this->is_demo,
-            ],
+            'verification' => Trust::status($this->resource),
             'provenance' => new ProvenanceSourceResource($this->whenLoaded('provenanceSource')),
         ];
     }

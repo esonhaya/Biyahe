@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\RoutePatterns\Tables;
 
+use App\Filament\Support\VerificationTableFilters;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
@@ -19,6 +20,13 @@ class RoutePatternsTable
                     ->searchable(),
                 TextColumn::make('provenanceSource.title')
                     ->searchable(),
+                TextColumn::make('provenanceSource.checked_at')
+                    ->date()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('stable_id')
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('name')
                     ->searchable(),
                 TextColumn::make('direction')
@@ -39,9 +47,7 @@ class RoutePatternsTable
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
-            ->filters([
-                //
-            ])
+            ->filters(VerificationTableFilters::make())
             ->recordActions([
                 EditAction::make(),
             ])

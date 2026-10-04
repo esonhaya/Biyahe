@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Resources\PlaceResource;
 use App\Models\Place;
+use App\Support\Trust;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -13,14 +14,17 @@ class PlaceController
     public function index(Request $request)
     {
         $query = $this->baseQuery()->orderBy('places.name');
+        Trust::apply($query, $request, 'places');
         $this->applyFilters($query, $request);
 
         return PlaceResource::collection($query->paginate($this->perPage($request))->withQueryString());
     }
 
-    public function show(Place $place): PlaceResource
+    public function show(Request $request, Place $place): PlaceResource
     {
-        $place = $this->withLocation(Place::query())
+        $query = $this->withLocation(Place::query());
+        Trust::apply($query, $request, 'places');
+        $place = $query
             ->with(['city', 'aliases', 'provenanceSource'])
             ->findOrFail($place->id);
 
@@ -50,7 +54,12 @@ class PlaceController
 
         if ($request->filled('city')) {
             $city = (string) $request->query('city');
-            $query->whereHas('city', fn (Builder $builder) => $builder->where('slug', $city)->orWhereKey($city));
+            $query->whereHas('city', function (Builder $builder) use ($city): void {
+                $builder->where('slug', $city);
+                if (ctype_digit($city)) {
+                    $builder->orWhereKey((int) $city);
+                }
+            });
         }
 
         if ($request->filled('category')) {

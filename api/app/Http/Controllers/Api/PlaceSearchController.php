@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Resources\PlaceResource;
 use App\Models\Place;
+use App\Support\Trust;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -28,12 +29,22 @@ class PlaceSearchController
                 $builder
                     ->whereRaw('LOWER(places.name) LIKE ?', [$term])
                     ->orWhereHas('aliases', fn (Builder $alias) => $alias->where('is_active', true)->whereRaw('LOWER(alias) LIKE ?', [$term]));
-            })
-            ->when(isset($validated['city']), fn (Builder $builder) => $builder->whereHas('city', fn (Builder $city) => $city->where('slug', $validated['city'])->orWhereKey($validated['city'])))
-            ->orderBy('places.name')
-            ->limit($validated['limit'] ?? 20)
-            ->get();
+            });
+        Trust::apply($query, $request, 'places');
+        if (! empty($validated['city'])) {
+            $city = (string) $validated['city'];
+            $query->whereHas('city', function (Builder $builder) use ($city): void {
+                $builder->where('slug', $city);
+                if (ctype_digit($city)) {
+                    $builder->orWhereKey((int) $city);
+                }
+            });
+        }
 
-        return response()->json(['data' => PlaceResource::collection($query)->resolve($request)]);
+        $query
+            ->orderBy('places.name')
+            ->limit($validated['limit'] ?? 20);
+
+        return response()->json(['data' => PlaceResource::collection($query->get())->resolve($request)]);
     }
 }
