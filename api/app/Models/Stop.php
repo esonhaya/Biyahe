@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\BoardingPrecision;
 use App\Enums\VerificationState;
 use App\Support\Geo;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -22,6 +23,8 @@ class Stop extends Model
             'is_active' => 'boolean',
             'is_demo' => 'boolean',
             'verification_state' => VerificationState::class,
+            'boarding_precision' => BoardingPrecision::class,
+            'boarding_verification_state' => VerificationState::class,
         ];
     }
 
@@ -54,10 +57,26 @@ class Stop extends Model
         return $this->belongsTo(ProvenanceSource::class);
     }
 
+    public function boardingProvenanceSource(): BelongsTo
+    {
+        return $this->belongsTo(ProvenanceSource::class, 'boarding_provenance_source_id');
+    }
+
     public function routePatterns(): BelongsToMany
     {
         return $this->belongsToMany(RoutePattern::class, 'route_pattern_stops')
-            ->withPivot(['sequence', 'boarding_allowed', 'alighting_allowed', 'verification_state', 'instruction', 'service_metadata'])
+            ->withPivot([
+                'sequence',
+                'boarding_allowed',
+                'alighting_allowed',
+                'verification_state',
+                'service_verification_state',
+                'sequence_verification_state',
+                'boarding_verification_state',
+                'alighting_verification_state',
+                'instruction',
+                'service_metadata',
+            ])
             ->orderBy('route_pattern_stops.sequence');
     }
 }

@@ -15,11 +15,19 @@ class RoutePatternController
         $query = RoutePattern::query()
             ->with(['route.city', 'provenanceSource'])
             ->with(['patternStops' => function ($builder): void {
-                $builder->with(['stop' => function ($stop): void {
-                    if (config('database.default') === 'pgsql') {
-                        $stop->addSelect(['stops.*', DB::raw('ST_AsText(stops.location) AS location_wkt')]);
-                    }
-                }]);
+                $builder->with([
+                    'provenanceSource',
+                    'serviceProvenanceSource',
+                    'sequenceProvenanceSource',
+                    'boardingProvenanceSource',
+                    'alightingProvenanceSource',
+                    'stop.provenanceSource',
+                    'stop.boardingProvenanceSource',
+                    'stop' => function ($stop): void {
+                        if (config('database.default') === 'pgsql') {
+                            $stop->addSelect(['stops.*', DB::raw('ST_AsText(stops.location) AS location_wkt')]);
+                        }
+                    }]);
             }]);
 
         if (config('database.default') === 'pgsql') {

@@ -4,6 +4,8 @@ namespace App\Console\Commands;
 
 use App\Enums\VerificationState;
 use App\Services\Data\DatasetValidator;
+use App\Services\Evidence\CuratedJourneySet;
+use App\Services\Evidence\EvidenceCoverageReport;
 use App\Services\Routing\NetworkAudit;
 use App\Support\Diagnostics\DoctorCheckResult;
 use App\Support\Diagnostics\DoctorReport;
@@ -18,7 +20,7 @@ class BiyaheDoctor extends Command
 {
     protected $signature = 'biyahe:doctor';
 
-    protected $description = 'Check Biyahe application, PostGIS, transport network, provenance, imports, and fares.';
+    protected $description = 'Check Biyahe application, PostGIS, transport network, evidence, imports, and fares.';
 
     private bool $hasCriticalFailure = false;
 
@@ -29,7 +31,7 @@ class BiyaheDoctor extends Command
     public function handle(): int
     {
         $this->report = new DoctorReport;
-        $this->info('BIYAHE DOCTOR V4');
+        $this->info('BIYAHE DOCTOR V6');
         $this->check('application', 'PASS', 'Laravel booted and configuration loaded.');
 
         $databaseReady = $this->checkDatabase();
@@ -47,8 +49,8 @@ class BiyaheDoctor extends Command
             return $this->exitCode();
         }
 
-        if (! $this->hasBatch004Schema()) {
-            $this->check('transport schema', 'FAIL', 'Batch 004 evidence migration is missing or incomplete.');
+        if (! $this->hasBatch006EvidenceSchema()) {
+            $this->check('transport schema', 'FAIL', 'Batch 006 evidence migration is missing or incomplete.');
 
             return $this->exitCode();
         }
@@ -56,6 +58,7 @@ class BiyaheDoctor extends Command
         try {
             $this->runRelationalChecks();
             $this->runVerificationChecks();
+            $this->runEvidenceChecks();
             $this->runImportChecks();
             $this->runFareChecks();
             $this->runSpatialChecks($postgisReady);
@@ -106,7 +109,7 @@ class BiyaheDoctor extends Command
         }
     }
 
-    private function hasBatch004Schema(): bool
+    private function hasBatch006EvidenceSchema(): bool
     {
         return Schema::hasColumn('provenance_sources', 'stable_id')
             && Schema::hasColumn('provenance_sources', 'checked_at')
@@ -117,7 +120,20 @@ class BiyaheDoctor extends Command
             && Schema::hasTable('transfer_relationships')
             && Schema::hasColumn('transfer_relationships', 'stable_id')
             && Schema::hasColumn('transfer_relationships', 'from_route_pattern_id')
-            && Schema::hasColumn('transfer_relationships', 'practical_note');
+            && Schema::hasColumn('transfer_relationships', 'practical_note')
+            && Schema::hasColumn('provenance_sources', 'evidence_scope')
+            && Schema::hasColumn('provenance_sources', 'conflict_status')
+            && Schema::hasColumn('provenance_sources', 'superseded_by_id')
+            && Schema::hasColumn('stops', 'boarding_precision')
+            && Schema::hasColumn('stops', 'boarding_verification_state')
+            && Schema::hasColumn('stops', 'boarding_provenance_source_id')
+            && Schema::hasColumn('route_pattern_stops', 'service_verification_state')
+            && Schema::hasColumn('route_pattern_stops', 'sequence_verification_state')
+            && Schema::hasColumn('route_pattern_stops', 'boarding_verification_state')
+            && Schema::hasColumn('route_pattern_stops', 'alighting_verification_state')
+            && Schema::hasColumn('transfer_relationships', 'review_status')
+            && Schema::hasColumn('transfer_relationships', 'reviewed_at')
+            && Schema::hasColumn('transfer_relationships', 'review_fingerprint');
     }
 
     private function runRelationalChecks(): void
@@ -294,6 +310,24 @@ class BiyaheDoctor extends Command
             })
             ->count();
         $this->checkCount('transfer association integrity', $associationStopMismatches, 'transfer pattern metadata does not match its stop endpoints.');
+
+        $staleTransferEndpoints = DB::table('transfer_relationships')
+            ->join('stops AS transfer_from', 'transfer_from.id', '=', 'transfer_relationships.from_stop_id')
+            ->join('stops AS transfer_to', 'transfer_to.id', '=', 'transfer_relationships.to_stop_id')
+            ->where('transfer_relationships.is_active', true)
+            ->where('transfer_relationships.is_demo', false)
+            ->where(function (Builder $query): void {
+                $states = [VerificationState::VERIFIED->value, VerificationState::UNVERIFIED->value];
+                $query
+                    ->whereNotIn('transfer_from.verification_state', $states)
+                    ->orWhereNotIn('transfer_to.verification_state', $states)
+                    ->orWhere('transfer_from.is_active', false)
+                    ->orWhere('transfer_to.is_active', false)
+                    ->orWhere('transfer_from.is_demo', true)
+                    ->orWhere('transfer_to.is_demo', true);
+            })
+            ->count();
+        $this->checkCount('transfer endpoint routing', $staleTransferEndpoints, 'active transfers use stale, retired, inactive, or demo stop endpoints.');
     }
 
     private function runVerificationChecks(): void
@@ -378,6 +412,182 @@ class BiyaheDoctor extends Command
         $this->checkWarningCount('alias collisions', $aliasCollisions, 'normalized aliases refer to more than one non-demo place and need review.');
     }
 
+    private function runEvidenceChecks(): void
+    {
+        $invalidConflictMetadata = DB::table('provenance_sources')
+            ->where('conflict_status', 'OPEN')
+            ->where(function (Builder $query): void {
+                $query->whereNull('conflict_group')->orWhere('conflict_group', '');
+            })
+            ->count();
+        $this->checkCount('evidence conflict metadata', $invalidConflictMetadata, 'open evidence conflicts lack a conflict group.');
+
+        $futureEvidenceDates = DB::table('provenance_sources')
+            ->where(function (Builder $query): void {
+                $query->whereDate('published_at', '>', now()->toDateString())
+                    ->orWhereDate('observed_at', '>', now()->toDateString())
+                    ->orWhereDate('checked_at', '>', now()->toDateString());
+            })
+            ->count();
+        $this->checkCount('evidence date validity', $futureEvidenceDates, 'evidence metadata uses a future date.');
+
+        $verifiedBlockedBySource = 0;
+        foreach (['cities', 'operators', 'places', 'stops', 'routes', 'route_patterns', 'route_pattern_stops', 'transfer_relationships', 'fares'] as $table) {
+            $verifiedBlockedBySource += DB::table($table)
+                ->join('provenance_sources', 'provenance_sources.id', '=', $table.'.provenance_source_id')
+                ->where($table.'.verification_state', VerificationState::VERIFIED->value)
+                ->where(function (Builder $query): void {
+                    $query->where('provenance_sources.conflict_status', 'OPEN')
+                        ->orWhereNotNull('provenance_sources.superseded_by_id');
+                })
+                ->count();
+        }
+        $this->checkCount('verified conflict leakage', $verifiedBlockedBySource, 'VERIFIED facts rely on open or superseded evidence.');
+
+        $invalidFactStates = 0;
+        foreach (['service', 'sequence', 'boarding', 'alighting'] as $fact) {
+            $invalidFactStates += DB::table('route_pattern_stops')
+                ->whereNotIn($fact.'_verification_state', VerificationState::values())
+                ->count();
+        }
+        $invalidFactStates += DB::table('stops')->whereNotIn('boarding_verification_state', VerificationState::values())->count();
+        $this->checkCount('fact-state validity', $invalidFactStates, 'claim-level evidence uses an unsupported verification state.');
+
+        $verifiedFactWithoutSource = 0;
+        foreach (['service', 'sequence', 'boarding', 'alighting'] as $fact) {
+            $verifiedFactWithoutSource += DB::table('route_pattern_stops')
+                ->where($fact.'_verification_state', VerificationState::VERIFIED->value)
+                ->whereNull($fact.'_provenance_source_id')
+                ->count();
+        }
+        $verifiedFactWithoutSource += DB::table('stops')
+            ->where('boarding_verification_state', VerificationState::VERIFIED->value)
+            ->whereNull('boarding_provenance_source_id')
+            ->count();
+        $this->checkCount('verified fact provenance', $verifiedFactWithoutSource, 'VERIFIED claim-level facts lack a qualifying source reference.');
+
+        $verifiedAggregateMismatch = DB::table('route_pattern_stops')
+            ->where('verification_state', VerificationState::VERIFIED->value)
+            ->where(function (Builder $query): void {
+                foreach (['service', 'sequence', 'boarding', 'alighting'] as $index => $fact) {
+                    $method = $index === 0 ? 'where' : 'orWhere';
+                    $query->{$method}($fact.'_verification_state', '!=', VerificationState::VERIFIED->value);
+                }
+            })
+            ->count();
+        $this->checkCount('aggregate trust consistency', $verifiedAggregateMismatch, 'VERIFIED pattern-stop associations contain unverified claim-level facts.');
+
+        $exactBoardingWithoutEvidence = DB::table('stops')
+            ->where('boarding_precision', 'EXACT_BOARDING_POINT')
+            ->where(function (Builder $query): void {
+                $query->where('boarding_verification_state', '!=', VerificationState::VERIFIED->value)
+                    ->orWhereNull('boarding_provenance_source_id');
+            })
+            ->count();
+        $this->checkCount('boarding precision evidence', $exactBoardingWithoutEvidence, 'exact boarding precision lacks VERIFIED boarding evidence.');
+
+        $invalidTransferReview = DB::table('transfer_relationships')
+            ->whereNotIn('review_status', ['PENDING_REVIEW', 'SUPPORTED', 'REJECTED', 'NEEDS_RECHECK'])
+            ->count();
+        $this->checkCount('transfer review lifecycle', $invalidTransferReview, 'transfer relationships use an unsupported review status.');
+        $rejectedWithoutReason = DB::table('transfer_relationships')
+            ->where('review_status', 'REJECTED')
+            ->where(function (Builder $query): void {
+                $query->whereNull('review_notes')->orWhere('review_notes', '');
+            })
+            ->count();
+        $this->checkCount('rejected transfer rationale', $rejectedWithoutReason, 'rejected transfer candidates lack a retained review reason.');
+        $rejectedWithoutFingerprint = DB::table('transfer_relationships')
+            ->where('review_status', 'REJECTED')
+            ->whereNull('review_fingerprint')
+            ->count();
+        $this->checkCount('rejected transfer fingerprint', $rejectedWithoutFingerprint, 'rejected transfer candidates lack a network fingerprint and cannot be safely re-evaluated after data changes.');
+        $verifiedTransferWithoutSupport = DB::table('transfer_relationships')
+            ->where('verification_state', VerificationState::VERIFIED->value)
+            ->where('review_status', '!=', 'SUPPORTED')
+            ->count();
+        $this->checkCount('verified transfer review consistency', $verifiedTransferWithoutSupport, 'VERIFIED transfer facts are not in the SUPPORTED review state.');
+
+        $activeRejectedTransfers = DB::table('transfer_relationships')
+            ->where('is_active', true)
+            ->whereIn('review_status', ['REJECTED', 'NEEDS_RECHECK'])
+            ->count();
+        $this->checkWarningCount('excluded transfer reviews', $activeRejectedTransfers, 'active transfer records are excluded until their review status is resolved.');
+
+        $verifiedTransferWithoutSource = DB::table('transfer_relationships')
+            ->where('verification_state', VerificationState::VERIFIED->value)
+            ->where('review_status', 'SUPPORTED')
+            ->whereNull('provenance_source_id')
+            ->count();
+        $this->checkCount('verified transfer evidence', $verifiedTransferWithoutSource, 'SUPPORTED VERIFIED transfers lack provenance.');
+
+        $staleSources = DB::table('provenance_sources')
+            ->whereNotNull('checked_at')
+            ->whereDate('checked_at', '<', now()->subDays((int) config('biyahe.evidence.freshness.default.aging_days', 365))->toDateString())
+            ->count();
+        $this->checkWarningCount('evidence freshness policy', $staleSources, 'evidence sources are beyond the default freshness window and need re-review.');
+
+        try {
+            $coverage = app(EvidenceCoverageReport::class)->report(false, true);
+            $this->checkWarningCount('pattern-stop evidence coverage', $coverage['pattern_stops_total'] - $coverage['pattern_stops_service_verified'], 'pattern-stop service evidence remains incomplete.');
+            $this->checkWarningCount('boarding evidence coverage', $coverage['boarding_points_unknown'], 'boarding points do not yet have a declared precision.');
+            $this->checkWarningCount('current fare rule evidence', $coverage['fare_rules_current'] === 0 ? 1 : 0, 'no currently effective, recently checked fare rule is recorded.');
+            $this->checkWarningCount('verified fare coverage', $coverage['fare_rules_current_unverified'], 'current general fare rules are reported but remain unverified; no journey fare is calculated.');
+            $this->checkWarningCount('fare evidence scope', $coverage['fare_rules_missing_scope'], 'fare claims lack matching route or vehicle-class evidence scope.');
+
+            $factEntries = collect($coverage['fact_audit']['places'])
+                ->merge($coverage['fact_audit']['routes'])
+                ->merge($coverage['fact_audit']['patterns'])
+                ->merge($coverage['fact_audit']['transfers'])
+                ->merge($coverage['fact_audit']['fares'])
+                ->map(fn (array $record): array => $record['evidence'])
+                ->merge(collect($coverage['fact_audit']['pattern_stops'])->flatMap(fn (array $association): array => array_values($association['facts'])))
+                ->merge(collect($coverage['fact_audit']['stops'])->flatMap(fn (array $stop): array => [$stop['location'], $stop['boarding']]));
+            $verifiedWithoutScope = $factEntries->filter(function (array $entry): bool {
+                if ($entry['raw_state'] !== VerificationState::VERIFIED->value) {
+                    return false;
+                }
+                $scope = $entry['claim'];
+
+                return $entry['provenance_source_id'] === null
+                    || ! is_array($entry['evidence_scope'])
+                    || ! in_array($scope, $entry['evidence_scope'], true)
+                    || $entry['conflict_status'] === 'OPEN'
+                    || $entry['superseded_by_id'] !== null;
+            })->count();
+            $this->checkCount('verified claim scope integrity', $verifiedWithoutScope, 'VERIFIED claims lack scoped provenance, conflict resolution, or current supporting evidence.');
+            $verifiedFreshnessDeficiencies = $factEntries->filter(fn (array $entry): bool => $entry['raw_state'] === VerificationState::VERIFIED->value
+                && $entry['provenance_source_id'] !== null
+                && $entry['conflict_status'] !== 'OPEN'
+                && $entry['superseded_by_id'] === null
+                && in_array($entry['freshness'], ['STALE', 'UNKNOWN_FRESHNESS'], true)
+            )->count();
+            $this->checkWarningCount('verified claim freshness', $verifiedFreshnessDeficiencies, 'VERIFIED records rely on aging-out or undated evidence and are downgraded for trust.');
+            $exactBoardingUnsupported = collect($coverage['fact_audit']['stops'])
+                ->filter(fn (array $stop): bool => $stop['boarding_precision'] === 'EXACT_BOARDING_POINT'
+                    && $stop['boarding']['effective_state'] !== VerificationState::VERIFIED->value)
+                ->count();
+            $this->checkCount('exact boarding precision provenance', $exactBoardingUnsupported, 'exact boarding points lack current, correctly scoped VERIFIED evidence.');
+        } catch (Throwable $exception) {
+            $this->check('evidence coverage report', 'FAIL', 'Evidence coverage report could not run: '.$exception->getMessage());
+        }
+
+        $referencedSourceIds = collect(['cities', 'operators', 'places', 'place_aliases', 'stops', 'routes', 'route_patterns', 'route_pattern_stops', 'transfer_relationships', 'fares'])
+            ->flatMap(fn (string $table) => DB::table($table)->whereNotNull('provenance_source_id')->pluck('provenance_source_id'))
+            ->merge(DB::table('stops')->whereNotNull('boarding_provenance_source_id')->pluck('boarding_provenance_source_id'));
+        foreach (['service', 'sequence', 'boarding', 'alighting'] as $fact) {
+            $referencedSourceIds = $referencedSourceIds->merge(
+                DB::table('route_pattern_stops')->whereNotNull($fact.'_provenance_source_id')->pluck($fact.'_provenance_source_id'),
+            );
+        }
+        $referencedSourceIds = $referencedSourceIds
+            ->merge(DB::table('provenance_sources')->whereNotNull('superseded_by_id')->pluck('superseded_by_id'))
+            ->unique()
+            ->values();
+        $orphanSources = DB::table('provenance_sources')->whereNotIn('id', $referencedSourceIds)->count();
+        $this->checkWarningCount('orphan provenance', $orphanSources, 'provenance sources are not attached to a production record.');
+    }
+
     private function runImportChecks(): void
     {
         foreach (['cebu-central-network-2026-10-05.json', 'cebu-network-expansion-2026-10-05.json'] as $datasetName) {
@@ -387,6 +597,23 @@ class BiyaheDoctor extends Command
                 ? 'Dataset schema and references are valid.'
                 : count($dataset->errors()).' dataset schema or reference errors.';
             $this->check('dataset '.$datasetName, $datasetStatus, $datasetMessage);
+        }
+
+        try {
+            $scenarios = app(CuratedJourneySet::class)->scenarios();
+            $placeSlugs = collect($scenarios)
+                ->flatMap(fn (array $scenario): array => [$scenario['origin_place_slug'], $scenario['destination_place_slug']])
+                ->unique()
+                ->values();
+            $availablePlaces = DB::table('places')
+                ->whereIn('slug', $placeSlugs)
+                ->where('is_active', true)
+                ->where('is_demo', false)
+                ->whereIn('verification_state', [VerificationState::VERIFIED->value, VerificationState::UNVERIFIED->value])
+                ->count();
+            $this->checkCount('curated journey references', max($placeSlugs->count() - $availablePlaces, 0), 'curated scenarios reference missing or ineligible places.');
+        } catch (Throwable $exception) {
+            $this->check('curated journey dataset', 'FAIL', 'Curated journey schema is invalid: '.$exception->getMessage());
         }
 
         $importedTables = ['provenance_sources', 'cities', 'operators', 'places', 'place_aliases', 'stops', 'routes', 'route_patterns', 'route_pattern_stops', 'transfer_relationships', 'fares'];
@@ -553,12 +780,52 @@ class BiyaheDoctor extends Command
             ->count();
         $this->checkCount('stale association routing exposure', $staleAssociations, 'active patterns contain stale or retired service associations.');
 
-        $networkAudit = app(NetworkAudit::class)->audit(maxPairs: min(
-            (int) config('biyahe.routing.doctor_network_audit_max_pairs', 12),
-            (int) config('biyahe.routing.network_audit_max_pairs', 200),
+        $invalidTransferPermissions = DB::table('transfer_relationships')
+            ->join('route_pattern_stops AS from_associations', function ($join): void {
+                $join->on('from_associations.route_pattern_id', '=', 'transfer_relationships.from_route_pattern_id')
+                    ->on('from_associations.stop_id', '=', 'transfer_relationships.from_stop_id');
+            })
+            ->join('route_pattern_stops AS to_associations', function ($join): void {
+                $join->on('to_associations.route_pattern_id', '=', 'transfer_relationships.to_route_pattern_id')
+                    ->on('to_associations.stop_id', '=', 'transfer_relationships.to_stop_id');
+            })
+            ->whereNotNull('transfer_relationships.from_route_pattern_id')
+            ->whereNotNull('transfer_relationships.to_route_pattern_id')
+            ->where(function (Builder $query): void {
+                $query->where('from_associations.alighting_allowed', false)
+                    ->orWhere('to_associations.boarding_allowed', false);
+            })
+            ->count();
+        $this->checkCount('transfer permissions', $invalidTransferPermissions, 'explicit transfers cannot alight from or board onto their referenced patterns.');
+
+        $networkAudit = app(NetworkAudit::class)->audit(
+            maxPairs: min(
+                (int) config('biyahe.routing.doctor_network_audit_max_pairs', 1),
+                (int) config('biyahe.routing.network_audit_max_pairs', 200),
+            ),
+            maxTransfers: (int) config('biyahe.routing.default_max_transfers', 2),
+            maxCanIRideChecks: (int) config('biyahe.routing.doctor_network_audit_max_can_i_ride_checks', 1),
+        );
+        $this->check('journey smoke sample', 'PASS', sprintf(
+            'Audited %d place pairs through %d transfers (%d Can-I-Ride check); found direct=%d, one-transfer=%d, two-transfer=%d.',
+            $networkAudit['pairs_examined'],
+            $networkAudit['max_transfers'],
+            $networkAudit['can_i_ride_checked'],
+            $networkAudit['direct'],
+            $networkAudit['one_transfer'],
+            $networkAudit['two_transfer'],
         ));
         $this->checkCount('journey invariant audit', count($networkAudit['errors']), 'journey invariant failures were found.');
         $this->checkWarningCount('known-pair coverage', $networkAudit['no_known_journey'], 'known place pairs currently have no supported journey.');
+        $this->checkWarningCount('two-transfer coverage', $networkAudit['two_transfer'] === 0 ? 1 : 0, 'the bounded network audit found no two-transfer place pair.');
+        $this->checkCount('routing transfer cap', $networkAudit['transfer_cap_violations'], 'journeys exceed the configured public transfer cap.');
+        $this->checkCount('routing loops', $networkAudit['loops'], 'journeys repeat a route across transit legs.');
+        $this->checkCount('routing direction', $networkAudit['direction_violations'], 'journeys contain backwards or empty ride sequences.');
+        $this->checkCount('routing stale leakage', $networkAudit['stale_leakage'], 'journeys expose stale or retired service data.');
+        $this->checkCount('routing trust leakage', $networkAudit['trust_leakage'], 'journeys elevate less-trusted legs to VERIFIED.');
+        $this->checkCount('can-I-ride integrity', $networkAudit['can_i_ride_integrity_errors'], 'Can I Ride returned an invalid direction, sequence, or trust result.');
+        $this->checkWarningCount('duplicate alternatives', $networkAudit['duplicate_journeys'], 'bounded routing returned duplicate commuter decisions.');
+        $this->checkWarningCount('walking bounds', $networkAudit['walking_bound_violations'], 'bounded journeys exceed the configured walking burden.');
 
         if (! $postgisReady) {
             $this->check('pattern stop geography', 'BLOCKED', 'PostGIS runtime is required to compare ordered stops with route geometry.');

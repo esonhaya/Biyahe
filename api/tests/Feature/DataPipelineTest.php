@@ -146,6 +146,65 @@ class DataPipelineTest extends TestCase
         }
     }
 
+    public function test_verified_place_requires_location_scoped_provenance(): void
+    {
+        $data = $this->dataset();
+        $sourceId = $data['places'][0]['source_id'];
+        foreach ($data['sources'] as &$source) {
+            if ($source['stable_id'] === $sourceId) {
+                $source['evidence_scope'] = array_values(array_diff($source['evidence_scope'], ['PLACE_LOCATION']));
+            }
+        }
+        unset($source);
+        $path = $this->temporaryDataset($data);
+
+        try {
+            $result = app(DatasetValidator::class)->validate($path);
+
+            $this->assertFalse($result->isValid());
+            $this->assertTrue(collect($result->errors())->contains(fn (array $error): bool => str_contains($error['message'], 'PLACE_LOCATION')));
+        } finally {
+            unlink($path);
+        }
+    }
+
+    public function test_rejected_transfer_requires_a_retained_review_reason(): void
+    {
+        $data = $this->dataset();
+        $data['transfers'][0]['review_status'] = 'REJECTED';
+        $path = $this->temporaryDataset($data);
+
+        try {
+            $result = app(DatasetValidator::class)->validate($path);
+            $this->assertFalse($result->isValid());
+
+            $data['transfers'][0]['review_notes'] = 'Current evidence shows no safe connection between the mapped boarding areas.';
+            file_put_contents($path, json_encode($data, JSON_THROW_ON_ERROR));
+            $resultWithReason = app(DatasetValidator::class)->validate($path);
+
+            $this->assertTrue($resultWithReason->isValid(), json_encode($resultWithReason->errors()));
+        } finally {
+            unlink($path);
+        }
+    }
+
+    public function test_malformed_claim_metadata_returns_validation_errors_instead_of_throwing(): void
+    {
+        $data = $this->dataset();
+        $data['sources'][0]['evidence_scope'] = ['UNKNOWN_SCOPE', ['nested' => true]];
+        $data['places'][] = 'not-a-place-object';
+        $path = $this->temporaryDataset($data);
+
+        try {
+            $result = app(DatasetValidator::class)->validate($path);
+
+            $this->assertFalse($result->isValid());
+            $this->assertNotEmpty($result->errors());
+        } finally {
+            unlink($path);
+        }
+    }
+
     /** @return array<string, mixed> */
     private function dataset(): array
     {

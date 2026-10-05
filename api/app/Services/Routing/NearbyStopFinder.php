@@ -6,6 +6,7 @@ use App\Enums\VerificationState;
 use App\Models\Place;
 use App\Models\Stop;
 use App\Support\Geo;
+use App\Support\Trust;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
@@ -29,7 +30,7 @@ final class NearbyStopFinder
         );
 
         $query = Stop::query()
-            ->with(['provenanceSource', 'nearbyPlace'])
+            ->with(['provenanceSource', 'boardingProvenanceSource', 'nearbyPlace'])
             ->where('stops.city_id', $place->city_id)
             ->where('stops.is_active', true)
             ->where('stops.is_demo', false)
@@ -38,9 +39,17 @@ final class NearbyStopFinder
                 VerificationState::UNVERIFIED->value,
             ])
             ->whereNotNull('stops.location');
+        Trust::applyRoutable($query, 'stops');
 
         if ($boardingOnly) {
-            $query->where('stops.is_boarding_point', true);
+            $query
+                ->with('boardingProvenanceSource')
+                ->where('stops.is_boarding_point', true)
+                ->whereNotIn('stops.boarding_verification_state', [
+                    VerificationState::DRAFT->value,
+                    VerificationState::STALE->value,
+                    VerificationState::RETIRED->value,
+                ]);
         }
 
         if (config('database.default') === 'pgsql') {

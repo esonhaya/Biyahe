@@ -2,6 +2,8 @@
 
 namespace Tests\Feature;
 
+use App\Services\Evidence\EvidenceCoverageReport;
+use App\Services\Evidence\EvidencePriorityEngine;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
@@ -99,5 +101,23 @@ class PostgisTransportTest extends TestCase
         $this->assertSame('TRANSFER_WALK', $transfer['legs'][2]['type']);
         $this->assertGreaterThan(0, $transfer['legs'][0]['distance_meters']);
         $this->assertLessThanOrEqual(600, $transfer['legs'][2]['distance_meters']);
+    }
+
+    public function test_postgis_evidence_reports_resolve_places_for_journey_audits(): void
+    {
+        if (config('database.default') !== 'pgsql') {
+            $this->markTestSkipped('PostGIS integration requires DB_CONNECTION=pgsql.');
+        }
+
+        $this->seed();
+
+        $coverage = app(EvidenceCoverageReport::class)->report(true, false);
+        $this->assertSame(8, $coverage['curated_journeys_total']);
+        $this->assertGreaterThan(0, collect($coverage['curated_journeys'])->where('status', 'ROUTABLE')->count());
+
+        $priority = app(EvidencePriorityEngine::class)->analyze(limit: 5, maxPairs: 1, maxTransfers: 0);
+        $this->assertSame(1, $priority['pairs_examined']);
+        $this->assertGreaterThan(0, $priority['journeys_examined']);
+        $this->assertNotEmpty($priority['items']);
     }
 }

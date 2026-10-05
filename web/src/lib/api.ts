@@ -147,7 +147,7 @@ export type Journey = {
   destination: JourneyPoint;
   legs: JourneyLeg[];
   transfer_count: number;
-  ranking: { walking_distance_meters: number; ride_stop_count: number; policy: string };
+  ranking: { walking_distance_meters: number; ride_stop_count: number; policy: string; reasons: string[] };
   trust: { state: JourneyTrustState; warning: string | null };
   warnings: string[];
   fare: { status: "UNAVAILABLE" | "AVAILABLE"; label: string; amount: number | null; currency: string | null };
@@ -166,6 +166,44 @@ export type JourneyResponse = {
     boarding_candidates: number;
     alighting_candidates: number;
     no_route: { code: string; message: string } | null;
+  };
+};
+
+export type CanIRideOption = {
+  pattern: { id: number; name: string; direction: string; verification: JourneyPoint["verification"] };
+  boarding_stop: JourneyPoint & { boarding_notes?: string | null; boarding_side?: string | null; direction_note?: string | null };
+  alighting_stop: JourneyPoint;
+  boarding_association: JourneyPoint["verification"];
+  alighting_association: JourneyPoint["verification"];
+  boarding_instruction: string;
+  driver_instruction: string;
+  get_off_guidance: string;
+  stop_count: number;
+  boarding_sequence: number;
+  alighting_sequence: number;
+  access_distance_meters: number;
+  egress_distance_meters: number;
+  trust: JourneyTrustState;
+  provenance: Provenance[];
+};
+
+export type CanIRideResponse = {
+  data: {
+    origin: JourneyPoint;
+    destination: JourneyPoint;
+    status: "YES" | "NO" | "DIRECTION_DEPENDENT" | "UNKNOWN";
+    message: string;
+    route: { id: number; code: string; name: string; vehicle_type: { code: string; name: string } | null; verification: JourneyPoint["verification"] } | null;
+    option: CanIRideOption | null;
+    opposite_direction: CanIRideOption | null;
+    trust: JourneyTrustState | null;
+    warnings: string[];
+    provenance: Provenance[];
+  };
+  meta: {
+    distance_unit: "meters";
+    walking_distance_type: "straight_line_estimate";
+    access_radius_meters: number;
   };
 };
 
@@ -226,4 +264,19 @@ export async function planJourney(
   });
 
   return getJson<JourneyResponse>("/journeys?" + params.toString(), signal);
+}
+
+export async function canIRide(
+  routeCode: string,
+  fromPlaceId: number,
+  toPlaceId: number,
+  signal?: AbortSignal,
+): Promise<CanIRideResponse> {
+  const params = new URLSearchParams({
+    route_code: routeCode,
+    from_place_id: String(fromPlaceId),
+    to_place_id: String(toPlaceId),
+  });
+
+  return getJson<CanIRideResponse>("/can-i-ride?" + params.toString(), signal);
 }

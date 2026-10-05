@@ -37,6 +37,11 @@ class StopsTable
                     ->searchable(),
                 TextColumn::make('boarding_side')
                     ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('boarding_precision')
+                    ->badge(),
+                TextColumn::make('boarding_verification_state')
+                    ->badge()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 IconColumn::make('is_boarding_point')
                     ->boolean(),
                 IconColumn::make('is_active')

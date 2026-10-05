@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Stops\Schemas;
 
+use App\Enums\BoardingPrecision;
 use App\Filament\Support\VerificationStateField;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
@@ -22,6 +23,9 @@ class StopForm
                     ->relationship('nearbyPlace', 'name'),
                 Select::make('provenance_source_id')
                     ->relationship('provenanceSource', 'title'),
+                Select::make('boarding_provenance_source_id')
+                    ->relationship('boardingProvenanceSource', 'title')
+                    ->label('Boarding evidence source'),
                 TextInput::make('name')
                     ->required()
                     ->maxLength(150),
@@ -42,6 +46,12 @@ class StopForm
                 Textarea::make('direction_note')
                     ->helperText('Optional direction/roadside note; do not infer it from geometry alone.')
                     ->columnSpanFull(),
+                Select::make('boarding_precision')
+                    ->options(BoardingPrecision::class)
+                    ->default(BoardingPrecision::UNKNOWN->value)
+                    ->required()
+                    ->helperText('A stop coordinate does not prove an exact curbside boarding point.'),
+                VerificationStateField::make('boarding_verification_state', 'Boarding evidence state'),
                 Toggle::make('is_active')
                     ->required(),
                 VerificationStateField::make(),

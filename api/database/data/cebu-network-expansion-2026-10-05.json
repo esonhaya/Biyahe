@@ -10,12 +10,15 @@
   "sources": [
     {
       "stable_id": "source-osm-cebu-batch004",
-      "source_type": "OPEN_DATA",
+      "source_type": "COMMUNITY_OPEN_DATA",
       "title": "OpenStreetMap Cebu public transport route relations — Batch 004",
       "publisher": "OpenStreetMap contributors",
       "url": "https://wiki.openstreetmap.org/wiki/Public_transportation_in_Metro_Cebu",
       "accessed_at": "2026-10-05",
+      "observed_at": "2026-10-05",
       "checked_at": "2026-10-05",
+      "evidence_scope": ["PLACE_LOCATION", "ROUTE_IDENTITY", "ROUTE_PATTERN", "ROUTE_GEOMETRY", "STOP_LOCATION"],
+      "conflict_status": "NONE",
       "license": "ODbL-1.0",
       "verification_method": "Inspected route-master metadata, directional PTv2 relations, and platform members.",
       "verified_by": "Biyahe Batch 004 research",
@@ -28,12 +31,52 @@
       "publisher": "Land Transportation Franchising and Regulatory Board",
       "url": "https://ltfrb.gov.ph/wp-content/uploads/2024/11/Fare-Guide_Traditional-PUJ-Provisional-Fare-Increase_08Oct2023.pdf",
       "accessed_at": "2026-10-05",
+      "published_at": "2023-10-08",
       "checked_at": "2026-10-05",
       "effective_from": "2023-10-08",
+      "evidence_scope": ["FARE_GENERAL_TRADITIONAL_PUJ"],
+      "conflict_status": "NONE",
+      "superseded_by_source_id": "source-ltfrb-puj-fares-2026-09",
       "license": "Government publication",
       "verification_method": "Read the official fare guide; no current Cebu route-specific confirmation found.",
       "verified_by": "Biyahe Batch 004 research",
       "notes": "Historical general traditional-PUJ fare evidence: PHP 13.00 for the first four kilometres and PHP 1.80 per succeeding kilometre. Stored as STALE evidence and never used for a current journey fare."
+    },
+    {
+      "stable_id": "source-ltfrb-puj-fares-2026-09",
+      "source_type": "GOVERNMENT_REPORTING",
+      "title": "LTFRB temporary PUJ fare guide and validity, reported 2026-09-28",
+      "publisher": "Philippine News Agency, reporting LTFRB rates",
+      "url": "https://www.pna.gov.ph/articles/1285005",
+      "accessed_at": "2026-10-05",
+      "published_at": "2026-09-28",
+      "checked_at": "2026-10-05",
+      "effective_from": "2026-09-28",
+      "effective_until": "2026-12-31",
+      "evidence_scope": ["FARE_GENERAL_TRADITIONAL_PUJ"],
+      "conflict_status": "NONE",
+      "license": "Government publication",
+      "verification_method": "Reviewed the Philippine News Agency report of the LTFRB rate announcement and temporary matrix validity; no current Cebu route-specific fare matrix was found.",
+      "verified_by": "Biyahe Batch 006 evidence review",
+      "notes": "PNA reports LTFRB traditional-PUJ rates of PHP 14 for the first 4 km and PHP 2 per succeeding kilometre, effective 2026-09-28, and that the temporary fare guide is valid through 2026-12-31. Rate announcement: https://www.pna.gov.ph/articles/1284951. Government broadcaster PTV reports regular and discounted rates: https://ptvnews.ph/ltfrb-releases-new-matrices-for-puv-fare-hikes-effective-sept-28/. PIA corroboration: https://pia.gov.ph/news/luzon/car/fare-hike-eases-puj-drivers-rising-operating-costs-in-benguet/. These do not establish a Cebu route-specific tariff or Biyahe fare-distance basis."
+    },
+    {
+      "stable_id": "source-ptv-traditional-puj-fares-2026-09",
+      "source_type": "GOVERNMENT_REPORTING",
+      "title": "LTFRB 2026 PUV fare guides, including traditional PUJ discounts",
+      "publisher": "People's Television Network, Inc. (PTV)",
+      "url": "https://ptvnews.ph/ltfrb-releases-new-matrices-for-puv-fare-hikes-effective-sept-28/",
+      "accessed_at": "2026-10-05",
+      "published_at": "2026-09-28",
+      "observed_at": "2026-10-05",
+      "checked_at": "2026-10-05",
+      "effective_from": "2026-09-28",
+      "evidence_scope": ["FARE_GENERAL_TRADITIONAL_PUJ"],
+      "conflict_status": "NONE",
+      "license": "Government publication",
+      "verification_method": "Reviewed PTV's report of the LTFRB fare guide; no Cebu route-specific fare matrix or fare-distance basis was found.",
+      "verified_by": "Biyahe Batch 006 evidence review",
+      "notes": "Reports traditional PUJ regular fare and student/elderly/PWD discount rates effective 2026-09-28. Treat as government reporting rather than a directly inspected fare matrix. The temporary guide expiry is separately recorded from PNA."
     }
   ],
   "cities": [
@@ -2792,9 +2835,9 @@
       "min_distance_km": 0,
       "max_distance_km": 4,
       "effective_from": "2023-10-08",
-      "verification_state": "STALE",
+      "verification_state": "RETIRED",
       "is_demo": false,
-      "notes": "Historical official general PUJ fare for the first four kilometres. Current route-specific applicability is not confirmed; not used by journey planning."
+      "notes": "Retired legacy per-route copy of a general PUJ fare. The LTFRB source does not support route-specific fare applicability; class-level historical rule is recorded separately."
     },
     {
       "stable_id": "fare-03b-addon-2023",
@@ -2807,9 +2850,9 @@
       "min_distance_km": 4.01,
       "max_distance_km": null,
       "effective_from": "2023-10-08",
-      "verification_state": "STALE",
+      "verification_state": "RETIRED",
       "is_demo": false,
-      "notes": "Historical official general PUJ fare for each succeeding kilometre. Current route-specific applicability is not confirmed; not used by journey planning."
+      "notes": "Retired legacy per-route copy of a general PUJ fare. The LTFRB source does not support route-specific fare applicability; class-level historical rule is recorded separately."
     },
     {
       "stable_id": "fare-04l-base-2023",
@@ -2822,9 +2865,9 @@
       "min_distance_km": 0,
       "max_distance_km": 4,
       "effective_from": "2023-10-08",
-      "verification_state": "STALE",
+      "verification_state": "RETIRED",
       "is_demo": false,
-      "notes": "Historical official general PUJ fare for the first four kilometres. Current route-specific applicability is not confirmed; not used by journey planning."
+      "notes": "Retired legacy per-route copy of a general PUJ fare. The LTFRB source does not support route-specific fare applicability; class-level historical rule is recorded separately."
     },
     {
       "stable_id": "fare-04l-addon-2023",
@@ -2837,9 +2880,9 @@
       "min_distance_km": 4.01,
       "max_distance_km": null,
       "effective_from": "2023-10-08",
-      "verification_state": "STALE",
+      "verification_state": "RETIRED",
       "is_demo": false,
-      "notes": "Historical official general PUJ fare for each succeeding kilometre. Current route-specific applicability is not confirmed; not used by journey planning."
+      "notes": "Retired legacy per-route copy of a general PUJ fare. The LTFRB source does not support route-specific fare applicability; class-level historical rule is recorded separately."
     },
     {
       "stable_id": "fare-06b-base-2023",
@@ -2852,9 +2895,9 @@
       "min_distance_km": 0,
       "max_distance_km": 4,
       "effective_from": "2023-10-08",
-      "verification_state": "STALE",
+      "verification_state": "RETIRED",
       "is_demo": false,
-      "notes": "Historical official general PUJ fare for the first four kilometres. Current route-specific applicability is not confirmed; not used by journey planning."
+      "notes": "Retired legacy per-route copy of a general PUJ fare. The LTFRB source does not support route-specific fare applicability; class-level historical rule is recorded separately."
     },
     {
       "stable_id": "fare-06b-addon-2023",
@@ -2867,9 +2910,9 @@
       "min_distance_km": 4.01,
       "max_distance_km": null,
       "effective_from": "2023-10-08",
-      "verification_state": "STALE",
+      "verification_state": "RETIRED",
       "is_demo": false,
-      "notes": "Historical official general PUJ fare for each succeeding kilometre. Current route-specific applicability is not confirmed; not used by journey planning."
+      "notes": "Retired legacy per-route copy of a general PUJ fare. The LTFRB source does not support route-specific fare applicability; class-level historical rule is recorded separately."
     },
     {
       "stable_id": "fare-06c-base-2023",
@@ -2882,9 +2925,9 @@
       "min_distance_km": 0,
       "max_distance_km": 4,
       "effective_from": "2023-10-08",
-      "verification_state": "STALE",
+      "verification_state": "RETIRED",
       "is_demo": false,
-      "notes": "Historical official general PUJ fare for the first four kilometres. Current route-specific applicability is not confirmed; not used by journey planning."
+      "notes": "Retired legacy per-route copy of a general PUJ fare. The LTFRB source does not support route-specific fare applicability; class-level historical rule is recorded separately."
     },
     {
       "stable_id": "fare-06c-addon-2023",
@@ -2897,9 +2940,9 @@
       "min_distance_km": 4.01,
       "max_distance_km": null,
       "effective_from": "2023-10-08",
-      "verification_state": "STALE",
+      "verification_state": "RETIRED",
       "is_demo": false,
-      "notes": "Historical official general PUJ fare for each succeeding kilometre. Current route-specific applicability is not confirmed; not used by journey planning."
+      "notes": "Retired legacy per-route copy of a general PUJ fare. The LTFRB source does not support route-specific fare applicability; class-level historical rule is recorded separately."
     },
     {
       "stable_id": "fare-06h-base-2023",
@@ -2912,9 +2955,9 @@
       "min_distance_km": 0,
       "max_distance_km": 4,
       "effective_from": "2023-10-08",
-      "verification_state": "STALE",
+      "verification_state": "RETIRED",
       "is_demo": false,
-      "notes": "Historical official general PUJ fare for the first four kilometres. Current route-specific applicability is not confirmed; not used by journey planning."
+      "notes": "Retired legacy per-route copy of a general PUJ fare. The LTFRB source does not support route-specific fare applicability; class-level historical rule is recorded separately."
     },
     {
       "stable_id": "fare-06h-addon-2023",
@@ -2927,9 +2970,9 @@
       "min_distance_km": 4.01,
       "max_distance_km": null,
       "effective_from": "2023-10-08",
-      "verification_state": "STALE",
+      "verification_state": "RETIRED",
       "is_demo": false,
-      "notes": "Historical official general PUJ fare for each succeeding kilometre. Current route-specific applicability is not confirmed; not used by journey planning."
+      "notes": "Retired legacy per-route copy of a general PUJ fare. The LTFRB source does not support route-specific fare applicability; class-level historical rule is recorded separately."
     },
     {
       "stable_id": "fare-13c-base-2023",
@@ -2942,9 +2985,9 @@
       "min_distance_km": 0,
       "max_distance_km": 4,
       "effective_from": "2023-10-08",
-      "verification_state": "STALE",
+      "verification_state": "RETIRED",
       "is_demo": false,
-      "notes": "Historical official general PUJ fare for the first four kilometres. Current route-specific applicability is not confirmed; not used by journey planning."
+      "notes": "Retired legacy per-route copy of a general PUJ fare. The LTFRB source does not support route-specific fare applicability; class-level historical rule is recorded separately."
     },
     {
       "stable_id": "fare-13c-addon-2023",
@@ -2957,9 +3000,145 @@
       "min_distance_km": 4.01,
       "max_distance_km": null,
       "effective_from": "2023-10-08",
+      "verification_state": "RETIRED",
+      "is_demo": false,
+      "notes": "Retired legacy per-route copy of a general PUJ fare. The LTFRB source does not support route-specific fare applicability; class-level historical rule is recorded separately."
+    },
+    {
+      "stable_id": "fare-rule-traditional-puj-regular-base-2023",
+      "applicability_scope": "VEHICLE_CLASS",
+      "route_id": null,
+      "vehicle_type": "JEEPNEY",
+      "source_id": "source-ltfrb-puj-fares-2023",
+      "fare_class": "REGULAR_BASE",
+      "amount": 13,
+      "currency": "PHP",
+      "min_distance_km": 0,
+      "max_distance_km": 4,
+      "effective_from": "2023-10-08",
+      "effective_until": "2026-09-27",
       "verification_state": "STALE",
       "is_demo": false,
-      "notes": "Historical official general PUJ fare for each succeeding kilometre. Current route-specific applicability is not confirmed; not used by journey planning."
+      "notes": "Historical general traditional-PUJ base fare, not route-specific. Superseded by the 2026 provisional guide; retained for history and not used for journey fares."
+    },
+    {
+      "stable_id": "fare-rule-traditional-puj-regular-addon-2023",
+      "applicability_scope": "VEHICLE_CLASS",
+      "route_id": null,
+      "vehicle_type": "JEEPNEY",
+      "source_id": "source-ltfrb-puj-fares-2023",
+      "fare_class": "REGULAR_ADD_ON_KM",
+      "amount": 1.8,
+      "currency": "PHP",
+      "min_distance_km": 4,
+      "max_distance_km": null,
+      "effective_from": "2023-10-08",
+      "effective_until": "2026-09-27",
+      "verification_state": "STALE",
+      "is_demo": false,
+      "notes": "Historical general traditional-PUJ succeeding-kilometre rate, not route-specific. Superseded by the 2026 provisional guide; retained for history and not used for journey fares."
+    },
+    {
+      "stable_id": "fare-rule-traditional-puj-discount-base-2023",
+      "applicability_scope": "VEHICLE_CLASS",
+      "route_id": null,
+      "vehicle_type": "JEEPNEY",
+      "source_id": "source-ltfrb-puj-fares-2023",
+      "fare_class": "STUDENT_ELDERLY_PWD_BASE",
+      "amount": 10.4,
+      "currency": "PHP",
+      "min_distance_km": 0,
+      "max_distance_km": 4,
+      "effective_from": "2023-10-08",
+      "effective_until": "2026-09-27",
+      "verification_state": "STALE",
+      "is_demo": false,
+      "notes": "Historical general 20-percent-discount traditional-PUJ base fare, not route-specific. Superseded by the 2026 provisional guide; retained for history and not used for journey fares."
+    },
+    {
+      "stable_id": "fare-rule-traditional-puj-discount-addon-2023",
+      "applicability_scope": "VEHICLE_CLASS",
+      "route_id": null,
+      "vehicle_type": "JEEPNEY",
+      "source_id": "source-ltfrb-puj-fares-2023",
+      "fare_class": "STUDENT_ELDERLY_PWD_ADD_ON_KM",
+      "amount": 1.44,
+      "currency": "PHP",
+      "min_distance_km": 4,
+      "max_distance_km": null,
+      "effective_from": "2023-10-08",
+      "effective_until": "2026-09-27",
+      "verification_state": "STALE",
+      "is_demo": false,
+      "notes": "Historical general 20-percent-discount traditional-PUJ succeeding-kilometre rate, not route-specific. Superseded by the 2026 provisional guide; retained for history and not used for journey fares."
+    },
+    {
+      "stable_id": "fare-rule-traditional-puj-regular-base-2026-09",
+      "applicability_scope": "VEHICLE_CLASS",
+      "route_id": null,
+      "vehicle_type": "JEEPNEY",
+      "source_id": "source-ltfrb-puj-fares-2026-09",
+      "fare_class": "REGULAR_BASE",
+      "amount": 14,
+      "currency": "PHP",
+      "min_distance_km": 0,
+      "max_distance_km": 4,
+      "effective_from": "2026-09-28",
+      "effective_until": "2026-12-31",
+      "verification_state": "UNVERIFIED",
+      "is_demo": false,
+      "notes": "General provisional traditional-PUJ base fare reported effective 2026-09-28. No route-specific Cebu matrix; not used to calculate journey fares."
+    },
+    {
+      "stable_id": "fare-rule-traditional-puj-regular-addon-2026-09",
+      "applicability_scope": "VEHICLE_CLASS",
+      "route_id": null,
+      "vehicle_type": "JEEPNEY",
+      "source_id": "source-ltfrb-puj-fares-2026-09",
+      "fare_class": "REGULAR_ADD_ON_KM",
+      "amount": 2,
+      "currency": "PHP",
+      "min_distance_km": 4,
+      "max_distance_km": null,
+      "effective_from": "2026-09-28",
+      "effective_until": "2026-12-31",
+      "verification_state": "UNVERIFIED",
+      "is_demo": false,
+      "notes": "General provisional traditional-PUJ succeeding-kilometre rate reported effective 2026-09-28. Biyahe lacks route fare matrices and authoritative journey fare-distance data, so no total is calculated."
+    },
+    {
+      "stable_id": "fare-rule-traditional-puj-discount-base-2026-09",
+      "applicability_scope": "VEHICLE_CLASS",
+      "route_id": null,
+      "vehicle_type": "JEEPNEY",
+      "source_id": "source-ptv-traditional-puj-fares-2026-09",
+      "fare_class": "STUDENT_ELDERLY_PWD_BASE",
+      "amount": 11.25,
+      "currency": "PHP",
+      "min_distance_km": 0,
+      "max_distance_km": 4,
+      "effective_from": "2026-09-28",
+      "effective_until": "2026-12-31",
+      "verification_state": "UNVERIFIED",
+      "is_demo": false,
+      "notes": "Reported discounted traditional-PUJ base fare for students, senior citizens, and PWD passengers. It is a general vehicle-class rule, not a Cebu route fare, and is not used to calculate a journey total."
+    },
+    {
+      "stable_id": "fare-rule-traditional-puj-discount-addon-2026-09",
+      "applicability_scope": "VEHICLE_CLASS",
+      "route_id": null,
+      "vehicle_type": "JEEPNEY",
+      "source_id": "source-ptv-traditional-puj-fares-2026-09",
+      "fare_class": "STUDENT_ELDERLY_PWD_ADD_ON_KM",
+      "amount": 1.6,
+      "currency": "PHP",
+      "min_distance_km": 4,
+      "max_distance_km": null,
+      "effective_from": "2026-09-28",
+      "effective_until": "2026-12-31",
+      "verification_state": "UNVERIFIED",
+      "is_demo": false,
+      "notes": "Reported discounted traditional-PUJ succeeding-kilometre rate for students, senior citizens, and PWD passengers. It is a general vehicle-class rule, not a Cebu route fare, and is not used to calculate a journey total."
     }
   ]
 }

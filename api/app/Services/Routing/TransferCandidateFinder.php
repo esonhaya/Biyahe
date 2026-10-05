@@ -3,8 +3,8 @@
 namespace App\Services\Routing;
 
 use App\Enums\JourneyTrustState;
-use App\Enums\VerificationState;
 use App\Models\Stop;
+use App\Models\TransferRelationship;
 use App\Support\Geo;
 use App\Support\Trust;
 use Illuminate\Database\Eloquent\Builder;
@@ -30,6 +30,10 @@ final class TransferCandidateFinder
                         ->where('route_patterns.is_demo', false)
                         ->whereIn('route_patterns.verification_state', ['VERIFIED', 'UNVERIFIED'])
                         ->wherePivotIn('verification_state', ['VERIFIED', 'UNVERIFIED'])
+                        ->wherePivotNotIn('service_verification_state', ['DRAFT', 'STALE', 'RETIRED'])
+                        ->wherePivotNotIn('sequence_verification_state', ['DRAFT', 'STALE', 'RETIRED'])
+                        ->wherePivotNotIn('boarding_verification_state', ['DRAFT', 'STALE', 'RETIRED'])
+                        ->wherePivotNotIn('alighting_verification_state', ['DRAFT', 'STALE', 'RETIRED'])
                         ->with('route');
                 },
             ])
@@ -45,6 +49,31 @@ final class TransferCandidateFinder
         }
 
         $stops = $query->get();
+        $reviewedPairs = collect();
+        $fingerprints = app(TransferReviewFingerprint::class);
+        foreach (TransferRelationship::query()
+            ->where('is_demo', false)
+            ->get(['from_stop_id', 'to_stop_id', 'review_status', 'review_fingerprint']) as $relationship) {
+            $status = $relationship->review_status?->value;
+            if ($status === 'NEEDS_RECHECK') {
+                continue;
+            }
+            if ($status === 'REJECTED') {
+                if (
+                    $relationship->review_fingerprint !== null
+                    && $relationship->review_fingerprint !== $fingerprints->forPair(
+                        (int) $relationship->from_stop_id,
+                        (int) $relationship->to_stop_id,
+                    )
+                ) {
+                    continue;
+                }
+                $reviewedPairs[$relationship->from_stop_id.':'.$relationship->to_stop_id] = true;
+                $reviewedPairs[$relationship->to_stop_id.':'.$relationship->from_stop_id] = true;
+            } else {
+                $reviewedPairs[$relationship->from_stop_id.':'.$relationship->to_stop_id] = true;
+            }
+        }
         $candidates = collect();
         foreach ($stops as $index => $fromStop) {
             if (! $fromStop instanceof Stop || $fromStop->location_point === null) {
@@ -64,6 +93,9 @@ final class TransferCandidateFinder
                 $sameRouteSet = $sharedRoutes->count() === $fromRoutes->count()
                     && $sharedRoutes->count() === $toRoutes->count();
                 if ($toRoutes->isEmpty() || $sameRouteSet) {
+                    continue;
+                }
+                if (isset($reviewedPairs[$fromStop->getKey().':'.$toStop->getKey()])) {
                     continue;
                 }
                 $distance = Geo::distanceMeters(
@@ -143,11 +175,7 @@ final class TransferCandidateFinder
     {
         $models = [$fromStop, $toStop, ...$fromStop->routePatterns->all(), ...$toStop->routePatterns->all()];
         $states = collect($models)
-            ->map(function ($model): ?string {
-                $state = $model->verification_state ?? null;
-
-                return $state instanceof VerificationState ? $state->value : $state;
-            })
+            ->map(fn ($model): ?string => Trust::effectiveState($model))
             ->filter()
             ->values();
 

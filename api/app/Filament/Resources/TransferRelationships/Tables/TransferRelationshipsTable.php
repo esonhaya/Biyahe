@@ -29,6 +29,7 @@ class TransferRelationshipsTable
                 TextColumn::make('stable_id')->searchable()->toggleable(isToggledHiddenByDefault: true),
                 IconColumn::make('is_active')->boolean(),
                 TextColumn::make('verification_state')->badge()->searchable(),
+                TextColumn::make('review_status')->badge()->searchable(),
                 IconColumn::make('is_demo')->boolean(),
             ])
             ->filters(VerificationTableFilters::make())

@@ -40,12 +40,17 @@ final class DatasetImporter
                         'publisher' => $record['publisher'] ?? null,
                         'url' => $record['url'] ?? null,
                         'accessed_at' => $record['accessed_at'] ?? null,
+                        'published_at' => $record['published_at'] ?? null,
+                        'observed_at' => $record['observed_at'] ?? null,
                         'checked_at' => $record['checked_at'] ?? null,
                         'effective_from' => $record['effective_from'] ?? null,
                         'effective_until' => $record['effective_until'] ?? null,
                         'license' => $record['license'] ?? null,
                         'verification_method' => $record['verification_method'] ?? null,
                         'verified_by' => $record['verified_by'] ?? null,
+                        'evidence_scope' => $record['evidence_scope'] ?? null,
+                        'conflict_status' => $record['conflict_status'] ?? 'NONE',
+                        'conflict_group' => $record['conflict_group'] ?? null,
                         'notes' => $record['notes'] ?? null,
                     ],
                     'sources',
@@ -53,6 +58,11 @@ final class DatasetImporter
                     $summary,
                 );
                 $sourceIds[$record['stable_id']] = $source->id;
+            }
+            foreach ($this->sorted($data['sources'] ?? []) as $record) {
+                $source = ProvenanceSource::query()->where('stable_id', $record['stable_id'])->firstOrFail();
+                $source->superseded_by_id = $this->sourceId($record['superseded_by_source_id'] ?? null, $sourceIds);
+                $source->save();
             }
 
             $cityIds = [];
@@ -163,6 +173,13 @@ final class DatasetImporter
                         'boarding_notes' => $record['boarding_notes'] ?? null,
                         'boarding_side' => $record['boarding_side'] ?? null,
                         'direction_note' => $record['direction_note'] ?? null,
+                        'boarding_precision' => $record['boarding_precision'] ?? 'UNKNOWN',
+                        'boarding_verification_state' => $record['boarding_verification_state']
+                            ?? ($record['is_demo'] ? 'DRAFT' : 'UNVERIFIED'),
+                        'boarding_provenance_source_id' => $this->sourceId(
+                            $record['boarding_source_id'] ?? ($record['source_id'] ?? null),
+                            $sourceIds,
+                        ),
                         'location' => $record['location'],
                         'is_active' => $record['is_active'] ?? true,
                         'verification_state' => $record['verification_state'],
@@ -246,6 +263,26 @@ final class DatasetImporter
                             'boarding_allowed' => $patternStop['boarding_allowed'] ?? true,
                             'alighting_allowed' => $patternStop['alighting_allowed'] ?? true,
                             'verification_state' => $patternStop['verification_state'] ?? 'UNVERIFIED',
+                            'service_verification_state' => $this->patternStopFactState($patternStop, $record, 'service'),
+                            'sequence_verification_state' => $this->patternStopFactState($patternStop, $record, 'sequence'),
+                            'boarding_verification_state' => $this->patternStopFactState($patternStop, $record, 'boarding'),
+                            'alighting_verification_state' => $this->patternStopFactState($patternStop, $record, 'alighting'),
+                            'service_provenance_source_id' => $this->sourceId(
+                                $patternStop['service_source_id'] ?? ($patternStop['source_id'] ?? ($record['source_id'] ?? null)),
+                                $sourceIds,
+                            ),
+                            'sequence_provenance_source_id' => $this->sourceId(
+                                $patternStop['sequence_source_id'] ?? ($patternStop['source_id'] ?? ($record['source_id'] ?? null)),
+                                $sourceIds,
+                            ),
+                            'boarding_provenance_source_id' => $this->sourceId(
+                                $patternStop['boarding_source_id'] ?? ($patternStop['source_id'] ?? ($record['source_id'] ?? null)),
+                                $sourceIds,
+                            ),
+                            'alighting_provenance_source_id' => $this->sourceId(
+                                $patternStop['alighting_source_id'] ?? ($patternStop['source_id'] ?? ($record['source_id'] ?? null)),
+                                $sourceIds,
+                            ),
                             'instruction' => $patternStop['instruction'] ?? null,
                             'service_metadata' => $patternStop['service_metadata'] ?? null,
                         ],
@@ -278,6 +315,8 @@ final class DatasetImporter
                             : $this->reference($patternIds, $record['to_pattern_id'], 'pattern'),
                         'landmark' => $record['landmark'] ?? null,
                         'practical_note' => $record['practical_note'] ?? null,
+                        'review_status' => $record['review_status'] ?? ($record['verification_state'] === 'VERIFIED' ? 'SUPPORTED' : 'PENDING_REVIEW'),
+                        'review_notes' => $record['review_notes'] ?? null,
                         'is_active' => $record['is_active'] ?? true,
                         'verification_state' => $record['verification_state'],
                         'is_demo' => $record['is_demo'],
@@ -293,7 +332,9 @@ final class DatasetImporter
             }
 
             foreach ($this->sorted($data['fares'] ?? []) as $record) {
-                $routeId = $this->reference($routeIds, $record['route_id'], 'route');
+                $routeId = ($record['route_id'] ?? null) === null
+                    ? null
+                    : $this->reference($routeIds, $record['route_id'], 'route');
                 $vehicleTypeId = $vehicleTypeIds[$record['vehicle_type']] ?? null;
                 if ($vehicleTypeId === null) {
                     throw new RuntimeException('Vehicle type '.$record['vehicle_type'].' is not seeded.');
@@ -312,6 +353,7 @@ final class DatasetImporter
                     $record['stable_id'],
                     [
                         'route_id' => $routeId,
+                        'applicability_scope' => $record['applicability_scope'] ?? 'ROUTE_SPECIFIC',
                         'vehicle_type_id' => $vehicleTypeId,
                         'route_pattern_id' => $routePatternId,
                         'origin_stop_id' => $originStopId,
@@ -414,5 +456,18 @@ final class DatasetImporter
     private function sourceId(?string $stableId, array $ids): ?int
     {
         return $stableId === null ? null : $this->reference($ids, $stableId, 'source');
+    }
+
+    /** @param array<string, mixed> $patternStop @param array<string, mixed> $pattern */
+    private function patternStopFactState(array $patternStop, array $pattern, string $fact): string
+    {
+        $explicit = $patternStop[$fact.'_verification_state'] ?? $pattern[$fact.'_verification_state'] ?? null;
+        if ($explicit !== null) {
+            return $explicit;
+        }
+
+        $aggregate = $patternStop['verification_state'] ?? $pattern['verification_state'] ?? 'UNVERIFIED';
+
+        return $aggregate === 'VERIFIED' ? 'DRAFT' : $aggregate;
     }
 }

@@ -25,13 +25,14 @@ client cannot mistake an unverified record for trusted guidance.
 
 ## Provenance
 
-Important places, stops, routes, patterns, transfer relationships, and fare records must point to a
-ProvenanceSource when they are not demo data. A source records the practical
-evidence trail:
+Important places, stops, routes, patterns, transfer relationships, and fare
+records must point to a `ProvenanceSource` when they are not demo data. A
+source records the practical evidence trail:
 
 - source type and title;
 - publisher and optional URL/reference;
-- checked_at and optional effective dates;
+- published/observed dates, `checked_at`, and optional effective dates;
+- fact scope, conflict group/status, and optional superseding source;
 - license;
 - verification method and reviewer/process;
 - notes.
@@ -40,11 +41,13 @@ A URL is optional because observations, printed notices, or direct
 administrative checks may not have one. A URL alone is not proof of
 verification.
 
-Pattern-stop associations have their own verification state and provenance.
-A verified stop coordinate, route identity, or route geometry never promotes
-the associated boarding/alighting sequence automatically. Stops may carry a
-boarding note, side, and direction lead; these remain reviewable claims until
-the evidence supports the practical waiting instruction.
+Pattern-stop associations track service, sequence, boarding, and alighting
+verification independently, each with its own provenance reference. A
+verified stop coordinate, route identity, or route geometry never promotes
+the associated boarding/alighting sequence automatically. Stops track
+boarding precision separately from coordinate precision. `UNKNOWN` boarding
+precision cannot support a `VERIFIED` boarding fact, and exact precision
+without current scoped evidence is a Doctor failure.
 
 ## Review workflow
 
@@ -67,6 +70,42 @@ confirmed commute.
 Transfer candidate output is intentionally advisory. It reports route and
 pattern overlap, distance, current trust, and a candidate reason, but it does
 not create a transfer relationship or claim a safe pedestrian crossing.
+Transfer records use `PENDING_REVIEW`, `SUPPORTED`, `REJECTED`, or
+`NEEDS_RECHECK`; a rejection must keep a review reason. Rejected pairs are
+suppressed in both directions from proximity-candidate output. Transfer
+verification still requires fact-scoped provenance, and nearby stops never
+become verified automatically.
+
+## Batch 005 evidence closure
+
+The eight represented route identities and their cited OSM route geography
+remain VERIFIED only for those specific facts. The sixteen directional
+patterns and their ordered pattern-stop service associations remain
+UNVERIFIED because the reviewed open data does not establish current
+curbside boarding, alighting practice, or a complete passenger sequence for
+each direction. The two explicit Fuente/B. Rodriguez transfer relationships
+remain UNVERIFIED straight-line transfer estimates, not confirmed pedestrian
+routes. Current general fare reporting is recorded for research, but no
+route-specific official fare matrix was available for these services, so
+journey fares remain unavailable. Batch 005 does not promote any of these
+facts merely to increase routing coverage.
 
 Community accounts, reputation, submissions, and moderation queues are not
 implemented yet.
+
+## Batch 006 claim-level review
+
+`EvidenceFreshnessPolicy` classifies claims as `CURRENT`, `AGING`, `STALE`, or
+`UNKNOWN_FRESHNESS` using claim-specific review windows. Old evidence is not
+silently treated as false, but it cannot continue to support a `VERIFIED`
+claim after its configured aging window. Open conflicts and superseded
+sources also prevent verified trust while preserving their historical source
+records.
+
+`php artisan biyahe:evidence:report --json` outputs dynamic production claim
+coverage, source freshness/conflicts, curated journey trust, and bounded
+commuter-impact verification priorities. Priority items identify the
+underlying record and affected O/D pairs and journeys. The report does not
+edit data or promote verification. See `docs/evidence-verification.md` for
+the verified-journey definition, source policy, freshness windows, fare
+limitations, and review commands.

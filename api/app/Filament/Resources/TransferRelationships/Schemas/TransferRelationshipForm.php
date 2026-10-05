@@ -2,11 +2,13 @@
 
 namespace App\Filament\Resources\TransferRelationships\Schemas;
 
+use App\Enums\TransferReviewStatus;
 use App\Filament\Support\VerificationStateField;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
+use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
 
 class TransferRelationshipForm
@@ -45,6 +47,14 @@ class TransferRelationshipForm
                     ->helperText('Optional supported landmark near the transfer.'),
                 Textarea::make('practical_note')
                     ->helperText('Record only an evidenced transfer instruction; proximity alone is a candidate, not proof.')
+                    ->columnSpanFull(),
+                Select::make('review_status')
+                    ->options(TransferReviewStatus::class)
+                    ->default(TransferReviewStatus::PENDING_REVIEW->value)
+                    ->required(),
+                Textarea::make('review_notes')
+                    ->required(fn (Get $get): bool => $get->get('review_status') === TransferReviewStatus::REJECTED->value)
+                    ->helperText('Required when rejecting a candidate; explain the evidence or safety reason.')
                     ->columnSpanFull(),
                 Toggle::make('is_active')
                     ->required(),

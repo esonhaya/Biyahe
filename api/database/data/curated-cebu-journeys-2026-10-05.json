@@ -1,0 +1,64 @@
+{
+  "format": "biyahe-curated-journey-set",
+  "version": 1,
+  "dataset_id": "curated-cebu-journeys-2026-10-05",
+  "reviewed_at": "2026-10-05",
+  "scenarios": [
+    {
+      "stable_id": "scenario-lahug-carbon-17b",
+      "origin_place_slug": "lahug-market",
+      "destination_place_slug": "carbon-market-unit-3",
+      "expected_route_codes": ["17B"],
+      "required_evidence": ["PATTERN_STOP_SERVICE", "PATTERN_STOP_SEQUENCE", "PATTERN_STOP_BOARDING", "PATTERN_STOP_ALIGHTING", "BOARDING"]
+    },
+    {
+      "stable_id": "scenario-carbon-lahug-17b",
+      "origin_place_slug": "carbon-market-unit-3",
+      "destination_place_slug": "lahug-market",
+      "expected_route_codes": ["17B"],
+      "required_evidence": ["PATTERN_STOP_SERVICE", "PATTERN_STOP_SEQUENCE", "PATTERN_STOP_BOARDING", "PATTERN_STOP_ALIGHTING", "BOARDING"]
+    },
+    {
+      "stable_id": "scenario-ayala-labangon-12l",
+      "origin_place_slug": "ayala-center-cebu",
+      "destination_place_slug": "labangon",
+      "expected_route_codes": ["12L"],
+      "required_evidence": ["PATTERN_STOP_SERVICE", "PATTERN_STOP_SEQUENCE", "PATTERN_STOP_BOARDING", "PATTERN_STOP_ALIGHTING", "BOARDING"]
+    },
+    {
+      "stable_id": "scenario-labangon-ayala-12l",
+      "origin_place_slug": "labangon",
+      "destination_place_slug": "ayala-center-cebu",
+      "expected_route_codes": ["12L"],
+      "required_evidence": ["PATTERN_STOP_SERVICE", "PATTERN_STOP_SEQUENCE", "PATTERN_STOP_BOARDING", "PATTERN_STOP_ALIGHTING", "BOARDING"]
+    },
+    {
+      "stable_id": "scenario-talamban-colon-13c",
+      "origin_place_slug": "talamban",
+      "destination_place_slug": "colon",
+      "expected_route_codes": ["13C"],
+      "required_evidence": ["PATTERN_STOP_SERVICE", "PATTERN_STOP_SEQUENCE", "PATTERN_STOP_BOARDING", "PATTERN_STOP_ALIGHTING", "BOARDING"]
+    },
+    {
+      "stable_id": "scenario-guadalupe-sm-06h",
+      "origin_place_slug": "guadalupe",
+      "destination_place_slug": "sm-city-cebu",
+      "expected_route_codes": ["06H"],
+      "required_evidence": ["PATTERN_STOP_SERVICE", "PATTERN_STOP_SEQUENCE", "PATTERN_STOP_BOARDING", "PATTERN_STOP_ALIGHTING", "BOARDING"]
+    },
+    {
+      "stable_id": "scenario-it-park-sm-network",
+      "origin_place_slug": "cebu-it-park",
+      "destination_place_slug": "sm-city-cebu",
+      "expected_route_codes": ["03B", "04L", "06H", "13C", "17B"],
+      "required_evidence": ["PATTERN_STOP_SERVICE", "PATTERN_STOP_SEQUENCE", "PATTERN_STOP_BOARDING", "PATTERN_STOP_ALIGHTING", "BOARDING"]
+    },
+    {
+      "stable_id": "scenario-mabolo-fuente",
+      "origin_place_slug": "mabolo",
+      "destination_place_slug": "fuente-osmena-circle",
+      "expected_route_codes": ["03B"],
+      "required_evidence": ["PATTERN_STOP_SERVICE", "PATTERN_STOP_SEQUENCE", "PATTERN_STOP_BOARDING", "PATTERN_STOP_ALIGHTING", "BOARDING"]
+    }
+  ]
+}

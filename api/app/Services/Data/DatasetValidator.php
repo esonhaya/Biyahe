@@ -2,6 +2,10 @@
 
 namespace App\Services\Data;
 
+use App\Enums\BoardingPrecision;
+use App\Enums\EvidenceClaimType;
+use App\Enums\EvidenceConflictStatus;
+use App\Enums\TransferReviewStatus;
 use App\Enums\VehicleTypeCode;
 use App\Enums\VerificationState;
 use App\Support\Geo;
@@ -107,7 +111,7 @@ final class DatasetValidator
 
         foreach ($records['sources'] as $recordIndex => $record) {
             if (is_array($record)) {
-                $this->validateSource($record, 'sources.'.$recordIndex, $result);
+                $this->validateSource($record, 'sources.'.$recordIndex, $knownIds['sources'], $result);
             }
         }
         foreach ($records['cities'] as $recordIndex => $record) {
@@ -161,6 +165,16 @@ final class DatasetValidator
                         $result->addError($path.'.'.$field, $field.' must be a non-empty string when supplied.');
                     }
                 }
+                if (isset($record['boarding_precision']) && (! is_string($record['boarding_precision']) || ! in_array($record['boarding_precision'], BoardingPrecision::values(), true))) {
+                    $result->addError($path.'.boarding_precision', 'boarding_precision is not supported.');
+                }
+                if (isset($record['boarding_verification_state']) && (! is_string($record['boarding_verification_state']) || ! in_array($record['boarding_verification_state'], VerificationState::values(), true))) {
+                    $result->addError($path.'.boarding_verification_state', 'boarding_verification_state must be a valid verification state.');
+                }
+                $this->requireOptionalReference($record['boarding_source_id'] ?? null, $knownIds['sources'], $path.'.boarding_source_id', $result);
+                if (($record['boarding_precision'] ?? null) === BoardingPrecision::EXACT_BOARDING_POINT->value && ($record['boarding_verification_state'] ?? null) !== VerificationState::VERIFIED->value) {
+                    $result->addError($path.'.boarding_precision', 'EXACT_BOARDING_POINT requires VERIFIED boarding evidence.');
+                }
                 $this->validatePoint($record['location'] ?? null, $path.'.location', $result, true);
             }
         }
@@ -212,12 +226,19 @@ final class DatasetValidator
                 $this->validateFare($record, 'fares.'.$recordIndex, $knownIds, $result);
             }
         }
+
+        $this->validateVerifiedClaimScopes($records, $result);
+        $this->validateSupersessionCycles($records['sources'], $result);
     }
 
-    /** @param array<string, mixed> $record */
-    private function validateSource(array $record, string $path, DatasetValidationResult $result): void
+    /** @param array<string, mixed> $record @param array<string, string> $sourceIds */
+    private function validateSource(array $record, string $path, array $sourceIds, DatasetValidationResult $result): void
     {
         $this->requireString($record, 'source_type', $path.'.source_type', $result);
+        $sourceTypes = array_keys((array) config('biyahe.evidence.source_quality', []));
+        if (is_string($record['source_type'] ?? null) && ! in_array($record['source_type'], $sourceTypes, true)) {
+            $result->addError($path.'.source_type', 'source_type is not defined by the source-quality policy.');
+        }
         $this->requireString($record, 'title', $path.'.title', $result);
         $this->requireString($record, 'checked_at', $path.'.checked_at', $result);
         $this->validateDate($record['checked_at'] ?? null, $path.'.checked_at', $result);
@@ -230,6 +251,35 @@ final class DatasetValidator
         }
         if (isset($record['effective_until'])) {
             $this->validateDate($record['effective_until'], $path.'.effective_until', $result);
+        }
+        foreach (['published_at', 'observed_at'] as $field) {
+            if (isset($record[$field])) {
+                $this->validateDate($record[$field], $path.'.'.$field, $result);
+            }
+        }
+        if (isset($record['evidence_scope']) && ! is_array($record['evidence_scope'])) {
+            $result->addError($path.'.evidence_scope', 'evidence_scope must be an array when supplied.');
+        } elseif (isset($record['evidence_scope'])) {
+            foreach ($record['evidence_scope'] as $scope) {
+                if (! is_string($scope) || ! in_array($scope, EvidenceClaimType::values(), true)) {
+                    $result->addError($path.'.evidence_scope', 'evidence_scope contains an unsupported fact scope.');
+                    break;
+                }
+            }
+            $stringScopes = array_values(array_filter($record['evidence_scope'], 'is_string'));
+            if (count(array_unique($stringScopes)) !== count($stringScopes)) {
+                $result->addError($path.'.evidence_scope', 'evidence_scope must not contain duplicates.');
+            }
+        }
+        if (isset($record['conflict_status']) && (! is_string($record['conflict_status']) || ! in_array($record['conflict_status'], EvidenceConflictStatus::values(), true))) {
+            $result->addError($path.'.conflict_status', 'conflict_status is not supported.');
+        }
+        if (($record['conflict_status'] ?? EvidenceConflictStatus::NONE->value) !== EvidenceConflictStatus::NONE->value && (! is_string($record['conflict_group'] ?? null) || trim($record['conflict_group']) === '')) {
+            $result->addError($path.'.conflict_group', 'conflict_group is required when evidence is in conflict.');
+        }
+        $this->requireOptionalReference($record['superseded_by_source_id'] ?? null, $sourceIds, $path.'.superseded_by_source_id', $result);
+        if (($record['superseded_by_source_id'] ?? null) === ($record['stable_id'] ?? null)) {
+            $result->addError($path.'.superseded_by_source_id', 'A provenance source cannot supersede itself.');
         }
     }
 
@@ -304,6 +354,23 @@ final class DatasetValidator
                 $result->addError($stopPath.'.source_id', 'VERIFIED pattern-stop associations require provenance.');
             }
             $this->requireOptionalReference($stop['source_id'] ?? null, $knownIds['sources'], $stopPath.'.source_id', $result);
+            $factStates = [];
+            foreach (['service', 'sequence', 'boarding', 'alighting'] as $fact) {
+                $stateKey = $fact.'_verification_state';
+                $sourceKey = $fact.'_source_id';
+                $state = $stop[$stateKey] ?? null;
+                if ($state !== null && (! is_string($state) || ! in_array($state, VerificationState::values(), true))) {
+                    $result->addError($stopPath.'.'.$stateKey, $stateKey.' must be a valid verification state when supplied.');
+                }
+                $this->requireOptionalReference($stop[$sourceKey] ?? null, $knownIds['sources'], $stopPath.'.'.$sourceKey, $result);
+                if ($state === VerificationState::VERIFIED->value && ! isset($stop[$sourceKey]) && ! isset($stop['source_id']) && ! isset($record['source_id'])) {
+                    $result->addError($stopPath.'.'.$sourceKey, 'VERIFIED pattern-stop facts require provenance.');
+                }
+                $factStates[$fact] = $state;
+            }
+            if (($stop['verification_state'] ?? null) === VerificationState::VERIFIED->value && count(array_filter($factStates, static fn (?string $state): bool => $state === VerificationState::VERIFIED->value)) !== 4) {
+                $result->addError($stopPath.'.verification_state', 'A VERIFIED pattern-stop association must have VERIFIED service, sequence, boarding, and alighting facts.');
+            }
         }
         ksort($sequences);
         if (array_keys($sequences) !== range(1, count($sequences))) {
@@ -315,8 +382,16 @@ final class DatasetValidator
     private function validateFare(array $record, string $path, array $knownIds, DatasetValidationResult $result): void
     {
         $this->validateEntityStatus($record, $path, $knownIds['sources'], $result);
-        $this->requireString($record, 'route_id', $path.'.route_id', $result);
-        $this->requireReference($record['route_id'] ?? null, $knownIds['routes'], $path.'.route_id', $result);
+        $scope = $record['applicability_scope'] ?? 'ROUTE_SPECIFIC';
+        if (! in_array($scope, ['ROUTE_SPECIFIC', 'VEHICLE_CLASS'], true)) {
+            $result->addError($path.'.applicability_scope', 'applicability_scope must be ROUTE_SPECIFIC or VEHICLE_CLASS.');
+        }
+        if ($scope === 'ROUTE_SPECIFIC') {
+            $this->requireString($record, 'route_id', $path.'.route_id', $result);
+            $this->requireReference($record['route_id'] ?? null, $knownIds['routes'], $path.'.route_id', $result);
+        } elseif (($record['route_id'] ?? null) !== null) {
+            $result->addError($path.'.route_id', 'VEHICLE_CLASS fare rules must not claim a specific route.');
+        }
         $this->requireString($record, 'vehicle_type', $path.'.vehicle_type', $result);
         if (! is_numeric($record['amount'] ?? null) || (float) $record['amount'] < 0) {
             $result->addError($path.'.amount', 'amount must be a non-negative number.');
@@ -327,6 +402,103 @@ final class DatasetValidator
             $this->validateDate($record['effective_until'], $path.'.effective_until', $result);
             if (is_string($record['effective_from'] ?? null) && is_string($record['effective_until']) && $record['effective_until'] < $record['effective_from']) {
                 $result->addError($path.'.effective_until', 'effective_until cannot precede effective_from.');
+            }
+        }
+    }
+
+    /** @param array<string, list<array<string, mixed>>> $records */
+    private function validateVerifiedClaimScopes(array $records, DatasetValidationResult $result): void
+    {
+        $sources = collect($records['sources'])
+            ->filter(fn (mixed $source): bool => is_array($source) && is_string($source['stable_id'] ?? null))
+            ->keyBy('stable_id');
+        $check = function (array $record, mixed $sourceId, string $scope, string $path) use ($sources, $result): void {
+            if (($record['verification_state'] ?? null) !== VerificationState::VERIFIED->value) {
+                return;
+            }
+            $source = is_string($sourceId) ? $sources->get($sourceId) : null;
+            if (! is_array($source) || ! in_array($scope, $source['evidence_scope'] ?? [], true)) {
+                $result->addError($path.'.source_id', 'VERIFIED claim requires provenance scoped to '.$scope.'.');
+            }
+        };
+
+        foreach ([
+            'places' => 'PLACE_LOCATION',
+            'stops' => 'STOP_LOCATION',
+            'routes' => 'ROUTE_IDENTITY',
+            'patterns' => 'ROUTE_PATTERN',
+            'transfers' => 'TRANSFER',
+        ] as $collection => $scope) {
+            foreach ($records[$collection] as $index => $record) {
+                if (! is_array($record)) {
+                    continue;
+                }
+                $check($record, $record['source_id'] ?? null, $scope, $collection.'.'.$index);
+            }
+        }
+
+        foreach ($records['stops'] as $index => $stop) {
+            if (! is_array($stop)) {
+                continue;
+            }
+            if (($stop['boarding_verification_state'] ?? null) !== VerificationState::VERIFIED->value) {
+                continue;
+            }
+            $sourceId = $stop['boarding_source_id'] ?? $stop['source_id'] ?? null;
+            $source = is_string($sourceId) ? $sources->get($sourceId) : null;
+            if (! is_array($source) || ! in_array('BOARDING', $source['evidence_scope'] ?? [], true)) {
+                $result->addError('stops.'.$index.'.boarding_source_id', 'VERIFIED boarding guidance requires provenance scoped to BOARDING.');
+            }
+        }
+
+        foreach ($records['patterns'] as $patternIndex => $pattern) {
+            if (! is_array($pattern)) {
+                continue;
+            }
+            foreach ($pattern['stops'] ?? [] as $stopIndex => $association) {
+                if (! is_array($association)) {
+                    continue;
+                }
+                foreach (['service', 'sequence', 'boarding', 'alighting'] as $fact) {
+                    if (($association[$fact.'_verification_state'] ?? null) !== VerificationState::VERIFIED->value) {
+                        continue;
+                    }
+                    $sourceId = $association[$fact.'_source_id'] ?? $association['source_id'] ?? $pattern['source_id'] ?? null;
+                    $source = is_string($sourceId) ? $sources->get($sourceId) : null;
+                    $scope = 'PATTERN_STOP_'.strtoupper($fact);
+                    if (! is_array($source) || ! in_array($scope, $source['evidence_scope'] ?? [], true)) {
+                        $result->addError(
+                            'patterns.'.$patternIndex.'.stops.'.$stopIndex.'.'.$fact.'_source_id',
+                            'VERIFIED pattern-stop facts require provenance scoped to '.$scope.'.',
+                        );
+                    }
+                }
+            }
+        }
+
+        foreach ($records['fares'] as $index => $fare) {
+            $scope = ($fare['applicability_scope'] ?? 'ROUTE_SPECIFIC') === 'VEHICLE_CLASS'
+                ? EvidenceClaimType::FARE_GENERAL_TRADITIONAL_PUJ->value
+                : EvidenceClaimType::FARE->value;
+            $check($fare, $fare['source_id'] ?? null, $scope, 'fares.'.$index);
+        }
+    }
+
+    /** @param list<array<string, mixed>> $sources */
+    private function validateSupersessionCycles(array $sources, DatasetValidationResult $result): void
+    {
+        $supersedes = collect($sources)
+            ->filter(fn (mixed $source): bool => is_array($source) && is_string($source['stable_id'] ?? null))
+            ->mapWithKeys(fn (array $source): array => [$source['stable_id'] => $source['superseded_by_source_id'] ?? null]);
+        foreach ($supersedes as $stableId => $nextId) {
+            $seen = [];
+            while (is_string($nextId)) {
+                if ($nextId === $stableId || isset($seen[$nextId])) {
+                    $result->addError('sources', 'Provenance supersession links must not contain cycles.');
+                    break;
+                }
+                $seen[$nextId] = true;
+                $nextId = $supersedes->get($nextId);
             }
         }
     }
@@ -343,6 +515,15 @@ final class DatasetValidator
         $this->requireReference($record['to_stop_id'] ?? null, $knownIds['stops'], $path.'.to_stop_id', $result);
         if (($record['from_stop_id'] ?? null) === ($record['to_stop_id'] ?? null)) {
             $result->addError($path.'.to_stop_id', 'A transfer relationship must connect two different stops.');
+        }
+        if (isset($record['review_status']) && (! is_string($record['review_status']) || ! in_array($record['review_status'], TransferReviewStatus::values(), true))) {
+            $result->addError($path.'.review_status', 'review_status is not supported.');
+        }
+        if (isset($record['review_notes']) && (! is_string($record['review_notes']) || trim($record['review_notes']) === '')) {
+            $result->addError($path.'.review_notes', 'review_notes must be a non-empty string when supplied.');
+        }
+        if (($record['review_status'] ?? null) === TransferReviewStatus::REJECTED->value && ! isset($record['review_notes'])) {
+            $result->addError($path.'.review_notes', 'Rejected transfer candidates must retain a review reason.');
         }
         $this->requireString($record, 'relationship_type', $path.'.relationship_type', $result);
         if (isset($record['distance_meters']) && (! is_numeric($record['distance_meters']) || (float) $record['distance_meters'] < 0)) {

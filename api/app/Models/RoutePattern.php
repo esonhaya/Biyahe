@@ -53,7 +53,18 @@ class RoutePattern extends Model
     public function stops(): BelongsToMany
     {
         return $this->belongsToMany(Stop::class, 'route_pattern_stops')
-            ->withPivot(['sequence', 'boarding_allowed', 'alighting_allowed', 'verification_state', 'instruction', 'service_metadata'])
+            ->withPivot([
+                'sequence',
+                'boarding_allowed',
+                'alighting_allowed',
+                'verification_state',
+                'service_verification_state',
+                'sequence_verification_state',
+                'boarding_verification_state',
+                'alighting_verification_state',
+                'instruction',
+                'service_metadata',
+            ])
             ->orderBy('route_pattern_stops.sequence');
     }
 

@@ -15,6 +15,12 @@ class RoutePatternStopResource extends JsonResource
             'boarding_allowed' => (bool) $this->boarding_allowed,
             'alighting_allowed' => (bool) $this->alighting_allowed,
             'verification' => Trust::status($this->resource),
+            'evidence' => [
+                'service' => ['state' => Trust::effectiveFactState($this->resource, 'service'), 'provenance' => new ProvenanceSourceResource($this->whenLoaded('serviceProvenanceSource'))],
+                'sequence' => ['state' => Trust::effectiveFactState($this->resource, 'sequence'), 'provenance' => new ProvenanceSourceResource($this->whenLoaded('sequenceProvenanceSource'))],
+                'boarding' => ['state' => Trust::effectiveFactState($this->resource, 'boarding'), 'provenance' => new ProvenanceSourceResource($this->whenLoaded('boardingProvenanceSource'))],
+                'alighting' => ['state' => Trust::effectiveFactState($this->resource, 'alighting'), 'provenance' => new ProvenanceSourceResource($this->whenLoaded('alightingProvenanceSource'))],
+            ],
             'instruction' => $this->instruction,
             'service_metadata' => $this->service_metadata,
             'stop' => new StopResource($this->whenLoaded('stop')),

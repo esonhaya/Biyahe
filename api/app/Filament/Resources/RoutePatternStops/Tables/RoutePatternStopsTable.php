@@ -34,6 +34,10 @@ class RoutePatternStopsTable
                 TextColumn::make('verification_state')
                     ->badge()
                     ->searchable(),
+                TextColumn::make('service_verification_state')->badge()->toggleable(),
+                TextColumn::make('sequence_verification_state')->badge()->toggleable(),
+                TextColumn::make('boarding_verification_state')->badge()->toggleable(),
+                TextColumn::make('alighting_verification_state')->badge()->toggleable(),
                 TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()

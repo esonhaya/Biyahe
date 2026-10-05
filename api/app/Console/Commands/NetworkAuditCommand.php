@@ -19,9 +19,34 @@ class NetworkAuditCommand extends Command
         );
 
         $this->line('BIYAHE NETWORK AUDIT');
-        foreach (['pairs_examined', 'routable', 'direct', 'one_transfer', 'no_known_journey', 'coverage_gap_pairs'] as $metric) {
+        foreach ([
+            'pairs_examined',
+            'routable',
+            'direct',
+            'one_transfer',
+            'two_transfer',
+            'no_known_journey',
+            'coverage_gap_pairs',
+            'average_transfers',
+            'median_transfers',
+            'can_i_ride_checked',
+            'can_i_ride_yes',
+            'can_i_ride_no',
+            'can_i_ride_direction_dependent',
+            'can_i_ride_unknown',
+            'walking_bound_violations',
+            'loops',
+            'duplicate_journeys',
+            'direction_violations',
+            'transfer_cap_violations',
+            'stale_leakage',
+            'trust_leakage',
+            'planner_errors',
+            'can_i_ride_integrity_errors',
+        ] as $metric) {
             $this->line($metric.': '.$metrics[$metric]);
         }
+        $this->line('trust_distribution: '.json_encode($metrics['trust_distribution']));
         $this->line('warnings: '.count($metrics['warnings']));
         $this->line('errors: '.count($metrics['errors']));
         foreach ($metrics['warnings'] as $warning) {

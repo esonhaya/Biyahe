@@ -20,6 +20,7 @@ class JourneyController
             'to_place_id' => ['required', 'integer', 'min:1'],
             'access_radius' => ['nullable', 'numeric', 'min:50', 'max:'.(int) config('biyahe.routing.max_access_radius_meters', 1000)],
             'transfer_radius' => ['nullable', 'numeric', 'min:0', 'max:'.(int) config('biyahe.routing.max_transfer_radius_meters', 600)],
+            'max_transfers' => ['nullable', 'integer', 'min:0', 'max:'.(int) config('biyahe.routing.public_max_transfers', 2)],
             'limit' => ['nullable', 'integer', 'min:1', 'max:10'],
         ]);
         $validator->after(function ($validator) use ($request): void {
@@ -50,11 +51,15 @@ class JourneyController
             return $this->unknownPlaceResponse('destination');
         }
 
+        $maxTransfers = isset($validated['max_transfers'])
+            ? (int) $validated['max_transfers']
+            : (int) config('biyahe.routing.default_max_transfers', 2);
         $result = $planner->plan(
             origin: $origin,
             destination: $destination,
             accessRadiusMeters: isset($validated['access_radius']) ? (float) $validated['access_radius'] : null,
             transferRadiusMeters: isset($validated['transfer_radius']) ? (float) $validated['transfer_radius'] : null,
+            maxTransfers: $maxTransfers,
         );
         $limit = (int) ($validated['limit'] ?? 10);
         $journeys = array_slice($result->journeys, 0, $limit);
@@ -68,7 +73,7 @@ class JourneyController
                 'origin' => $this->placeSummary($origin),
                 'destination' => $this->placeSummary($destination),
                 'result_count' => count($journeys),
-                'max_transfers' => 1,
+                'max_transfers' => $maxTransfers,
                 'distance_unit' => 'meters',
                 'walking_distance_type' => 'straight_line_estimate',
                 'boarding_candidates' => $result->boardingCandidates,

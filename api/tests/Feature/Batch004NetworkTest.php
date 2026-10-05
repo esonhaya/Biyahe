@@ -30,7 +30,8 @@ class Batch004NetworkTest extends TestCase
         $this->assertSame(12, RoutePattern::whereHas('route', fn ($query) => $query->whereIn('code', ['03B', '04L', '06B', '06C', '06H', '13C']))->count());
         $this->assertSame(60, RoutePatternStop::whereHas('routePattern.route', fn ($query) => $query->whereIn('code', ['03B', '04L', '06B', '06C', '06H', '13C']))->count());
         $this->assertSame(60, RoutePatternStop::where('verification_state', 'UNVERIFIED')->whereHas('routePattern.route', fn ($query) => $query->whereIn('code', ['03B', '04L', '06B', '06C', '06H', '13C']))->count());
-        $this->assertSame(12, Fare::where('verification_state', 'STALE')->count());
+        $this->assertSame(4, Fare::where('verification_state', 'STALE')->count());
+        $this->assertSame(12, Fare::where('verification_state', 'RETIRED')->count());
         $this->assertSame(2, TransferRelationship::whereNotNull('practical_note')->count());
     }
 

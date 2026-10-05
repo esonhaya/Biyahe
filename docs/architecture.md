@@ -20,8 +20,11 @@ general road graph.
 Collection endpoints paginate and eager-load the relationships needed for
 their response. Nearby-stop queries use ST_DWithin and ST_Distance on
 PostGIS. `JourneyPlanner` keeps spatial candidate discovery in PostGIS and
-performs direct or one-transfer stop-sequence reasoning in the application.
-Journey results are ephemeral and are not persisted.
+performs bounded direct, one-transfer, and two-transfer stop-sequence
+reasoning in the application. Search state, transfer, pattern, and result
+limits are configuration bounds; journeys are deduplicated by meaningful
+boarding, ride, transfer, and alighting decisions. Journey results are
+ephemeral and are not persisted.
 
 The planner exposes separate access, ride, transfer-walk, and egress legs.
 Walking is a bounded straight-line estimate, never a claimed pedestrian
@@ -34,5 +37,5 @@ facts.
 Future batches can add cache policy for stable geography, bounded map
 viewport endpoints, schedules, fare products, better transfer evidence, and
 a pedestrian-routing adapter after real transport data and usage patterns
-exist. Unrestricted multi-transfer graph search remains deliberately out of
-scope.
+exist. Unrestricted multi-transfer graph search, road navigation, and
+turn-by-turn walking remain deliberately out of scope.

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\CanIRideController;
 use App\Http\Controllers\Api\CityController;
 use App\Http\Controllers\Api\HealthController;
 use App\Http\Controllers\Api\JourneyController;
@@ -20,6 +21,7 @@ Route::prefix('v1')->group(function (): void {
     Route::get('places/{place}', [PlaceController::class, 'show']);
 
     Route::get('journeys', JourneyController::class);
+    Route::get('can-i-ride', CanIRideController::class);
 
     Route::get('stops/nearby', [StopController::class, 'nearby']);
     Route::get('stops', [StopController::class, 'index']);

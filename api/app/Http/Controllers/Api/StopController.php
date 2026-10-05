@@ -102,6 +102,7 @@ class StopController
         $query = Stop::query()->with([
             'city',
             'provenanceSource',
+            'boardingProvenanceSource',
             'nearbyPlace' => function ($place): void {
                 if (config('database.default') === 'pgsql') {
                     $place->addSelect(['places.*', DB::raw('ST_AsText(places.location) AS location_wkt')]);

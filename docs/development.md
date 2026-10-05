@@ -30,12 +30,23 @@ Then:
     php artisan biyahe:data:import cebu-central-network-2026-10-05.json --dry-run
     php artisan biyahe:data:validate cebu-network-expansion-2026-10-05.json
     php artisan biyahe:data:import cebu-network-expansion-2026-10-05.json --dry-run
+    php artisan biyahe:evidence:report --json --pairs=24 --max-transfers=2
     php artisan test
     php artisan biyahe:doctor
     php artisan biyahe:transfers:candidates --city=cebu-city
     php artisan biyahe:network:audit --pairs=50
     curl -H 'Accept: application/json' 'http://127.0.0.1:8000/api/v1/journeys?from_place_id=...&to_place_id=...'
     php artisan serve
+
+After reviewing a dataset and its dry-run report, import it without
+`--dry-run`. Imports are deterministic upserts keyed by stable identifiers;
+validation must pass before any database write. Use the evidence report to
+review claim-level coverage and prioritize records for verification.
+
+Doctor runs one bounded O/D sample plus one Can-I-Ride check so it remains
+practical on Termux/mobile hardware. Use `biyahe:network:audit` with larger
+explicit pair bounds for broader coverage analysis; neither check assumes
+universal network connectivity.
 
 Use php artisan make:filament-user to create a local administrator. Do not
 use development credentials in production. Set APP_ENV=production,
@@ -78,10 +89,16 @@ or a conventional Linux host for the real integration suite.
 ## Journey planner checks
 
 The planner is intentionally bounded: access/egress searches are capped at
-1,000 meters, explicit transfer relationships at 600 meters, and one transit
-transfer maximum. Run the focused checks while changing routing code:
+1,000 meters, explicit transfer relationships at 600 meters, and public
+searches at two transit transfers. Run the focused checks while changing
+routing code:
 
-    php artisan test --compact tests/Feature/JourneyApiTest.php tests/Feature/PostgisTransportTest.php tests/Unit/JourneyRankerTest.php
+    php artisan test --compact tests/Feature/JourneyApiTest.php tests/Feature/Batch005RoutingTest.php tests/Feature/PostgisTransportTest.php tests/Unit/JourneyRankerTest.php
+
+Check the developer network audit and a route decision with:
+
+    php artisan biyahe:network:audit --places=22 --pairs=60
+    curl -H 'Accept: application/json' 'http://127.0.0.1:8000/api/v1/can-i-ride?route_code=17B&from_place_id=...&to_place_id=...'
 
 Use the PostGIS environment for the `PostgisTransportTest` cases. A successful
 SQLite run still skips the spatial assertions and does not prove geography

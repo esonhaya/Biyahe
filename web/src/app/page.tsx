@@ -2,8 +2,8 @@
 
 import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
-import type { Journey, Place, Route, RoutePattern, Stop } from "@/lib/api";
-import { getRoutePattern, listPlaces, listRoutes, listStops, planJourney, searchPlaces } from "@/lib/api";
+import type { CanIRideResponse, Journey, Place, Route, RoutePattern, Stop } from "@/lib/api";
+import { canIRide, getRoutePattern, listPlaces, listRoutes, listStops, planJourney, searchPlaces } from "@/lib/api";
 import styles from "./page.module.css";
 
 const MapView = dynamic(() => import("@/components/MapView"), {
@@ -52,16 +52,34 @@ function formatDistance(distance: number | null) {
   return `Approx. ${Math.round(distance)} m`;
 }
 
+function trustLabel(state: string | null | undefined) {
+  switch (state) {
+    case "VERIFIED":
+      return "Verified route details";
+    case "MIXED":
+      return "Some details need checking";
+    case "UNVERIFIED":
+      return "Route details not fully verified";
+    default:
+      return "Route details unavailable";
+  }
+}
+
 function JourneyCard({ journey, recommended, onSelect }: { journey: Journey; recommended: boolean; onSelect: () => void }) {
   return (
     <article className={`${styles.journeyCard} ${recommended ? styles.recommended : ""}`}>
       <div className={styles.journeyCardHeader}>
         <div>
           <p className={styles.cardKicker}>{recommended ? "RECOMMENDED" : "ALTERNATIVE"}</p>
-          <h3>{journey.transfer_count === 0 ? "Direct ride" : "One transfer"}</h3>
+          <h3>
+            {journey.transfer_count === 0
+              ? "Direct ride"
+              : journey.transfer_count + " transfer" + (journey.transfer_count === 1 ? "" : "s")}
+          </h3>
         </div>
-        <span className={styles.trustBadge}>{journey.trust.state}</span>
+        <span className={styles.trustBadge}>{trustLabel(journey.trust.state)}</span>
       </div>
+      {journey.ranking.reasons.length > 0 && <p className={styles.rankingReasons}>{journey.ranking.reasons.join(" · ")}</p>}
       <div className={styles.legList}>
         {journey.legs.map((leg, index) => {
           if (leg.type === "RIDE") {
@@ -114,6 +132,49 @@ function JourneyCard({ journey, recommended, onSelect }: { journey: Journey; rec
   );
 }
 
+function CanIRideResultCard({ result }: { result: CanIRideResponse["data"] }) {
+  const option = result.option ?? result.opposite_direction;
+  const tone = result.status === "YES"
+    ? styles.decisionYes
+    : result.status === "DIRECTION_DEPENDENT"
+      ? styles.decisionDirection
+      : result.status === "NO"
+        ? styles.decisionNo
+        : styles.decisionUnknown;
+
+  return (
+    <div className={styles.decisionResult + " " + tone} role="status">
+      <div className={styles.decisionHeader}>
+        <div>
+          <p className={styles.cardKicker}>CAN I RIDE THIS?</p>
+          <h3>
+            {result.status === "YES"
+              ? "YES — ride " + (result.route?.code ?? "this route")
+              : result.status === "DIRECTION_DEPENDENT"
+                ? "NOT THIS DIRECTION"
+                : result.status === "NO"
+                  ? "NOT A KNOWN RIDE"
+                  : "NOT ENOUGH INFORMATION YET"}
+          </h3>
+        </div>
+        <span className={styles.trustBadge}>{trustLabel(result.trust)}</span>
+      </div>
+      <p>{result.message}</p>
+      {option && (
+        <div className={styles.decisionDetails}>
+          <p><strong>Direction:</strong> {option.pattern.direction}</p>
+          <p><strong>Board near:</strong> {option.boarding_stop.name}</p>
+          <p>{option.boarding_instruction}</p>
+          <p><strong>{option.driver_instruction}</strong></p>
+          <p><strong>{option.get_off_guidance}</strong></p>
+          <small>{option.stop_count} stops · route details {option.trust.toLowerCase()}</small>
+        </div>
+      )}
+      {result.warnings.map((warning) => <p className={styles.warning} key={warning}>{warning}</p>)}
+    </div>
+  );
+}
+
 export default function Home() {
   const [places, setPlaces] = useState<Place[]>([]);
   const [stops, setStops] = useState<Stop[]>([]);
@@ -133,6 +194,9 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
   const [loadingNetwork, setLoadingNetwork] = useState(true);
   const [loadingJourney, setLoadingJourney] = useState(false);
+  const [rideRouteCode, setRideRouteCode] = useState("");
+  const [canRideResult, setCanRideResult] = useState<CanIRideResponse["data"] | null>(null);
+  const [loadingCanRide, setLoadingCanRide] = useState(false);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -175,6 +239,7 @@ export default function Home() {
     setSelectedJourney(null);
     setSelectedPattern(null);
     setNoRouteMessage(null);
+    setCanRideResult(null);
   }
 
   function changeDestination(value: string) {
@@ -185,6 +250,7 @@ export default function Home() {
     setSelectedJourney(null);
     setSelectedPattern(null);
     setNoRouteMessage(null);
+    setCanRideResult(null);
   }
 
   function chooseOrigin(place: Place) {
@@ -195,6 +261,7 @@ export default function Home() {
     setSelectedJourney(null);
     setSelectedPattern(null);
     setNoRouteMessage(null);
+    setCanRideResult(null);
   }
 
   function chooseDestination(place: Place) {
@@ -205,6 +272,7 @@ export default function Home() {
     setSelectedJourney(null);
     setSelectedPattern(null);
     setNoRouteMessage(null);
+    setCanRideResult(null);
   }
 
   async function findRoute() {
@@ -251,6 +319,29 @@ export default function Home() {
     }
   }
 
+  async function checkCanIRide() {
+    if (!origin || !destination) {
+      setError("Select From and To places before checking a route.");
+      return;
+    }
+    if (!rideRouteCode) {
+      setError("Choose the route code you can see.");
+      return;
+    }
+
+    setLoadingCanRide(true);
+    setError(null);
+    try {
+      const response = await canIRide(rideRouteCode, origin.id, destination.id);
+      setCanRideResult(response.data);
+    } catch {
+      setError("The Can I Ride check is unavailable right now. Check the API connection and try again.");
+      setCanRideResult(null);
+    } finally {
+      setLoadingCanRide(false);
+    }
+  }
+
   return (
     <main className={styles.page}>
       <section className={styles.hero}>
@@ -276,15 +367,36 @@ export default function Home() {
       <section className={styles.resultsSection} aria-labelledby="results-heading">
         <div className={styles.sectionHeading}>
           <div><p className={styles.eyebrow}>What to do next</p><h2 id="results-heading">Journey results</h2></div>
-          {selectedJourney && <span className={styles.fixtureBadge}>{selectedJourney.trust.state}</span>}
+          {selectedJourney && <span className={styles.fixtureBadge}>{trustLabel(selectedJourney.trust.state)}</span>}
         </div>
         {journeys.length === 0 ? (
-          <p className={styles.emptyState}>{loadingJourney ? "Looking for direct and one-transfer rides…" : noRouteMessage ?? "Your supported journeys will appear here."}</p>
+          <p className={styles.emptyState}>{loadingJourney ? "Looking for direct, one- or two-transfer rides…" : noRouteMessage ?? "Your supported journeys will appear here."}</p>
         ) : (
           <div className={styles.journeyGrid}>
             {journeys.map((journey, index) => <JourneyCard key={journey.id} journey={journey} recommended={index === 0} onSelect={() => { setSelectedPattern(null); setSelectedJourney(journey); }} />)}
           </div>
         )}
+      </section>
+
+      <section className={styles.decisionSection} aria-labelledby="can-ride-heading">
+        <div className={styles.sectionHeading}>
+          <div><p className={styles.eyebrow}>Standing at a stop?</p><h2 id="can-ride-heading">Can I ride this?</h2></div>
+        </div>
+        <div className={styles.decisionCard}>
+          <p className={styles.sectionCopy}>Choose the route code you can see. Biyahe checks its known direction and stop sequence between your selected From and To places.</p>
+          <div className={styles.decisionForm}>
+            <label htmlFor="ride-route">Jeep / route</label>
+            <select id="ride-route" value={rideRouteCode} onChange={(event) => { setRideRouteCode(event.target.value); setCanRideResult(null); }}>
+              <option value="">Choose a route</option>
+              {routes.map((route) => <option key={route.id} value={route.code}>{route.code} · {route.name}</option>)}
+            </select>
+            <button type="button" className={styles.primaryButton} onClick={checkCanIRide} disabled={loadingCanRide || !origin || !destination || !rideRouteCode}>
+              {loadingCanRide ? "Checking…" : "Check this ride"}
+            </button>
+          </div>
+          {(!origin || !destination) && <p className={styles.emptyState}>Select From and To above to use this check.</p>}
+          {canRideResult && <CanIRideResultCard result={canRideResult} />}
+        </div>
       </section>
 
       <section className={styles.exploration} aria-labelledby="map-heading">
@@ -334,7 +446,7 @@ export default function Home() {
         )}
       </section>
 
-      <footer className={styles.footer}><span>BIYAHE Batch 003</span><span>© OpenStreetMap contributors · route confidence is shown, not hidden.</span></footer>
+      <footer className={styles.footer}><span>BIYAHE Batch 005</span><span>© OpenStreetMap contributors · route confidence is shown, not hidden.</span></footer>
     </main>
   );
 }

@@ -14,10 +14,12 @@ class RouteController
     public function index(Request $request)
     {
         $query = Route::query()->with([
+            'provenanceSource',
             'city',
             'operator',
             'vehicleType',
             'patterns' => function ($builder): void {
+                $builder->with('provenanceSource');
                 if (config('database.default') === 'pgsql') {
                     $builder->addSelect(['route_patterns.*', DB::raw('ST_AsText(route_patterns.geometry) AS geometry_wkt')]);
                 }
@@ -64,11 +66,19 @@ class RouteController
                     $builder->addSelect(['route_patterns.*', DB::raw('ST_AsText(route_patterns.geometry) AS geometry_wkt')]);
                 }
                 $builder->with(['patternStops' => function ($patternStops): void {
-                    $patternStops->with(['stop' => function ($stop): void {
-                        if (config('database.default') === 'pgsql') {
-                            $stop->addSelect(['stops.*', DB::raw('ST_AsText(stops.location) AS location_wkt')]);
-                        }
-                    }]);
+                    $patternStops->with([
+                        'provenanceSource',
+                        'serviceProvenanceSource',
+                        'sequenceProvenanceSource',
+                        'boardingProvenanceSource',
+                        'alightingProvenanceSource',
+                        'stop.provenanceSource',
+                        'stop.boardingProvenanceSource',
+                        'stop' => function ($stop): void {
+                            if (config('database.default') === 'pgsql') {
+                                $stop->addSelect(['stops.*', DB::raw('ST_AsText(stops.location) AS location_wkt')]);
+                            }
+                        }]);
                 }]);
             },
         ]);

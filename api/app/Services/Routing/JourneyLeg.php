@@ -15,6 +15,7 @@ final class JourneyLeg
      * @param  array<string, mixed>|null  $boardingStop
      * @param  array<string, mixed>|null  $alightingStop
      * @param  list<array<string, mixed>>  $provenance
+     * @param  array<string, mixed>  $evidence
      * @param  array<string, mixed>|null  $geometry
      */
     public function __construct(
@@ -36,6 +37,7 @@ final class JourneyLeg
         public readonly ?string $getOffGuidance = null,
         public readonly ?JourneyTrustState $trust = null,
         public readonly array $provenance = [],
+        public readonly array $evidence = [],
         public readonly ?array $geometry = null,
         public readonly ?string $instruction = null,
     ) {}
@@ -70,6 +72,7 @@ final class JourneyLeg
             'get_off_guidance' => $this->getOffGuidance,
             'trust' => $this->trust?->value,
             'provenance' => $this->provenance,
+            'evidence' => $this->evidence,
             'geometry' => $this->geometry,
         ];
     }

@@ -2,8 +2,10 @@
 
 namespace App\Models;
 
+use App\Enums\EvidenceConflictStatus;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class ProvenanceSource extends Model
@@ -16,9 +18,13 @@ class ProvenanceSource extends Model
     {
         return [
             'accessed_at' => 'date',
+            'published_at' => 'date',
+            'observed_at' => 'date',
             'checked_at' => 'date',
             'effective_from' => 'date',
             'effective_until' => 'date',
+            'evidence_scope' => 'array',
+            'conflict_status' => EvidenceConflictStatus::class,
         ];
     }
 
@@ -60,5 +66,15 @@ class ProvenanceSource extends Model
     public function transferRelationships(): HasMany
     {
         return $this->hasMany(TransferRelationship::class);
+    }
+
+    public function supersededBy(): BelongsTo
+    {
+        return $this->belongsTo(self::class, 'superseded_by_id');
+    }
+
+    public function supersedes(): HasMany
+    {
+        return $this->hasMany(self::class, 'superseded_by_id');
     }
 }

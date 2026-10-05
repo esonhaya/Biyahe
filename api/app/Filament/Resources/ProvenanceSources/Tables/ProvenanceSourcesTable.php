@@ -29,6 +29,12 @@ class ProvenanceSourcesTable
                 TextColumn::make('checked_at')
                     ->date()
                     ->sortable(),
+                TextColumn::make('conflict_status')
+                    ->badge()
+                    ->searchable(),
+                TextColumn::make('evidence_scope')
+                    ->listWithLineBreaks()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('license')
                     ->searchable(),
                 TextColumn::make('verified_by')

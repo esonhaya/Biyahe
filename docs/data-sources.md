@@ -6,7 +6,7 @@ The checked datasets are `cebu-central-network-2026-10-05.json` and
 `cebu-network-expansion-2026-10-05.json`. The expansion source record is
 `source-osm-cebu-batch004`:
 
-- source type: OPEN_DATA;
+- source type: COMMUNITY_OPEN_DATA;
 - checked date: 2026-10-05;
 - license: OpenStreetMap ODbL;
 - verification method: inspection of cited route-master metadata, directional
@@ -41,11 +41,43 @@ routes. The expansion also stores the official LTFRB 2023 general traditional
 PUJ fare guide as STALE historical evidence; it is not used to calculate a
 current journey fare. No fare is invented in this slice.
 
+The network currently has eight route identities, sixteen directional
+patterns, forty-eight mapped stops, and two explicit unverified transfer
+relationships. These counts are dataset observations, not completeness
+targets. Exact route-pattern associations and boarding/alighting applicability
+remain separately unverified where the cited evidence does not support them.
+
 The OSM route research is cross-checked against the public Metro Cebu
 transport overview at
 https://wiki.openstreetmap.org/wiki/Public_transportation_in_Metro_Cebu.
 The historical fare record links the official LTFRB publication at
 https://ltfrb.gov.ph/wp-content/uploads/2024/11/Fare-Guide_Traditional-PUJ-Provisional-Fare-Increase_08Oct2023.pdf.
+
+The evidence recheck did not find a current official Cebu route-and-stop
+dataset. An [LTFRB Freedom of Information route-list request](https://www.foi.gov.ph/agencies/ltfrb/information-of-traditional-jeepney-routes-within-cebu-city/)
+remained marked PENDING when reviewed; it is not itself route evidence. PNA's
+[2020 report](https://www.pna.gov.ph/articles/1120577) that 04L was among
+routes reopened between Lahug and Ayala is useful historical
+context, not proof of today's status, exact path, boarding points, or stop
+sequence. Those claims remain at the scope supported by current OSM relations
+and are not promoted from the old report.
+
+## Current fare review
+
+PNA reported on 2026-09-28 that traditional-PUJ fares are PHP 14 for the first
+four kilometres and PHP 2 per succeeding kilometre, and that the temporary
+guide is valid through 2026-12-31. PTV reported the regular and
+student/senior/PWD figures; PIA independently corroborated the regular rule.
+These are government-reporting sources, not a directly inspected Cebu
+operator fare matrix. All four 2026 general vehicle-class rules remain
+UNVERIFIED and no journey total is calculated. Older general rates remain
+historical STALE evidence. Legacy copies keyed to individual route IDs are
+retired because the source did not support per-route fare claims.
+
+Sources: [PNA rate report, September 28, 2026](https://www.pna.gov.ph/articles/1284951),
+[PNA temporary-guide validity report, September 28, 2026](https://www.pna.gov.ph/articles/1285005),
+[PTV fare guide report](https://ptvnews.ph/ltfrb-releases-new-matrices-for-puv-fare-hikes-effective-sept-28/),
+[PIA, October 1, 2026](https://pia.gov.ph/news/luzon/car/fare-hike-eases-puj-drivers-rising-operating-costs-in-benguet/).
 
 ## ODbL responsibilities
 

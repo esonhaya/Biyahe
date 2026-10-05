@@ -12,6 +12,7 @@ final class Journey
      * @param  list<JourneyLeg>  $legs
      * @param  list<array<string, mixed>>  $provenance
      * @param  list<string>  $warnings
+     * @param  list<string>  $rankingReasons
      */
     public function __construct(
         public readonly string $id,
@@ -24,6 +25,7 @@ final class Journey
         public readonly JourneyTrustState $trustState,
         public readonly array $provenance,
         public readonly array $warnings,
+        public readonly array $rankingReasons = [],
         public readonly array $fare = [
             'status' => 'UNAVAILABLE',
             'label' => 'Fare unavailable',
@@ -48,6 +50,7 @@ final class Journey
                 'walking_distance_meters' => round($this->walkingDistanceMeters, 2),
                 'ride_stop_count' => $this->rideStopCount,
                 'policy' => 'trust, then transfers, then walking burden, then stop burden',
+                'reasons' => $this->rankingReasons,
             ],
             'trust' => [
                 'state' => $this->trustState->value,
@@ -57,5 +60,23 @@ final class Journey
             'fare' => $this->fare,
             'provenance' => $this->provenance,
         ];
+    }
+
+    public function withRankingReasons(array $rankingReasons): self
+    {
+        return new self(
+            id: $this->id,
+            origin: $this->origin,
+            destination: $this->destination,
+            legs: $this->legs,
+            transferCount: $this->transferCount,
+            walkingDistanceMeters: $this->walkingDistanceMeters,
+            rideStopCount: $this->rideStopCount,
+            trustState: $this->trustState,
+            provenance: $this->provenance,
+            warnings: $this->warnings,
+            rankingReasons: $rankingReasons,
+            fare: $this->fare,
+        );
     }
 }
