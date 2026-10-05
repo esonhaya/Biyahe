@@ -11,7 +11,7 @@ use Throwable;
 final class DatasetValidator
 {
     /** @var list<string> */
-    private const COLLECTIONS = ['sources', 'cities', 'places', 'aliases', 'stops', 'operators', 'routes', 'patterns', 'fares'];
+    private const COLLECTIONS = ['sources', 'cities', 'places', 'aliases', 'stops', 'operators', 'routes', 'patterns', 'transfers', 'fares'];
 
     public function validate(string $path): DatasetValidationResult
     {
@@ -178,6 +178,21 @@ final class DatasetValidator
                 $this->validatePattern($record, 'patterns.'.$recordIndex, $knownIds, $result);
             }
         }
+        $transferPairs = [];
+        foreach ($records['transfers'] as $recordIndex => $record) {
+            if (is_array($record)) {
+                $path = 'transfers.'.$recordIndex;
+                $this->validateTransfer($record, $path, $knownIds, $result);
+                if (is_string($record['from_stop_id'] ?? null) && is_string($record['to_stop_id'] ?? null)) {
+                    $pair = $record['from_stop_id'].':'.$record['to_stop_id'];
+                    if (isset($transferPairs[$pair])) {
+                        $result->addError($path.'.to_stop_id', 'Duplicate transfer relationship also used at '.$transferPairs[$pair].'.');
+                    } else {
+                        $transferPairs[$pair] = $path;
+                    }
+                }
+            }
+        }
         foreach ($records['fares'] as $recordIndex => $record) {
             if (is_array($record)) {
                 $this->validateFare($record, 'fares.'.$recordIndex, $knownIds, $result);
@@ -293,6 +308,25 @@ final class DatasetValidator
             if (is_string($record['effective_from'] ?? null) && is_string($record['effective_until']) && $record['effective_until'] < $record['effective_from']) {
                 $result->addError($path.'.effective_until', 'effective_until cannot precede effective_from.');
             }
+        }
+    }
+
+    /** @param array<string, mixed> $record @param array<string, array<string, string>> $knownIds */
+    private function validateTransfer(array $record, string $path, array $knownIds, DatasetValidationResult $result): void
+    {
+        $this->validateEntityStatus($record, $path, $knownIds['sources'], $result);
+        $this->requireString($record, 'city_id', $path.'.city_id', $result);
+        $this->requireReference($record['city_id'] ?? null, $knownIds['cities'], $path.'.city_id', $result);
+        $this->requireString($record, 'from_stop_id', $path.'.from_stop_id', $result);
+        $this->requireReference($record['from_stop_id'] ?? null, $knownIds['stops'], $path.'.from_stop_id', $result);
+        $this->requireString($record, 'to_stop_id', $path.'.to_stop_id', $result);
+        $this->requireReference($record['to_stop_id'] ?? null, $knownIds['stops'], $path.'.to_stop_id', $result);
+        if (($record['from_stop_id'] ?? null) === ($record['to_stop_id'] ?? null)) {
+            $result->addError($path.'.to_stop_id', 'A transfer relationship must connect two different stops.');
+        }
+        $this->requireString($record, 'relationship_type', $path.'.relationship_type', $result);
+        if (isset($record['distance_meters']) && (! is_numeric($record['distance_meters']) || (float) $record['distance_meters'] < 0)) {
+            $result->addError($path.'.distance_meters', 'distance_meters must be a non-negative number when supplied.');
         }
     }
 

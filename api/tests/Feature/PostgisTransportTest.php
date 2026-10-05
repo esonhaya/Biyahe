@@ -77,4 +77,27 @@ class PostgisTransportTest extends TestCase
         $this->assertGreaterThan(100, $offsetDistance);
         $this->assertLessThan(130, $offsetDistance);
     }
+
+    public function test_real_postgis_journey_search_uses_bounded_meter_candidates(): void
+    {
+        if (config('database.default') !== 'pgsql') {
+            $this->markTestSkipped('PostGIS integration requires DB_CONNECTION=pgsql.');
+        }
+
+        $this->seed();
+        $origin = DB::table('places')->where('slug', 'ayala-center-cebu')->value('id');
+        $destination = DB::table('places')->where('slug', 'carbon-market-unit-3')->value('id');
+
+        $response = $this->getJson('/api/v1/journeys?from_place_id='.$origin.'&to_place_id='.$destination);
+        $response
+            ->assertOk()
+            ->assertJsonPath('meta.distance_unit', 'meters')
+            ->assertJsonPath('meta.walking_distance_type', 'straight_line_estimate');
+
+        $transfer = collect($response->json('data'))->firstWhere('transfer_count', 1);
+        $this->assertNotNull($transfer);
+        $this->assertSame('TRANSFER_WALK', $transfer['legs'][2]['type']);
+        $this->assertGreaterThan(0, $transfer['legs'][0]['distance_meters']);
+        $this->assertLessThanOrEqual(600, $transfer['legs'][2]['distance_meters']);
+    }
 }

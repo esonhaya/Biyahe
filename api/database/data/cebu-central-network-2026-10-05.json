@@ -18,8 +18,8 @@
       "checked_at": "2026-10-05",
       "license": "ODbL-1.0",
       "verification_method": "Reviewed named elements, coordinates, route relation tags, and relation way roles in the linked OSM/Overpass snapshot.",
-      "verified_by": "BIYAHE Batch 002 data review",
-      "notes": "OpenStreetMap snapshot retrieved 2026-10-05 through Overpass API. Route geometry uses relation 3169782 (12L) and relation 3177015 (17B) way members; places/stops use the named OSM elements documented in docs/data-sources.md. Geographic facts are reviewed; route-to-stop service associations remain UNVERIFIED."
+      "verified_by": "BIYAHE Batch 003 data review",
+      "notes": "OpenStreetMap snapshot retrieved 2026-10-05 through Overpass API. Route geometry uses relation 3169782 (12L) and relation 3177015 (17B) way members; places/stops use the named OSM elements documented in docs/data-sources.md. Route identity and relation geometry are supported; exact route-to-stop service associations and the curated walking-transfer candidate remain UNVERIFIED."
     }
   ],
   "cities": [
@@ -109,6 +109,66 @@
       },
       "verification_state": "VERIFIED",
       "is_demo": false
+    },
+    {
+      "stable_id": "place-up-cebu",
+      "city_id": "city-cebu-city",
+      "source_id": "osm-cebu-transport-2026-10-05",
+      "name": "UP Cebu",
+      "slug": "up-cebu",
+      "category": "UNIVERSITY",
+      "description": "Named OSM public-transport and university-area feature in Cebu City.",
+      "location": {
+        "lat": 10.3221616,
+        "lng": 123.8987258
+      },
+      "verification_state": "VERIFIED",
+      "is_demo": false
+    },
+    {
+      "stable_id": "place-labangon",
+      "city_id": "city-cebu-city",
+      "source_id": "osm-cebu-transport-2026-10-05",
+      "name": "Labangon",
+      "slug": "labangon",
+      "category": "DISTRICT",
+      "description": "Named OSM public-transport stop area in Cebu City.",
+      "location": {
+        "lat": 10.2996184,
+        "lng": 123.878355
+      },
+      "verification_state": "VERIFIED",
+      "is_demo": false
+    },
+    {
+      "stable_id": "place-punta-princesa",
+      "city_id": "city-cebu-city",
+      "source_id": "osm-cebu-transport-2026-10-05",
+      "name": "Punta Princesa",
+      "slug": "punta-princesa",
+      "category": "DISTRICT",
+      "description": "Named OSM public-transport stop area in Cebu City.",
+      "location": {
+        "lat": 10.2949407,
+        "lng": 123.8700098
+      },
+      "verification_state": "VERIFIED",
+      "is_demo": false
+    },
+    {
+      "stable_id": "place-sacred-heart",
+      "city_id": "city-cebu-city",
+      "source_id": "osm-cebu-transport-2026-10-05",
+      "name": "Sacred Heart",
+      "slug": "sacred-heart",
+      "category": "LANDMARK",
+      "description": "Named OSM public-transport stop area in Cebu City.",
+      "location": {
+        "lat": 10.317795,
+        "lng": 123.8958974
+      },
+      "verification_state": "VERIFIED",
+      "is_demo": false
     }
   ],
   "aliases": [
@@ -165,6 +225,30 @@
       "place_id": "place-lahug-market",
       "source_id": "osm-cebu-transport-2026-10-05",
       "alias": "Lahug"
+    },
+    {
+      "stable_id": "alias-up-cebu",
+      "place_id": "place-up-cebu",
+      "source_id": "osm-cebu-transport-2026-10-05",
+      "alias": "UP"
+    },
+    {
+      "stable_id": "alias-labangon",
+      "place_id": "place-labangon",
+      "source_id": "osm-cebu-transport-2026-10-05",
+      "alias": "Labangon"
+    },
+    {
+      "stable_id": "alias-punta",
+      "place_id": "place-punta-princesa",
+      "source_id": "osm-cebu-transport-2026-10-05",
+      "alias": "Punta"
+    },
+    {
+      "stable_id": "alias-sacred-heart",
+      "place_id": "place-sacred-heart",
+      "source_id": "osm-cebu-transport-2026-10-05",
+      "alias": "Sacred Heart"
     }
   ],
   "stops": [
@@ -188,7 +272,7 @@
     {
       "stable_id": "stop-up-cebu",
       "city_id": "city-cebu-city",
-      "nearby_place_id": null,
+      "nearby_place_id": "place-up-cebu",
       "source_id": "osm-cebu-transport-2026-10-05",
       "name": "UP Cebu",
       "code": "OSM-14104740239",
@@ -205,7 +289,7 @@
     {
       "stable_id": "stop-gonzales-compound",
       "city_id": "city-cebu-city",
-      "nearby_place_id": null,
+      "nearby_place_id": "place-sacred-heart",
       "source_id": "osm-cebu-transport-2026-10-05",
       "name": "Gonzales Compound",
       "code": "OSM-10783372754",
@@ -239,7 +323,7 @@
     {
       "stable_id": "stop-uytengsu",
       "city_id": "city-cebu-city",
-      "nearby_place_id": null,
+      "nearby_place_id": "place-labangon",
       "source_id": "osm-cebu-transport-2026-10-05",
       "name": "Uytengsu",
       "code": "OSM-10743602369",
@@ -256,7 +340,7 @@
     {
       "stable_id": "stop-psbank-colon",
       "city_id": "city-cebu-city",
-      "nearby_place_id": null,
+      "nearby_place_id": "place-punta-princesa",
       "source_id": "osm-cebu-transport-2026-10-05",
       "name": "PSBank Colon",
       "code": "OSM-14104740251",
@@ -324,7 +408,7 @@
     {
       "stable_id": "stop-sacred-heart",
       "city_id": "city-cebu-city",
-      "nearby_place_id": null,
+      "nearby_place_id": "place-sacred-heart",
       "source_id": "osm-cebu-transport-2026-10-05",
       "name": "Sacred Heart",
       "code": "OSM-13754365861",
@@ -358,7 +442,7 @@
     {
       "stable_id": "stop-labangon",
       "city_id": "city-cebu-city",
-      "nearby_place_id": null,
+      "nearby_place_id": "place-labangon",
       "source_id": "osm-cebu-transport-2026-10-05",
       "name": "Labangon",
       "code": "OSM-14102013667",
@@ -375,7 +459,7 @@
     {
       "stable_id": "stop-punta-princesa",
       "city_id": "city-cebu-city",
-      "nearby_place_id": null,
+      "nearby_place_id": "place-punta-princesa",
       "source_id": "osm-cebu-transport-2026-10-05",
       "name": "Punta Princesa",
       "code": "OSM-14102013693",
@@ -401,7 +485,7 @@
       "code": "17B",
       "name": "Jeepney 17B: Apas - Lahug - Carbon",
       "description": "OSM route relation 3177015. The mapped route and stop associations require owner review before public service guidance.",
-      "verification_state": "UNVERIFIED",
+      "verification_state": "VERIFIED",
       "is_demo": false,
       "notes": "Network label and route geometry are from OSM; no official current timetable or fare is asserted."
     },
@@ -414,7 +498,7 @@
       "code": "12L",
       "name": "Jeepney 12L: Ayala - Escario - Labangon",
       "description": "OSM route relation 3169782. The mapped route and stop associations require owner review before public service guidance.",
-      "verification_state": "UNVERIFIED",
+      "verification_state": "VERIFIED",
       "is_demo": false,
       "notes": "Network label and route geometry are from OSM; no official current timetable or fare is asserted."
     }
@@ -3917,6 +4001,32 @@
           "sequence": 6
         }
       ]
+    }
+  ],
+  "transfers": [
+    {
+      "stable_id": "transfer-b-rodriguez-to-fuente",
+      "city_id": "city-cebu-city",
+      "from_stop_id": "stop-b-rodriguez-extension",
+      "to_stop_id": "stop-fuente",
+      "source_id": "osm-cebu-transport-2026-10-05",
+      "relationship_type": "CURATED_WALK_ESTIMATE",
+      "distance_meters": 356.26,
+      "verification_state": "UNVERIFIED",
+      "is_demo": false,
+      "notes": "Named OSM stop points are close enough for a bounded transfer candidate. This is a straight-line screening estimate, not a pedestrian route; confirm crossings and boarding locally."
+    },
+    {
+      "stable_id": "transfer-fuente-to-b-rodriguez",
+      "city_id": "city-cebu-city",
+      "from_stop_id": "stop-fuente",
+      "to_stop_id": "stop-b-rodriguez-extension",
+      "source_id": "osm-cebu-transport-2026-10-05",
+      "relationship_type": "CURATED_WALK_ESTIMATE",
+      "distance_meters": 356.26,
+      "verification_state": "UNVERIFIED",
+      "is_demo": false,
+      "notes": "Named OSM stop points are close enough for a bounded transfer candidate. This is a straight-line screening estimate, not a pedestrian route; confirm crossings and boarding locally."
     }
   ],
   "fares": []

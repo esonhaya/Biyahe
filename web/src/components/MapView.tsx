@@ -3,11 +3,12 @@
 import * as maplibregl from "maplibre-gl";
 import type { Map as MapInstance, MapLayerMouseEvent, StyleSpecification } from "maplibre-gl";
 import { useEffect, useRef, useState } from "react";
-import type { Place, RoutePattern, Stop } from "@/lib/api";
+import type { Journey, Place, RoutePattern, Stop } from "@/lib/api";
 
 type MapViewProps = {
   places: Place[];
   stops: Stop[];
+  journey: Journey | null;
   selectedPattern: RoutePattern | null;
   onStopSelect?: (stop: Stop) => void;
 };
@@ -30,16 +31,82 @@ const fallbackMapStyle: StyleSpecification = {
 
 const mapStyle: string | StyleSpecification = process.env.NEXT_PUBLIC_MAP_STYLE_URL || fallbackMapStyle;
 
-function pointFeature(id: number, name: string, location: { lat: number; lng: number }) {
+function pointFeature(id: string | number, name: string, location: { lat: number; lng: number }, properties: Record<string, string | number>) {
   return {
     type: "Feature" as const,
     id,
-    properties: { name },
+    properties: { name, ...properties },
     geometry: { type: "Point" as const, coordinates: [location.lng, location.lat] },
   };
 }
 
-export default function MapView({ places, stops, selectedPattern, onStopSelect }: MapViewProps) {
+function journeyPointFeatures(journey: Journey) {
+  const points = [
+    journey.origin.location ? pointFeature(`origin-${journey.origin.id}`, journey.origin.name, journey.origin.location, { kind: "origin" }) : null,
+    journey.destination.location ? pointFeature(`destination-${journey.destination.id}`, journey.destination.name, journey.destination.location, { kind: "destination" }) : null,
+  ];
+
+  journey.legs.forEach((leg, index) => {
+    if (leg.type === "RIDE" && leg.boarding_stop?.location) {
+      points.push(pointFeature(`boarding-${index}-${leg.boarding_stop.id}`, leg.boarding_stop.name, leg.boarding_stop.location, { kind: "boarding" }));
+    }
+    if (leg.type === "RIDE" && leg.alighting_stop?.location) {
+      points.push(pointFeature(`alighting-${index}-${leg.alighting_stop.id}`, leg.alighting_stop.name, leg.alighting_stop.location, { kind: "alighting" }));
+    }
+    if (leg.type === "TRANSFER_WALK") {
+      if (leg.origin.location) {
+        points.push(pointFeature(`transfer-from-${index}-${leg.origin.id}`, leg.origin.name, leg.origin.location, { kind: "transfer" }));
+      }
+      if (leg.destination.location) {
+        points.push(pointFeature(`transfer-to-${index}-${leg.destination.id}`, leg.destination.name, leg.destination.location, { kind: "transfer" }));
+      }
+    }
+  });
+
+  return points.filter((point): point is NonNullable<typeof point> => point !== null);
+}
+
+function journeyRouteFeatures(journey: Journey) {
+  return journey.legs
+    .map((leg, index) => leg.type === "RIDE" && leg.geometry ? {
+      type: "Feature" as const,
+      id: `ride-${index}`,
+      properties: { route: leg.route?.code ?? "route" },
+      geometry: leg.geometry,
+    } : null)
+    .filter((feature): feature is NonNullable<typeof feature> => feature !== null);
+}
+
+function journeyBounds(journey: Journey): maplibregl.LngLatBounds | null {
+  const bounds = new maplibregl.LngLatBounds();
+  const points = journeyPointFeatures(journey);
+  points.forEach((point) => bounds.extend(point.geometry.coordinates as [number, number]));
+
+  journeyRouteFeatures(journey).forEach((feature) => {
+    feature.geometry.coordinates.flat().forEach((coordinate) => {
+      if (Array.isArray(coordinate) && coordinate.length >= 2 && typeof coordinate[0] === "number" && typeof coordinate[1] === "number") {
+        bounds.extend([coordinate[0], coordinate[1]]);
+      }
+    });
+  });
+
+  return bounds.isEmpty() ? null : bounds;
+}
+
+function patternBounds(pattern: RoutePattern): maplibregl.LngLatBounds | null {
+  const bounds = new maplibregl.LngLatBounds();
+  pattern.geometry?.coordinates.flat().forEach((coordinate) => bounds.extend([coordinate[0], coordinate[1]]));
+  pattern.stops?.forEach((patternStop) => {
+    const location = patternStop.stop.location;
+    if (location) {
+      bounds.extend([location.lng, location.lat]);
+    }
+  });
+
+  return bounds.isEmpty() ? null : bounds;
+}
+
+export default function MapView({ places, stops, journey, selectedPattern, onStopSelect }: MapViewProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<MapInstance | null>(null);
   const stopLookupRef = useRef(new Map<number, Stop>());
@@ -65,7 +132,7 @@ export default function MapView({ places, stops, selectedPattern, onStopSelect }
         id: "place-points",
         type: "circle",
         source: "places",
-        paint: { "circle-color": "#e07a5f", "circle-radius": 6, "circle-stroke-color": "#fff", "circle-stroke-width": 2 },
+        paint: { "circle-color": "#e07a5f", "circle-radius": 5, "circle-stroke-color": "#fff", "circle-stroke-width": 2 },
       });
       map.addLayer({
         id: "place-labels",
@@ -79,7 +146,7 @@ export default function MapView({ places, stops, selectedPattern, onStopSelect }
         id: "stop-points",
         type: "circle",
         source: "stops",
-        paint: { "circle-color": "#176b87", "circle-radius": 5, "circle-stroke-color": "#fff", "circle-stroke-width": 1.5 },
+        paint: { "circle-color": "#176b87", "circle-radius": 4, "circle-stroke-color": "#fff", "circle-stroke-width": 1.5 },
       });
       map.addLayer({
         id: "stop-labels",
@@ -108,6 +175,32 @@ export default function MapView({ places, stops, selectedPattern, onStopSelect }
         type: "line",
         source: "route-pattern",
         paint: { "line-color": "#e07a5f", "line-width": 4, "line-opacity": 0.9 },
+      });
+      map.addSource("journey-points", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
+      map.addLayer({
+        id: "journey-points-layer",
+        type: "circle",
+        source: "journey-points",
+        paint: {
+          "circle-color": ["match", ["get", "kind"], "origin", "#153b45", "destination", "#d3624d", "boarding", "#f4a261", "alighting", "#e07a5f", "transfer", "#7b61a8", "#176b87"],
+          "circle-radius": ["match", ["get", "kind"], "origin", 9, "destination", 9, 7],
+          "circle-stroke-color": "#fff",
+          "circle-stroke-width": 2,
+        },
+      });
+      map.addLayer({
+        id: "journey-point-labels",
+        type: "symbol",
+        source: "journey-points",
+        layout: { "text-field": ["get", "name"], "text-size": 11, "text-offset": [0, 1.2], "text-anchor": "top" },
+        paint: { "text-color": "#153b45", "text-halo-color": "#fff", "text-halo-width": 1 },
+      });
+      map.addSource("journey-routes", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
+      map.addLayer({
+        id: "journey-route-lines",
+        type: "line",
+        source: "journey-routes",
+        paint: { "line-color": "#d3624d", "line-width": 5, "line-opacity": 0.88 },
       });
       setMapReady(true);
     });
@@ -143,39 +236,49 @@ export default function MapView({ places, stops, selectedPattern, onStopSelect }
     const placeSource = map.getSource("places") as maplibregl.GeoJSONSource | undefined;
     const stopSource = map.getSource("stops") as maplibregl.GeoJSONSource | undefined;
     const patternStopSource = map.getSource("pattern-stops") as maplibregl.GeoJSONSource | undefined;
-    const routeSource = map.getSource("route-pattern") as maplibregl.GeoJSONSource | undefined;
-    if (!placeSource || !stopSource || !patternStopSource || !routeSource) {
+    const patternRouteSource = map.getSource("route-pattern") as maplibregl.GeoJSONSource | undefined;
+    const journeyPointSource = map.getSource("journey-points") as maplibregl.GeoJSONSource | undefined;
+    const journeyRouteSource = map.getSource("journey-routes") as maplibregl.GeoJSONSource | undefined;
+    if (!placeSource || !stopSource || !patternStopSource || !patternRouteSource || !journeyPointSource || !journeyRouteSource) {
       return;
     }
 
     placeSource.setData({
       type: "FeatureCollection",
-      features: places.filter((place) => place.location).map((place) => pointFeature(place.id, place.name, place.location!)),
+      features: places.filter((place) => place.location).map((place) => pointFeature(place.id, place.name, place.location!, { kind: "place" })),
     });
     stopLookupRef.current = new Map(stops.map((stop) => [stop.id, stop]));
     stopSource.setData({
       type: "FeatureCollection",
-      features: stops.filter((stop) => stop.location).map((stop) => ({
-        ...pointFeature(stop.id, stop.name, stop.location!),
-        properties: { name: stop.name, stopId: stop.id },
-      })),
+      features: stops.filter((stop) => stop.location).map((stop) => pointFeature(stop.id, stop.name, stop.location!, { kind: "stop", stopId: stop.id })),
     });
     patternStopSource.setData({
       type: "FeatureCollection",
-      features: (selectedPattern?.stops ?? []).filter((patternStop) => patternStop.stop.location).map((patternStop) => ({
-        type: "Feature",
+      features: journey ? [] : (selectedPattern?.stops ?? []).filter((patternStop) => patternStop.stop.location).map((patternStop) => ({
+        type: "Feature" as const,
         id: `${selectedPattern?.id}-${patternStop.sequence}`,
         properties: { sequence: patternStop.sequence, name: patternStop.stop.name },
-        geometry: { type: "Point", coordinates: [patternStop.stop.location!.lng, patternStop.stop.location!.lat] },
+        geometry: { type: "Point" as const, coordinates: [patternStop.stop.location!.lng, patternStop.stop.location!.lat] },
       })),
     });
-    routeSource.setData({
+    patternRouteSource.setData({
       type: "FeatureCollection",
-      features: selectedPattern?.geometry
-        ? [{ type: "Feature", properties: { name: selectedPattern.name }, geometry: selectedPattern.geometry }]
-        : [],
+      features: journey || !selectedPattern?.geometry ? [] : [{ type: "Feature" as const, properties: { name: selectedPattern.name }, geometry: selectedPattern.geometry }],
     });
-  }, [mapReady, places, stops, selectedPattern]);
+    journeyPointSource.setData({
+      type: "FeatureCollection",
+      features: journey ? journeyPointFeatures(journey) : [],
+    });
+    journeyRouteSource.setData({
+      type: "FeatureCollection",
+      features: journey ? journeyRouteFeatures(journey) : [],
+    });
 
-  return <div className="map-frame" ref={containerRef} aria-label="Biyahe Cebu exploration map" />;
+    const bounds = journey ? journeyBounds(journey) : selectedPattern ? patternBounds(selectedPattern) : null;
+    if (bounds) {
+      map.fitBounds(bounds, { padding: 48, maxZoom: 14, duration: 0 });
+    }
+  }, [journey, mapReady, places, selectedPattern, stops]);
+
+  return <div className="map-frame" ref={containerRef} aria-label="Biyahe journey review map" />;
 }

@@ -1,7 +1,8 @@
 # BIYAHE web
 
-This is the mobile-first Next.js and MapLibre exploration interface. It reads
-the Laravel API; it never connects directly to the database.
+This is the mobile-first Next.js and MapLibre commuter interface. It resolves
+places through the Laravel API, requests direct or one-transfer journeys, and
+shows route confidence and fare uncertainty without connecting to the database.
 
 ## Local setup
 
@@ -20,4 +21,5 @@ The build uses Webpack because Next.js Turbopack native bindings are not
 available on Termux Android/arm64. The map style is replaceable with
 NEXT_PUBLIC_MAP_STYLE_URL in a later deployment; the development fallback
 uses public OpenStreetMap raster tiles and must not be treated as a production
-tile service.
+tile service. Walking overlays are points and distance estimates only; the
+interface does not imply a pedestrian path that Biyahe has not computed.

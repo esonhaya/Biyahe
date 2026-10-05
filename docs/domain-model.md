@@ -17,6 +17,9 @@
 - RoutePatternStop orders shared stops and records boarding/alighting
   permissions, commuter instructions, and optional service metadata. Database
   uniqueness and Doctor checks protect sequence integrity.
+- TransferRelationship records an explicitly reviewed or reviewable walking
+  relationship between two stops. It has its own provenance and verification
+  state; geographic proximity alone does not create a transfer.
 - Fare is a dated, sourced foundation scoped to a route and vehicle type, with
   optional pattern, stop-pair, distance, and fare-class fields. No fare engine
   or authoritative estimate is implemented.
@@ -30,11 +33,18 @@ Therefore, Route is not RoutePattern, Stop, or Place. A route may have
 several directional patterns; a pattern visits ordered stops; a place is a
 destination that may be near a stop.
 
+Journey search results are application-level representations, not persisted
+transport facts. A Journey contains ordered access, ride, transfer-walk, and
+egress legs. Its trust state is derived from the places, stops, routes,
+patterns, and transfer evidence used to construct it.
+
 ## Verification
 
 Transport records use DRAFT, UNVERIFIED, VERIFIED, STALE, or RETIRED. Demo
 records are separately flagged with is_demo; Doctor rejects demo data marked
-VERIFIED. Public API defaults exclude demo and retired records, while route
-service associations in the first Cebu network remain UNVERIFIED. Community
+VERIFIED. Public API defaults exclude demo and retired records, and routing
+also excludes draft and stale service records. The initial Cebu route
+patterns and curated transfer relationships remain UNVERIFIED while route
+identity, geography, and some place/stop facts are reviewed. Community
 submissions and moderation are future work. Until then, an administrator must
 review provenance before promoting a record.

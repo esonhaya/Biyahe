@@ -17,14 +17,15 @@ flag:
 - DEMO: not a verification state. is_demo=true identifies artificial fixture
   data and keeps it separate from production-like records.
 
-The API excludes demo and retired records by default. trusted_only=1 further
-restricts collections to non-demo VERIFIED records. Responses expose
+The API excludes demo and retired records by default. Journey routing also
+excludes DRAFT and STALE service records. trusted_only=1 further restricts
+collections to non-demo VERIFIED records. Responses expose
 verification.state, verification.is_demo, and verification.trusted so a
 client cannot mistake an unverified record for trusted guidance.
 
 ## Provenance
 
-Important places, stops, routes, patterns, and fare records must point to a
+Important places, stops, routes, patterns, transfer relationships, and fare records must point to a
 ProvenanceSource when they are not demo data. A source records the practical
 evidence trail:
 
@@ -50,8 +51,11 @@ verification.
 6. Run php artisan biyahe:doctor before publishing a reviewed dataset.
 
 The Filament owner/admin panel exposes state, demo, stable ID, provenance, and
-review filters. The VERIFIED option is disabled for demo records in the form;
-Doctor remains the authoritative integrity backstop.
+review filters for transport facts and explicit transfer relationships. The
+VERIFIED option is disabled for demo records in the form; Doctor remains the
+authoritative integrity backstop. A journey marked MIXED or UNVERIFIED is
+shown with a plain-language warning rather than being presented as a
+confirmed commute.
 
 Community accounts, reputation, submissions, and moderation queues are not
 implemented yet.

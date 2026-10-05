@@ -51,7 +51,7 @@ final class DatasetValidationResult
             return 0;
         }
 
-        return collect(['sources', 'cities', 'places', 'aliases', 'stops', 'operators', 'routes', 'patterns', 'fares'])
+        return collect(['sources', 'cities', 'places', 'aliases', 'stops', 'operators', 'routes', 'patterns', 'transfers', 'fares'])
             ->sum(fn (string $collection): int => is_array($this->data[$collection] ?? null) ? count($this->data[$collection]) : 0);
     }
 

@@ -95,6 +95,67 @@ export type Route = {
   provenance?: Provenance;
 };
 
+export type JourneyLegType = "WALK_ACCESS" | "RIDE" | "TRANSFER_WALK" | "WALK_EGRESS";
+
+export type JourneyTrustState = "VERIFIED" | "MIXED" | "UNVERIFIED";
+
+export type JourneyPoint = {
+  type: "PLACE" | "STOP";
+  id: number;
+  name: string;
+  slug?: string;
+  code?: string | null;
+  location: LocationPoint | null;
+  verification: { state: VerificationState; is_demo: boolean; trusted: boolean };
+};
+
+export type JourneyLeg = {
+  type: JourneyLegType;
+  origin: JourneyPoint;
+  destination: JourneyPoint;
+  distance_meters: number | null;
+  distance_is_estimate: boolean;
+  instruction: string | null;
+  route: { id: number; code: string; name: string; vehicle_type: { code: string; name: string } | null; verification: JourneyPoint["verification"] } | null;
+  pattern: { id: number; name: string; direction: string; verification: JourneyPoint["verification"] } | null;
+  boarding_stop: JourneyPoint | null;
+  alighting_stop: JourneyPoint | null;
+  stop_count: number | null;
+  driver_instruction: string | null;
+  get_off_guidance: string | null;
+  trust: JourneyTrustState | null;
+  provenance: Provenance[];
+  geometry: RoutePattern["geometry"];
+};
+
+export type Journey = {
+  id: string;
+  origin: JourneyPoint;
+  destination: JourneyPoint;
+  legs: JourneyLeg[];
+  transfer_count: number;
+  ranking: { walking_distance_meters: number; ride_stop_count: number; policy: string };
+  trust: { state: JourneyTrustState; warning: string | null };
+  warnings: string[];
+  fare: { status: "UNAVAILABLE" | "AVAILABLE"; label: string; amount: number | null; currency: string | null };
+  provenance: Provenance[];
+};
+
+export type JourneyResponse = {
+  data: Journey[];
+  meta: {
+    origin: JourneyPoint;
+    destination: JourneyPoint;
+    result_count: number;
+    max_transfers: number;
+    distance_unit: "meters";
+    walking_distance_type: "straight_line_estimate";
+    boarding_candidates: number;
+    alighting_candidates: number;
+    no_route: { code: string; message: string } | null;
+  };
+};
+
 type ApiPage<T> = {
   data: T[];
   meta?: { current_page?: number; last_page?: number; per_page?: number; total?: number };
@@ -139,4 +200,17 @@ export async function listRoutes(signal?: AbortSignal): Promise<Route[]> {
 export async function getRoutePattern(patternId: number, signal?: AbortSignal): Promise<RoutePattern> {
   const response = await getJson<{ data: RoutePattern }>("/route-patterns/" + patternId, signal);
   return response.data;
+}
+
+export async function planJourney(
+  fromPlaceId: number,
+  toPlaceId: number,
+  signal?: AbortSignal,
+): Promise<JourneyResponse> {
+  const params = new URLSearchParams({
+    from_place_id: String(fromPlaceId),
+    to_place_id: String(toPlaceId),
+  });
+
+  return getJson<JourneyResponse>("/journeys?" + params.toString(), signal);
 }

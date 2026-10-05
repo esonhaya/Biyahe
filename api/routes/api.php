@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\CityController;
 use App\Http\Controllers\Api\HealthController;
+use App\Http\Controllers\Api\JourneyController;
 use App\Http\Controllers\Api\PlaceController;
 use App\Http\Controllers\Api\PlaceSearchController;
 use App\Http\Controllers\Api\RouteController;
@@ -17,6 +18,8 @@ Route::prefix('v1')->group(function (): void {
     Route::get('places/search', PlaceSearchController::class);
     Route::get('places', [PlaceController::class, 'index']);
     Route::get('places/{place}', [PlaceController::class, 'show']);
+
+    Route::get('journeys', JourneyController::class);
 
     Route::get('stops/nearby', [StopController::class, 'nearby']);
     Route::get('stops', [StopController::class, 'index']);

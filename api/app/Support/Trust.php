@@ -48,4 +48,26 @@ final class Trust
             'trusted' => $state === VerificationState::VERIFIED->value && ! $isDemo,
         ];
     }
+
+    public static function isRoutable(Model $model): bool
+    {
+        $state = $model->verification_state instanceof VerificationState
+            ? $model->verification_state->value
+            : $model->verification_state;
+
+        return (bool) ($model->is_active ?? true)
+            && ! (bool) ($model->is_demo ?? false)
+            && in_array($state, [VerificationState::VERIFIED->value, VerificationState::UNVERIFIED->value], true);
+    }
+
+    public static function applyRoutable(Builder $query, string $table): Builder
+    {
+        return $query
+            ->where("{$table}.is_active", true)
+            ->where("{$table}.is_demo", false)
+            ->whereIn("{$table}.verification_state", [
+                VerificationState::VERIFIED->value,
+                VerificationState::UNVERIFIED->value,
+            ]);
+    }
 }

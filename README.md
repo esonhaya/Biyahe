@@ -3,15 +3,12 @@
 Biyahe is an open-source Philippine public-transport companion designed to
 reduce commuter uncertainty with carefully sourced local transport knowledge.
 
-Batch 002 establishes a real PostgreSQL/PostGIS gate, a repeatable
-provenance-first dataset importer, and a small Cebu City review network. The
-reviewed geographic places and public-transport stops are sourced from
-OpenStreetMap. The route and pattern service associations remain UNVERIFIED
-until stronger route evidence is collected. The artificial Batch 001 fixture
-remains available only as demo data and is never exposed by default public
-queries.
-
-The full A-to-B journey planner is intentionally deferred.
+Batch 003 adds a bounded, trust-aware A-to-B planner for the reviewed Cebu
+slice. It supports direct rides and explicitly curated one-transfer walking
+relationships, while keeping route-pattern associations UNVERIFIED where the
+available OSM evidence does not prove the exact passenger stop sequence. The
+artificial Batch 001 fixture remains demo-only and is never exposed by default
+public queries.
 
 ## Quick start
 
@@ -45,6 +42,11 @@ SQLite can exercise relational tests, but it cannot prove spatial behavior.
 Doctor reports PostGIS as BLOCKED when the configured database is not a
 PostgreSQL/PostGIS connection.
 
+The journey endpoint is `GET /api/v1/journeys?from_place_id=&to_place_id=`.
+The web home page resolves canonical places, calls this endpoint, and shows
+boarding, alighting, transfer, trust, fare, and map information. Walking
+distances are straight-line estimates, not pedestrian directions.
+
 ## Documentation
 
 - Architecture: docs/architecture.md
@@ -54,6 +56,8 @@ PostgreSQL/PostGIS connection.
 - Data verification: docs/data-verification.md
 - Dataset format and import: docs/data-format.md
 - Sources and licensing: docs/data-sources.md
+- Journey planning: docs/journey-planning.md
+- Haya reuse audit: docs/haya-reuse-audit.md
 
 ## License
 

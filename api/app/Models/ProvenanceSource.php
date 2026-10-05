@@ -56,4 +56,9 @@ class ProvenanceSource extends Model
     {
         return $this->hasMany(Fare::class);
     }
+
+    public function transferRelationships(): HasMany
+    {
+        return $this->hasMany(TransferRelationship::class);
+    }
 }

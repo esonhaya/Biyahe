@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\RoutePatternStop;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -27,5 +28,17 @@ class BiyaheDoctorTest extends TestCase
         $artisan
             ->expectsOutputToContain('BLOCKED')
             ->assertExitCode(2);
+    }
+
+    public function test_doctor_fails_when_a_routing_pattern_loses_usable_permissions(): void
+    {
+        $this->seed();
+
+        RoutePatternStop::query()->update(['boarding_allowed' => false]);
+
+        $this->artisan('biyahe:doctor')
+            ->expectsOutputToContain('boarding and alighting permissions')
+            ->expectsOutputToContain('FAIL')
+            ->assertExitCode(1);
     }
 }

@@ -30,6 +30,7 @@ Then:
     php artisan biyahe:data:import cebu-central-network-2026-10-05.json --dry-run
     php artisan test
     php artisan biyahe:doctor
+    curl -H 'Accept: application/json' 'http://127.0.0.1:8000/api/v1/journeys?from_place_id=...&to_place_id=...'
     php artisan serve
 
 Use php artisan make:filament-user to create a local administrator. Do not
@@ -69,6 +70,18 @@ DB_USERNAME, and DB_PASSWORD for Laravel. Stop the isolated server with:
 If the package mirror does not contain PostGIS, do not compile a large stack
 just to force a local PASS. Keep Doctor's BLOCKED result truthful and use CI
 or a conventional Linux host for the real integration suite.
+
+## Journey planner checks
+
+The planner is intentionally bounded: access/egress searches are capped at
+1,000 meters, explicit transfer relationships at 600 meters, and one transit
+transfer maximum. Run the focused checks while changing routing code:
+
+    php artisan test --compact tests/Feature/JourneyApiTest.php tests/Feature/PostgisTransportTest.php tests/Unit/JourneyRankerTest.php
+
+Use the PostGIS environment for the `PostgisTransportTest` cases. A successful
+SQLite run still skips the spatial assertions and does not prove geography
+queries or route geometry behavior.
 
 ## Web
 

@@ -11,13 +11,17 @@ The document contains:
 - dataset_id;
 - license metadata with name and attribution;
 - sources;
-- cities, places, aliases, stops, operators, routes, patterns, and fares.
+- cities, places, aliases, stops, operators, routes, patterns, transfers,
+  and fares.
 
 Every record has a stable_id. Non-demo records have verification_state,
 is_demo=false, and source_id. A VERIFIED record must refer to a source with
 checked_at and verified_by. Pattern records contain a GeoJSON
 MultiLineString and an ordered nested stops list. Nested pattern stops also
-have stable IDs and positive contiguous sequence values.
+have stable IDs and positive contiguous sequence values. Transfer records
+connect two stops only when a bounded walking relationship is explicitly
+supported or intentionally marked UNVERIFIED for review; they do not create a
+general pedestrian graph.
 
 Points use an object with lat and lng. GeoJSON geometry coordinates use the
 standard [longitude, latitude] order. All geographic data is WGS 84, SRID
@@ -36,8 +40,8 @@ From api:
     php artisan biyahe:data:import cebu-central-network-2026-10-05.json
 
 Validation checks JSON shape, stable IDs, references, statuses, dates,
-coordinates, geometry, pattern order, duplicate stops, and fare values. A
-validation error returns a non-zero exit code.
+coordinates, geometry, pattern order, duplicate stops, transfer bounds, and
+fare values. A validation error returns a non-zero exit code.
 
 Dry-run performs the same validation and writes no records. A normal import
 opens one database transaction only after validation passes. Any runtime

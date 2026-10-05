@@ -15,13 +15,17 @@ Biyahe transport data.
   points, selected route-pattern MultiLineStrings, direction labels, and
   ordered pattern stops.
 
-The initial viewport is Cebu City. The Batch 002 review slice shows
+The initial viewport is Cebu City. The Batch 003 review slice shows
 OSM-derived place and stop geography, plus OSM-derived route-member geometry.
-The route and pattern service associations are visibly marked UNVERIFIED;
-they are not presented as trusted journey instructions. Demo overlays are
-excluded unless a development request explicitly includes them.
+Route-pattern overlays are shown with their direction, ordered stops, and
+trust state; unverified service associations are not presented as confirmed
+journey instructions. Demo overlays are excluded unless a development request
+explicitly includes them.
 
-The map is a data-review surface, not a journey planner. Reviewers should use
-it to spot longitude/latitude reversals, geometry gaps, direction anomalies,
-and stop-order mistakes. A future deployment can replace the style and tile
-source without changing the transport model.
+The map is both a data-review surface and a selected-journey surface.
+Reviewers should use it to spot longitude/latitude reversals, geometry gaps,
+direction anomalies, and stop-order mistakes. A selected journey displays
+origin, destination, boarding, alighting, transfer, and transit geometry. A
+walking estimate displays points and distance only; it never implies a known
+pedestrian path. A future deployment can replace the style and tile source
+without changing the transport model.

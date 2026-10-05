@@ -1,8 +1,8 @@
 # BIYAHE API
 
 This directory contains the Laravel 13 REST API, PostgreSQL/PostGIS transport
-model, Filament administration panel, reviewed Cebu dataset, importer, and
-PHPUnit tests.
+model, bounded direct/one-transfer journey planner, Filament administration
+panel, reviewed Cebu dataset, importer, and PHPUnit tests.
 
 ## Local setup
 
@@ -39,7 +39,11 @@ from corrupt transport data. It never claims a spatial PASS on SQLite.
 
 The public API is versioned under /api/v1. Default collections hide demo and
 retired records; trusted_only=1 selects only non-demo VERIFIED records.
-Distances and nearby-query radii are expressed in meters.
+Journeys use `GET /api/v1/journeys?from_place_id=&to_place_id=` and exclude
+demo, stale, retired, and draft routing records. They may include explicitly
+marked UNVERIFIED service associations with a user-facing warning. Distances
+and nearby-query radii are expressed in meters; walking values are
+straight-line estimates.
 
 See the repository documentation for the data format, OSM/ODbL obligations,
 domain model, map review behavior, and verification lifecycle.

@@ -36,7 +36,7 @@ class Stop extends Model
 
     public function getLocationPointAttribute(): ?array
     {
-        return Geo::parsePoint($this->attributes['location'] ?? null);
+        return Geo::parsePoint($this->attributes['location_wkt'] ?? $this->attributes['location'] ?? null);
     }
 
     public function city(): BelongsTo

@@ -17,7 +17,28 @@
 .suggestions small, .patternList small { color: #6d858b; font-size: .72rem; }
 .primaryButton { align-self: end; border: 0; border-radius: 10px; padding: 14px 22px; color: #fff; background: #176b87; font: inherit; font-weight: 800; cursor: pointer; }
 .primaryButton:hover { background: #10556d; }
+.primaryButton:disabled { cursor: wait; opacity: .65; }
 .status { grid-column: 1 / -1; margin: 0; color: #6d858b; font-size: .82rem; }
+.error { grid-column: 1 / -1; margin: 0; color: #a53f36; font-size: .82rem; }
+.resultsSection { width: min(880px, calc(100% - 32px)); margin: 0 auto; padding: 42px 0 0; }
+.journeyGrid { display: grid; gap: 14px; margin-top: 18px; }
+.journeyCard { border: 1px solid #dfded7; border-radius: 18px; padding: 18px; background: #fff; box-shadow: 0 10px 28px rgba(21, 59, 69, .05); }
+.journeyCard.recommended { border-color: #e07a5f; box-shadow: 0 14px 36px rgba(224, 122, 95, .12); }
+.journeyCardHeader, .journeyFooter { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.journeyCardHeader h3 { margin: 4px 0 0; font-size: 1.25rem; }
+.trustBadge { border: 1px solid #d6d2c8; border-radius: 999px; padding: 6px 9px; color: #6d858b; font-size: .68rem; font-weight: 800; letter-spacing: .08em; }
+.legList { display: grid; gap: 0; margin: 18px 0; }
+.rideLeg, .walkLeg { display: grid; grid-template-columns: 42px 1fr; gap: 12px; padding: 14px 0; border-top: 1px solid #edf0ec; }
+.legMarker { display: grid; min-height: 32px; place-items: center; align-self: start; border-radius: 9px; color: #fff; background: #153b45; font-size: .72rem; font-weight: 800; }
+.walkLeg .legMarker { color: #7b61a8; background: #f0ebf8; font-size: 1.1rem; }
+.legBody p { margin: 0 0 5px; color: #5d777e; font-size: .88rem; line-height: 1.45; }
+.legBody p strong { color: #153b45; }
+.legBody .legLabel { color: #d3624d; font-size: .7rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+.legBody small { color: #799096; font-size: .76rem; }
+.journeyFooter { border-top: 1px solid #edf0ec; padding-top: 14px; color: #5d777e; font-size: .8rem; }
+.secondaryButton { border: 1px solid #176b87; border-radius: 9px; padding: 8px 10px; color: #176b87; background: #fff; cursor: pointer; font-size: .78rem; font-weight: 700; }
+.secondaryButton:hover { color: #fff; background: #176b87; }
+.warning { margin: 14px 0 0; border-radius: 9px; padding: 10px 12px; color: #8b5a31; background: #fff8e9; font-size: .8rem; line-height: 1.45; }
 .exploration, .routeSection { padding: 42px 0 0; }
 .sectionHeading { display: flex; align-items: end; justify-content: space-between; gap: 12px; }
 .sectionHeading h2 { margin: 6px 0 0; color: #153b45; font-size: clamp(1.8rem, 4vw, 2.8rem); letter-spacing: -.04em; }
@@ -29,7 +50,7 @@
 .mapLegend { position: absolute; right: 12px; bottom: 12px; display: flex; flex-wrap: wrap; gap: 9px; border-radius: 10px; padding: 8px 10px; color: #153b45; background: rgba(255, 255, 255, .9); font-size: .72rem; }
 .mapLegend span { display: flex; align-items: center; gap: 5px; }
 .mapLegend i { display: inline-block; width: 8px; height: 8px; border-radius: 50%; }
-.placeDot { background: #e07a5f; }.stopDot { background: #176b87; }.routeDot { background: #e07a5f; width: 18px !important; height: 3px !important; border-radius: 0 !important; }
+.placeDot { background: #e07a5f; }.stopDot { background: #176b87; }.routeDot { background: #e07a5f; width: 18px !important; height: 3px !important; border-radius: 0 !important; }.transferDot { background: #7b61a8; }
 .infoCard { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 12px; border: 1px solid #dfded7; border-radius: 14px; padding: 14px 16px; background: #fff; }
 .infoCard h3 { margin: 4px 0 0; font-size: 1rem; }.infoCard p { margin: 0; color: #5d777e; font-size: .86rem; line-height: 1.45; }.infoCard button { border: 0; color: #176b87; background: transparent; cursor: pointer; font-weight: 700; }
 .cardKicker { color: #d3624d !important; font-size: .64rem !important; font-weight: 800; letter-spacing: .09em; }
@@ -41,4 +62,4 @@
 .patternList button { display: flex; min-width: 120px; flex-direction: column; gap: 3px; border: 1px solid #d4dcd9; border-radius: 9px; padding: 8px 10px; text-align: left; color: #153b45; background: #fbfcfa; cursor: pointer; font: inherit; font-size: .78rem; }
 .patternList button:hover, .patternActive { border-color: #e07a5f !important; background: #fff5f1 !important; }
 .emptyState { margin: 18px 0; color: #6d858b; }.footer { display: flex; justify-content: space-between; gap: 16px; width: min(1120px, calc(100% - 32px)); margin: 60px auto 0; border-top: 1px solid #d8ddd7; padding: 18px 0 28px; color: #799096; font-size: .74rem; }
-@media (max-width: 700px) { .hero { padding-top: 28px; }.searchCard { grid-template-columns: 1fr; }.primaryButton { width: 100%; }.suggestions { top: 72px; }.map-frame { min-height: 360px; }.routeGrid { grid-template-columns: 1fr; }.infoCard { align-items: start; flex-direction: column; }.footer { flex-direction: column; } }
+@media (max-width: 700px) { .hero { padding-top: 28px; }.searchCard { grid-template-columns: 1fr; }.primaryButton { width: 100%; }.suggestions { top: 72px; }.map-frame { min-height: 360px; }.routeGrid { grid-template-columns: 1fr; }.infoCard { align-items: start; flex-direction: column; }.footer { flex-direction: column; }.journeyCard { padding: 14px; }.journeyFooter { align-items: start; flex-direction: column; }.secondaryButton { width: 100%; }.resultsSection { padding-top: 28px; } }

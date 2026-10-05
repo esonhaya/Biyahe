@@ -11,7 +11,7 @@ osm-cebu-transport-2026-10-05:
 - license: OpenStreetMap ODbL;
 - verification method: direct inspection of the cited OSM objects and
   geometry, with route-member paths retained in the dataset;
-- reviewer: BIYAHE Batch 002 data review.
+- reviewer: BIYAHE Batch 003 data review.
 
 The source record links to the OpenStreetMap copyright page and records the
 OSM object references in its notes. Route relations used for the initial
@@ -21,12 +21,14 @@ review slice are:
 - relation 3177015, Jeepney 17B: Apas - Lahug - Carbon.
 
 The reviewed place and stop coordinates are OSM-derived geographic facts.
-Route geometry is derived from member ways of the cited relations. The
-dataset deliberately marks route records, route patterns, and their
-pattern-stop service associations UNVERIFIED: the current evidence is
-appropriate for a review network, but does not by itself prove every
-boarding, direction, or currently operating service claim. No fare is
-invented in this slice.
+Route geometry and route identities are derived from member ways and the
+cited route relations, so the two Route records are VERIFIED for those
+specific facts. RoutePattern records and their pattern-stop service
+associations remain UNVERIFIED: the current evidence does not by itself prove
+every boarding, direction, or currently operating passenger-service claim.
+The two curated B. Rodriguez Extension ↔ Fuente transfer records are also
+UNVERIFIED straight-line screening relationships, not confirmed pedestrian
+routes. No fare is invented in this slice.
 
 ## ODbL responsibilities
 

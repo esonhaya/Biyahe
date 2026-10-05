@@ -12,6 +12,7 @@ use App\Models\Route;
 use App\Models\RoutePattern;
 use App\Models\RoutePatternStop;
 use App\Models\Stop;
+use App\Models\TransferRelationship;
 use App\Models\VehicleType;
 use App\Support\Geo;
 use Closure;
@@ -250,6 +251,34 @@ final class DatasetImporter
                         $summary,
                     );
                 }
+            }
+
+            foreach ($this->sorted($data['transfers'] ?? []) as $record) {
+                $cityId = $this->reference($cityIds, $record['city_id'], 'city');
+                $fromStopId = $this->reference($stopIds, $record['from_stop_id'], 'stop');
+                $toStopId = $this->reference($stopIds, $record['to_stop_id'], 'stop');
+                $this->saveRecord(
+                    TransferRelationship::class,
+                    $record['stable_id'],
+                    [
+                        'city_id' => $cityId,
+                        'from_stop_id' => $fromStopId,
+                        'to_stop_id' => $toStopId,
+                        'provenance_source_id' => $this->sourceId($record['source_id'] ?? null, $sourceIds),
+                        'relationship_type' => $record['relationship_type'],
+                        'distance_meters' => $record['distance_meters'] ?? null,
+                        'is_active' => $record['is_active'] ?? true,
+                        'verification_state' => $record['verification_state'],
+                        'is_demo' => $record['is_demo'],
+                        'notes' => $record['notes'] ?? null,
+                    ],
+                    'transfers',
+                    fn (): ?Model => TransferRelationship::query()
+                        ->where('from_stop_id', $fromStopId)
+                        ->where('to_stop_id', $toStopId)
+                        ->first(),
+                    $summary,
+                );
             }
 
             foreach ($this->sorted($data['fares'] ?? []) as $record) {

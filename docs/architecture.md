@@ -13,15 +13,26 @@ landmark; Stop represents a boarding or alighting location.
 Places and stops use PostGIS geography(Point,4326). Pattern paths use
 geometry(MultiLineString,4326) with GiST indexes. The SQLite test fallback
 stores WKT text and uses a bounded PHP distance fallback only when PostGIS is
-not available; it is not a production spatial implementation.
+not available; it is not a production spatial implementation. Transfer
+relationships are explicit, bounded walking-transfer evidence rather than a
+general road graph.
 
 Collection endpoints paginate and eager-load the relationships needed for
 their response. Nearby-stop queries use ST_DWithin and ST_Distance on
-PostGIS. There is no street network, road matcher, or journey planner in
-this batch.
+PostGIS. `JourneyPlanner` keeps spatial candidate discovery in PostGIS and
+performs direct or one-transfer stop-sequence reasoning in the application.
+Journey results are ephemeral and are not persisted.
+
+The planner exposes separate access, ride, transfer-walk, and egress legs.
+Walking is a bounded straight-line estimate, never a claimed pedestrian
+route. Routing excludes demo, draft, stale, and retired service records and
+derives a VERIFIED, MIXED, or UNVERIFIED result state from its underlying
+facts.
 
 ## Scaling points
 
 Future batches can add cache policy for stable geography, bounded map
-viewport endpoints, reviewed imports, and a routing graph after real
-transport data and usage patterns exist.
+viewport endpoints, schedules, fare products, better transfer evidence, and
+a pedestrian-routing adapter after real transport data and usage patterns
+exist. Unrestricted multi-transfer graph search remains deliberately out of
+scope.

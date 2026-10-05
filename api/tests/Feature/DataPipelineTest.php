@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Enums\VehicleTypeCode;
 use App\Models\ProvenanceSource;
+use App\Models\TransferRelationship;
 use App\Models\VehicleType;
 use App\Services\Data\DatasetImporter;
 use App\Services\Data\DatasetValidator;
@@ -55,6 +56,26 @@ class DataPipelineTest extends TestCase
         $this->assertSame(0, $second->total('updated'));
         $this->assertGreaterThan(0, $second->total('skipped'));
         $this->assertSame(1, ProvenanceSource::where('stable_id', 'osm-cebu-transport-2026-10-05')->count());
+        $this->assertSame(2, TransferRelationship::where('is_demo', false)->count());
+    }
+
+    public function test_transfer_evidence_stays_unverified_until_reviewed(): void
+    {
+        foreach (VehicleTypeCode::cases() as $vehicleType) {
+            VehicleType::create([
+                'code' => $vehicleType->value,
+                'name' => $vehicleType->value,
+                'is_active' => true,
+            ]);
+        }
+
+        $result = app(DatasetValidator::class)->validate($this->datasetPath());
+        app(DatasetImporter::class)->import($result->data ?? []);
+
+        $this->assertSame(
+            ['UNVERIFIED'],
+            TransferRelationship::query()->pluck('verification_state')->map(fn ($state): string => $state->value)->unique()->values()->all(),
+        );
     }
 
     public function test_invalid_dataset_reports_duplicate_and_unresolved_references(): void
@@ -71,6 +92,24 @@ class DataPipelineTest extends TestCase
             $this->assertFalse($result->isValid());
             $this->assertTrue(collect($messages)->contains(fn (string $message): bool => str_contains($message, 'Duplicate stable_id')));
             $this->assertTrue(collect($messages)->contains(fn (string $message): bool => str_contains($message, 'does not resolve')));
+        } finally {
+            unlink($path);
+        }
+    }
+
+    public function test_duplicate_transfer_pairs_are_rejected_even_with_different_stable_ids(): void
+    {
+        $data = $this->dataset();
+        $duplicate = $data['transfers'][0];
+        $duplicate['stable_id'] = 'transfer-duplicate-pair';
+        $data['transfers'][] = $duplicate;
+        $path = $this->temporaryDataset($data);
+
+        try {
+            $result = app(DatasetValidator::class)->validate($path);
+
+            $this->assertFalse($result->isValid());
+            $this->assertTrue(collect(array_column($result->errors(), 'message'))->contains(fn (string $message): bool => str_contains($message, 'Duplicate transfer relationship')));
         } finally {
             unlink($path);
         }
