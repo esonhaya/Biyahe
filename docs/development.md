@@ -28,8 +28,12 @@ Then:
     php artisan migrate:fresh --seed
     php artisan biyahe:data:validate cebu-central-network-2026-10-05.json
     php artisan biyahe:data:import cebu-central-network-2026-10-05.json --dry-run
+    php artisan biyahe:data:validate cebu-network-expansion-2026-10-05.json
+    php artisan biyahe:data:import cebu-network-expansion-2026-10-05.json --dry-run
     php artisan test
     php artisan biyahe:doctor
+    php artisan biyahe:transfers:candidates --city=cebu-city
+    php artisan biyahe:network:audit --pairs=50
     curl -H 'Accept: application/json' 'http://127.0.0.1:8000/api/v1/journeys?from_place_id=...&to_place_id=...'
     php artisan serve
 

@@ -29,3 +29,8 @@ origin, destination, boarding, alighting, transfer, and transit geometry. A
 walking estimate displays points and distance only; it never implies a known
 pedestrian path. A future deployment can replace the style and tile source
 without changing the transport model.
+
+The expansion overlay intentionally shows sampled OSM platform members as
+reviewable stop points, not confirmed curbside boarding. Admins should compare
+route direction, ordered sequence, boarding/alighting permissions, and source
+freshness before promoting an association.

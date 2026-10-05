@@ -37,6 +37,11 @@ class StopForm
                     ->required(),
                 Textarea::make('boarding_notes')
                     ->columnSpanFull(),
+                TextInput::make('boarding_side')
+                    ->helperText('Optional side or direction label only when supported by evidence.'),
+                Textarea::make('direction_note')
+                    ->helperText('Optional direction/roadside note; do not infer it from geometry alone.')
+                    ->columnSpanFull(),
                 Toggle::make('is_active')
                     ->required(),
                 VerificationStateField::make(),

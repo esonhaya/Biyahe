@@ -119,7 +119,7 @@ final class JourneyPlanner
 
         foreach ($patterns as $pattern) {
             foreach ($pattern->patternStops as $boardingPatternStop) {
-                if (! $boardingPatternStop->boarding_allowed) {
+                if (! Trust::isRoutable($boardingPatternStop) || ! $boardingPatternStop->boarding_allowed) {
                     continue;
                 }
 
@@ -130,7 +130,8 @@ final class JourneyPlanner
 
                 foreach ($pattern->patternStops as $alightingPatternStop) {
                     if (
-                        ! $alightingPatternStop->alighting_allowed
+                        ! Trust::isRoutable($alightingPatternStop)
+                        || ! $alightingPatternStop->alighting_allowed
                         || $alightingPatternStop->sequence <= $boardingPatternStop->sequence
                     ) {
                         continue;
@@ -176,6 +177,9 @@ final class JourneyPlanner
                             $alightingPatternStop,
                         ],
                     );
+                    if (count($journeys) >= $this->generatedJourneyLimit()) {
+                        return $journeys;
+                    }
                 }
             }
         }
@@ -227,7 +231,7 @@ final class JourneyPlanner
 
         foreach ($firstPatterns as $firstPattern) {
             foreach ($firstPattern->patternStops as $firstBoardingPatternStop) {
-                if (! $firstBoardingPatternStop->boarding_allowed) {
+                if (! Trust::isRoutable($firstBoardingPatternStop) || ! $firstBoardingPatternStop->boarding_allowed) {
                     continue;
                 }
                 $boardingStop = $boardingById->get($firstBoardingPatternStop->stop_id);
@@ -237,7 +241,8 @@ final class JourneyPlanner
 
                 foreach ($firstPattern->patternStops as $firstAlightingPatternStop) {
                     if (
-                        ! $firstAlightingPatternStop->alighting_allowed
+                        ! Trust::isRoutable($firstAlightingPatternStop)
+                        || ! $firstAlightingPatternStop->alighting_allowed
                         || $firstAlightingPatternStop->sequence <= $firstBoardingPatternStop->sequence
                     ) {
                         continue;
@@ -256,7 +261,7 @@ final class JourneyPlanner
                         }
 
                         foreach ($secondPattern->patternStops as $secondBoardingPatternStop) {
-                            if (! $secondBoardingPatternStop->boarding_allowed) {
+                            if (! Trust::isRoutable($secondBoardingPatternStop) || ! $secondBoardingPatternStop->boarding_allowed) {
                                 continue;
                             }
                             $secondBoardingStop = $secondBoardingPatternStop->stop;
@@ -273,6 +278,10 @@ final class JourneyPlanner
                                 if (! $relationship instanceof TransferRelationship) {
                                     continue;
                                 }
+                                if (($relationship->from_route_pattern_id !== null && (int) $relationship->from_route_pattern_id !== (int) $firstPattern->getKey())
+                                    || ($relationship->to_route_pattern_id !== null && (int) $relationship->to_route_pattern_id !== (int) $secondPattern->getKey())) {
+                                    continue;
+                                }
                                 $transferDistance = $relationship->distance_meters
                                     ?? $this->distanceBetweenStops($firstAlightingStop, $secondBoardingStop);
                                 if ($transferDistance > $maxTransferRadiusMeters) {
@@ -282,7 +291,8 @@ final class JourneyPlanner
 
                             foreach ($secondPattern->patternStops as $secondAlightingPatternStop) {
                                 if (
-                                    ! $secondAlightingPatternStop->alighting_allowed
+                                    ! Trust::isRoutable($secondAlightingPatternStop)
+                                    || ! $secondAlightingPatternStop->alighting_allowed
                                     || $secondAlightingPatternStop->sequence <= $secondBoardingPatternStop->sequence
                                 ) {
                                     continue;
@@ -297,6 +307,8 @@ final class JourneyPlanner
                                     $secondBoardingStop,
                                     $transferDistance,
                                     $relationship,
+                                    $firstAlightingPatternStop,
+                                    $secondBoardingPatternStop,
                                 );
                                 $journeys[] = $this->buildJourney(
                                     id: sprintf(
@@ -320,7 +332,7 @@ final class JourneyPlanner
                                             $firstPattern,
                                             $firstBoardingPatternStop,
                                             $firstAlightingPatternStop,
-                                            $firstAlightingStop->name,
+                                            $this->cueForStop($firstAlightingStop),
                                         ),
                                         $transferLeg,
                                         $this->buildRideLeg(
@@ -354,6 +366,9 @@ final class JourneyPlanner
                                         $relationship,
                                     ],
                                 );
+                                if (count($journeys) >= $this->generatedJourneyLimit()) {
+                                    return $journeys;
+                                }
                             }
                         }
                     }
@@ -369,8 +384,10 @@ final class JourneyPlanner
         Stop $toStop,
         float $distanceMeters,
         ?TransferRelationship $relationship,
+        ?RoutePatternStop $fromAssociation = null,
+        ?RoutePatternStop $toAssociation = null,
     ): JourneyLeg {
-        $models = [$fromStop, $toStop, $relationship];
+        $models = [$fromStop, $toStop, $relationship, $fromAssociation, $toAssociation];
         $trustState = $this->trustState($models);
 
         return new JourneyLeg(
@@ -421,6 +438,7 @@ final class JourneyPlanner
         $driverInstruction = $driverCue === null || trim($driverCue) === ''
             ? null
             : 'Tell the driver: "'.$driverCue.'".';
+        $boardingInstruction = $this->boardingInstruction($boardingPatternStop->stop);
         $getOffGuidance = 'Get off near '.$alightingPatternStop->stop->name.'.';
         if ($trustState !== JourneyTrustState::VERIFIED) {
             $getOffGuidance .= ' The mapped stop association is still being checked.';
@@ -435,6 +453,11 @@ final class JourneyPlanner
             boardingStop: $this->stopSummary($boardingPatternStop->stop),
             alightingStop: $this->stopSummary($alightingPatternStop->stop),
             stopCount: $alightingPatternStop->sequence - $boardingPatternStop->sequence,
+            boardingSequence: $boardingPatternStop->sequence,
+            alightingSequence: $alightingPatternStop->sequence,
+            boardingInstruction: $boardingInstruction,
+            boardingAssociation: Trust::status($boardingPatternStop),
+            alightingAssociation: Trust::status($alightingPatternStop),
             driverInstruction: $driverInstruction,
             getOffGuidance: $getOffGuidance,
             trust: $trustState,
@@ -562,6 +585,13 @@ final class JourneyPlanner
             'name' => $stop->name,
             'code' => $stop->code,
             'location' => $stop->location_point,
+            'is_boarding_point' => (bool) $stop->is_boarding_point,
+            'boarding_notes' => $stop->boarding_notes,
+            'boarding_side' => $stop->boarding_side,
+            'direction_note' => $stop->direction_note,
+            'nearby_place' => $stop->relationLoaded('nearbyPlace') && $stop->nearbyPlace !== null
+                ? ['id' => $stop->nearbyPlace->getKey(), 'name' => $stop->nearbyPlace->name]
+                : null,
             'verification' => Trust::status($stop),
         ];
     }
@@ -724,7 +754,7 @@ final class JourneyPlanner
                     $builder->orderBy('sequence')->with([
                         'provenanceSource',
                         'stop' => function ($stop): void {
-                            $stop->with(['provenanceSource']);
+                            $stop->with(['provenanceSource', 'nearbyPlace']);
                             if (config('database.default') === 'pgsql') {
                                 $stop->addSelect(['stops.*', DB::raw('ST_AsText(stops.location) AS location_wkt')]);
                             }
@@ -742,6 +772,38 @@ final class JourneyPlanner
         }
 
         return $query;
+    }
+
+    private function cueForStop(Stop $stop): ?string
+    {
+        if ($stop->relationLoaded('nearbyPlace') && $stop->nearbyPlace !== null) {
+            return $stop->nearbyPlace->name;
+        }
+
+        return preg_match('/^OSM platform /', $stop->name) === 1 ? null : $stop->name;
+    }
+
+    private function boardingInstruction(Stop $stop): string
+    {
+        $location = $stop->relationLoaded('nearbyPlace') && $stop->nearbyPlace !== null
+            ? $stop->name.' near '.$stop->nearbyPlace->name
+            : $stop->name;
+        $details = array_values(array_filter([
+            $stop->boarding_notes,
+            $stop->boarding_side === null ? null : 'Wait on '.$stop->boarding_side.'.',
+            $stop->direction_note,
+        ], static fn (?string $detail): bool => $detail !== null && trim($detail) !== ''));
+
+        if ($details === []) {
+            return 'Wait near '.$location.'. Exact curbside boarding is not confirmed.';
+        }
+
+        return 'Wait near '.$location.'. '.implode(' ', $details);
+    }
+
+    private function generatedJourneyLimit(): int
+    {
+        return min(max((int) config('biyahe.routing.max_generated_journeys', 300), 10), 1000);
     }
 
     /** @param list<Journey> $journeys @return list<Journey> */

@@ -5,6 +5,7 @@ namespace App\Services\Data;
 use App\Enums\VehicleTypeCode;
 use App\Enums\VerificationState;
 use App\Support\Geo;
+use App\Support\SearchText;
 use DateTimeImmutable;
 use Throwable;
 
@@ -129,6 +130,7 @@ final class DatasetValidator
                 $this->validatePoint($record['location'] ?? null, $path.'.location', $result, true);
             }
         }
+        $normalizedAliases = [];
         foreach ($records['aliases'] as $recordIndex => $record) {
             if (is_array($record)) {
                 $path = 'aliases.'.$recordIndex;
@@ -136,6 +138,13 @@ final class DatasetValidator
                 $this->requireReference($record['place_id'] ?? null, $knownIds['places'], $path.'.place_id', $result);
                 $this->requireString($record, 'alias', $path.'.alias', $result);
                 $this->requireOptionalReference($record['source_id'] ?? null, $knownIds['sources'], $path.'.source_id', $result);
+                if (is_string($record['place_id'] ?? null) && is_string($record['alias'] ?? null)) {
+                    $normalized = SearchText::normalize($record['alias']);
+                    if (isset($normalizedAliases[$record['place_id']][$normalized])) {
+                        $result->addError($path.'.alias', 'Duplicate normalized alias for the same place; punctuation and spacing variants must be represented once.');
+                    }
+                    $normalizedAliases[$record['place_id']][$normalized] = $path;
+                }
             }
         }
         foreach ($records['stops'] as $recordIndex => $record) {
@@ -147,6 +156,11 @@ final class DatasetValidator
                 $this->requireOptionalReference($record['nearby_place_id'] ?? null, $knownIds['places'], $path.'.nearby_place_id', $result);
                 $this->requireString($record, 'name', $path.'.name', $result);
                 $this->requireString($record, 'code', $path.'.code', $result);
+                foreach (['boarding_side', 'direction_note'] as $field) {
+                    if (isset($record[$field]) && $record[$field] !== null && (! is_string($record[$field]) || trim($record[$field]) === '')) {
+                        $result->addError($path.'.'.$field, $field.' must be a non-empty string when supplied.');
+                    }
+                }
                 $this->validatePoint($record['location'] ?? null, $path.'.location', $result, true);
             }
         }
@@ -283,6 +297,12 @@ final class DatasetValidator
             if (isset($stop['stop_id'])) {
                 $stopIds[$stop['stop_id']] = true;
             }
+            if (isset($stop['verification_state']) && (! is_string($stop['verification_state']) || ! in_array($stop['verification_state'], VerificationState::values(), true))) {
+                $result->addError($stopPath.'.verification_state', 'verification_state must be DRAFT, UNVERIFIED, VERIFIED, STALE, or RETIRED when supplied.');
+            }
+            if (($stop['verification_state'] ?? null) === VerificationState::VERIFIED->value && ! isset($stop['source_id']) && ! isset($record['source_id'])) {
+                $result->addError($stopPath.'.source_id', 'VERIFIED pattern-stop associations require provenance.');
+            }
             $this->requireOptionalReference($stop['source_id'] ?? null, $knownIds['sources'], $stopPath.'.source_id', $result);
         }
         ksort($sequences);
@@ -327,6 +347,13 @@ final class DatasetValidator
         $this->requireString($record, 'relationship_type', $path.'.relationship_type', $result);
         if (isset($record['distance_meters']) && (! is_numeric($record['distance_meters']) || (float) $record['distance_meters'] < 0)) {
             $result->addError($path.'.distance_meters', 'distance_meters must be a non-negative number when supplied.');
+        }
+        $this->requireOptionalReference($record['from_pattern_id'] ?? null, $knownIds['patterns'], $path.'.from_pattern_id', $result);
+        $this->requireOptionalReference($record['to_pattern_id'] ?? null, $knownIds['patterns'], $path.'.to_pattern_id', $result);
+        foreach (['landmark', 'practical_note'] as $field) {
+            if (isset($record[$field]) && $record[$field] !== null && (! is_string($record[$field]) || trim($record[$field]) === '')) {
+                $result->addError($path.'.'.$field, $field.' must be a non-empty string when supplied.');
+            }
         }
     }
 

@@ -64,11 +64,15 @@ jobs:
 
       - name: Validate reviewed dataset
         working-directory: api
-        run: php artisan biyahe:data:validate cebu-central-network-2026-10-05.json
+        run: |
+          php artisan biyahe:data:validate cebu-central-network-2026-10-05.json
+          php artisan biyahe:data:validate cebu-network-expansion-2026-10-05.json
 
       - name: Dry-run reviewed dataset import
         working-directory: api
-        run: php artisan biyahe:data:import cebu-central-network-2026-10-05.json --dry-run
+        run: |
+          php artisan biyahe:data:import cebu-central-network-2026-10-05.json --dry-run
+          php artisan biyahe:data:import cebu-network-expansion-2026-10-05.json --dry-run
 
       - name: Run backend and PostGIS tests
         working-directory: api

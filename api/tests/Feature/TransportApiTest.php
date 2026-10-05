@@ -42,8 +42,12 @@ class TransportApiTest extends TestCase
 
         $this->getJson('/api/v1/places?city=cebu-city')
             ->assertOk()
-            ->assertJsonCount(9, 'data')
+            ->assertJsonCount(20, 'data')
             ->assertJsonPath('data.0.verification.trusted', true);
+
+        $this->getJson('/api/v1/places/search?q=IT%20Park')
+            ->assertOk()
+            ->assertJsonPath('data.0.name', 'Cebu IT Park');
 
         $this->getJson('/api/v1/places/search?q=DEMO%20Fuente&include_demo=1')
             ->assertOk()
@@ -75,7 +79,8 @@ class TransportApiTest extends TestCase
 
         $this->getJson('/api/v1/stops')
             ->assertOk()
-            ->assertJsonCount(13, 'data')
+            ->assertJsonCount(20, 'data')
+            ->assertJsonPath('meta.total', 48)
             ->assertJsonFragment(['code' => 'OSM-10251749651']);
     }
 
@@ -97,7 +102,7 @@ class TransportApiTest extends TestCase
     {
         $this->getJson('/api/v1/routes?trusted_only=1')
             ->assertOk()
-            ->assertJsonCount(2, 'data');
+            ->assertJsonCount(8, 'data');
 
         $this->getJson('/api/v1/routes?include_demo=1&q=DEMO-04L&per_page=1')
             ->assertOk()

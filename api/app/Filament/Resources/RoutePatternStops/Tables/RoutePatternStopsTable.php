@@ -31,6 +31,9 @@ class RoutePatternStopsTable
                     ->boolean(),
                 IconColumn::make('alighting_allowed')
                     ->boolean(),
+                TextColumn::make('verification_state')
+                    ->badge()
+                    ->searchable(),
                 TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()

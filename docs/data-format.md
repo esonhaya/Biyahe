@@ -18,7 +18,11 @@ Every record has a stable_id. Non-demo records have verification_state,
 is_demo=false, and source_id. A VERIFIED record must refer to a source with
 checked_at and verified_by. Pattern records contain a GeoJSON
 MultiLineString and an ordered nested stops list. Nested pattern stops also
-have stable IDs and positive contiguous sequence values. Transfer records
+have stable IDs, their own verification state, and positive contiguous
+sequence values. Stops may include `boarding_side`, `direction_note`, and a
+human review note; these describe a boarding lead and do not prove that every
+route-pattern association is correct. Transfer records may identify the
+directional patterns, landmark, and practical review note involved. They
 connect two stops only when a bounded walking relationship is explicitly
 supported or intentionally marked UNVERIFIED for review; they do not create a
 general pedestrian graph.
@@ -38,6 +42,10 @@ From api:
     php artisan biyahe:data:validate cebu-central-network-2026-10-05.json
     php artisan biyahe:data:import cebu-central-network-2026-10-05.json --dry-run
     php artisan biyahe:data:import cebu-central-network-2026-10-05.json
+    php artisan biyahe:data:validate cebu-network-expansion-2026-10-05.json
+    php artisan biyahe:data:import cebu-network-expansion-2026-10-05.json --dry-run
+    php artisan biyahe:transfers:candidates --city=cebu-city
+    php artisan biyahe:network:audit --pairs=50
 
 Validation checks JSON shape, stable IDs, references, statuses, dates,
 coordinates, geometry, pattern order, duplicate stops, transfer bounds, and

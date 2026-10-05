@@ -36,8 +36,9 @@ otherwise not eligible for guidance.
 4. One-transfer candidates use either a shared stop or an explicit
    `transfer_relationships` record. Batch 003 does not infer every nearby
    point to be a safe transfer. The Cebu B. Rodriguez Extension ↔ Fuente
-   relationship is a curated, UNVERIFIED straight-line candidate and is
-   shown with uncertainty.
+   relationship is a directional, curated, UNVERIFIED straight-line candidate
+   and is shown with uncertainty. The `biyahe:transfers:candidates` command
+   finds additional bounded review leads without auto-verifying them.
 5. Candidates are deduplicated and ranked before the result limit is applied.
 
 The web review surface still exposes route patterns, direction, permissions,
@@ -69,6 +70,11 @@ The current real journeys are normally `MIXED`: OSM place/stop geography and
 route identity are reviewed, while exact passenger stop service associations
 still need stronger evidence.
 
+Ride legs expose the boarding note, nearby landmark when recorded, boarding
+and alighting association trust, route direction, stop sequences, and a
+plain-language instruction to wait near the mapped point. Generic OSM platform
+members are explicitly described as unconfirmed curbside boarding leads.
+
 The rank policy is lexicographic and deterministic:
 
 1. verified data before mixed data before unverified data;
@@ -80,8 +86,10 @@ The rank policy is lexicographic and deterministic:
 The planner has no reliable schedule, traffic, or speed model and therefore
 does not invent an ETA. No production fare is currently supported; the API
 returns `Fare unavailable`, never zero. Driver cues use a recorded place alias
-or mapped stop name. Get-off guidance says “near” rather than claiming exact
-street-side precision.
+or a supported transfer landmark; a generic platform member is not turned into
+a fabricated local phrase. Get-off guidance says “near” rather than claiming
+exact street-side precision. Stale fare evidence remains unavailable in
+journey responses.
 
 ## Network requirements and future work
 
@@ -94,3 +102,9 @@ Future batches may add better transfer evidence, schedules, accessibility
 rules, fare products, and a real pedestrian router. They must not silently
 turn straight-line distances into walking directions or promote an incomplete
 pattern to VERIFIED.
+
+`biyahe:network:audit` runs a bounded developer audit over known canonical
+place pairs. It reports pairs examined, direct and one-transfer coverage,
+unknown pairs, and invariant errors such as backwards rides, excess transfers,
+or trust leakage. It is a coverage diagnostic, not a claim that every Cebu
+place pair should be routable.

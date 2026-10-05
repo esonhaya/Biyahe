@@ -204,11 +204,13 @@ class DatabaseSeeder extends Seeder
             );
         }
 
-        $dataset = app(DatasetValidator::class)->validate(database_path('data/cebu-central-network-2026-10-05.json'));
-        if (! $dataset->isValid() || $dataset->data === null) {
-            throw new RuntimeException('The reviewed Cebu dataset failed validation while seeding.');
-        }
+        foreach (['cebu-central-network-2026-10-05.json', 'cebu-network-expansion-2026-10-05.json'] as $datasetName) {
+            $dataset = app(DatasetValidator::class)->validate(database_path('data/'.$datasetName));
+            if (! $dataset->isValid() || $dataset->data === null) {
+                throw new RuntimeException('The reviewed Cebu dataset '.$datasetName.' failed validation while seeding.');
+            }
 
-        app(DatasetImporter::class)->import($dataset->data);
+            app(DatasetImporter::class)->import($dataset->data);
+        }
     }
 }

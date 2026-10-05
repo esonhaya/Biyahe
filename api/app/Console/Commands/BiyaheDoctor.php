@@ -4,8 +4,10 @@ namespace App\Console\Commands;
 
 use App\Enums\VerificationState;
 use App\Services\Data\DatasetValidator;
+use App\Services\Routing\NetworkAudit;
 use App\Support\Diagnostics\DoctorCheckResult;
 use App\Support\Diagnostics\DoctorReport;
+use App\Support\SearchText;
 use Illuminate\Console\Command;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\DB;
@@ -27,7 +29,7 @@ class BiyaheDoctor extends Command
     public function handle(): int
     {
         $this->report = new DoctorReport;
-        $this->info('BIYAHE DOCTOR V3');
+        $this->info('BIYAHE DOCTOR V4');
         $this->check('application', 'PASS', 'Laravel booted and configuration loaded.');
 
         $databaseReady = $this->checkDatabase();
@@ -45,8 +47,8 @@ class BiyaheDoctor extends Command
             return $this->exitCode();
         }
 
-        if (! $this->hasBatch003Schema()) {
-            $this->check('transport schema', 'FAIL', 'Batch 003 routing migration is missing or incomplete.');
+        if (! $this->hasBatch004Schema()) {
+            $this->check('transport schema', 'FAIL', 'Batch 004 evidence migration is missing or incomplete.');
 
             return $this->exitCode();
         }
@@ -104,14 +106,18 @@ class BiyaheDoctor extends Command
         }
     }
 
-    private function hasBatch003Schema(): bool
+    private function hasBatch004Schema(): bool
     {
         return Schema::hasColumn('provenance_sources', 'stable_id')
             && Schema::hasColumn('provenance_sources', 'checked_at')
             && Schema::hasColumn('places', 'stable_id')
             && Schema::hasColumn('route_pattern_stops', 'provenance_source_id')
+            && Schema::hasColumn('route_pattern_stops', 'verification_state')
+            && Schema::hasColumn('stops', 'boarding_side')
             && Schema::hasTable('transfer_relationships')
-            && Schema::hasColumn('transfer_relationships', 'stable_id');
+            && Schema::hasColumn('transfer_relationships', 'stable_id')
+            && Schema::hasColumn('transfer_relationships', 'from_route_pattern_id')
+            && Schema::hasColumn('transfer_relationships', 'practical_note');
     }
 
     private function runRelationalChecks(): void
@@ -238,6 +244,56 @@ class BiyaheDoctor extends Command
             })
             ->count();
         $this->checkCount('transfer city scope', $invalidTransferCities, 'transfer relationships cross city scopes.');
+
+        $isolatedPatterns = DB::table('route_patterns')
+            ->leftJoin('route_pattern_stops', 'route_pattern_stops.route_pattern_id', '=', 'route_patterns.id')
+            ->where('route_patterns.is_active', true)
+            ->select('route_patterns.id')
+            ->groupBy('route_patterns.id')
+            ->havingRaw('COUNT(route_pattern_stops.id) < 2')
+            ->count();
+        $this->checkWarningCount('isolated active patterns', $isolatedPatterns, 'active patterns have fewer than two ordered stops.');
+
+        $duplicateAssociations = DB::table('route_pattern_stops')
+            ->select('route_pattern_id', 'stop_id')
+            ->groupBy('route_pattern_id', 'stop_id')
+            ->havingRaw('COUNT(*) > 1')
+            ->count();
+        $this->checkCount('duplicate service associations', $duplicateAssociations, 'route patterns associate the same stop more than once.');
+
+        $invalidTransferPatterns = DB::table('transfer_relationships')
+            ->where(function (Builder $query): void {
+                $query->where(function (Builder $pattern): void {
+                    $pattern->whereNotNull('from_route_pattern_id')->whereNotExists(function (Builder $exists): void {
+                        $exists->selectRaw('1')->from('route_patterns')->whereColumn('route_patterns.id', 'transfer_relationships.from_route_pattern_id');
+                    });
+                })->orWhere(function (Builder $pattern): void {
+                    $pattern->whereNotNull('to_route_pattern_id')->whereNotExists(function (Builder $exists): void {
+                        $exists->selectRaw('1')->from('route_patterns')->whereColumn('route_patterns.id', 'transfer_relationships.to_route_pattern_id');
+                    });
+                });
+            })
+            ->count();
+        $this->checkCount('transfer pattern references', $invalidTransferPatterns, 'transfer relationships reference missing route patterns.');
+
+        $associationStopMismatches = DB::table('transfer_relationships')
+            ->where(function (Builder $query): void {
+                $query->whereNotNull('from_route_pattern_id')->whereNotExists(function (Builder $exists): void {
+                    $exists->selectRaw('1')
+                        ->from('route_pattern_stops')
+                        ->whereColumn('route_pattern_stops.route_pattern_id', 'transfer_relationships.from_route_pattern_id')
+                        ->whereColumn('route_pattern_stops.stop_id', 'transfer_relationships.from_stop_id');
+                })->orWhere(function (Builder $to): void {
+                    $to->whereNotNull('to_route_pattern_id')->whereNotExists(function (Builder $exists): void {
+                        $exists->selectRaw('1')
+                            ->from('route_pattern_stops')
+                            ->whereColumn('route_pattern_stops.route_pattern_id', 'transfer_relationships.to_route_pattern_id')
+                            ->whereColumn('route_pattern_stops.stop_id', 'transfer_relationships.to_stop_id');
+                    });
+                });
+            })
+            ->count();
+        $this->checkCount('transfer association integrity', $associationStopMismatches, 'transfer pattern metadata does not match its stop endpoints.');
     }
 
     private function runVerificationChecks(): void
@@ -269,6 +325,17 @@ class BiyaheDoctor extends Command
         }
         $this->checkCount('verified provenance review', $verifiedWithoutReview, 'VERIFIED records lack a checked source or reviewer.');
 
+        $verifiedAssociationsWithoutReview = DB::table('route_pattern_stops')
+            ->leftJoin('provenance_sources', 'provenance_sources.id', '=', 'route_pattern_stops.provenance_source_id')
+            ->where('route_pattern_stops.verification_state', VerificationState::VERIFIED->value)
+            ->where(function (Builder $query): void {
+                $query->whereNull('route_pattern_stops.provenance_source_id')
+                    ->orWhereNull('provenance_sources.checked_at')
+                    ->orWhereNull('provenance_sources.verified_by');
+            })
+            ->count();
+        $this->checkCount('verified association provenance', $verifiedAssociationsWithoutReview, 'VERIFIED pattern-stop associations lack a checked source or reviewer.');
+
         $verifiedDemo = 0;
         foreach ($transportTables as $table) {
             $verifiedDemo += DB::table($table)->where('is_demo', true)->where('verification_state', VerificationState::VERIFIED->value)->count();
@@ -295,16 +362,32 @@ class BiyaheDoctor extends Command
             ->whereDate('checked_at', '<', now()->subYear()->toDateString())
             ->count();
         $this->checkWarningCount('provenance freshness', $staleSources, 'provenance sources have not been checked within the one-year review policy.');
+
+        $aliasGroups = DB::table('place_aliases')
+            ->join('places', 'places.id', '=', 'place_aliases.place_id')
+            ->where('places.is_demo', false)
+            ->where('place_aliases.is_active', true)
+            ->get(['place_aliases.alias', 'place_aliases.place_id']);
+        $aliasesByNormalizedValue = [];
+        foreach ($aliasGroups as $alias) {
+            $aliasesByNormalizedValue[SearchText::normalize((string) $alias->alias)][(int) $alias->place_id] = true;
+        }
+        $aliasCollisions = collect($aliasesByNormalizedValue)
+            ->filter(fn (array $placeIds): bool => count($placeIds) > 1)
+            ->count();
+        $this->checkWarningCount('alias collisions', $aliasCollisions, 'normalized aliases refer to more than one non-demo place and need review.');
     }
 
     private function runImportChecks(): void
     {
-        $dataset = app(DatasetValidator::class)->validate(database_path('data/cebu-central-network-2026-10-05.json'));
-        $datasetStatus = $dataset->isValid() ? 'PASS' : 'FAIL';
-        $datasetMessage = $dataset->isValid()
-            ? 'Reviewed dataset schema and references are valid.'
-            : count($dataset->errors()).' dataset schema or reference errors.';
-        $this->check('dataset schema and references', $datasetStatus, $datasetMessage);
+        foreach (['cebu-central-network-2026-10-05.json', 'cebu-network-expansion-2026-10-05.json'] as $datasetName) {
+            $dataset = app(DatasetValidator::class)->validate(database_path('data/'.$datasetName));
+            $datasetStatus = $dataset->isValid() ? 'PASS' : 'FAIL';
+            $datasetMessage = $dataset->isValid()
+                ? 'Dataset schema and references are valid.'
+                : count($dataset->errors()).' dataset schema or reference errors.';
+            $this->check('dataset '.$datasetName, $datasetStatus, $datasetMessage);
+        }
 
         $importedTables = ['provenance_sources', 'cities', 'operators', 'places', 'place_aliases', 'stops', 'routes', 'route_patterns', 'route_pattern_stops', 'transfer_relationships', 'fares'];
         $missingStableIds = 0;
@@ -453,6 +536,30 @@ class BiyaheDoctor extends Command
             ->count();
         $this->checkCount('verified transfer provenance', $verifiedTransferWithoutProvenance, 'verified transfer relationships lack adequate provenance.');
 
+        $unreviewedTransfers = DB::table('transfer_relationships')
+            ->where('is_active', true)
+            ->where('is_demo', false)
+            ->where(function (Builder $query): void {
+                $query->whereNull('practical_note')->orWhere('practical_note', '');
+            })
+            ->where('verification_state', VerificationState::VERIFIED->value)
+            ->count();
+        $this->checkCount('verified transfer review notes', $unreviewedTransfers, 'VERIFIED transfers lack a practical review note.');
+
+        $staleAssociations = DB::table('route_pattern_stops')
+            ->join('route_patterns', 'route_patterns.id', '=', 'route_pattern_stops.route_pattern_id')
+            ->where('route_patterns.is_active', true)
+            ->whereIn('route_pattern_stops.verification_state', [VerificationState::STALE->value, VerificationState::RETIRED->value])
+            ->count();
+        $this->checkCount('stale association routing exposure', $staleAssociations, 'active patterns contain stale or retired service associations.');
+
+        $networkAudit = app(NetworkAudit::class)->audit(maxPairs: min(
+            (int) config('biyahe.routing.doctor_network_audit_max_pairs', 12),
+            (int) config('biyahe.routing.network_audit_max_pairs', 200),
+        ));
+        $this->checkCount('journey invariant audit', count($networkAudit['errors']), 'journey invariant failures were found.');
+        $this->checkWarningCount('known-pair coverage', $networkAudit['no_known_journey'], 'known place pairs currently have no supported journey.');
+
         if (! $postgisReady) {
             $this->check('pattern stop geography', 'BLOCKED', 'PostGIS runtime is required to compare ordered stops with route geometry.');
 
@@ -470,6 +577,20 @@ class BiyaheDoctor extends Command
                AND NOT ST_DWithin(stops.location, patterns.geometry::geography, 2000)',
         );
         $this->checkWarningCount('pattern stop geography', (int) ($geometryMismatches->mismatch_count ?? 0), 'ordered stops sit more than 2 km from their pattern geometry.');
+
+        $geometryJumps = DB::selectOne(
+            'SELECT COUNT(*) AS jump_count
+             FROM (
+                 SELECT route_pattern_stops.route_pattern_id,
+                        stops.location,
+                        LAG(stops.location) OVER (PARTITION BY route_pattern_stops.route_pattern_id ORDER BY route_pattern_stops.sequence) AS previous_location
+                 FROM route_pattern_stops
+                 JOIN stops ON stops.id = route_pattern_stops.stop_id
+             ) AS ordered_stops
+             WHERE previous_location IS NOT NULL
+               AND ST_Distance(location, previous_location) > 5000',
+        );
+        $this->checkWarningCount('pattern geometry jumps', (int) ($geometryJumps->jump_count ?? 0), 'consecutive mapped stops are more than 5 km apart by straight-line distance.');
     }
 
     private function checkCount(string $label, int $count, string $failureMessage): void

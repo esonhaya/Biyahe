@@ -50,6 +50,8 @@ export type Stop = {
   location: LocationPoint | null;
   is_boarding_point: boolean;
   boarding_notes: string | null;
+  boarding_side: string | null;
+  direction_note: string | null;
   city?: City;
   nearby_place?: Place;
   verification: { state: VerificationState; is_demo: boolean; trusted: boolean };
@@ -62,6 +64,7 @@ export type RoutePatternStop = {
   boarding_allowed: boolean;
   alighting_allowed: boolean;
   instruction: string | null;
+  verification: JourneyPoint["verification"];
   service_metadata: Record<string, unknown> | null;
   stop: Stop;
   provenance?: Provenance;
@@ -106,6 +109,11 @@ export type JourneyPoint = {
   slug?: string;
   code?: string | null;
   location: LocationPoint | null;
+  is_boarding_point?: boolean;
+  boarding_notes?: string | null;
+  boarding_side?: string | null;
+  direction_note?: string | null;
+  nearby_place?: { id: number; name: string } | null;
   verification: { state: VerificationState; is_demo: boolean; trusted: boolean };
 };
 
@@ -121,6 +129,11 @@ export type JourneyLeg = {
   boarding_stop: JourneyPoint | null;
   alighting_stop: JourneyPoint | null;
   stop_count: number | null;
+  boarding_sequence: number | null;
+  alighting_sequence: number | null;
+  boarding_instruction: string | null;
+  boarding_association: JourneyPoint["verification"] | null;
+  alighting_association: JourneyPoint["verification"] | null;
   driver_instruction: string | null;
   get_off_guidance: string | null;
   trust: JourneyTrustState | null;

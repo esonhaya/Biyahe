@@ -24,6 +24,10 @@ class TransferRelationshipForm
                 Select::make('to_stop_id')
                     ->relationship('toStop', 'name')
                     ->required(),
+                Select::make('from_route_pattern_id')
+                    ->relationship('fromRoutePattern', 'name'),
+                Select::make('to_route_pattern_id')
+                    ->relationship('toRoutePattern', 'name'),
                 Select::make('provenance_source_id')
                     ->relationship('provenanceSource', 'title'),
                 TextInput::make('stable_id')
@@ -37,6 +41,11 @@ class TransferRelationshipForm
                     ->numeric()
                     ->minValue(0)
                     ->helperText('Straight-line screening estimate only; it is not a pedestrian route length.'),
+                TextInput::make('landmark')
+                    ->helperText('Optional supported landmark near the transfer.'),
+                Textarea::make('practical_note')
+                    ->helperText('Record only an evidenced transfer instruction; proximity alone is a candidate, not proof.')
+                    ->columnSpanFull(),
                 Toggle::make('is_active')
                     ->required(),
                 VerificationStateField::make(),

@@ -1,0 +1,2965 @@
+{
+  "dataset_id": "cebu-network-expansion-2026-10-05",
+  "version": 1,
+  "format": "biyahe-transport-dataset",
+  "license": {
+    "name": "ODbL-1.0",
+    "attribution": "© OpenStreetMap contributors",
+    "url": "https://www.openstreetmap.org/copyright"
+  },
+  "sources": [
+    {
+      "stable_id": "source-osm-cebu-batch004",
+      "source_type": "OPEN_DATA",
+      "title": "OpenStreetMap Cebu public transport route relations — Batch 004",
+      "publisher": "OpenStreetMap contributors",
+      "url": "https://wiki.openstreetmap.org/wiki/Public_transportation_in_Metro_Cebu",
+      "accessed_at": "2026-10-05",
+      "checked_at": "2026-10-05",
+      "license": "ODbL-1.0",
+      "verification_method": "Inspected route-master metadata, directional PTv2 relations, and platform members.",
+      "verified_by": "Biyahe Batch 004 research",
+      "notes": "Route masters 03B=3182142, 04L=3168675, 06B=3201532, 06C=3201551, 06H=3179558, 13C=3179695. Platform members are mapped stop candidates; exact current boarding/alighting practice remains UNVERIFIED. OpenStreetMap data is used under ODbL-1.0 with attribution to OpenStreetMap contributors."
+    },
+    {
+      "stable_id": "source-ltfrb-puj-fares-2023",
+      "source_type": "OFFICIAL",
+      "title": "LTFRB Traditional PUJ Provisional Fare Increase General Fare Guide",
+      "publisher": "Land Transportation Franchising and Regulatory Board",
+      "url": "https://ltfrb.gov.ph/wp-content/uploads/2024/11/Fare-Guide_Traditional-PUJ-Provisional-Fare-Increase_08Oct2023.pdf",
+      "accessed_at": "2026-10-05",
+      "checked_at": "2026-10-05",
+      "effective_from": "2023-10-08",
+      "license": "Government publication",
+      "verification_method": "Read the official fare guide; no current Cebu route-specific confirmation found.",
+      "verified_by": "Biyahe Batch 004 research",
+      "notes": "Historical general traditional-PUJ fare evidence: PHP 13.00 for the first four kilometres and PHP 1.80 per succeeding kilometre. Stored as STALE evidence and never used for a current journey fare."
+    }
+  ],
+  "cities": [
+    {
+      "stable_id": "city-cebu-city",
+      "source_id": "source-osm-cebu-batch004",
+      "name": "Cebu City",
+      "slug": "cebu-city",
+      "country_code": "PH",
+      "is_active": true,
+      "verification_state": "VERIFIED",
+      "is_demo": false,
+      "notes": "Service area used by the Batch 004 Cebu network overlay."
+    }
+  ],
+  "places": [
+    {
+      "stable_id": "place-colon",
+      "city_id": "city-cebu-city",
+      "source_id": "source-osm-cebu-batch004",
+      "name": "Colon",
+      "slug": "colon",
+      "category": "DOWNTOWN",
+      "description": "Colon Street and the downtown corridor.",
+      "location": {
+        "lat": 10.294437,
+        "lng": 123.8938946
+      },
+      "verification_state": "VERIFIED",
+      "is_demo": false,
+      "notes": "Mapped place location; transport associations and exact boarding side are separately evidenced."
+    },
+    {
+      "stable_id": "place-cebu-capitol",
+      "city_id": "city-cebu-city",
+      "source_id": "source-osm-cebu-batch004",
+      "name": "Cebu Provincial Capitol",
+      "slug": "cebu-provincial-capitol",
+      "category": "CIVIC",
+      "description": "Cebu Provincial Capitol on N. Escario Street.",
+      "location": {
+        "lat": 10.316719,
+        "lng": 123.8907131
+      },
+      "verification_state": "VERIFIED",
+      "is_demo": false,
+      "notes": "Mapped place location; transport associations and exact boarding side are separately evidenced."
+    },
+    {
+      "stable_id": "place-cebu-business-park",
+      "city_id": "city-cebu-city",
+      "source_id": "source-osm-cebu-batch004",
+      "name": "Cebu Business Park",
+      "slug": "cebu-business-park",
+      "category": "BUSINESS_DISTRICT",
+      "description": "Cebu Business Park.",
+      "location": {
+        "lat": 10.3161674,
+        "lng": 123.9058619
+      },
+      "verification_state": "VERIFIED",
+      "is_demo": false,
+      "notes": "Mapped place location; transport associations and exact boarding side are separately evidenced."
+    },
+    {
+      "stable_id": "place-cebu-it-park",
+      "city_id": "city-cebu-city",
+      "source_id": "source-osm-cebu-batch004",
+      "name": "Cebu IT Park",
+      "slug": "cebu-it-park",
+      "category": "BUSINESS_DISTRICT",
+      "description": "Cebu IT Park in Apas.",
+      "location": {
+        "lat": 10.3307983,
+        "lng": 123.9068258
+      },
+      "verification_state": "VERIFIED",
+      "is_demo": false,
+      "notes": "Mapped place location; transport associations and exact boarding side are separately evidenced."
+    },
+    {
+      "stable_id": "place-sm-city-cebu",
+      "city_id": "city-cebu-city",
+      "source_id": "source-osm-cebu-batch004",
+      "name": "SM City Cebu",
+      "slug": "sm-city-cebu",
+      "category": "COMMERCIAL",
+      "description": "SM City Cebu and the North Reclamation area.",
+      "location": {
+        "lat": 10.3113996,
+        "lng": 123.9177809
+      },
+      "verification_state": "VERIFIED",
+      "is_demo": false,
+      "notes": "Mapped place location; transport associations and exact boarding side are separately evidenced."
+    },
+    {
+      "stable_id": "place-mabolo",
+      "city_id": "city-cebu-city",
+      "source_id": "source-osm-cebu-batch004",
+      "name": "Mabolo",
+      "slug": "mabolo",
+      "category": "DISTRICT",
+      "description": "Mabolo district.",
+      "location": {
+        "lat": 10.3142998,
+        "lng": 123.9147025
+      },
+      "verification_state": "VERIFIED",
+      "is_demo": false,
+      "notes": "Mapped place location; transport associations and exact boarding side are separately evidenced."
+    },
+    {
+      "stable_id": "place-banilad-town-center",
+      "city_id": "city-cebu-city",
+      "source_id": "source-osm-cebu-batch004",
+      "name": "Banilad Town Center",
+      "slug": "banilad-town-center",
+      "category": "COMMERCIAL",
+      "description": "Banilad Town Center on Governor M. Cuenco Avenue.",
+      "location": {
+        "lat": 10.3409696,
+        "lng": 123.9125683
+      },
+      "verification_state": "VERIFIED",
+      "is_demo": false,
+      "notes": "Mapped place location; transport associations and exact boarding side are separately evidenced."
+    },
+    {
+      "stable_id": "place-gaisano-country-mall",
+      "city_id": "city-cebu-city",
+      "source_id": "source-osm-cebu-batch004",
+      "name": "Gaisano Country Mall",
+      "slug": "gaisano-country-mall",
+      "category": "COMMERCIAL",
+      "description": "Gaisano Country Mall.",
+      "location": {
+        "lat": 10.33965,
+        "lng": 123.9105413
+      },
+      "verification_state": "VERIFIED",
+      "is_demo": false,
+      "notes": "Mapped place location; transport associations and exact boarding side are separately evidenced."
+    },
+    {
+      "stable_id": "place-talamban",
+      "city_id": "city-cebu-city",
+      "source_id": "source-osm-cebu-batch004",
+      "name": "Talamban",
+      "slug": "talamban",
+      "category": "DISTRICT",
+      "description": "Talamban district and terminal area.",
+      "location": {
+        "lat": 10.3693575,
+        "lng": 123.9169315
+      },
+      "verification_state": "VERIFIED",
+      "is_demo": false,
+      "notes": "Mapped place location; transport associations and exact boarding side are separately evidenced."
+    },
+    {
+      "stable_id": "place-guadalupe",
+      "city_id": "city-cebu-city",
+      "source_id": "source-osm-cebu-batch004",
+      "name": "Guadalupe",
+      "slug": "guadalupe",
+      "category": "DISTRICT",
+      "description": "Guadalupe district.",
+      "location": {
+        "lat": 10.3305264,
+        "lng": 123.8799819
+      },
+      "verification_state": "VERIFIED",
+      "is_demo": false,
+      "notes": "Mapped place location; transport associations and exact boarding side are separately evidenced."
+    },
+    {
+      "stable_id": "place-jones-avenue",
+      "city_id": "city-cebu-city",
+      "source_id": "source-osm-cebu-batch004",
+      "name": "Jones Avenue",
+      "slug": "jones-avenue",
+      "category": "CORRIDOR",
+      "description": "Jones Avenue / Osmeña Boulevard downtown corridor.",
+      "location": {
+        "lat": 10.3023027,
+        "lng": 123.8959083
+      },
+      "verification_state": "VERIFIED",
+      "is_demo": false,
+      "notes": "Mapped place location; transport associations and exact boarding side are separately evidenced."
+    },
+    {
+      "stable_id": "place-north-reclamation-area",
+      "city_id": "city-cebu-city",
+      "source_id": "source-osm-cebu-batch004",
+      "name": "North Reclamation Area",
+      "slug": "north-reclamation-area",
+      "category": "DISTRICT",
+      "description": "North Reclamation Area around SM City Cebu.",
+      "location": {
+        "lat": 10.3113996,
+        "lng": 123.9177809
+      },
+      "verification_state": "VERIFIED",
+      "is_demo": false,
+      "notes": "Mapped place location; transport associations and exact boarding side are separately evidenced."
+    },
+    {
+      "stable_id": "place-cebu-normal-university",
+      "city_id": "city-cebu-city",
+      "source_id": "source-osm-cebu-batch004",
+      "name": "Cebu Normal University",
+      "slug": "cebu-normal-university",
+      "category": "UNIVERSITY",
+      "description": "Cebu Normal University on Osmeña Boulevard.",
+      "location": {
+        "lat": 10.3016486,
+        "lng": 123.8967853
+      },
+      "verification_state": "VERIFIED",
+      "is_demo": false,
+      "notes": "Mapped place location; transport associations and exact boarding side are separately evidenced."
+    },
+    {
+      "stable_id": "place-fuente-osmena-circle",
+      "city_id": "city-cebu-city",
+      "source_id": "source-osm-cebu-batch004",
+      "name": "Fuente Osmeña Circle",
+      "slug": "fuente-osmena-circle",
+      "category": "LANDMARK",
+      "description": "Named OSM landmark feature in Cebu City.",
+      "location": {
+        "lat": 10.3099383,
+        "lng": 123.8926115
+      },
+      "verification_state": "VERIFIED",
+      "is_demo": false,
+      "notes": "Batch 003 canonical place reused by the Batch 004 OSM route overlay."
+    },
+    {
+      "stable_id": "place-cebu-south-bus-terminal",
+      "city_id": "city-cebu-city",
+      "source_id": "source-osm-cebu-batch004",
+      "name": "Cebu South Bus Terminal",
+      "slug": "cebu-south-bus-terminal",
+      "category": "TERMINAL",
+      "description": "Named OSM public-transport stop position.",
+      "location": {
+        "lat": 10.2983027,
+        "lng": 123.893576
+      },
+      "verification_state": "VERIFIED",
+      "is_demo": false,
+      "notes": "Batch 003 canonical place reused by the Batch 004 OSM route overlay."
+    },
+    {
+      "stable_id": "place-carbon-market-unit-3",
+      "city_id": "city-cebu-city",
+      "source_id": "source-osm-cebu-batch004",
+      "name": "Carbon Market Unit 3",
+      "slug": "carbon-market-unit-3",
+      "category": "MARKET",
+      "description": "Named OSM public-transport stop position at Carbon Market.",
+      "location": {
+        "lat": 10.2920131,
+        "lng": 123.8999261
+      },
+      "verification_state": "VERIFIED",
+      "is_demo": false,
+      "notes": "Batch 003 canonical place reused by the Batch 004 OSM route overlay."
+    },
+    {
+      "stable_id": "place-ayala-center-cebu",
+      "city_id": "city-cebu-city",
+      "source_id": "source-osm-cebu-batch004",
+      "name": "Ayala Center Cebu",
+      "slug": "ayala-center-cebu",
+      "category": "MALL",
+      "description": "Named OSM place feature in Cebu City.",
+      "location": {
+        "lat": 10.3180958,
+        "lng": 123.9051572
+      },
+      "verification_state": "VERIFIED",
+      "is_demo": false,
+      "notes": "Batch 003 canonical place reused by the Batch 004 OSM route overlay."
+    },
+    {
+      "stable_id": "place-lahug-market",
+      "city_id": "city-cebu-city",
+      "source_id": "source-osm-cebu-batch004",
+      "name": "Lahug Market",
+      "slug": "lahug-market",
+      "category": "MARKET",
+      "description": "Named OSM place feature in Lahug.",
+      "location": {
+        "lat": 10.3318902,
+        "lng": 123.8989382
+      },
+      "verification_state": "VERIFIED",
+      "is_demo": false,
+      "notes": "Batch 003 canonical place reused by the Batch 004 OSM route overlay."
+    },
+    {
+      "stable_id": "place-up-cebu",
+      "city_id": "city-cebu-city",
+      "source_id": "source-osm-cebu-batch004",
+      "name": "UP Cebu",
+      "slug": "up-cebu",
+      "category": "UNIVERSITY",
+      "description": "Named OSM public-transport and university-area feature in Cebu City.",
+      "location": {
+        "lat": 10.3221616,
+        "lng": 123.8987258
+      },
+      "verification_state": "VERIFIED",
+      "is_demo": false,
+      "notes": "Batch 003 canonical place reused by the Batch 004 OSM route overlay."
+    },
+    {
+      "stable_id": "place-labangon",
+      "city_id": "city-cebu-city",
+      "source_id": "source-osm-cebu-batch004",
+      "name": "Labangon",
+      "slug": "labangon",
+      "category": "DISTRICT",
+      "description": "Named OSM public-transport stop area in Cebu City.",
+      "location": {
+        "lat": 10.2996184,
+        "lng": 123.878355
+      },
+      "verification_state": "VERIFIED",
+      "is_demo": false,
+      "notes": "Batch 003 canonical place reused by the Batch 004 OSM route overlay."
+    },
+    {
+      "stable_id": "place-punta-princesa",
+      "city_id": "city-cebu-city",
+      "source_id": "source-osm-cebu-batch004",
+      "name": "Punta Princesa",
+      "slug": "punta-princesa",
+      "category": "DISTRICT",
+      "description": "Named OSM public-transport stop area in Cebu City.",
+      "location": {
+        "lat": 10.2949407,
+        "lng": 123.8700098
+      },
+      "verification_state": "VERIFIED",
+      "is_demo": false,
+      "notes": "Batch 003 canonical place reused by the Batch 004 OSM route overlay."
+    },
+    {
+      "stable_id": "place-sacred-heart",
+      "city_id": "city-cebu-city",
+      "source_id": "source-osm-cebu-batch004",
+      "name": "Sacred Heart",
+      "slug": "sacred-heart",
+      "category": "LANDMARK",
+      "description": "Named OSM public-transport stop area in Cebu City.",
+      "location": {
+        "lat": 10.317795,
+        "lng": 123.8958974
+      },
+      "verification_state": "VERIFIED",
+      "is_demo": false,
+      "notes": "Batch 003 canonical place reused by the Batch 004 OSM route overlay."
+    }
+  ],
+  "aliases": [
+    {
+      "stable_id": "alias-colon-0",
+      "place_id": "place-colon",
+      "source_id": "source-osm-cebu-batch004",
+      "alias": "Colon Street"
+    },
+    {
+      "stable_id": "alias-colon-1",
+      "place_id": "place-colon",
+      "source_id": "source-osm-cebu-batch004",
+      "alias": "Downtown"
+    },
+    {
+      "stable_id": "alias-cebu-capitol-0",
+      "place_id": "place-cebu-capitol",
+      "source_id": "source-osm-cebu-batch004",
+      "alias": "Capitol"
+    },
+    {
+      "stable_id": "alias-cebu-capitol-1",
+      "place_id": "place-cebu-capitol",
+      "source_id": "source-osm-cebu-batch004",
+      "alias": "Capitol Site"
+    },
+    {
+      "stable_id": "alias-cebu-business-park-0",
+      "place_id": "place-cebu-business-park",
+      "source_id": "source-osm-cebu-batch004",
+      "alias": "Ayala Business Park"
+    },
+    {
+      "stable_id": "alias-cebu-it-park-0",
+      "place_id": "place-cebu-it-park",
+      "source_id": "source-osm-cebu-batch004",
+      "alias": "IT Park"
+    },
+    {
+      "stable_id": "alias-sm-city-cebu-0",
+      "place_id": "place-sm-city-cebu",
+      "source_id": "source-osm-cebu-batch004",
+      "alias": "SM Cebu"
+    },
+    {
+      "stable_id": "alias-sm-city-cebu-1",
+      "place_id": "place-sm-city-cebu",
+      "source_id": "source-osm-cebu-batch004",
+      "alias": "SM City"
+    },
+    {
+      "stable_id": "alias-mabolo-0",
+      "place_id": "place-mabolo",
+      "source_id": "source-osm-cebu-batch004",
+      "alias": "Mabolo"
+    },
+    {
+      "stable_id": "alias-banilad-town-center-0",
+      "place_id": "place-banilad-town-center",
+      "source_id": "source-osm-cebu-batch004",
+      "alias": "Banilad"
+    },
+    {
+      "stable_id": "alias-banilad-town-center-1",
+      "place_id": "place-banilad-town-center",
+      "source_id": "source-osm-cebu-batch004",
+      "alias": "BTC"
+    },
+    {
+      "stable_id": "alias-gaisano-country-mall-0",
+      "place_id": "place-gaisano-country-mall",
+      "source_id": "source-osm-cebu-batch004",
+      "alias": "Country Mall"
+    },
+    {
+      "stable_id": "alias-talamban-0",
+      "place_id": "place-talamban",
+      "source_id": "source-osm-cebu-batch004",
+      "alias": "Talamban"
+    },
+    {
+      "stable_id": "alias-guadalupe-0",
+      "place_id": "place-guadalupe",
+      "source_id": "source-osm-cebu-batch004",
+      "alias": "Guadalupe"
+    },
+    {
+      "stable_id": "alias-jones-avenue-0",
+      "place_id": "place-jones-avenue",
+      "source_id": "source-osm-cebu-batch004",
+      "alias": "Jones"
+    },
+    {
+      "stable_id": "alias-north-reclamation-area-0",
+      "place_id": "place-north-reclamation-area",
+      "source_id": "source-osm-cebu-batch004",
+      "alias": "North Recla"
+    },
+    {
+      "stable_id": "alias-cebu-normal-university-0",
+      "place_id": "place-cebu-normal-university",
+      "source_id": "source-osm-cebu-batch004",
+      "alias": "CNU"
+    }
+  ],
+  "stops": [
+    {
+      "stable_id": "stop-carbon-market",
+      "city_id": "city-cebu-city",
+      "source_id": "source-osm-cebu-batch004",
+      "name": "Carbon Market Unit 3",
+      "code": "OSM-10250495187",
+      "category": "PUBLIC_TRANSPORT_STOP",
+      "is_boarding_point": true,
+      "boarding_notes": "OSM public-transport node; route association remains UNVERIFIED until reviewed against service evidence.",
+      "location": {
+        "lat": 10.2920131,
+        "lng": 123.8999261
+      },
+      "is_active": true,
+      "verification_state": "VERIFIED",
+      "is_demo": false,
+      "notes": "Batch 003 canonical stop reused by the Batch 004 OSM route overlay.",
+      "nearby_place_id": "place-carbon-market-unit-3"
+    },
+    {
+      "stable_id": "stop-osm-14102354695",
+      "city_id": "city-cebu-city",
+      "source_id": "source-osm-cebu-batch004",
+      "name": "OSM platform 14102354695",
+      "code": "OSM-14102354695",
+      "category": "PLATFORM",
+      "is_boarding_point": true,
+      "boarding_notes": "Mapped OpenStreetMap platform member; exact waiting side, landmark, and current boarding practice need local review.",
+      "location": {
+        "lat": 10.296228,
+        "lng": 123.9056972
+      },
+      "is_active": true,
+      "verification_state": "UNVERIFIED",
+      "is_demo": false,
+      "notes": "Platform node from OSM route relation 21251277; not a promise that vehicles stop at this exact point today."
+    },
+    {
+      "stable_id": "stop-osm-10250495181",
+      "city_id": "city-cebu-city",
+      "source_id": "source-osm-cebu-batch004",
+      "name": "OSM platform 10250495181",
+      "code": "OSM-10250495181",
+      "category": "PLATFORM",
+      "is_boarding_point": true,
+      "boarding_notes": "Mapped OpenStreetMap platform member; exact waiting side, landmark, and current boarding practice need local review.",
+      "location": {
+        "lat": 10.3043833,
+        "lng": 123.9062685
+      },
+      "is_active": true,
+      "verification_state": "UNVERIFIED",
+      "is_demo": false,
+      "notes": "Platform node from OSM route relation 21251277; not a promise that vehicles stop at this exact point today."
+    },
+    {
+      "stable_id": "stop-osm-13761865123",
+      "city_id": "city-cebu-city",
+      "source_id": "source-osm-cebu-batch004",
+      "name": "OSM platform 13761865123",
+      "code": "OSM-13761865123",
+      "category": "PLATFORM",
+      "is_boarding_point": true,
+      "boarding_notes": "Mapped OpenStreetMap platform member; exact waiting side, landmark, and current boarding practice need local review.",
+      "location": {
+        "lat": 10.3127987,
+        "lng": 123.9117725
+      },
+      "is_active": true,
+      "verification_state": "UNVERIFIED",
+      "is_demo": false,
+      "notes": "Platform node from OSM route relation 21251277; not a promise that vehicles stop at this exact point today."
+    },
+    {
+      "stable_id": "stop-osm-14104740255",
+      "city_id": "city-cebu-city",
+      "source_id": "source-osm-cebu-batch004",
+      "name": "OSM platform 14104740255",
+      "code": "OSM-14104740255",
+      "category": "PLATFORM",
+      "is_boarding_point": true,
+      "boarding_notes": "Mapped OpenStreetMap platform member; exact waiting side, landmark, and current boarding practice need local review.",
+      "location": {
+        "lat": 10.3192232,
+        "lng": 123.9161172
+      },
+      "is_active": true,
+      "verification_state": "UNVERIFIED",
+      "is_demo": false,
+      "notes": "Platform node from OSM route relation 21251277; not a promise that vehicles stop at this exact point today."
+    },
+    {
+      "stable_id": "stop-osm-13761865119",
+      "city_id": "city-cebu-city",
+      "source_id": "source-osm-cebu-batch004",
+      "name": "OSM platform 13761865119",
+      "code": "OSM-13761865119",
+      "category": "PLATFORM",
+      "is_boarding_point": true,
+      "boarding_notes": "Mapped OpenStreetMap platform member; exact waiting side, landmark, and current boarding practice need local review.",
+      "location": {
+        "lat": 10.3108932,
+        "lng": 123.9087717
+      },
+      "is_active": true,
+      "verification_state": "UNVERIFIED",
+      "is_demo": false,
+      "notes": "Platform node from OSM route relation 21251278; not a promise that vehicles stop at this exact point today."
+    },
+    {
+      "stable_id": "stop-osm-13185519446",
+      "city_id": "city-cebu-city",
+      "source_id": "source-osm-cebu-batch004",
+      "name": "OSM platform 13185519446",
+      "code": "OSM-13185519446",
+      "category": "PLATFORM",
+      "is_boarding_point": true,
+      "boarding_notes": "Mapped OpenStreetMap platform member; exact waiting side, landmark, and current boarding practice need local review.",
+      "location": {
+        "lat": 10.3113926,
+        "lng": 123.8986773
+      },
+      "is_active": true,
+      "verification_state": "UNVERIFIED",
+      "is_demo": false,
+      "notes": "Platform node from OSM route relation 21251278; not a promise that vehicles stop at this exact point today."
+    },
+    {
+      "stable_id": "stop-uytengsu",
+      "city_id": "city-cebu-city",
+      "source_id": "source-osm-cebu-batch004",
+      "name": "Uytengsu",
+      "code": "OSM-10743602369",
+      "category": "PUBLIC_TRANSPORT_STOP",
+      "is_boarding_point": true,
+      "boarding_notes": "OSM public-transport node; route association remains UNVERIFIED until reviewed against service evidence.",
+      "location": {
+        "lat": 10.3041842,
+        "lng": 123.8950388
+      },
+      "is_active": true,
+      "verification_state": "VERIFIED",
+      "is_demo": false,
+      "notes": "Batch 003 canonical stop reused by the Batch 004 OSM route overlay.",
+      "nearby_place_id": "place-labangon"
+    },
+    {
+      "stable_id": "stop-jy-square-mall",
+      "city_id": "city-cebu-city",
+      "source_id": "source-osm-cebu-batch004",
+      "name": "JY Square Mall",
+      "code": "OSM-10251749651",
+      "category": "PUBLIC_TRANSPORT_STOP",
+      "is_boarding_point": true,
+      "boarding_notes": "OSM public-transport node; route association remains UNVERIFIED until reviewed against service evidence.",
+      "location": {
+        "lat": 10.3301055,
+        "lng": 123.8976342
+      },
+      "is_active": true,
+      "verification_state": "VERIFIED",
+      "is_demo": false,
+      "notes": "Batch 003 canonical stop reused by the Batch 004 OSM route overlay.",
+      "nearby_place_id": "place-lahug-market"
+    },
+    {
+      "stable_id": "stop-osm-10149201814",
+      "city_id": "city-cebu-city",
+      "source_id": "source-osm-cebu-batch004",
+      "name": "OSM platform 10149201814",
+      "code": "OSM-10149201814",
+      "category": "PLATFORM",
+      "is_boarding_point": true,
+      "boarding_notes": "Mapped OpenStreetMap platform member; exact waiting side, landmark, and current boarding practice need local review.",
+      "location": {
+        "lat": 10.3248901,
+        "lng": 123.8981505
+      },
+      "is_active": true,
+      "verification_state": "UNVERIFIED",
+      "is_demo": false,
+      "notes": "Platform node from OSM route relation 14991303; not a promise that vehicles stop at this exact point today."
+    },
+    {
+      "stable_id": "stop-osm-13754365860",
+      "city_id": "city-cebu-city",
+      "source_id": "source-osm-cebu-batch004",
+      "name": "OSM platform 13754365860",
+      "code": "OSM-13754365860",
+      "category": "PLATFORM",
+      "is_boarding_point": true,
+      "boarding_notes": "Mapped OpenStreetMap platform member; exact waiting side, landmark, and current boarding practice need local review.",
+      "location": {
+        "lat": 10.3199713,
+        "lng": 123.9049163
+      },
+      "is_active": true,
+      "verification_state": "UNVERIFIED",
+      "is_demo": false,
+      "notes": "Platform node from OSM route relation 14991303; not a promise that vehicles stop at this exact point today."
+    },
+    {
+      "stable_id": "stop-osm-10251749641",
+      "city_id": "city-cebu-city",
+      "source_id": "source-osm-cebu-batch004",
+      "name": "OSM platform 10251749641",
+      "code": "OSM-10251749641",
+      "category": "PLATFORM",
+      "is_boarding_point": true,
+      "boarding_notes": "Mapped OpenStreetMap platform member; exact waiting side, landmark, and current boarding practice need local review.",
+      "location": {
+        "lat": 10.3186374,
+        "lng": 123.9119497
+      },
+      "is_active": true,
+      "verification_state": "UNVERIFIED",
+      "is_demo": false,
+      "notes": "Platform node from OSM route relation 14991303; not a promise that vehicles stop at this exact point today."
+    },
+    {
+      "stable_id": "stop-osm-10251749649",
+      "city_id": "city-cebu-city",
+      "source_id": "source-osm-cebu-batch004",
+      "name": "OSM platform 10251749649",
+      "code": "OSM-10251749649",
+      "category": "PLATFORM",
+      "is_boarding_point": true,
+      "boarding_notes": "Mapped OpenStreetMap platform member; exact waiting side, landmark, and current boarding practice need local review.",
+      "location": {
+        "lat": 10.3114677,
+        "lng": 123.921263
+      },
+      "is_active": true,
+      "verification_state": "UNVERIFIED",
+      "is_demo": false,
+      "notes": "Platform node from OSM route relation 14991303; not a promise that vehicles stop at this exact point today."
+    },
+    {
+      "stable_id": "stop-osm-5992425488",
+      "city_id": "city-cebu-city",
+      "source_id": "source-osm-cebu-batch004",
+      "name": "OSM platform 5992425488",
+      "code": "OSM-5992425488",
+      "category": "PLATFORM",
+      "is_boarding_point": true,
+      "boarding_notes": "Mapped OpenStreetMap platform member; exact waiting side, landmark, and current boarding practice need local review.",
+      "location": {
+        "lat": 10.3151906,
+        "lng": 123.9142149
+      },
+      "is_active": true,
+      "verification_state": "UNVERIFIED",
+      "is_demo": false,
+      "notes": "Platform node from OSM route relation 14991302; not a promise that vehicles stop at this exact point today."
+    },
+    {
+      "stable_id": "stop-osm-10251749637",
+      "city_id": "city-cebu-city",
+      "source_id": "source-osm-cebu-batch004",
+      "name": "OSM platform 10251749637",
+      "code": "OSM-10251749637",
+      "category": "PLATFORM",
+      "is_boarding_point": true,
+      "boarding_notes": "Mapped OpenStreetMap platform member; exact waiting side, landmark, and current boarding practice need local review.",
+      "location": {
+        "lat": 10.3220692,
+        "lng": 123.9099844
+      },
+      "is_active": true,
+      "verification_state": "UNVERIFIED",
+      "is_demo": false,
+      "notes": "Platform node from OSM route relation 14991302; not a promise that vehicles stop at this exact point today."
+    },
+    {
+      "stable_id": "stop-osm-6049975585",
+      "city_id": "city-cebu-city",
+      "source_id": "source-osm-cebu-batch004",
+      "name": "OSM platform 6049975585",
+      "code": "OSM-6049975585",
+      "category": "PLATFORM",
+      "is_boarding_point": true,
+      "boarding_notes": "Mapped OpenStreetMap platform member; exact waiting side, landmark, and current boarding practice need local review.",
+      "location": {
+        "lat": 10.3274115,
+        "lng": 123.9055382
+      },
+      "is_active": true,
+      "verification_state": "UNVERIFIED",
+      "is_demo": false,
+      "notes": "Platform node from OSM route relation 14991302; not a promise that vehicles stop at this exact point today."
+    },
+    {
+      "stable_id": "stop-osm-13761760745",
+      "city_id": "city-cebu-city",
+      "source_id": "source-osm-cebu-batch004",
+      "name": "OSM platform 13761760745",
+      "code": "OSM-13761760745",
+      "category": "PLATFORM",
+      "is_boarding_point": true,
+      "boarding_notes": "Mapped OpenStreetMap platform member; exact waiting side, landmark, and current boarding practice need local review.",
+      "location": {
+        "lat": 10.3305264,
+        "lng": 123.8799819
+      },
+      "is_active": true,
+      "verification_state": "UNVERIFIED",
+      "is_demo": false,
+      "notes": "Platform node from OSM route relation 21142706; not a promise that vehicles stop at this exact point today."
+    },
+    {
+      "stable_id": "stop-osm-14048307471",
+      "city_id": "city-cebu-city",
+      "source_id": "source-osm-cebu-batch004",
+      "name": "OSM platform 14048307471",
+      "code": "OSM-14048307471",
+      "category": "PLATFORM",
+      "is_boarding_point": true,
+      "boarding_notes": "Mapped OpenStreetMap platform member; exact waiting side, landmark, and current boarding practice need local review.",
+      "location": {
+        "lat": 10.3185952,
+        "lng": 123.8847488
+      },
+      "is_active": true,
+      "verification_state": "UNVERIFIED",
+      "is_demo": false,
+      "notes": "Platform node from OSM route relation 21142706; not a promise that vehicles stop at this exact point today."
+    },
+    {
+      "stable_id": "stop-osm-10250495161",
+      "city_id": "city-cebu-city",
+      "source_id": "source-osm-cebu-batch004",
+      "name": "OSM platform 10250495161",
+      "code": "OSM-10250495161",
+      "category": "PLATFORM",
+      "is_boarding_point": true,
+      "boarding_notes": "Mapped OpenStreetMap platform member; exact waiting side, landmark, and current boarding practice need local review.",
+      "location": {
+        "lat": 10.3157039,
+        "lng": 123.890942
+      },
+      "is_active": true,
+      "verification_state": "UNVERIFIED",
+      "is_demo": false,
+      "notes": "Platform node from OSM route relation 21142706; not a promise that vehicles stop at this exact point today."
+    },
+    {
+      "stable_id": "stop-osm-10250495225",
+      "city_id": "city-cebu-city",
+      "source_id": "source-osm-cebu-batch004",
+      "name": "OSM platform 10250495225",
+      "code": "OSM-10250495225",
+      "category": "PLATFORM",
+      "is_boarding_point": true,
+      "boarding_notes": "Mapped OpenStreetMap platform member; exact waiting side, landmark, and current boarding practice need local review.",
+      "location": {
+        "lat": 10.2968851,
+        "lng": 123.8979945
+      },
+      "is_active": true,
+      "verification_state": "UNVERIFIED",
+      "is_demo": false,
+      "notes": "Platform node from OSM route relation 21142705; not a promise that vehicles stop at this exact point today."
+    },
+    {
+      "stable_id": "stop-osm-10149227776",
+      "city_id": "city-cebu-city",
+      "source_id": "source-osm-cebu-batch004",
+      "name": "OSM platform 10149227776",
+      "code": "OSM-10149227776",
+      "category": "PLATFORM",
+      "is_boarding_point": true,
+      "boarding_notes": "Mapped OpenStreetMap platform member; exact waiting side, landmark, and current boarding practice need local review.",
+      "location": {
+        "lat": 10.3121549,
+        "lng": 123.8924488
+      },
+      "is_active": true,
+      "verification_state": "UNVERIFIED",
+      "is_demo": false,
+      "notes": "Platform node from OSM route relation 21142705; not a promise that vehicles stop at this exact point today."
+    },
+    {
+      "stable_id": "stop-osm-14048307462",
+      "city_id": "city-cebu-city",
+      "source_id": "source-osm-cebu-batch004",
+      "name": "OSM platform 14048307462",
+      "code": "OSM-14048307462",
+      "category": "PLATFORM",
+      "is_boarding_point": true,
+      "boarding_notes": "Mapped OpenStreetMap platform member; exact waiting side, landmark, and current boarding practice need local review.",
+      "location": {
+        "lat": 10.3179474,
+        "lng": 123.88657
+      },
+      "is_active": true,
+      "verification_state": "UNVERIFIED",
+      "is_demo": false,
+      "notes": "Platform node from OSM route relation 21142705; not a promise that vehicles stop at this exact point today."
+    },
+    {
+      "stable_id": "stop-b-rodriguez-extension",
+      "city_id": "city-cebu-city",
+      "source_id": "source-osm-cebu-batch004",
+      "name": "B. Rodriguez Extension",
+      "code": "OSM-14113797210",
+      "category": "PUBLIC_TRANSPORT_STOP",
+      "is_boarding_point": true,
+      "boarding_notes": "OSM public-transport node; route association remains UNVERIFIED until reviewed against service evidence.",
+      "location": {
+        "lat": 10.3080925,
+        "lng": 123.8895292
+      },
+      "is_active": true,
+      "verification_state": "VERIFIED",
+      "is_demo": false,
+      "notes": "Batch 003 canonical stop reused by the Batch 004 OSM route overlay.",
+      "nearby_place_id": null
+    },
+    {
+      "stable_id": "stop-osm-14113797207",
+      "city_id": "city-cebu-city",
+      "source_id": "source-osm-cebu-batch004",
+      "name": "OSM platform 14113797207",
+      "code": "OSM-14113797207",
+      "category": "PLATFORM",
+      "is_boarding_point": true,
+      "boarding_notes": "Mapped OpenStreetMap platform member; exact waiting side, landmark, and current boarding practice need local review.",
+      "location": {
+        "lat": 10.3088987,
+        "lng": 123.8914798
+      },
+      "is_active": true,
+      "verification_state": "UNVERIFIED",
+      "is_demo": false,
+      "notes": "Platform node from OSM route relation 21265626; not a promise that vehicles stop at this exact point today."
+    },
+    {
+      "stable_id": "stop-osm-13761760738",
+      "city_id": "city-cebu-city",
+      "source_id": "source-osm-cebu-batch004",
+      "name": "OSM platform 13761760738",
+      "code": "OSM-13761760738",
+      "category": "PLATFORM",
+      "is_boarding_point": true,
+      "boarding_notes": "Mapped OpenStreetMap platform member; exact waiting side, landmark, and current boarding practice need local review.",
+      "location": {
+        "lat": 10.3167612,
+        "lng": 123.8852584
+      },
+      "is_active": true,
+      "verification_state": "UNVERIFIED",
+      "is_demo": false,
+      "notes": "Platform node from OSM route relation 21265626; not a promise that vehicles stop at this exact point today."
+    },
+    {
+      "stable_id": "stop-osm-13761760739",
+      "city_id": "city-cebu-city",
+      "source_id": "source-osm-cebu-batch004",
+      "name": "OSM platform 13761760739",
+      "code": "OSM-13761760739",
+      "category": "PLATFORM",
+      "is_boarding_point": true,
+      "boarding_notes": "Mapped OpenStreetMap platform member; exact waiting side, landmark, and current boarding practice need local review.",
+      "location": {
+        "lat": 10.3166783,
+        "lng": 123.8851646
+      },
+      "is_active": true,
+      "verification_state": "UNVERIFIED",
+      "is_demo": false,
+      "notes": "Platform node from OSM route relation 21267110; not a promise that vehicles stop at this exact point today."
+    },
+    {
+      "stable_id": "stop-osm-10250495110",
+      "city_id": "city-cebu-city",
+      "source_id": "source-osm-cebu-batch004",
+      "name": "OSM platform 10250495110",
+      "code": "OSM-10250495110",
+      "category": "PLATFORM",
+      "is_boarding_point": true,
+      "boarding_notes": "Mapped OpenStreetMap platform member; exact waiting side, landmark, and current boarding practice need local review.",
+      "location": {
+        "lat": 10.3166462,
+        "lng": 123.8923719
+      },
+      "is_active": true,
+      "verification_state": "UNVERIFIED",
+      "is_demo": false,
+      "notes": "Platform node from OSM route relation 21267110; not a promise that vehicles stop at this exact point today."
+    },
+    {
+      "stable_id": "stop-osm-14104740225",
+      "city_id": "city-cebu-city",
+      "source_id": "source-osm-cebu-batch004",
+      "name": "OSM platform 14104740225",
+      "code": "OSM-14104740225",
+      "category": "PLATFORM",
+      "is_boarding_point": true,
+      "boarding_notes": "Mapped OpenStreetMap platform member; exact waiting side, landmark, and current boarding practice need local review.",
+      "location": {
+        "lat": 10.3188841,
+        "lng": 123.9085427
+      },
+      "is_active": true,
+      "verification_state": "UNVERIFIED",
+      "is_demo": false,
+      "notes": "Platform node from OSM route relation 21267110; not a promise that vehicles stop at this exact point today."
+    },
+    {
+      "stable_id": "stop-osm-5544373721",
+      "city_id": "city-cebu-city",
+      "source_id": "source-osm-cebu-batch004",
+      "name": "OSM platform 5544373721",
+      "code": "OSM-5544373721",
+      "category": "PLATFORM",
+      "is_boarding_point": true,
+      "boarding_notes": "Mapped OpenStreetMap platform member; exact waiting side, landmark, and current boarding practice need local review.",
+      "location": {
+        "lat": 10.3105862,
+        "lng": 123.9180581
+      },
+      "is_active": true,
+      "verification_state": "UNVERIFIED",
+      "is_demo": false,
+      "notes": "Platform node from OSM route relation 21267110; not a promise that vehicles stop at this exact point today."
+    },
+    {
+      "stable_id": "stop-osm-10251749639",
+      "city_id": "city-cebu-city",
+      "source_id": "source-osm-cebu-batch004",
+      "name": "OSM platform 10251749639",
+      "code": "OSM-10251749639",
+      "category": "PLATFORM",
+      "is_boarding_point": true,
+      "boarding_notes": "Mapped OpenStreetMap platform member; exact waiting side, landmark, and current boarding practice need local review.",
+      "location": {
+        "lat": 10.3190133,
+        "lng": 123.9083531
+      },
+      "is_active": true,
+      "verification_state": "UNVERIFIED",
+      "is_demo": false,
+      "notes": "Platform node from OSM route relation 21267109; not a promise that vehicles stop at this exact point today."
+    },
+    {
+      "stable_id": "stop-osm-10250495172",
+      "city_id": "city-cebu-city",
+      "source_id": "source-osm-cebu-batch004",
+      "name": "OSM platform 10250495172",
+      "code": "OSM-10250495172",
+      "category": "PLATFORM",
+      "is_boarding_point": true,
+      "boarding_notes": "Mapped OpenStreetMap platform member; exact waiting side, landmark, and current boarding practice need local review.",
+      "location": {
+        "lat": 10.3109833,
+        "lng": 123.8972602
+      },
+      "is_active": true,
+      "verification_state": "UNVERIFIED",
+      "is_demo": false,
+      "notes": "Platform node from OSM route relation 21267109; not a promise that vehicles stop at this exact point today."
+    },
+    {
+      "stable_id": "stop-osm-13761760743",
+      "city_id": "city-cebu-city",
+      "source_id": "source-osm-cebu-batch004",
+      "name": "OSM platform 13761760743",
+      "code": "OSM-13761760743",
+      "category": "PLATFORM",
+      "is_boarding_point": true,
+      "boarding_notes": "Mapped OpenStreetMap platform member; exact waiting side, landmark, and current boarding practice need local review.",
+      "location": {
+        "lat": 10.3136816,
+        "lng": 123.8859462
+      },
+      "is_active": true,
+      "verification_state": "UNVERIFIED",
+      "is_demo": false,
+      "notes": "Platform node from OSM route relation 21267109; not a promise that vehicles stop at this exact point today."
+    },
+    {
+      "stable_id": "stop-psbank-colon",
+      "city_id": "city-cebu-city",
+      "source_id": "source-osm-cebu-batch004",
+      "name": "PSBank Colon",
+      "code": "OSM-14104740251",
+      "category": "PUBLIC_TRANSPORT_STOP",
+      "is_boarding_point": true,
+      "boarding_notes": "OSM public-transport node; route association remains UNVERIFIED until reviewed against service evidence.",
+      "location": {
+        "lat": 10.2972912,
+        "lng": 123.8987888
+      },
+      "is_active": true,
+      "verification_state": "VERIFIED",
+      "is_demo": false,
+      "notes": "Batch 003 canonical stop reused by the Batch 004 OSM route overlay.",
+      "nearby_place_id": "place-punta-princesa"
+    },
+    {
+      "stable_id": "stop-osm-13761865121",
+      "city_id": "city-cebu-city",
+      "source_id": "source-osm-cebu-batch004",
+      "name": "OSM platform 13761865121",
+      "code": "OSM-13761865121",
+      "category": "PLATFORM",
+      "is_boarding_point": true,
+      "boarding_notes": "Mapped OpenStreetMap platform member; exact waiting side, landmark, and current boarding practice need local review.",
+      "location": {
+        "lat": 10.311453,
+        "lng": 123.9094545
+      },
+      "is_active": true,
+      "verification_state": "UNVERIFIED",
+      "is_demo": false,
+      "notes": "Platform node from OSM route relation 21251275; not a promise that vehicles stop at this exact point today."
+    },
+    {
+      "stable_id": "stop-osm-13769915542",
+      "city_id": "city-cebu-city",
+      "source_id": "source-osm-cebu-batch004",
+      "name": "OSM platform 13769915542",
+      "code": "OSM-13769915542",
+      "category": "PLATFORM",
+      "is_boarding_point": true,
+      "boarding_notes": "Mapped OpenStreetMap platform member; exact waiting side, landmark, and current boarding practice need local review.",
+      "location": {
+        "lat": 10.3315341,
+        "lng": 123.9102028
+      },
+      "is_active": true,
+      "verification_state": "UNVERIFIED",
+      "is_demo": false,
+      "notes": "Platform node from OSM route relation 21251275; not a promise that vehicles stop at this exact point today."
+    },
+    {
+      "stable_id": "stop-osm-13769915543",
+      "city_id": "city-cebu-city",
+      "source_id": "source-osm-cebu-batch004",
+      "name": "OSM platform 13769915543",
+      "code": "OSM-13769915543",
+      "category": "PLATFORM",
+      "is_boarding_point": true,
+      "boarding_notes": "Mapped OpenStreetMap platform member; exact waiting side, landmark, and current boarding practice need local review.",
+      "location": {
+        "lat": 10.3545123,
+        "lng": 123.9146084
+      },
+      "is_active": true,
+      "verification_state": "UNVERIFIED",
+      "is_demo": false,
+      "notes": "Platform node from OSM route relation 21251275; not a promise that vehicles stop at this exact point today."
+    },
+    {
+      "stable_id": "stop-osm-14104740296",
+      "city_id": "city-cebu-city",
+      "source_id": "source-osm-cebu-batch004",
+      "name": "OSM platform 14104740296",
+      "code": "OSM-14104740296",
+      "category": "PLATFORM",
+      "is_boarding_point": true,
+      "boarding_notes": "Mapped OpenStreetMap platform member; exact waiting side, landmark, and current boarding practice need local review.",
+      "location": {
+        "lat": 10.3709914,
+        "lng": 123.9250021
+      },
+      "is_active": true,
+      "verification_state": "UNVERIFIED",
+      "is_demo": false,
+      "notes": "Platform node from OSM route relation 21251275; not a promise that vehicles stop at this exact point today."
+    },
+    {
+      "stable_id": "stop-osm-14104740297",
+      "city_id": "city-cebu-city",
+      "source_id": "source-osm-cebu-batch004",
+      "name": "OSM platform 14104740297",
+      "code": "OSM-14104740297",
+      "category": "PLATFORM",
+      "is_boarding_point": true,
+      "boarding_notes": "Mapped OpenStreetMap platform member; exact waiting side, landmark, and current boarding practice need local review.",
+      "location": {
+        "lat": 10.3709465,
+        "lng": 123.9247888
+      },
+      "is_active": true,
+      "verification_state": "UNVERIFIED",
+      "is_demo": false,
+      "notes": "Platform node from OSM route relation 21251276; not a promise that vehicles stop at this exact point today."
+    },
+    {
+      "stable_id": "stop-osm-14104740282",
+      "city_id": "city-cebu-city",
+      "source_id": "source-osm-cebu-batch004",
+      "name": "OSM platform 14104740282",
+      "code": "OSM-14104740282",
+      "category": "PLATFORM",
+      "is_boarding_point": true,
+      "boarding_notes": "Mapped OpenStreetMap platform member; exact waiting side, landmark, and current boarding practice need local review.",
+      "location": {
+        "lat": 10.3520148,
+        "lng": 123.9138302
+      },
+      "is_active": true,
+      "verification_state": "UNVERIFIED",
+      "is_demo": false,
+      "notes": "Platform node from OSM route relation 21251276; not a promise that vehicles stop at this exact point today."
+    },
+    {
+      "stable_id": "stop-osm-14104740278",
+      "city_id": "city-cebu-city",
+      "source_id": "source-osm-cebu-batch004",
+      "name": "OSM platform 14104740278",
+      "code": "OSM-14104740278",
+      "category": "PLATFORM",
+      "is_boarding_point": true,
+      "boarding_notes": "Mapped OpenStreetMap platform member; exact waiting side, landmark, and current boarding practice need local review.",
+      "location": {
+        "lat": 10.3080811,
+        "lng": 123.9030717
+      },
+      "is_active": true,
+      "verification_state": "UNVERIFIED",
+      "is_demo": false,
+      "notes": "Platform node from OSM route relation 21251276; not a promise that vehicles stop at this exact point today."
+    }
+  ],
+  "operators": [
+    {
+      "stable_id": "operator-mabolo-transport-cooperative",
+      "source_id": "source-osm-cebu-batch004",
+      "name": "Mabolo Transport Cooperative",
+      "slug": "mabolo-transport-cooperative",
+      "description": "Operator label from the associated OpenStreetMap route relation; current service status remains separately reviewable.",
+      "is_active": true,
+      "verification_state": "UNVERIFIED",
+      "is_demo": false,
+      "notes": "OSM operator tag; not an official franchise record."
+    },
+    {
+      "stable_id": "operator-lahug-transport-cooperative",
+      "source_id": "source-osm-cebu-batch004",
+      "name": "Lahug Transport Cooperative",
+      "slug": "lahug-transport-cooperative",
+      "description": "Operator label from the associated OpenStreetMap route relation; current service status remains separately reviewable.",
+      "is_active": true,
+      "verification_state": "UNVERIFIED",
+      "is_demo": false,
+      "notes": "OSM operator tag; not an official franchise record."
+    },
+    {
+      "stable_id": "operator-cebu-integrated-transport-services",
+      "source_id": "source-osm-cebu-batch004",
+      "name": "Cebu Integrated Transport Services & Multi-purpose Cooperative",
+      "slug": "cebu-integrated-transport-services-multi-purpose-cooperative",
+      "description": "Operator label from the associated OpenStreetMap route relation; current service status remains separately reviewable.",
+      "is_active": true,
+      "verification_state": "UNVERIFIED",
+      "is_demo": false,
+      "notes": "OSM operator tag; not an official franchise record."
+    }
+  ],
+  "routes": [
+    {
+      "stable_id": "route-03b",
+      "city_id": "city-cebu-city",
+      "operator_id": "operator-mabolo-transport-cooperative",
+      "vehicle_type": "JEEPNEY",
+      "source_id": "source-osm-cebu-batch004",
+      "code": "03B",
+      "name": "Jeepney 03B: Mabolo - Fuente - Carbon",
+      "description": "OpenStreetMap route master relation 3182142; route identity and mapped corridor are sourced, current operation and exact passenger service remain reviewable.",
+      "verification_state": "VERIFIED",
+      "is_demo": false,
+      "notes": "Route identity is supported by the OSM route relation. Do not read this record as proof of a current schedule, fare, exact boarding side, or complete stop sequence."
+    },
+    {
+      "stable_id": "route-04l",
+      "city_id": "city-cebu-city",
+      "operator_id": "operator-lahug-transport-cooperative",
+      "vehicle_type": "JEEPNEY",
+      "source_id": "source-osm-cebu-batch004",
+      "code": "04L",
+      "name": "Jeepney 04L: Lahug - SM City Cebu",
+      "description": "OpenStreetMap route master relation 3168675; route identity and mapped corridor are sourced, current operation and exact passenger service remain reviewable.",
+      "verification_state": "VERIFIED",
+      "is_demo": false,
+      "notes": "Route identity is supported by the OSM route relation. Do not read this record as proof of a current schedule, fare, exact boarding side, or complete stop sequence."
+    },
+    {
+      "stable_id": "route-06b",
+      "city_id": "city-cebu-city",
+      "operator_id": "operator-cebu-integrated-transport-services",
+      "vehicle_type": "JEEPNEY",
+      "source_id": "source-osm-cebu-batch004",
+      "code": "06B",
+      "name": "Jeepney 06B: Guadalupe - Colon via R. Duterte",
+      "description": "OpenStreetMap route master relation 3201532; route identity and mapped corridor are sourced, current operation and exact passenger service remain reviewable.",
+      "verification_state": "VERIFIED",
+      "is_demo": false,
+      "notes": "Route identity is supported by the OSM route relation. Do not read this record as proof of a current schedule, fare, exact boarding side, or complete stop sequence."
+    },
+    {
+      "stable_id": "route-06c",
+      "city_id": "city-cebu-city",
+      "operator_id": "operator-cebu-integrated-transport-services",
+      "vehicle_type": "JEEPNEY",
+      "source_id": "source-osm-cebu-batch004",
+      "code": "06C",
+      "name": "Jeepney 06C: Guadalupe - Carbon via Jones, B. Rodriguez, Englis",
+      "description": "OpenStreetMap route master relation 3201551; route identity and mapped corridor are sourced, current operation and exact passenger service remain reviewable.",
+      "verification_state": "VERIFIED",
+      "is_demo": false,
+      "notes": "Route identity is supported by the OSM route relation. Do not read this record as proof of a current schedule, fare, exact boarding side, or complete stop sequence."
+    },
+    {
+      "stable_id": "route-06h",
+      "city_id": "city-cebu-city",
+      "operator_id": "operator-cebu-integrated-transport-services",
+      "vehicle_type": "JEEPNEY",
+      "source_id": "source-osm-cebu-batch004",
+      "code": "06H",
+      "name": "Jeepney 06H: Guadalupe - SM City Cebu",
+      "description": "OpenStreetMap route master relation 3179558; route identity and mapped corridor are sourced, current operation and exact passenger service remain reviewable.",
+      "verification_state": "VERIFIED",
+      "is_demo": false,
+      "notes": "Route identity is supported by the OSM route relation. Do not read this record as proof of a current schedule, fare, exact boarding side, or complete stop sequence."
+    },
+    {
+      "stable_id": "route-13c",
+      "city_id": "city-cebu-city",
+      "operator_id": null,
+      "vehicle_type": "JEEPNEY",
+      "source_id": "source-osm-cebu-batch004",
+      "code": "13C",
+      "name": "Jeepney 13C: Talamban - Colon",
+      "description": "OpenStreetMap route master relation 3179695; route identity and mapped corridor are sourced, current operation and exact passenger service remain reviewable.",
+      "verification_state": "VERIFIED",
+      "is_demo": false,
+      "notes": "Route identity is supported by the OSM route relation. Do not read this record as proof of a current schedule, fare, exact boarding side, or complete stop sequence."
+    }
+  ],
+  "patterns": [
+    {
+      "stable_id": "pattern-03b-21251277",
+      "route_id": "route-03b",
+      "source_id": "source-osm-cebu-batch004",
+      "name": "OSM relation 21251277: Carbon Market to Mabolo",
+      "direction": "INBOUND",
+      "service_notes": "OSM PTv2 directional relation 21251277; Carbon Market to Mabolo. Geometry follows a sampled mapped platform corridor; the sampled association and current passenger service remain UNVERIFIED.",
+      "geometry": {
+        "type": "MultiLineString",
+        "coordinates": [
+          [
+            [
+              123.8999261,
+              10.2920131
+            ],
+            [
+              123.9056972,
+              10.296228
+            ],
+            [
+              123.9062685,
+              10.3043833
+            ],
+            [
+              123.9117725,
+              10.3127987
+            ],
+            [
+              123.9161172,
+              10.3192232
+            ]
+          ]
+        ]
+      },
+      "verification_state": "UNVERIFIED",
+      "is_demo": false,
+      "stops": [
+        {
+          "stable_id": "pattern-03b-21251277-stop-1",
+          "stop_id": "stop-carbon-market",
+          "source_id": "source-osm-cebu-batch004",
+          "sequence": 1,
+          "boarding_allowed": true,
+          "alighting_allowed": true,
+          "verification_state": "UNVERIFIED",
+          "instruction": "Mapped platform candidate; confirm the vehicle signboard and roadside waiting side before boarding.",
+          "service_metadata": {
+            "osm_member_role": "platform_entry_only",
+            "association_evidence": "OpenStreetMap PTv2 route relation",
+            "association_verified": false,
+            "sampled_platform_sequence": true
+          }
+        },
+        {
+          "stable_id": "pattern-03b-21251277-stop-2",
+          "stop_id": "stop-osm-14102354695",
+          "source_id": "source-osm-cebu-batch004",
+          "sequence": 2,
+          "boarding_allowed": true,
+          "alighting_allowed": true,
+          "verification_state": "UNVERIFIED",
+          "instruction": "Mapped platform candidate; confirm the vehicle signboard and roadside waiting side before boarding.",
+          "service_metadata": {
+            "osm_member_role": "platform",
+            "association_evidence": "OpenStreetMap PTv2 route relation",
+            "association_verified": false,
+            "sampled_platform_sequence": true
+          }
+        },
+        {
+          "stable_id": "pattern-03b-21251277-stop-3",
+          "stop_id": "stop-osm-10250495181",
+          "source_id": "source-osm-cebu-batch004",
+          "sequence": 3,
+          "boarding_allowed": true,
+          "alighting_allowed": true,
+          "verification_state": "UNVERIFIED",
+          "instruction": "Mapped platform candidate; confirm the vehicle signboard and roadside waiting side before boarding.",
+          "service_metadata": {
+            "osm_member_role": "platform",
+            "association_evidence": "OpenStreetMap PTv2 route relation",
+            "association_verified": false,
+            "sampled_platform_sequence": true
+          }
+        },
+        {
+          "stable_id": "pattern-03b-21251277-stop-4",
+          "stop_id": "stop-osm-13761865123",
+          "source_id": "source-osm-cebu-batch004",
+          "sequence": 4,
+          "boarding_allowed": true,
+          "alighting_allowed": true,
+          "verification_state": "UNVERIFIED",
+          "instruction": "Mapped platform candidate; confirm the vehicle signboard and roadside waiting side before boarding.",
+          "service_metadata": {
+            "osm_member_role": "platform",
+            "association_evidence": "OpenStreetMap PTv2 route relation",
+            "association_verified": false,
+            "sampled_platform_sequence": true
+          }
+        },
+        {
+          "stable_id": "pattern-03b-21251277-stop-5",
+          "stop_id": "stop-osm-14104740255",
+          "source_id": "source-osm-cebu-batch004",
+          "sequence": 5,
+          "boarding_allowed": true,
+          "alighting_allowed": true,
+          "verification_state": "UNVERIFIED",
+          "instruction": "Mapped platform candidate; confirm the vehicle signboard and roadside waiting side before boarding.",
+          "service_metadata": {
+            "osm_member_role": "platform_exit_only",
+            "association_evidence": "OpenStreetMap PTv2 route relation",
+            "association_verified": false,
+            "sampled_platform_sequence": true
+          }
+        }
+      ]
+    },
+    {
+      "stable_id": "pattern-03b-21251278",
+      "route_id": "route-03b",
+      "source_id": "source-osm-cebu-batch004",
+      "name": "OSM relation 21251278: Mabolo to Carbon Market",
+      "direction": "OUTBOUND",
+      "service_notes": "OSM PTv2 directional relation 21251278; Mabolo to Carbon Market. Geometry follows a sampled mapped platform corridor; the sampled association and current passenger service remain UNVERIFIED.",
+      "geometry": {
+        "type": "MultiLineString",
+        "coordinates": [
+          [
+            [
+              123.9161172,
+              10.3192232
+            ],
+            [
+              123.9087717,
+              10.3108932
+            ],
+            [
+              123.8986773,
+              10.3113926
+            ],
+            [
+              123.8950388,
+              10.3041842
+            ],
+            [
+              123.8999261,
+              10.2920131
+            ]
+          ]
+        ]
+      },
+      "verification_state": "UNVERIFIED",
+      "is_demo": false,
+      "stops": [
+        {
+          "stable_id": "pattern-03b-21251278-stop-1",
+          "stop_id": "stop-osm-14104740255",
+          "source_id": "source-osm-cebu-batch004",
+          "sequence": 1,
+          "boarding_allowed": true,
+          "alighting_allowed": true,
+          "verification_state": "UNVERIFIED",
+          "instruction": "Mapped platform candidate; confirm the vehicle signboard and roadside waiting side before boarding.",
+          "service_metadata": {
+            "osm_member_role": "platform_entry_only",
+            "association_evidence": "OpenStreetMap PTv2 route relation",
+            "association_verified": false,
+            "sampled_platform_sequence": true
+          }
+        },
+        {
+          "stable_id": "pattern-03b-21251278-stop-2",
+          "stop_id": "stop-osm-13761865119",
+          "source_id": "source-osm-cebu-batch004",
+          "sequence": 2,
+          "boarding_allowed": true,
+          "alighting_allowed": true,
+          "verification_state": "UNVERIFIED",
+          "instruction": "Mapped platform candidate; confirm the vehicle signboard and roadside waiting side before boarding.",
+          "service_metadata": {
+            "osm_member_role": "platform",
+            "association_evidence": "OpenStreetMap PTv2 route relation",
+            "association_verified": false,
+            "sampled_platform_sequence": true
+          }
+        },
+        {
+          "stable_id": "pattern-03b-21251278-stop-3",
+          "stop_id": "stop-osm-13185519446",
+          "source_id": "source-osm-cebu-batch004",
+          "sequence": 3,
+          "boarding_allowed": true,
+          "alighting_allowed": true,
+          "verification_state": "UNVERIFIED",
+          "instruction": "Mapped platform candidate; confirm the vehicle signboard and roadside waiting side before boarding.",
+          "service_metadata": {
+            "osm_member_role": "platform",
+            "association_evidence": "OpenStreetMap PTv2 route relation",
+            "association_verified": false,
+            "sampled_platform_sequence": true
+          }
+        },
+        {
+          "stable_id": "pattern-03b-21251278-stop-4",
+          "stop_id": "stop-uytengsu",
+          "source_id": "source-osm-cebu-batch004",
+          "sequence": 4,
+          "boarding_allowed": true,
+          "alighting_allowed": true,
+          "verification_state": "UNVERIFIED",
+          "instruction": "Mapped platform candidate; confirm the vehicle signboard and roadside waiting side before boarding.",
+          "service_metadata": {
+            "osm_member_role": "platform",
+            "association_evidence": "OpenStreetMap PTv2 route relation",
+            "association_verified": false,
+            "sampled_platform_sequence": true
+          }
+        },
+        {
+          "stable_id": "pattern-03b-21251278-stop-5",
+          "stop_id": "stop-carbon-market",
+          "source_id": "source-osm-cebu-batch004",
+          "sequence": 5,
+          "boarding_allowed": true,
+          "alighting_allowed": true,
+          "verification_state": "UNVERIFIED",
+          "instruction": "Mapped platform candidate; confirm the vehicle signboard and roadside waiting side before boarding.",
+          "service_metadata": {
+            "osm_member_role": "platform_exit_only",
+            "association_evidence": "OpenStreetMap PTv2 route relation",
+            "association_verified": false,
+            "sampled_platform_sequence": true
+          }
+        }
+      ]
+    },
+    {
+      "stable_id": "pattern-04l-14991303",
+      "route_id": "route-04l",
+      "source_id": "source-osm-cebu-batch004",
+      "name": "OSM relation 14991303: Lahug to SM City Cebu",
+      "direction": "OUTBOUND",
+      "service_notes": "OSM PTv2 directional relation 14991303; Lahug to SM City Cebu. Geometry follows a sampled mapped platform corridor; the sampled association and current passenger service remain UNVERIFIED.",
+      "geometry": {
+        "type": "MultiLineString",
+        "coordinates": [
+          [
+            [
+              123.8976342,
+              10.3301055
+            ],
+            [
+              123.8981505,
+              10.3248901
+            ],
+            [
+              123.9049163,
+              10.3199713
+            ],
+            [
+              123.9119497,
+              10.3186374
+            ],
+            [
+              123.921263,
+              10.3114677
+            ]
+          ]
+        ]
+      },
+      "verification_state": "UNVERIFIED",
+      "is_demo": false,
+      "stops": [
+        {
+          "stable_id": "pattern-04l-14991303-stop-1",
+          "stop_id": "stop-jy-square-mall",
+          "source_id": "source-osm-cebu-batch004",
+          "sequence": 1,
+          "boarding_allowed": true,
+          "alighting_allowed": true,
+          "verification_state": "UNVERIFIED",
+          "instruction": "Mapped platform candidate; confirm the vehicle signboard and roadside waiting side before boarding.",
+          "service_metadata": {
+            "osm_member_role": "platform_entry_only",
+            "association_evidence": "OpenStreetMap PTv2 route relation",
+            "association_verified": false,
+            "sampled_platform_sequence": true
+          }
+        },
+        {
+          "stable_id": "pattern-04l-14991303-stop-2",
+          "stop_id": "stop-osm-10149201814",
+          "source_id": "source-osm-cebu-batch004",
+          "sequence": 2,
+          "boarding_allowed": true,
+          "alighting_allowed": true,
+          "verification_state": "UNVERIFIED",
+          "instruction": "Mapped platform candidate; confirm the vehicle signboard and roadside waiting side before boarding.",
+          "service_metadata": {
+            "osm_member_role": "platform",
+            "association_evidence": "OpenStreetMap PTv2 route relation",
+            "association_verified": false,
+            "sampled_platform_sequence": true
+          }
+        },
+        {
+          "stable_id": "pattern-04l-14991303-stop-3",
+          "stop_id": "stop-osm-13754365860",
+          "source_id": "source-osm-cebu-batch004",
+          "sequence": 3,
+          "boarding_allowed": true,
+          "alighting_allowed": true,
+          "verification_state": "UNVERIFIED",
+          "instruction": "Mapped platform candidate; confirm the vehicle signboard and roadside waiting side before boarding.",
+          "service_metadata": {
+            "osm_member_role": "platform",
+            "association_evidence": "OpenStreetMap PTv2 route relation",
+            "association_verified": false,
+            "sampled_platform_sequence": true
+          }
+        },
+        {
+          "stable_id": "pattern-04l-14991303-stop-4",
+          "stop_id": "stop-osm-10251749641",
+          "source_id": "source-osm-cebu-batch004",
+          "sequence": 4,
+          "boarding_allowed": true,
+          "alighting_allowed": true,
+          "verification_state": "UNVERIFIED",
+          "instruction": "Mapped platform candidate; confirm the vehicle signboard and roadside waiting side before boarding.",
+          "service_metadata": {
+            "osm_member_role": "platform",
+            "association_evidence": "OpenStreetMap PTv2 route relation",
+            "association_verified": false,
+            "sampled_platform_sequence": true
+          }
+        },
+        {
+          "stable_id": "pattern-04l-14991303-stop-5",
+          "stop_id": "stop-osm-10251749649",
+          "source_id": "source-osm-cebu-batch004",
+          "sequence": 5,
+          "boarding_allowed": true,
+          "alighting_allowed": true,
+          "verification_state": "UNVERIFIED",
+          "instruction": "Mapped platform candidate; confirm the vehicle signboard and roadside waiting side before boarding.",
+          "service_metadata": {
+            "osm_member_role": "platform_exit_only",
+            "association_evidence": "OpenStreetMap PTv2 route relation",
+            "association_verified": false,
+            "sampled_platform_sequence": true
+          }
+        }
+      ]
+    },
+    {
+      "stable_id": "pattern-04l-14991302",
+      "route_id": "route-04l",
+      "source_id": "source-osm-cebu-batch004",
+      "name": "OSM relation 14991302: SM City Cebu to Lahug",
+      "direction": "INBOUND",
+      "service_notes": "OSM PTv2 directional relation 14991302; SM City Cebu to Lahug. Geometry follows a sampled mapped platform corridor; the sampled association and current passenger service remain UNVERIFIED.",
+      "geometry": {
+        "type": "MultiLineString",
+        "coordinates": [
+          [
+            [
+              123.921263,
+              10.3114677
+            ],
+            [
+              123.9142149,
+              10.3151906
+            ],
+            [
+              123.9099844,
+              10.3220692
+            ],
+            [
+              123.9055382,
+              10.3274115
+            ],
+            [
+              123.8976342,
+              10.3301055
+            ]
+          ]
+        ]
+      },
+      "verification_state": "UNVERIFIED",
+      "is_demo": false,
+      "stops": [
+        {
+          "stable_id": "pattern-04l-14991302-stop-1",
+          "stop_id": "stop-osm-10251749649",
+          "source_id": "source-osm-cebu-batch004",
+          "sequence": 1,
+          "boarding_allowed": true,
+          "alighting_allowed": true,
+          "verification_state": "UNVERIFIED",
+          "instruction": "Mapped platform candidate; confirm the vehicle signboard and roadside waiting side before boarding.",
+          "service_metadata": {
+            "osm_member_role": "platform_entry_only",
+            "association_evidence": "OpenStreetMap PTv2 route relation",
+            "association_verified": false,
+            "sampled_platform_sequence": true
+          }
+        },
+        {
+          "stable_id": "pattern-04l-14991302-stop-2",
+          "stop_id": "stop-osm-5992425488",
+          "source_id": "source-osm-cebu-batch004",
+          "sequence": 2,
+          "boarding_allowed": true,
+          "alighting_allowed": true,
+          "verification_state": "UNVERIFIED",
+          "instruction": "Mapped platform candidate; confirm the vehicle signboard and roadside waiting side before boarding.",
+          "service_metadata": {
+            "osm_member_role": "platform",
+            "association_evidence": "OpenStreetMap PTv2 route relation",
+            "association_verified": false,
+            "sampled_platform_sequence": true
+          }
+        },
+        {
+          "stable_id": "pattern-04l-14991302-stop-3",
+          "stop_id": "stop-osm-10251749637",
+          "source_id": "source-osm-cebu-batch004",
+          "sequence": 3,
+          "boarding_allowed": true,
+          "alighting_allowed": true,
+          "verification_state": "UNVERIFIED",
+          "instruction": "Mapped platform candidate; confirm the vehicle signboard and roadside waiting side before boarding.",
+          "service_metadata": {
+            "osm_member_role": "platform",
+            "association_evidence": "OpenStreetMap PTv2 route relation",
+            "association_verified": false,
+            "sampled_platform_sequence": true
+          }
+        },
+        {
+          "stable_id": "pattern-04l-14991302-stop-4",
+          "stop_id": "stop-osm-6049975585",
+          "source_id": "source-osm-cebu-batch004",
+          "sequence": 4,
+          "boarding_allowed": true,
+          "alighting_allowed": true,
+          "verification_state": "UNVERIFIED",
+          "instruction": "Mapped platform candidate; confirm the vehicle signboard and roadside waiting side before boarding.",
+          "service_metadata": {
+            "osm_member_role": "platform",
+            "association_evidence": "OpenStreetMap PTv2 route relation",
+            "association_verified": false,
+            "sampled_platform_sequence": true
+          }
+        },
+        {
+          "stable_id": "pattern-04l-14991302-stop-5",
+          "stop_id": "stop-jy-square-mall",
+          "source_id": "source-osm-cebu-batch004",
+          "sequence": 5,
+          "boarding_allowed": true,
+          "alighting_allowed": true,
+          "verification_state": "UNVERIFIED",
+          "instruction": "Mapped platform candidate; confirm the vehicle signboard and roadside waiting side before boarding.",
+          "service_metadata": {
+            "osm_member_role": "platform_exit_only",
+            "association_evidence": "OpenStreetMap PTv2 route relation",
+            "association_verified": false,
+            "sampled_platform_sequence": true
+          }
+        }
+      ]
+    },
+    {
+      "stable_id": "pattern-06b-21142706",
+      "route_id": "route-06b",
+      "source_id": "source-osm-cebu-batch004",
+      "name": "OSM relation 21142706: Guadalupe to Carbon Market",
+      "direction": "OUTBOUND",
+      "service_notes": "OSM PTv2 directional relation 21142706; Guadalupe to Carbon Market. Geometry follows a sampled mapped platform corridor; the sampled association and current passenger service remain UNVERIFIED.",
+      "geometry": {
+        "type": "MultiLineString",
+        "coordinates": [
+          [
+            [
+              123.8799819,
+              10.3305264
+            ],
+            [
+              123.8847488,
+              10.3185952
+            ],
+            [
+              123.890942,
+              10.3157039
+            ],
+            [
+              123.8950388,
+              10.3041842
+            ],
+            [
+              123.8999261,
+              10.2920131
+            ]
+          ]
+        ]
+      },
+      "verification_state": "UNVERIFIED",
+      "is_demo": false,
+      "stops": [
+        {
+          "stable_id": "pattern-06b-21142706-stop-1",
+          "stop_id": "stop-osm-13761760745",
+          "source_id": "source-osm-cebu-batch004",
+          "sequence": 1,
+          "boarding_allowed": true,
+          "alighting_allowed": true,
+          "verification_state": "UNVERIFIED",
+          "instruction": "Mapped platform candidate; confirm the vehicle signboard and roadside waiting side before boarding.",
+          "service_metadata": {
+            "osm_member_role": "platform_entry_only",
+            "association_evidence": "OpenStreetMap PTv2 route relation",
+            "association_verified": false,
+            "sampled_platform_sequence": true
+          }
+        },
+        {
+          "stable_id": "pattern-06b-21142706-stop-2",
+          "stop_id": "stop-osm-14048307471",
+          "source_id": "source-osm-cebu-batch004",
+          "sequence": 2,
+          "boarding_allowed": true,
+          "alighting_allowed": true,
+          "verification_state": "UNVERIFIED",
+          "instruction": "Mapped platform candidate; confirm the vehicle signboard and roadside waiting side before boarding.",
+          "service_metadata": {
+            "osm_member_role": "platform",
+            "association_evidence": "OpenStreetMap PTv2 route relation",
+            "association_verified": false,
+            "sampled_platform_sequence": true
+          }
+        },
+        {
+          "stable_id": "pattern-06b-21142706-stop-3",
+          "stop_id": "stop-osm-10250495161",
+          "source_id": "source-osm-cebu-batch004",
+          "sequence": 3,
+          "boarding_allowed": true,
+          "alighting_allowed": true,
+          "verification_state": "UNVERIFIED",
+          "instruction": "Mapped platform candidate; confirm the vehicle signboard and roadside waiting side before boarding.",
+          "service_metadata": {
+            "osm_member_role": "platform",
+            "association_evidence": "OpenStreetMap PTv2 route relation",
+            "association_verified": false,
+            "sampled_platform_sequence": true
+          }
+        },
+        {
+          "stable_id": "pattern-06b-21142706-stop-4",
+          "stop_id": "stop-uytengsu",
+          "source_id": "source-osm-cebu-batch004",
+          "sequence": 4,
+          "boarding_allowed": true,
+          "alighting_allowed": true,
+          "verification_state": "UNVERIFIED",
+          "instruction": "Mapped platform candidate; confirm the vehicle signboard and roadside waiting side before boarding.",
+          "service_metadata": {
+            "osm_member_role": "platform",
+            "association_evidence": "OpenStreetMap PTv2 route relation",
+            "association_verified": false,
+            "sampled_platform_sequence": true
+          }
+        },
+        {
+          "stable_id": "pattern-06b-21142706-stop-5",
+          "stop_id": "stop-carbon-market",
+          "source_id": "source-osm-cebu-batch004",
+          "sequence": 5,
+          "boarding_allowed": true,
+          "alighting_allowed": true,
+          "verification_state": "UNVERIFIED",
+          "instruction": "Mapped platform candidate; confirm the vehicle signboard and roadside waiting side before boarding.",
+          "service_metadata": {
+            "osm_member_role": "platform_exit_only",
+            "association_evidence": "OpenStreetMap PTv2 route relation",
+            "association_verified": false,
+            "sampled_platform_sequence": true
+          }
+        }
+      ]
+    },
+    {
+      "stable_id": "pattern-06b-21142705",
+      "route_id": "route-06b",
+      "source_id": "source-osm-cebu-batch004",
+      "name": "OSM relation 21142705: Carbon Market to Guadalupe",
+      "direction": "INBOUND",
+      "service_notes": "OSM PTv2 directional relation 21142705; Carbon Market to Guadalupe. Geometry follows a sampled mapped platform corridor; the sampled association and current passenger service remain UNVERIFIED.",
+      "geometry": {
+        "type": "MultiLineString",
+        "coordinates": [
+          [
+            [
+              123.8999261,
+              10.2920131
+            ],
+            [
+              123.8979945,
+              10.2968851
+            ],
+            [
+              123.8924488,
+              10.3121549
+            ],
+            [
+              123.88657,
+              10.3179474
+            ],
+            [
+              123.8799819,
+              10.3305264
+            ]
+          ]
+        ]
+      },
+      "verification_state": "UNVERIFIED",
+      "is_demo": false,
+      "stops": [
+        {
+          "stable_id": "pattern-06b-21142705-stop-1",
+          "stop_id": "stop-carbon-market",
+          "source_id": "source-osm-cebu-batch004",
+          "sequence": 1,
+          "boarding_allowed": true,
+          "alighting_allowed": true,
+          "verification_state": "UNVERIFIED",
+          "instruction": "Mapped platform candidate; confirm the vehicle signboard and roadside waiting side before boarding.",
+          "service_metadata": {
+            "osm_member_role": "platform_entry_only",
+            "association_evidence": "OpenStreetMap PTv2 route relation",
+            "association_verified": false,
+            "sampled_platform_sequence": true
+          }
+        },
+        {
+          "stable_id": "pattern-06b-21142705-stop-2",
+          "stop_id": "stop-osm-10250495225",
+          "source_id": "source-osm-cebu-batch004",
+          "sequence": 2,
+          "boarding_allowed": true,
+          "alighting_allowed": true,
+          "verification_state": "UNVERIFIED",
+          "instruction": "Mapped platform candidate; confirm the vehicle signboard and roadside waiting side before boarding.",
+          "service_metadata": {
+            "osm_member_role": "platform",
+            "association_evidence": "OpenStreetMap PTv2 route relation",
+            "association_verified": false,
+            "sampled_platform_sequence": true
+          }
+        },
+        {
+          "stable_id": "pattern-06b-21142705-stop-3",
+          "stop_id": "stop-osm-10149227776",
+          "source_id": "source-osm-cebu-batch004",
+          "sequence": 3,
+          "boarding_allowed": true,
+          "alighting_allowed": true,
+          "verification_state": "UNVERIFIED",
+          "instruction": "Mapped platform candidate; confirm the vehicle signboard and roadside waiting side before boarding.",
+          "service_metadata": {
+            "osm_member_role": "platform",
+            "association_evidence": "OpenStreetMap PTv2 route relation",
+            "association_verified": false,
+            "sampled_platform_sequence": true
+          }
+        },
+        {
+          "stable_id": "pattern-06b-21142705-stop-4",
+          "stop_id": "stop-osm-14048307462",
+          "source_id": "source-osm-cebu-batch004",
+          "sequence": 4,
+          "boarding_allowed": true,
+          "alighting_allowed": true,
+          "verification_state": "UNVERIFIED",
+          "instruction": "Mapped platform candidate; confirm the vehicle signboard and roadside waiting side before boarding.",
+          "service_metadata": {
+            "osm_member_role": "platform",
+            "association_evidence": "OpenStreetMap PTv2 route relation",
+            "association_verified": false,
+            "sampled_platform_sequence": true
+          }
+        },
+        {
+          "stable_id": "pattern-06b-21142705-stop-5",
+          "stop_id": "stop-osm-13761760745",
+          "source_id": "source-osm-cebu-batch004",
+          "sequence": 5,
+          "boarding_allowed": true,
+          "alighting_allowed": true,
+          "verification_state": "UNVERIFIED",
+          "instruction": "Mapped platform candidate; confirm the vehicle signboard and roadside waiting side before boarding.",
+          "service_metadata": {
+            "osm_member_role": "platform_exit_only",
+            "association_evidence": "OpenStreetMap PTv2 route relation",
+            "association_verified": false,
+            "sampled_platform_sequence": true
+          }
+        }
+      ]
+    },
+    {
+      "stable_id": "pattern-06c-21265627",
+      "route_id": "route-06c",
+      "source_id": "source-osm-cebu-batch004",
+      "name": "OSM relation 21265627: Guadalupe to Carbon Market",
+      "direction": "OUTBOUND",
+      "service_notes": "OSM PTv2 directional relation 21265627; Guadalupe to Carbon Market. Geometry follows a sampled mapped platform corridor; the sampled association and current passenger service remain UNVERIFIED.",
+      "geometry": {
+        "type": "MultiLineString",
+        "coordinates": [
+          [
+            [
+              123.8799819,
+              10.3305264
+            ],
+            [
+              123.8847488,
+              10.3185952
+            ],
+            [
+              123.8895292,
+              10.3080925
+            ],
+            [
+              123.8950388,
+              10.3041842
+            ],
+            [
+              123.8999261,
+              10.2920131
+            ]
+          ]
+        ]
+      },
+      "verification_state": "UNVERIFIED",
+      "is_demo": false,
+      "stops": [
+        {
+          "stable_id": "pattern-06c-21265627-stop-1",
+          "stop_id": "stop-osm-13761760745",
+          "source_id": "source-osm-cebu-batch004",
+          "sequence": 1,
+          "boarding_allowed": true,
+          "alighting_allowed": true,
+          "verification_state": "UNVERIFIED",
+          "instruction": "Mapped platform candidate; confirm the vehicle signboard and roadside waiting side before boarding.",
+          "service_metadata": {
+            "osm_member_role": "platform_entry_only",
+            "association_evidence": "OpenStreetMap PTv2 route relation",
+            "association_verified": false,
+            "sampled_platform_sequence": true
+          }
+        },
+        {
+          "stable_id": "pattern-06c-21265627-stop-2",
+          "stop_id": "stop-osm-14048307471",
+          "source_id": "source-osm-cebu-batch004",
+          "sequence": 2,
+          "boarding_allowed": true,
+          "alighting_allowed": true,
+          "verification_state": "UNVERIFIED",
+          "instruction": "Mapped platform candidate; confirm the vehicle signboard and roadside waiting side before boarding.",
+          "service_metadata": {
+            "osm_member_role": "platform",
+            "association_evidence": "OpenStreetMap PTv2 route relation",
+            "association_verified": false,
+            "sampled_platform_sequence": true
+          }
+        },
+        {
+          "stable_id": "pattern-06c-21265627-stop-3",
+          "stop_id": "stop-b-rodriguez-extension",
+          "source_id": "source-osm-cebu-batch004",
+          "sequence": 3,
+          "boarding_allowed": true,
+          "alighting_allowed": true,
+          "verification_state": "UNVERIFIED",
+          "instruction": "Mapped platform candidate; confirm the vehicle signboard and roadside waiting side before boarding.",
+          "service_metadata": {
+            "osm_member_role": "platform",
+            "association_evidence": "OpenStreetMap PTv2 route relation",
+            "association_verified": false,
+            "sampled_platform_sequence": true
+          }
+        },
+        {
+          "stable_id": "pattern-06c-21265627-stop-4",
+          "stop_id": "stop-uytengsu",
+          "source_id": "source-osm-cebu-batch004",
+          "sequence": 4,
+          "boarding_allowed": true,
+          "alighting_allowed": true,
+          "verification_state": "UNVERIFIED",
+          "instruction": "Mapped platform candidate; confirm the vehicle signboard and roadside waiting side before boarding.",
+          "service_metadata": {
+            "osm_member_role": "platform",
+            "association_evidence": "OpenStreetMap PTv2 route relation",
+            "association_verified": false,
+            "sampled_platform_sequence": true
+          }
+        },
+        {
+          "stable_id": "pattern-06c-21265627-stop-5",
+          "stop_id": "stop-carbon-market",
+          "source_id": "source-osm-cebu-batch004",
+          "sequence": 5,
+          "boarding_allowed": true,
+          "alighting_allowed": true,
+          "verification_state": "UNVERIFIED",
+          "instruction": "Mapped platform candidate; confirm the vehicle signboard and roadside waiting side before boarding.",
+          "service_metadata": {
+            "osm_member_role": "platform_exit_only",
+            "association_evidence": "OpenStreetMap PTv2 route relation",
+            "association_verified": false,
+            "sampled_platform_sequence": true
+          }
+        }
+      ]
+    },
+    {
+      "stable_id": "pattern-06c-21265626",
+      "route_id": "route-06c",
+      "source_id": "source-osm-cebu-batch004",
+      "name": "OSM relation 21265626: Carbon Market to Guadalupe",
+      "direction": "INBOUND",
+      "service_notes": "OSM PTv2 directional relation 21265626; Carbon Market to Guadalupe. Geometry follows a sampled mapped platform corridor; the sampled association and current passenger service remain UNVERIFIED.",
+      "geometry": {
+        "type": "MultiLineString",
+        "coordinates": [
+          [
+            [
+              123.8999261,
+              10.2920131
+            ],
+            [
+              123.8979945,
+              10.2968851
+            ],
+            [
+              123.8914798,
+              10.3088987
+            ],
+            [
+              123.8852584,
+              10.3167612
+            ],
+            [
+              123.8799819,
+              10.3305264
+            ]
+          ]
+        ]
+      },
+      "verification_state": "UNVERIFIED",
+      "is_demo": false,
+      "stops": [
+        {
+          "stable_id": "pattern-06c-21265626-stop-1",
+          "stop_id": "stop-carbon-market",
+          "source_id": "source-osm-cebu-batch004",
+          "sequence": 1,
+          "boarding_allowed": true,
+          "alighting_allowed": true,
+          "verification_state": "UNVERIFIED",
+          "instruction": "Mapped platform candidate; confirm the vehicle signboard and roadside waiting side before boarding.",
+          "service_metadata": {
+            "osm_member_role": "platform_entry_only",
+            "association_evidence": "OpenStreetMap PTv2 route relation",
+            "association_verified": false,
+            "sampled_platform_sequence": true
+          }
+        },
+        {
+          "stable_id": "pattern-06c-21265626-stop-2",
+          "stop_id": "stop-osm-10250495225",
+          "source_id": "source-osm-cebu-batch004",
+          "sequence": 2,
+          "boarding_allowed": true,
+          "alighting_allowed": true,
+          "verification_state": "UNVERIFIED",
+          "instruction": "Mapped platform candidate; confirm the vehicle signboard and roadside waiting side before boarding.",
+          "service_metadata": {
+            "osm_member_role": "platform",
+            "association_evidence": "OpenStreetMap PTv2 route relation",
+            "association_verified": false,
+            "sampled_platform_sequence": true
+          }
+        },
+        {
+          "stable_id": "pattern-06c-21265626-stop-3",
+          "stop_id": "stop-osm-14113797207",
+          "source_id": "source-osm-cebu-batch004",
+          "sequence": 3,
+          "boarding_allowed": true,
+          "alighting_allowed": true,
+          "verification_state": "UNVERIFIED",
+          "instruction": "Mapped platform candidate; confirm the vehicle signboard and roadside waiting side before boarding.",
+          "service_metadata": {
+            "osm_member_role": "platform",
+            "association_evidence": "OpenStreetMap PTv2 route relation",
+            "association_verified": false,
+            "sampled_platform_sequence": true
+          }
+        },
+        {
+          "stable_id": "pattern-06c-21265626-stop-4",
+          "stop_id": "stop-osm-13761760738",
+          "source_id": "source-osm-cebu-batch004",
+          "sequence": 4,
+          "boarding_allowed": true,
+          "alighting_allowed": true,
+          "verification_state": "UNVERIFIED",
+          "instruction": "Mapped platform candidate; confirm the vehicle signboard and roadside waiting side before boarding.",
+          "service_metadata": {
+            "osm_member_role": "platform",
+            "association_evidence": "OpenStreetMap PTv2 route relation",
+            "association_verified": false,
+            "sampled_platform_sequence": true
+          }
+        },
+        {
+          "stable_id": "pattern-06c-21265626-stop-5",
+          "stop_id": "stop-osm-13761760745",
+          "source_id": "source-osm-cebu-batch004",
+          "sequence": 5,
+          "boarding_allowed": true,
+          "alighting_allowed": true,
+          "verification_state": "UNVERIFIED",
+          "instruction": "Mapped platform candidate; confirm the vehicle signboard and roadside waiting side before boarding.",
+          "service_metadata": {
+            "osm_member_role": "platform_exit_only",
+            "association_evidence": "OpenStreetMap PTv2 route relation",
+            "association_verified": false,
+            "sampled_platform_sequence": true
+          }
+        }
+      ]
+    },
+    {
+      "stable_id": "pattern-06h-21267110",
+      "route_id": "route-06h",
+      "source_id": "source-osm-cebu-batch004",
+      "name": "OSM relation 21267110: Guadalupe to SM City Cebu",
+      "direction": "OUTBOUND",
+      "service_notes": "OSM PTv2 directional relation 21267110; Guadalupe to SM City Cebu. Geometry follows a sampled mapped platform corridor; the sampled association and current passenger service remain UNVERIFIED.",
+      "geometry": {
+        "type": "MultiLineString",
+        "coordinates": [
+          [
+            [
+              123.8799819,
+              10.3305264
+            ],
+            [
+              123.8851646,
+              10.3166783
+            ],
+            [
+              123.8923719,
+              10.3166462
+            ],
+            [
+              123.9085427,
+              10.3188841
+            ],
+            [
+              123.9180581,
+              10.3105862
+            ]
+          ]
+        ]
+      },
+      "verification_state": "UNVERIFIED",
+      "is_demo": false,
+      "stops": [
+        {
+          "stable_id": "pattern-06h-21267110-stop-1",
+          "stop_id": "stop-osm-13761760745",
+          "source_id": "source-osm-cebu-batch004",
+          "sequence": 1,
+          "boarding_allowed": true,
+          "alighting_allowed": true,
+          "verification_state": "UNVERIFIED",
+          "instruction": "Mapped platform candidate; confirm the vehicle signboard and roadside waiting side before boarding.",
+          "service_metadata": {
+            "osm_member_role": "platform_entry_only",
+            "association_evidence": "OpenStreetMap PTv2 route relation",
+            "association_verified": false,
+            "sampled_platform_sequence": true
+          }
+        },
+        {
+          "stable_id": "pattern-06h-21267110-stop-2",
+          "stop_id": "stop-osm-13761760739",
+          "source_id": "source-osm-cebu-batch004",
+          "sequence": 2,
+          "boarding_allowed": true,
+          "alighting_allowed": true,
+          "verification_state": "UNVERIFIED",
+          "instruction": "Mapped platform candidate; confirm the vehicle signboard and roadside waiting side before boarding.",
+          "service_metadata": {
+            "osm_member_role": "platform",
+            "association_evidence": "OpenStreetMap PTv2 route relation",
+            "association_verified": false,
+            "sampled_platform_sequence": true
+          }
+        },
+        {
+          "stable_id": "pattern-06h-21267110-stop-3",
+          "stop_id": "stop-osm-10250495110",
+          "source_id": "source-osm-cebu-batch004",
+          "sequence": 3,
+          "boarding_allowed": true,
+          "alighting_allowed": true,
+          "verification_state": "UNVERIFIED",
+          "instruction": "Mapped platform candidate; confirm the vehicle signboard and roadside waiting side before boarding.",
+          "service_metadata": {
+            "osm_member_role": "platform",
+            "association_evidence": "OpenStreetMap PTv2 route relation",
+            "association_verified": false,
+            "sampled_platform_sequence": true
+          }
+        },
+        {
+          "stable_id": "pattern-06h-21267110-stop-4",
+          "stop_id": "stop-osm-14104740225",
+          "source_id": "source-osm-cebu-batch004",
+          "sequence": 4,
+          "boarding_allowed": true,
+          "alighting_allowed": true,
+          "verification_state": "UNVERIFIED",
+          "instruction": "Mapped platform candidate; confirm the vehicle signboard and roadside waiting side before boarding.",
+          "service_metadata": {
+            "osm_member_role": "platform",
+            "association_evidence": "OpenStreetMap PTv2 route relation",
+            "association_verified": false,
+            "sampled_platform_sequence": true
+          }
+        },
+        {
+          "stable_id": "pattern-06h-21267110-stop-5",
+          "stop_id": "stop-osm-5544373721",
+          "source_id": "source-osm-cebu-batch004",
+          "sequence": 5,
+          "boarding_allowed": true,
+          "alighting_allowed": true,
+          "verification_state": "UNVERIFIED",
+          "instruction": "Mapped platform candidate; confirm the vehicle signboard and roadside waiting side before boarding.",
+          "service_metadata": {
+            "osm_member_role": "platform_exit_only",
+            "association_evidence": "OpenStreetMap PTv2 route relation",
+            "association_verified": false,
+            "sampled_platform_sequence": true
+          }
+        }
+      ]
+    },
+    {
+      "stable_id": "pattern-06h-21267109",
+      "route_id": "route-06h",
+      "source_id": "source-osm-cebu-batch004",
+      "name": "OSM relation 21267109: SM City Cebu to Guadalupe",
+      "direction": "INBOUND",
+      "service_notes": "OSM PTv2 directional relation 21267109; SM City Cebu to Guadalupe. Geometry follows a sampled mapped platform corridor; the sampled association and current passenger service remain UNVERIFIED.",
+      "geometry": {
+        "type": "MultiLineString",
+        "coordinates": [
+          [
+            [
+              123.9180581,
+              10.3105862
+            ],
+            [
+              123.9083531,
+              10.3190133
+            ],
+            [
+              123.8972602,
+              10.3109833
+            ],
+            [
+              123.8859462,
+              10.3136816
+            ],
+            [
+              123.8799819,
+              10.3305264
+            ]
+          ]
+        ]
+      },
+      "verification_state": "UNVERIFIED",
+      "is_demo": false,
+      "stops": [
+        {
+          "stable_id": "pattern-06h-21267109-stop-1",
+          "stop_id": "stop-osm-5544373721",
+          "source_id": "source-osm-cebu-batch004",
+          "sequence": 1,
+          "boarding_allowed": true,
+          "alighting_allowed": true,
+          "verification_state": "UNVERIFIED",
+          "instruction": "Mapped platform candidate; confirm the vehicle signboard and roadside waiting side before boarding.",
+          "service_metadata": {
+            "osm_member_role": "platform_entry_only",
+            "association_evidence": "OpenStreetMap PTv2 route relation",
+            "association_verified": false,
+            "sampled_platform_sequence": true
+          }
+        },
+        {
+          "stable_id": "pattern-06h-21267109-stop-2",
+          "stop_id": "stop-osm-10251749639",
+          "source_id": "source-osm-cebu-batch004",
+          "sequence": 2,
+          "boarding_allowed": true,
+          "alighting_allowed": true,
+          "verification_state": "UNVERIFIED",
+          "instruction": "Mapped platform candidate; confirm the vehicle signboard and roadside waiting side before boarding.",
+          "service_metadata": {
+            "osm_member_role": "platform",
+            "association_evidence": "OpenStreetMap PTv2 route relation",
+            "association_verified": false,
+            "sampled_platform_sequence": true
+          }
+        },
+        {
+          "stable_id": "pattern-06h-21267109-stop-3",
+          "stop_id": "stop-osm-10250495172",
+          "source_id": "source-osm-cebu-batch004",
+          "sequence": 3,
+          "boarding_allowed": true,
+          "alighting_allowed": true,
+          "verification_state": "UNVERIFIED",
+          "instruction": "Mapped platform candidate; confirm the vehicle signboard and roadside waiting side before boarding.",
+          "service_metadata": {
+            "osm_member_role": "platform",
+            "association_evidence": "OpenStreetMap PTv2 route relation",
+            "association_verified": false,
+            "sampled_platform_sequence": true
+          }
+        },
+        {
+          "stable_id": "pattern-06h-21267109-stop-4",
+          "stop_id": "stop-osm-13761760743",
+          "source_id": "source-osm-cebu-batch004",
+          "sequence": 4,
+          "boarding_allowed": true,
+          "alighting_allowed": true,
+          "verification_state": "UNVERIFIED",
+          "instruction": "Mapped platform candidate; confirm the vehicle signboard and roadside waiting side before boarding.",
+          "service_metadata": {
+            "osm_member_role": "platform",
+            "association_evidence": "OpenStreetMap PTv2 route relation",
+            "association_verified": false,
+            "sampled_platform_sequence": true
+          }
+        },
+        {
+          "stable_id": "pattern-06h-21267109-stop-5",
+          "stop_id": "stop-osm-13761760745",
+          "source_id": "source-osm-cebu-batch004",
+          "sequence": 5,
+          "boarding_allowed": true,
+          "alighting_allowed": true,
+          "verification_state": "UNVERIFIED",
+          "instruction": "Mapped platform candidate; confirm the vehicle signboard and roadside waiting side before boarding.",
+          "service_metadata": {
+            "osm_member_role": "platform_exit_only",
+            "association_evidence": "OpenStreetMap PTv2 route relation",
+            "association_verified": false,
+            "sampled_platform_sequence": true
+          }
+        }
+      ]
+    },
+    {
+      "stable_id": "pattern-13c-21251275",
+      "route_id": "route-13c",
+      "source_id": "source-osm-cebu-batch004",
+      "name": "OSM relation 21251275: Colon to Talamban",
+      "direction": "OUTBOUND",
+      "service_notes": "OSM PTv2 directional relation 21251275; Colon to Talamban. Geometry follows a sampled mapped platform corridor; the sampled association and current passenger service remain UNVERIFIED.",
+      "geometry": {
+        "type": "MultiLineString",
+        "coordinates": [
+          [
+            [
+              123.8987888,
+              10.2972912
+            ],
+            [
+              123.9094545,
+              10.311453
+            ],
+            [
+              123.9102028,
+              10.3315341
+            ],
+            [
+              123.9146084,
+              10.3545123
+            ],
+            [
+              123.9250021,
+              10.3709914
+            ]
+          ]
+        ]
+      },
+      "verification_state": "UNVERIFIED",
+      "is_demo": false,
+      "stops": [
+        {
+          "stable_id": "pattern-13c-21251275-stop-1",
+          "stop_id": "stop-psbank-colon",
+          "source_id": "source-osm-cebu-batch004",
+          "sequence": 1,
+          "boarding_allowed": true,
+          "alighting_allowed": true,
+          "verification_state": "UNVERIFIED",
+          "instruction": "Mapped platform candidate; confirm the vehicle signboard and roadside waiting side before boarding.",
+          "service_metadata": {
+            "osm_member_role": "platform_entry_only",
+            "association_evidence": "OpenStreetMap PTv2 route relation",
+            "association_verified": false,
+            "sampled_platform_sequence": true
+          }
+        },
+        {
+          "stable_id": "pattern-13c-21251275-stop-2",
+          "stop_id": "stop-osm-13761865121",
+          "source_id": "source-osm-cebu-batch004",
+          "sequence": 2,
+          "boarding_allowed": true,
+          "alighting_allowed": true,
+          "verification_state": "UNVERIFIED",
+          "instruction": "Mapped platform candidate; confirm the vehicle signboard and roadside waiting side before boarding.",
+          "service_metadata": {
+            "osm_member_role": "platform",
+            "association_evidence": "OpenStreetMap PTv2 route relation",
+            "association_verified": false,
+            "sampled_platform_sequence": true
+          }
+        },
+        {
+          "stable_id": "pattern-13c-21251275-stop-3",
+          "stop_id": "stop-osm-13769915542",
+          "source_id": "source-osm-cebu-batch004",
+          "sequence": 3,
+          "boarding_allowed": true,
+          "alighting_allowed": true,
+          "verification_state": "UNVERIFIED",
+          "instruction": "Mapped platform candidate; confirm the vehicle signboard and roadside waiting side before boarding.",
+          "service_metadata": {
+            "osm_member_role": "platform",
+            "association_evidence": "OpenStreetMap PTv2 route relation",
+            "association_verified": false,
+            "sampled_platform_sequence": true
+          }
+        },
+        {
+          "stable_id": "pattern-13c-21251275-stop-4",
+          "stop_id": "stop-osm-13769915543",
+          "source_id": "source-osm-cebu-batch004",
+          "sequence": 4,
+          "boarding_allowed": true,
+          "alighting_allowed": true,
+          "verification_state": "UNVERIFIED",
+          "instruction": "Mapped platform candidate; confirm the vehicle signboard and roadside waiting side before boarding.",
+          "service_metadata": {
+            "osm_member_role": "platform",
+            "association_evidence": "OpenStreetMap PTv2 route relation",
+            "association_verified": false,
+            "sampled_platform_sequence": true
+          }
+        },
+        {
+          "stable_id": "pattern-13c-21251275-stop-5",
+          "stop_id": "stop-osm-14104740296",
+          "source_id": "source-osm-cebu-batch004",
+          "sequence": 5,
+          "boarding_allowed": true,
+          "alighting_allowed": true,
+          "verification_state": "UNVERIFIED",
+          "instruction": "Mapped platform candidate; confirm the vehicle signboard and roadside waiting side before boarding.",
+          "service_metadata": {
+            "osm_member_role": "platform_exit_only",
+            "association_evidence": "OpenStreetMap PTv2 route relation",
+            "association_verified": false,
+            "sampled_platform_sequence": true
+          }
+        }
+      ]
+    },
+    {
+      "stable_id": "pattern-13c-21251276",
+      "route_id": "route-13c",
+      "source_id": "source-osm-cebu-batch004",
+      "name": "OSM relation 21251276: Talamban to Colon",
+      "direction": "INBOUND",
+      "service_notes": "OSM PTv2 directional relation 21251276; Talamban to Colon. Geometry follows a sampled mapped platform corridor; the sampled association and current passenger service remain UNVERIFIED.",
+      "geometry": {
+        "type": "MultiLineString",
+        "coordinates": [
+          [
+            [
+              123.9247888,
+              10.3709465
+            ],
+            [
+              123.9138302,
+              10.3520148
+            ],
+            [
+              123.9049163,
+              10.3199713
+            ],
+            [
+              123.9030717,
+              10.3080811
+            ],
+            [
+              123.8987888,
+              10.2972912
+            ]
+          ]
+        ]
+      },
+      "verification_state": "UNVERIFIED",
+      "is_demo": false,
+      "stops": [
+        {
+          "stable_id": "pattern-13c-21251276-stop-1",
+          "stop_id": "stop-osm-14104740297",
+          "source_id": "source-osm-cebu-batch004",
+          "sequence": 1,
+          "boarding_allowed": true,
+          "alighting_allowed": true,
+          "verification_state": "UNVERIFIED",
+          "instruction": "Mapped platform candidate; confirm the vehicle signboard and roadside waiting side before boarding.",
+          "service_metadata": {
+            "osm_member_role": "platform_entry_only",
+            "association_evidence": "OpenStreetMap PTv2 route relation",
+            "association_verified": false,
+            "sampled_platform_sequence": true
+          }
+        },
+        {
+          "stable_id": "pattern-13c-21251276-stop-2",
+          "stop_id": "stop-osm-14104740282",
+          "source_id": "source-osm-cebu-batch004",
+          "sequence": 2,
+          "boarding_allowed": true,
+          "alighting_allowed": true,
+          "verification_state": "UNVERIFIED",
+          "instruction": "Mapped platform candidate; confirm the vehicle signboard and roadside waiting side before boarding.",
+          "service_metadata": {
+            "osm_member_role": "platform",
+            "association_evidence": "OpenStreetMap PTv2 route relation",
+            "association_verified": false,
+            "sampled_platform_sequence": true
+          }
+        },
+        {
+          "stable_id": "pattern-13c-21251276-stop-3",
+          "stop_id": "stop-osm-13754365860",
+          "source_id": "source-osm-cebu-batch004",
+          "sequence": 3,
+          "boarding_allowed": true,
+          "alighting_allowed": true,
+          "verification_state": "UNVERIFIED",
+          "instruction": "Mapped platform candidate; confirm the vehicle signboard and roadside waiting side before boarding.",
+          "service_metadata": {
+            "osm_member_role": "platform",
+            "association_evidence": "OpenStreetMap PTv2 route relation",
+            "association_verified": false,
+            "sampled_platform_sequence": true
+          }
+        },
+        {
+          "stable_id": "pattern-13c-21251276-stop-4",
+          "stop_id": "stop-osm-14104740278",
+          "source_id": "source-osm-cebu-batch004",
+          "sequence": 4,
+          "boarding_allowed": true,
+          "alighting_allowed": true,
+          "verification_state": "UNVERIFIED",
+          "instruction": "Mapped platform candidate; confirm the vehicle signboard and roadside waiting side before boarding.",
+          "service_metadata": {
+            "osm_member_role": "platform",
+            "association_evidence": "OpenStreetMap PTv2 route relation",
+            "association_verified": false,
+            "sampled_platform_sequence": true
+          }
+        },
+        {
+          "stable_id": "pattern-13c-21251276-stop-5",
+          "stop_id": "stop-psbank-colon",
+          "source_id": "source-osm-cebu-batch004",
+          "sequence": 5,
+          "boarding_allowed": true,
+          "alighting_allowed": true,
+          "verification_state": "UNVERIFIED",
+          "instruction": "Mapped platform candidate; confirm the vehicle signboard and roadside waiting side before boarding.",
+          "service_metadata": {
+            "osm_member_role": "platform_exit_only",
+            "association_evidence": "OpenStreetMap PTv2 route relation",
+            "association_verified": false,
+            "sampled_platform_sequence": true
+          }
+        }
+      ]
+    }
+  ],
+  "transfers": [],
+  "fares": [
+    {
+      "stable_id": "fare-03b-base-2023",
+      "route_id": "route-03b",
+      "vehicle_type": "JEEPNEY",
+      "source_id": "source-ltfrb-puj-fares-2023",
+      "fare_class": "REGULAR_BASE",
+      "amount": 13,
+      "currency": "PHP",
+      "min_distance_km": 0,
+      "max_distance_km": 4,
+      "effective_from": "2023-10-08",
+      "verification_state": "STALE",
+      "is_demo": false,
+      "notes": "Historical official general PUJ fare for the first four kilometres. Current route-specific applicability is not confirmed; not used by journey planning."
+    },
+    {
+      "stable_id": "fare-03b-addon-2023",
+      "route_id": "route-03b",
+      "vehicle_type": "JEEPNEY",
+      "source_id": "source-ltfrb-puj-fares-2023",
+      "fare_class": "REGULAR_ADD_ON_KM",
+      "amount": 1.8,
+      "currency": "PHP",
+      "min_distance_km": 4.01,
+      "max_distance_km": null,
+      "effective_from": "2023-10-08",
+      "verification_state": "STALE",
+      "is_demo": false,
+      "notes": "Historical official general PUJ fare for each succeeding kilometre. Current route-specific applicability is not confirmed; not used by journey planning."
+    },
+    {
+      "stable_id": "fare-04l-base-2023",
+      "route_id": "route-04l",
+      "vehicle_type": "JEEPNEY",
+      "source_id": "source-ltfrb-puj-fares-2023",
+      "fare_class": "REGULAR_BASE",
+      "amount": 13,
+      "currency": "PHP",
+      "min_distance_km": 0,
+      "max_distance_km": 4,
+      "effective_from": "2023-10-08",
+      "verification_state": "STALE",
+      "is_demo": false,
+      "notes": "Historical official general PUJ fare for the first four kilometres. Current route-specific applicability is not confirmed; not used by journey planning."
+    },
+    {
+      "stable_id": "fare-04l-addon-2023",
+      "route_id": "route-04l",
+      "vehicle_type": "JEEPNEY",
+      "source_id": "source-ltfrb-puj-fares-2023",
+      "fare_class": "REGULAR_ADD_ON_KM",
+      "amount": 1.8,
+      "currency": "PHP",
+      "min_distance_km": 4.01,
+      "max_distance_km": null,
+      "effective_from": "2023-10-08",
+      "verification_state": "STALE",
+      "is_demo": false,
+      "notes": "Historical official general PUJ fare for each succeeding kilometre. Current route-specific applicability is not confirmed; not used by journey planning."
+    },
+    {
+      "stable_id": "fare-06b-base-2023",
+      "route_id": "route-06b",
+      "vehicle_type": "JEEPNEY",
+      "source_id": "source-ltfrb-puj-fares-2023",
+      "fare_class": "REGULAR_BASE",
+      "amount": 13,
+      "currency": "PHP",
+      "min_distance_km": 0,
+      "max_distance_km": 4,
+      "effective_from": "2023-10-08",
+      "verification_state": "STALE",
+      "is_demo": false,
+      "notes": "Historical official general PUJ fare for the first four kilometres. Current route-specific applicability is not confirmed; not used by journey planning."
+    },
+    {
+      "stable_id": "fare-06b-addon-2023",
+      "route_id": "route-06b",
+      "vehicle_type": "JEEPNEY",
+      "source_id": "source-ltfrb-puj-fares-2023",
+      "fare_class": "REGULAR_ADD_ON_KM",
+      "amount": 1.8,
+      "currency": "PHP",
+      "min_distance_km": 4.01,
+      "max_distance_km": null,
+      "effective_from": "2023-10-08",
+      "verification_state": "STALE",
+      "is_demo": false,
+      "notes": "Historical official general PUJ fare for each succeeding kilometre. Current route-specific applicability is not confirmed; not used by journey planning."
+    },
+    {
+      "stable_id": "fare-06c-base-2023",
+      "route_id": "route-06c",
+      "vehicle_type": "JEEPNEY",
+      "source_id": "source-ltfrb-puj-fares-2023",
+      "fare_class": "REGULAR_BASE",
+      "amount": 13,
+      "currency": "PHP",
+      "min_distance_km": 0,
+      "max_distance_km": 4,
+      "effective_from": "2023-10-08",
+      "verification_state": "STALE",
+      "is_demo": false,
+      "notes": "Historical official general PUJ fare for the first four kilometres. Current route-specific applicability is not confirmed; not used by journey planning."
+    },
+    {
+      "stable_id": "fare-06c-addon-2023",
+      "route_id": "route-06c",
+      "vehicle_type": "JEEPNEY",
+      "source_id": "source-ltfrb-puj-fares-2023",
+      "fare_class": "REGULAR_ADD_ON_KM",
+      "amount": 1.8,
+      "currency": "PHP",
+      "min_distance_km": 4.01,
+      "max_distance_km": null,
+      "effective_from": "2023-10-08",
+      "verification_state": "STALE",
+      "is_demo": false,
+      "notes": "Historical official general PUJ fare for each succeeding kilometre. Current route-specific applicability is not confirmed; not used by journey planning."
+    },
+    {
+      "stable_id": "fare-06h-base-2023",
+      "route_id": "route-06h",
+      "vehicle_type": "JEEPNEY",
+      "source_id": "source-ltfrb-puj-fares-2023",
+      "fare_class": "REGULAR_BASE",
+      "amount": 13,
+      "currency": "PHP",
+      "min_distance_km": 0,
+      "max_distance_km": 4,
+      "effective_from": "2023-10-08",
+      "verification_state": "STALE",
+      "is_demo": false,
+      "notes": "Historical official general PUJ fare for the first four kilometres. Current route-specific applicability is not confirmed; not used by journey planning."
+    },
+    {
+      "stable_id": "fare-06h-addon-2023",
+      "route_id": "route-06h",
+      "vehicle_type": "JEEPNEY",
+      "source_id": "source-ltfrb-puj-fares-2023",
+      "fare_class": "REGULAR_ADD_ON_KM",
+      "amount": 1.8,
+      "currency": "PHP",
+      "min_distance_km": 4.01,
+      "max_distance_km": null,
+      "effective_from": "2023-10-08",
+      "verification_state": "STALE",
+      "is_demo": false,
+      "notes": "Historical official general PUJ fare for each succeeding kilometre. Current route-specific applicability is not confirmed; not used by journey planning."
+    },
+    {
+      "stable_id": "fare-13c-base-2023",
+      "route_id": "route-13c",
+      "vehicle_type": "JEEPNEY",
+      "source_id": "source-ltfrb-puj-fares-2023",
+      "fare_class": "REGULAR_BASE",
+      "amount": 13,
+      "currency": "PHP",
+      "min_distance_km": 0,
+      "max_distance_km": 4,
+      "effective_from": "2023-10-08",
+      "verification_state": "STALE",
+      "is_demo": false,
+      "notes": "Historical official general PUJ fare for the first four kilometres. Current route-specific applicability is not confirmed; not used by journey planning."
+    },
+    {
+      "stable_id": "fare-13c-addon-2023",
+      "route_id": "route-13c",
+      "vehicle_type": "JEEPNEY",
+      "source_id": "source-ltfrb-puj-fares-2023",
+      "fare_class": "REGULAR_ADD_ON_KM",
+      "amount": 1.8,
+      "currency": "PHP",
+      "min_distance_km": 4.01,
+      "max_distance_km": null,
+      "effective_from": "2023-10-08",
+      "verification_state": "STALE",
+      "is_demo": false,
+      "notes": "Historical official general PUJ fare for each succeeding kilometre. Current route-specific applicability is not confirmed; not used by journey planning."
+    }
+  ]
+}

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\VerificationState;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -19,6 +20,7 @@ class RoutePatternStop extends Model
             'boarding_allowed' => 'boolean',
             'alighting_allowed' => 'boolean',
             'service_metadata' => 'array',
+            'verification_state' => VerificationState::class,
         ];
     }
 

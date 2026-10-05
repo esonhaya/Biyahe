@@ -35,6 +35,8 @@ class StopsTable
                     ->searchable(),
                 TextColumn::make('category')
                     ->searchable(),
+                TextColumn::make('boarding_side')
+                    ->toggleable(isToggledHiddenByDefault: true),
                 IconColumn::make('is_boarding_point')
                     ->boolean(),
                 IconColumn::make('is_active')

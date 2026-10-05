@@ -21,6 +21,8 @@ class StopResource extends JsonResource
             'location' => Geo::parsePoint($location),
             'is_boarding_point' => (bool) $this->is_boarding_point,
             'boarding_notes' => $this->boarding_notes,
+            'boarding_side' => $this->boarding_side,
+            'direction_note' => $this->direction_note,
             'city' => new CityResource($this->whenLoaded('city')),
             'nearby_place' => new PlaceResource($this->whenLoaded('nearbyPlace')),
             'verification' => Trust::status($this->resource),

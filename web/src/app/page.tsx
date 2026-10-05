@@ -71,6 +71,7 @@ function JourneyCard({ journey, recommended, onSelect }: { journey: Journey; rec
                 <div className={styles.legBody}>
                   <p className={styles.legLabel}>Ride · {leg.pattern?.direction ?? "direction not recorded"}</p>
                   <p><strong>Board at:</strong> {leg.boarding_stop?.name ?? leg.origin.name}</p>
+                  {leg.boarding_instruction && <p>{leg.boarding_instruction}</p>}
                   {leg.driver_instruction && <p><strong>{leg.driver_instruction}</strong></p>}
                   <p><strong>{leg.get_off_guidance ?? `Get off near ${leg.alighting_stop?.name ?? leg.destination.name}.`}</strong></p>
                   {leg.stop_count !== null && <small>{leg.stop_count} stops · {leg.route?.name ?? "Route details"}</small>}

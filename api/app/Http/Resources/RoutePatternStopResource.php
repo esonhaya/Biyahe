@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Support\Trust;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -13,6 +14,7 @@ class RoutePatternStopResource extends JsonResource
             'sequence' => (int) $this->sequence,
             'boarding_allowed' => (bool) $this->boarding_allowed,
             'alighting_allowed' => (bool) $this->alighting_allowed,
+            'verification' => Trust::status($this->resource),
             'instruction' => $this->instruction,
             'service_metadata' => $this->service_metadata,
             'stop' => new StopResource($this->whenLoaded('stop')),

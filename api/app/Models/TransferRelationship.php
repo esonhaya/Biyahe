@@ -38,6 +38,16 @@ class TransferRelationship extends Model
         return $this->belongsTo(Stop::class, 'to_stop_id');
     }
 
+    public function fromRoutePattern(): BelongsTo
+    {
+        return $this->belongsTo(RoutePattern::class, 'from_route_pattern_id');
+    }
+
+    public function toRoutePattern(): BelongsTo
+    {
+        return $this->belongsTo(RoutePattern::class, 'to_route_pattern_id');
+    }
+
     public function provenanceSource(): BelongsTo
     {
         return $this->belongsTo(ProvenanceSource::class);

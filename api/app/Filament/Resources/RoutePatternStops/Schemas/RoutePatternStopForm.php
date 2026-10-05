@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\RoutePatternStops\Schemas;
 
+use App\Filament\Support\VerificationStateField;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
@@ -35,6 +36,7 @@ class RoutePatternStopForm
                     ->required(),
                 Toggle::make('alighting_allowed')
                     ->required(),
+                VerificationStateField::make(),
                 Textarea::make('instruction')
                     ->columnSpanFull(),
                 Textarea::make('service_metadata')

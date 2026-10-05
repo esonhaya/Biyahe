@@ -62,9 +62,10 @@ class JourneyApiTest extends TestCase
             array_column($journey['legs'], 'type'),
         );
         $this->assertLessThanOrEqual(600, $journey['legs'][2]['distance_meters']);
-        $this->assertSame('Ayala Center Terminal', $journey['legs'][1]['boarding_stop']['name']);
-        $this->assertSame('Fuente', $journey['legs'][3]['boarding_stop']['name']);
-        $this->assertSame('Carbon Market Unit 3', $journey['legs'][3]['alighting_stop']['name']);
+        $this->assertNotNull($journey['legs'][1]['route']['code']);
+        $this->assertNotNull($journey['legs'][3]['route']['code']);
+        $this->assertNotSame($journey['legs'][1]['route']['code'], $journey['legs'][3]['route']['code']);
+        $this->assertSame('Carbon Market Unit 3', $journey['legs'][4]['destination']['name']);
         $this->assertSame('MIXED', $journey['trust']['state']);
     }
 
@@ -78,10 +79,17 @@ class JourneyApiTest extends TestCase
         ]);
 
         $response = $this->journey('lahug-market', 'carbon-market-unit-3');
-        $response
-            ->assertOk()
-            ->assertJsonPath('data', [])
-            ->assertJsonPath('meta.no_route.code', 'ROUTING_DATA_NOT_READY');
+        $response->assertOk()->assertJsonPath('meta.no_route', null);
+        $this->assertNotEmpty($response->json('data'));
+        foreach ($response->json('data') as $journey) {
+            foreach ($journey['legs'] as $leg) {
+                $this->assertNotSame('17B', $leg['route']['code'] ?? null);
+                if ($leg['type'] === 'RIDE') {
+                    $this->assertNotSame('STALE', $leg['boarding_association']['state']);
+                    $this->assertNotSame('STALE', $leg['alighting_association']['state']);
+                }
+            }
+        }
     }
 
     public function test_invalid_and_unknown_journey_inputs_are_explained(): void

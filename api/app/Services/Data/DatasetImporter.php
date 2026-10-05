@@ -15,10 +15,10 @@ use App\Models\Stop;
 use App\Models\TransferRelationship;
 use App\Models\VehicleType;
 use App\Support\Geo;
+use App\Support\SearchText;
 use Closure;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 use RuntimeException;
 
 final class DatasetImporter
@@ -105,7 +105,7 @@ final class DatasetImporter
 
             foreach ($this->sorted($data['aliases'] ?? []) as $record) {
                 $placeId = $this->reference($placeIds, $record['place_id'], 'place');
-                $normalizedAlias = Str::lower(Str::squish($record['alias']));
+                $normalizedAlias = SearchText::normalize($record['alias']);
                 $this->saveRecord(
                     PlaceAlias::class,
                     $record['stable_id'],
@@ -146,7 +146,7 @@ final class DatasetImporter
             $stopIds = [];
             foreach ($this->sorted($data['stops'] ?? []) as $record) {
                 $cityId = $this->reference($cityIds, $record['city_id'], 'city');
-                $nearbyPlaceId = $record['nearby_place_id'] === null
+                $nearbyPlaceId = ($record['nearby_place_id'] ?? null) === null
                     ? null
                     : $this->reference($placeIds, $record['nearby_place_id'], 'place');
                 $stop = $this->saveRecord(
@@ -161,6 +161,8 @@ final class DatasetImporter
                         'category' => strtoupper($record['category'] ?? 'GENERAL'),
                         'is_boarding_point' => $record['is_boarding_point'] ?? true,
                         'boarding_notes' => $record['boarding_notes'] ?? null,
+                        'boarding_side' => $record['boarding_side'] ?? null,
+                        'direction_note' => $record['direction_note'] ?? null,
                         'location' => $record['location'],
                         'is_active' => $record['is_active'] ?? true,
                         'verification_state' => $record['verification_state'],
@@ -243,6 +245,7 @@ final class DatasetImporter
                             'sequence' => $patternStop['sequence'],
                             'boarding_allowed' => $patternStop['boarding_allowed'] ?? true,
                             'alighting_allowed' => $patternStop['alighting_allowed'] ?? true,
+                            'verification_state' => $patternStop['verification_state'] ?? 'UNVERIFIED',
                             'instruction' => $patternStop['instruction'] ?? null,
                             'service_metadata' => $patternStop['service_metadata'] ?? null,
                         ],
@@ -267,6 +270,14 @@ final class DatasetImporter
                         'provenance_source_id' => $this->sourceId($record['source_id'] ?? null, $sourceIds),
                         'relationship_type' => $record['relationship_type'],
                         'distance_meters' => $record['distance_meters'] ?? null,
+                        'from_route_pattern_id' => ($record['from_pattern_id'] ?? null) === null
+                            ? null
+                            : $this->reference($patternIds, $record['from_pattern_id'], 'pattern'),
+                        'to_route_pattern_id' => ($record['to_pattern_id'] ?? null) === null
+                            ? null
+                            : $this->reference($patternIds, $record['to_pattern_id'], 'pattern'),
+                        'landmark' => $record['landmark'] ?? null,
+                        'practical_note' => $record['practical_note'] ?? null,
                         'is_active' => $record['is_active'] ?? true,
                         'verification_state' => $record['verification_state'],
                         'is_demo' => $record['is_demo'],
