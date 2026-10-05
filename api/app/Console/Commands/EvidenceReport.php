@@ -3,8 +3,10 @@
 namespace App\Console\Commands;
 
 use App\Services\Evidence\EvidenceCoverageReport;
+use App\Services\Evidence\EvidenceJourneyPlanCache;
 use App\Services\Evidence\EvidencePriorityEngine;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\DB;
 
 final class EvidenceReport extends Command
 {
@@ -12,14 +14,42 @@ final class EvidenceReport extends Command
 
     protected $description = 'Report claim-level evidence coverage and commuter-impact verification priorities.';
 
-    public function handle(EvidenceCoverageReport $coverage, EvidencePriorityEngine $priority): int
-    {
-        $report = $coverage->report(! $this->option('skip-curated'));
-        $report['priority'] = $priority->analyze(
-            $this->option('limit') === null ? null : (int) $this->option('limit'),
-            $this->option('pairs') === null ? null : (int) $this->option('pairs'),
-            $this->option('max-transfers') === null ? null : (int) $this->option('max-transfers'),
-        );
+    public function handle(
+        EvidenceCoverageReport $coverage,
+        EvidencePriorityEngine $priority,
+        EvidenceJourneyPlanCache $planCache,
+    ): int {
+        $connection = DB::connection();
+        $wasLoggingQueries = $connection->logging();
+        if (! $wasLoggingQueries) {
+            $connection->flushQueryLog();
+            $connection->enableQueryLog();
+        }
+        $queriesBefore = count($connection->getQueryLog());
+        $startedAt = hrtime(true);
+
+        try {
+            $report = $coverage->report(! $this->option('skip-curated'), true, $planCache);
+            $report['priority'] = $priority->analyze(
+                $this->option('limit') === null ? null : (int) $this->option('limit'),
+                $this->option('pairs') === null ? null : (int) $this->option('pairs'),
+                $this->option('max-transfers') === null ? null : (int) $this->option('max-transfers'),
+                $planCache,
+            );
+        } finally {
+            $elapsedMilliseconds = round((hrtime(true) - $startedAt) / 1_000_000, 2);
+            $databaseQueries = count($connection->getQueryLog()) - $queriesBefore;
+            if (! $wasLoggingQueries) {
+                $connection->disableQueryLog();
+                $connection->flushQueryLog();
+            }
+        }
+
+        $report['performance'] = [
+            'elapsed_milliseconds' => $elapsedMilliseconds,
+            'database_queries' => $databaseQueries,
+            ...$planCache->metrics(),
+        ];
 
         if ($this->option('json')) {
             $this->line((string) json_encode($report, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
@@ -62,6 +92,11 @@ final class EvidenceReport extends Command
         }
         $this->line('priority_pairs_examined: '.$report['priority']['pairs_examined']);
         $this->line('priority_journeys_examined: '.$report['priority']['journeys_examined']);
+        $this->line('report_elapsed_milliseconds: '.$report['performance']['elapsed_milliseconds']);
+        $this->line('report_database_queries: '.$report['performance']['database_queries']);
+        $this->line('planner_runs: '.$report['performance']['planner_runs']);
+        $this->line('plan_cache_hits: '.$report['performance']['result_cache_hits']);
+        $this->line('cached_pattern_models: '.$report['performance']['cached_patterns']);
         $this->line('priority_items: '.count($report['priority']['items']));
         foreach ($report['priority']['items'] as $item) {
             $this->line(sprintf(

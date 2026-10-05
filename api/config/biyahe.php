@@ -57,6 +57,7 @@ return [
                 'freshness' => 15,
                 'unknown_freshness' => 20,
             ],
+            'max_cached_patterns' => 250,
             'max_items' => 20,
         ],
         'curated_journeys_path' => database_path('data/curated-cebu-journeys-2026-10-05.json'),

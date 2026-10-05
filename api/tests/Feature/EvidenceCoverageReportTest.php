@@ -3,12 +3,20 @@
 namespace Tests\Feature;
 
 use App\Enums\VehicleTypeCode;
+use App\Models\Place;
+use App\Models\RoutePattern;
+use App\Models\RoutePatternStop;
+use App\Models\Stop;
 use App\Models\VehicleType;
 use App\Services\Data\DatasetImporter;
 use App\Services\Data\DatasetValidator;
 use App\Services\Evidence\EvidenceCoverageReport;
+use App\Services\Evidence\EvidenceJourneyPlanCache;
 use App\Services\Evidence\EvidencePriorityEngine;
+use App\Services\Routing\JourneyPlanner;
+use App\Support\Trust;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 class EvidenceCoverageReportTest extends TestCase
@@ -66,6 +74,78 @@ class EvidenceCoverageReportTest extends TestCase
                 str_contains($notes, 'not used to calculate') || str_contains($notes, 'no total is calculated')
             );
         }
+    }
+
+    public function test_institutional_12l_evidence_only_verifies_ayala_boarding_facts(): void
+    {
+        $this->importCentralDataset();
+
+        $stop = Stop::query()->where('stable_id', 'stop-ayala-center-terminal')->firstOrFail();
+        $stop->load('boardingProvenanceSource');
+        $this->assertSame('BOARDING_AREA', $stop->boarding_precision->value);
+        $this->assertSame('VERIFIED', Trust::effectiveFactState($stop, 'boarding'));
+
+        $association = RoutePatternStop::query()->where('stable_id', 'pattern-12l-forward-stop-01')->firstOrFail();
+        $association->load(['serviceProvenanceSource', 'sequenceProvenanceSource', 'boardingProvenanceSource', 'alightingProvenanceSource']);
+        $this->assertSame('VERIFIED', Trust::effectiveFactState($association, 'service'));
+        $this->assertSame('VERIFIED', Trust::effectiveFactState($association, 'boarding'));
+        $this->assertSame('UNVERIFIED', Trust::effectiveFactState($association, 'sequence'));
+        $this->assertSame('UNVERIFIED', Trust::effectiveFactState($association, 'alighting'));
+
+        $pattern = RoutePattern::query()->where('stable_id', 'pattern-12l-forward')->firstOrFail();
+        $pattern->load('provenanceSource');
+        $this->assertSame('UNVERIFIED', Trust::effectiveState($pattern));
+
+        $report = app(EvidenceCoverageReport::class)->report(false, false);
+        $this->assertSame(1, $report['pattern_stops_service_verified']);
+        $this->assertSame(1, $report['pattern_stops_boarding_verified']);
+        $this->assertSame(1, $report['boarding_points_area']);
+    }
+
+    public function test_evidence_plan_cache_reuses_duplicate_origin_destination_searches(): void
+    {
+        $this->importCentralDataset();
+        $origin = Place::query()
+            ->when(config('database.default') === 'pgsql', fn ($builder) => $builder->addSelect([
+                'places.*',
+                DB::raw('ST_AsText(places.location) AS location_wkt'),
+            ]))
+            ->where('slug', 'ayala-center-cebu')
+            ->firstOrFail();
+        $destination = Place::query()
+            ->when(config('database.default') === 'pgsql', fn ($builder) => $builder->addSelect([
+                'places.*',
+                DB::raw('ST_AsText(places.location) AS location_wkt'),
+            ]))
+            ->where('slug', 'labangon')
+            ->firstOrFail();
+        $uncached = app(JourneyPlanner::class)->plan($origin, $destination, maxTransfers: 0);
+        $cache = app(EvidenceJourneyPlanCache::class);
+
+        $first = $cache->plan($origin, $destination, maxTransfers: 0);
+        $second = $cache->plan($origin, $destination, maxTransfers: 0);
+
+        $this->assertSame($first, $second);
+        $this->assertNotEmpty($first->journeys);
+        $journeySignature = fn ($journey): array => [
+            $journey->id,
+            $journey->trustState->value,
+            array_map(fn ($leg): array => [
+                $leg->type->value,
+                $leg->pattern['id'] ?? null,
+                $leg->boardingStop['id'] ?? null,
+                $leg->alightingStop['id'] ?? null,
+                $leg->boardingSequence,
+                $leg->alightingSequence,
+            ], $journey->legs),
+        ];
+        $this->assertSame(
+            array_map($journeySignature, $uncached->journeys),
+            array_map($journeySignature, $first->journeys),
+        );
+        $this->assertSame(1, $cache->metrics()['planner_runs']);
+        $this->assertSame(1, $cache->metrics()['result_cache_hits']);
+        $this->assertGreaterThan(0, $cache->metrics()['trust_cache_hits']);
     }
 
     public function test_retired_fare_rules_are_not_double_counted_as_stale(): void

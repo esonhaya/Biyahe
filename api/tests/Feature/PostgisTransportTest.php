@@ -2,8 +2,14 @@
 
 namespace Tests\Feature;
 
+use App\Models\Place;
 use App\Services\Evidence\EvidenceCoverageReport;
+use App\Services\Evidence\EvidenceJourneyPlanCache;
 use App\Services\Evidence\EvidencePriorityEngine;
+use App\Services\Routing\Journey;
+use App\Services\Routing\JourneyLeg;
+use App\Services\Routing\JourneyPlanner;
+use App\Services\Routing\JourneyPlanningContext;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
@@ -103,6 +109,72 @@ class PostgisTransportTest extends TestCase
         $this->assertLessThanOrEqual(600, $transfer['legs'][2]['distance_meters']);
     }
 
+    public function test_report_scoped_context_preserves_postgis_two_transfer_results(): void
+    {
+        if (config('database.default') !== 'pgsql') {
+            $this->markTestSkipped('PostGIS integration requires DB_CONNECTION=pgsql.');
+        }
+
+        $this->seed();
+        $loadPlace = fn (string $slug): Place => Place::query()
+            ->with('aliases')
+            ->addSelect(['places.*', DB::raw('ST_AsText(places.location) AS location_wkt')])
+            ->where('slug', $slug)
+            ->firstOrFail();
+        $origin = $loadPlace('cebu-it-park');
+        $destination = $loadPlace('sm-city-cebu');
+        $planner = app(JourneyPlanner::class);
+
+        $uncached = $planner->plan($origin, $destination, maxTransfers: 2);
+        $context = new JourneyPlanningContext(250);
+        $cached = $planner->plan($origin, $destination, maxTransfers: 2, context: $context);
+        $signature = static fn (Journey $journey): array => [
+            $journey->id,
+            $journey->trustState->value,
+            array_map(static fn (JourneyLeg $leg): array => [
+                $leg->type->value,
+                $leg->route['code'] ?? null,
+                $leg->pattern['direction'] ?? null,
+                $leg->boardingStop['id'] ?? null,
+                $leg->alightingStop['id'] ?? null,
+                $leg->boardingSequence,
+                $leg->alightingSequence,
+                $leg->distanceMeters,
+            ], $journey->legs),
+        ];
+
+        $this->assertNotEmpty($uncached->journeys);
+        $this->assertSame(
+            array_map($signature, $uncached->journeys),
+            array_map($signature, $cached->journeys),
+        );
+        $this->assertGreaterThan(0, $context->metrics()['trust_cache_hits']);
+    }
+
+    public function test_12l_can_i_ride_uses_terminal_evidence_without_trust_escalation(): void
+    {
+        if (config('database.default') !== 'pgsql') {
+            $this->markTestSkipped('PostGIS integration requires DB_CONNECTION=pgsql.');
+        }
+
+        $this->seed();
+        $originId = DB::table('places')->where('slug', 'ayala-center-cebu')->value('id');
+        $destinationId = DB::table('places')->where('slug', 'labangon')->value('id');
+        $response = $this->getJson('/api/v1/can-i-ride?route_code=12L&from_place_id='.$originId.'&to_place_id='.$destinationId);
+
+        $response->assertOk()
+            ->assertJsonPath('data.status', 'YES')
+            ->assertJsonPath('data.option.pattern.direction', 'OUTBOUND')
+            ->assertJsonPath('data.option.boarding_stop.boarding_precision', 'BOARDING_AREA');
+
+        $option = $response->json('data.option');
+        $boardingStop = DB::table('stops')->where('id', $option['boarding_stop']['id'])->value('stable_id');
+        $this->assertSame('stop-ayala-center-terminal', $boardingStop);
+        $this->assertLessThan($option['alighting_sequence'], $option['boarding_sequence']);
+        $this->assertNotSame('VERIFIED', $response->json('data.trust'));
+        $this->assertStringContainsString('mapped boarding area', strtolower($option['boarding_instruction']));
+    }
+
     public function test_postgis_evidence_reports_resolve_places_for_journey_audits(): void
     {
         if (config('database.default') !== 'pgsql') {
@@ -111,11 +183,12 @@ class PostgisTransportTest extends TestCase
 
         $this->seed();
 
-        $coverage = app(EvidenceCoverageReport::class)->report(true, false);
+        $planCache = app(EvidenceJourneyPlanCache::class);
+        $coverage = app(EvidenceCoverageReport::class)->report(true, false, $planCache);
         $this->assertSame(8, $coverage['curated_journeys_total']);
         $this->assertGreaterThan(0, collect($coverage['curated_journeys'])->where('status', 'ROUTABLE')->count());
 
-        $priority = app(EvidencePriorityEngine::class)->analyze(limit: 5, maxPairs: 1, maxTransfers: 0);
+        $priority = app(EvidencePriorityEngine::class)->analyze(limit: 5, maxPairs: 1, maxTransfers: 0, planCache: $planCache);
         $this->assertSame(1, $priority['pairs_examined']);
         $this->assertGreaterThan(0, $priority['journeys_examined']);
         $this->assertNotEmpty($priority['items']);

@@ -15,8 +15,12 @@ final class EvidencePriorityEngine
     ) {}
 
     /** @return array<string, mixed> */
-    public function analyze(?int $limit = null, ?int $maxPairs = null, ?int $maxTransfers = null): array
-    {
+    public function analyze(
+        ?int $limit = null,
+        ?int $maxPairs = null,
+        ?int $maxTransfers = null,
+        ?EvidenceJourneyPlanCache $planCache = null,
+    ): array {
         $places = Place::query()
             ->with('provenanceSource')
             ->where('is_active', true)
@@ -50,7 +54,8 @@ final class EvidencePriorityEngine
                 }
                 $pairsExamined++;
                 try {
-                    $search = $this->journeyPlanner->plan($origin, $destination, null, null, $maxTransfers);
+                    $search = $planCache?->plan($origin, $destination, null, null, $maxTransfers)
+                        ?? $this->journeyPlanner->plan($origin, $destination, null, null, $maxTransfers);
                 } catch (\Throwable $exception) {
                     $errors[] = [
                         'origin' => $origin->slug,

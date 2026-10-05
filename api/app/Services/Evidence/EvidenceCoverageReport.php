@@ -30,8 +30,11 @@ final class EvidenceCoverageReport
     ) {}
 
     /** @return array<string, mixed> */
-    public function report(bool $includeJourneys = true, bool $includeDetails = true): array
-    {
+    public function report(
+        bool $includeJourneys = true,
+        bool $includeDetails = true,
+        ?EvidenceJourneyPlanCache $planCache = null,
+    ): array {
         $places = Place::query()->with('provenanceSource')->where('is_demo', false)->orderBy('id')->get();
         $aliases = PlaceAlias::query()->with(['provenanceSource', 'place'])->whereHas('place', fn ($query) => $query->where('is_demo', false))->orderBy('id')->get();
         $routes = Route::query()->with('provenanceSource')->where('is_demo', false)->orderBy('id')->get();
@@ -102,7 +105,7 @@ final class EvidenceCoverageReport
         }
 
         if ($includeJourneys) {
-            $curated = $this->curatedJourneys();
+            $curated = $this->curatedJourneys($planCache);
             $report['curated_journeys'] = $curated;
             $report['curated_journeys_total'] = count($curated);
             foreach ($curated as $scenario) {
@@ -121,7 +124,7 @@ final class EvidenceCoverageReport
     }
 
     /** @return list<array<string, mixed>> */
-    private function curatedJourneys(): array
+    private function curatedJourneys(?EvidenceJourneyPlanCache $planCache = null): array
     {
         $scenarios = $this->curatedJourneySet->scenarios();
         if ($scenarios === []) {
@@ -162,7 +165,8 @@ final class EvidenceCoverageReport
                 continue;
             }
             try {
-                $search = $this->journeyPlanner->plan($origin, $destination);
+                $search = $planCache?->plan($origin, $destination)
+                    ?? $this->journeyPlanner->plan($origin, $destination);
                 $journey = $search->journeys[0] ?? null;
             } catch (\Throwable $exception) {
                 $journey = null;

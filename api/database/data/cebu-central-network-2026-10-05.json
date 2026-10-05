@@ -23,6 +23,37 @@
       "verification_method": "Reviewed named elements, coordinates, route relation tags, and relation way roles in the linked OSM/Overpass snapshot.",
       "verified_by": "BIYAHE Batch 003 data review",
       "notes": "OpenStreetMap snapshot retrieved 2026-10-05 through Overpass API. Route geometry uses relation 3169782 (12L) and relation 3177015 (17B) way members; places/stops use the named OSM elements documented in docs/data-sources.md. Route identity and relation geometry are supported; exact route-to-stop service associations and the curated walking-transfer candidate remain UNVERIFIED."
+    },
+    {
+      "stable_id": "source-cebu-city-puj-route-code-list-2026",
+      "source_type": "SECONDARY",
+      "title": "Cebu City jeepney route-code guide, updated 2026",
+      "publisher": "CDN Digital / Cebu Daily News",
+      "url": "https://cebudailynews.inquirer.net/728043/lost-in-cebu-heres-a-guide-to-cebu-citys-jeepney-route-codes",
+      "accessed_at": "2026-10-05",
+      "published_at": "2026-05-15",
+      "checked_at": "2026-10-05",
+      "evidence_scope": ["ROUTE_IDENTITY"],
+      "conflict_status": "NONE",
+      "verification_method": "Reviewed the route-code entry and its stated basis in Cebu City Ordinance No. 2000 amendments and City Transportation Office data.",
+      "verified_by": "Biyahe Batch 007 evidence review",
+      "license": "News article; only source metadata and a factual summary are retained.",
+      "notes": "The 2026-05-15 guide lists 12-L as Labangon–Ayala via Escario–Banawa, compiled from ordinance amendments and Cebu City Transportation Office data. Supports route identity and the listed broad corridor only. It does not establish an exact direction-specific stop sequence, current dispatch, boarding bay, stop association, or fare."
+    },
+    {
+      "stable_id": "source-verbum-dei-cebu-12l-directions",
+      "source_type": "INSTITUTIONAL",
+      "title": "Public transportation directions to Verbum Dei Apostolate Center, Cebu",
+      "publisher": "Verbum Dei Philippines, Cebu Apostolate Center",
+      "url": "https://www.verbumdeiphilippines.com/verbumdeiapostolatecenter-cebu.html",
+      "accessed_at": "2026-10-05",
+      "checked_at": "2026-10-05",
+      "evidence_scope": ["BOARDING", "PATTERN_STOP_SERVICE", "PATTERN_STOP_BOARDING"],
+      "conflict_status": "NONE",
+      "verification_method": "Reviewed the institution's public visitor directions; the page names route 12L and the Ayala Center Cebu terminal as its boarding location.",
+      "verified_by": "Biyahe Batch 007 evidence review",
+      "license": "No page text or map reproduced; factual citation only.",
+      "notes": "Supports boarding 12L at the Ayala Center Cebu terminal for travel to Banawa. The page directs visitors to alight near Good Shepherd Road for the institution, but does not identify a mapped Biyahe stop, bay/platform, full ordered pattern, reverse pattern, or all route-stop associations. The page shows no publication or revision date; checked 2026-10-06."
     }
   ],
   "cities": [
@@ -383,7 +414,10 @@
       "code": "OSM-14102504003",
       "category": "PUBLIC_TRANSPORT_STOP",
       "is_boarding_point": true,
-      "boarding_notes": "OSM public-transport node; route association remains UNVERIFIED until reviewed against service evidence.",
+      "boarding_notes": "Board within the Ayala Center Cebu transport terminal for 12L. The source does not identify a bay or platform.",
+      "boarding_precision": "BOARDING_AREA",
+      "boarding_verification_state": "VERIFIED",
+      "boarding_source_id": "source-verbum-dei-cebu-12l-directions",
       "location": {
         "lat": 10.3188432,
         "lng": 123.9037362
@@ -497,13 +531,13 @@
       "city_id": "city-cebu-city",
       "operator_id": null,
       "vehicle_type": "JEEPNEY",
-      "source_id": "osm-cebu-transport-2026-10-05",
+      "source_id": "source-cebu-city-puj-route-code-list-2026",
       "code": "12L",
       "name": "Jeepney 12L: Ayala - Escario - Labangon",
-      "description": "OSM route relation 3169782. The mapped route and stop associations require owner review before public service guidance.",
+      "description": "The 2026 Cebu City route-code listing corroborates route identity and its broad Escario–Banawa corridor. OSM relation 3169782 supplies mapped geometry; exact pattern and stop associations remain under review.",
       "verification_state": "VERIFIED",
       "is_demo": false,
-      "notes": "Network label and route geometry are from OSM; no official current timetable or fare is asserted."
+      "notes": "The city route-code listing supports the 12L code and broad corridor, while OSM relation 3169782 supports a mapped relation. Neither source verifies the complete directional stop sequence, current dispatch, boarding bay, or fare."
     }
   ],
   "patterns": [
@@ -3389,7 +3423,11 @@
         {
           "stable_id": "pattern-12l-forward-stop-01",
           "stop_id": "stop-ayala-center-terminal",
-          "sequence": 1
+          "sequence": 1,
+          "service_verification_state": "VERIFIED",
+          "service_source_id": "source-verbum-dei-cebu-12l-directions",
+          "boarding_verification_state": "VERIFIED",
+          "boarding_source_id": "source-verbum-dei-cebu-12l-directions"
         },
         {
           "stable_id": "pattern-12l-forward-stop-02",

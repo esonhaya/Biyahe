@@ -33,6 +33,7 @@ final class JourneyPlanner
         ?float $accessRadiusMeters = null,
         ?float $transferRadiusMeters = null,
         ?int $maxTransfers = null,
+        ?JourneyPlanningContext $context = null,
     ): JourneySearchResult {
         $accessRadiusMeters ??= (float) config('biyahe.routing.max_access_radius_meters', 1000);
         $transferRadiusMeters ??= (float) config('biyahe.routing.max_transfer_radius_meters', 600);
@@ -73,7 +74,7 @@ final class JourneyPlanner
             );
         }
 
-        $directJourneys = $this->findDirectJourneys($origin, $destination, $boardingStops, $alightingStops);
+        $directJourneys = $this->findDirectJourneys($origin, $destination, $boardingStops, $alightingStops, $context);
         $journeys = array_merge(
             $directJourneys,
             $this->findBoundedTransferJourneys(
@@ -83,6 +84,7 @@ final class JourneyPlanner
                 $alightingStops,
                 min($transferRadiusMeters, (float) config('biyahe.routing.max_transfer_radius_meters', 600)),
                 $maxTransfers,
+                $context,
             ),
         );
 
@@ -118,17 +120,18 @@ final class JourneyPlanner
         Place $destination,
         Collection $boardingStops,
         Collection $alightingStops,
+        ?JourneyPlanningContext $context,
     ): array {
         $boardingIds = $boardingStops->modelKeys();
         $alightingIds = $alightingStops->modelKeys();
-        $patterns = $this->candidatePatterns($origin->city_id, $boardingIds, $alightingIds);
+        $patterns = $this->candidatePatterns($origin->city_id, $boardingIds, $alightingIds, context: $context);
         $boardingById = $boardingStops->keyBy(fn (Stop $stop): int => $stop->getKey());
         $alightingById = $alightingStops->keyBy(fn (Stop $stop): int => $stop->getKey());
         $journeys = [];
 
         foreach ($patterns as $pattern) {
             foreach ($pattern->patternStops as $boardingPatternStop) {
-                if (! Trust::isFactRoutable($boardingPatternStop, ['service', 'sequence', 'boarding']) || ! $boardingPatternStop->boarding_allowed) {
+                if (! $this->isFactRoutable($boardingPatternStop, ['service', 'sequence', 'boarding'], $context) || ! $boardingPatternStop->boarding_allowed) {
                     continue;
                 }
 
@@ -139,7 +142,7 @@ final class JourneyPlanner
 
                 foreach ($pattern->patternStops as $alightingPatternStop) {
                     if (
-                        ! Trust::isFactRoutable($alightingPatternStop, ['service', 'sequence', 'alighting'])
+                        ! $this->isFactRoutable($alightingPatternStop, ['service', 'sequence', 'alighting'], $context)
                         || ! $alightingPatternStop->alighting_allowed
                         || $alightingPatternStop->sequence <= $boardingPatternStop->sequence
                     ) {
@@ -167,6 +170,7 @@ final class JourneyPlanner
                                 $boardingPatternStop,
                                 $alightingPatternStop,
                                 $this->cueForPlace($destination),
+                                $context,
                             ),
                             $this->buildWalkLeg(
                                 JourneyLegType::WALK_EGRESS,
@@ -185,6 +189,7 @@ final class JourneyPlanner
                             $boardingPatternStop,
                             $alightingPatternStop,
                         ],
+                        context: $context,
                     );
                     if (count($journeys) >= $this->generatedJourneyLimit()) {
                         return $journeys;
@@ -204,6 +209,7 @@ final class JourneyPlanner
         Collection $alightingStops,
         float $maxTransferRadiusMeters,
         int $maxTransfers,
+        ?JourneyPlanningContext $context,
     ): array {
         if ($maxTransfers < 1) {
             return [];
@@ -215,6 +221,7 @@ final class JourneyPlanner
             $boardingStops,
             $alightingStops,
             $maxTransferRadiusMeters,
+            $context,
         );
 
         if ($maxTransfers < 2) {
@@ -230,6 +237,7 @@ final class JourneyPlanner
                 $alightingStops,
                 $maxTransferRadiusMeters,
                 $maxTransfers,
+                $context,
             ),
         );
     }
@@ -241,9 +249,10 @@ final class JourneyPlanner
         Collection $boardingStops,
         Collection $alightingStops,
         float $maxTransferRadiusMeters,
+        ?JourneyPlanningContext $context,
     ): array {
-        $firstPatterns = $this->candidatePatterns($origin->city_id, $boardingStops->modelKeys());
-        $secondPatterns = $this->candidatePatterns($origin->city_id, [], $alightingStops->modelKeys(), false);
+        $firstPatterns = $this->candidatePatterns($origin->city_id, $boardingStops->modelKeys(), context: $context);
+        $secondPatterns = $this->candidatePatterns($origin->city_id, [], $alightingStops->modelKeys(), false, $context);
         if ($firstPatterns->isEmpty() || $secondPatterns->isEmpty()) {
             return [];
         }
@@ -279,7 +288,7 @@ final class JourneyPlanner
 
         foreach ($firstPatterns as $firstPattern) {
             foreach ($firstPattern->patternStops as $firstBoardingPatternStop) {
-                if (! Trust::isFactRoutable($firstBoardingPatternStop, ['service', 'sequence', 'boarding']) || ! $firstBoardingPatternStop->boarding_allowed) {
+                if (! $this->isFactRoutable($firstBoardingPatternStop, ['service', 'sequence', 'boarding'], $context) || ! $firstBoardingPatternStop->boarding_allowed) {
                     continue;
                 }
                 $boardingStop = $boardingById->get($firstBoardingPatternStop->stop_id);
@@ -289,14 +298,14 @@ final class JourneyPlanner
 
                 foreach ($firstPattern->patternStops as $firstAlightingPatternStop) {
                     if (
-                        ! Trust::isFactRoutable($firstAlightingPatternStop, ['service', 'sequence', 'alighting'])
+                        ! $this->isFactRoutable($firstAlightingPatternStop, ['service', 'sequence', 'alighting'], $context)
                         || ! $firstAlightingPatternStop->alighting_allowed
                         || $firstAlightingPatternStop->sequence <= $firstBoardingPatternStop->sequence
                     ) {
                         continue;
                     }
                     $firstAlightingStop = $firstAlightingPatternStop->stop;
-                    if (! $firstAlightingStop instanceof Stop || ! Trust::isRoutable($firstAlightingStop)) {
+                    if (! $firstAlightingStop instanceof Stop || ! $this->isRoutable($firstAlightingStop, $context)) {
                         continue;
                     }
 
@@ -309,11 +318,11 @@ final class JourneyPlanner
                         }
 
                         foreach ($secondPattern->patternStops as $secondBoardingPatternStop) {
-                            if (! Trust::isFactRoutable($secondBoardingPatternStop, ['service', 'sequence', 'boarding']) || ! $secondBoardingPatternStop->boarding_allowed) {
+                            if (! $this->isFactRoutable($secondBoardingPatternStop, ['service', 'sequence', 'boarding'], $context) || ! $secondBoardingPatternStop->boarding_allowed) {
                                 continue;
                             }
                             $secondBoardingStop = $secondBoardingPatternStop->stop;
-                            if (! $secondBoardingStop instanceof Stop || ! Trust::isRoutable($secondBoardingStop)) {
+                            if (! $secondBoardingStop instanceof Stop || ! $this->isRoutable($secondBoardingStop, $context)) {
                                 continue;
                             }
 
@@ -339,14 +348,14 @@ final class JourneyPlanner
 
                             foreach ($secondPattern->patternStops as $secondAlightingPatternStop) {
                                 if (
-                                    ! Trust::isFactRoutable($secondAlightingPatternStop, ['service', 'sequence', 'alighting'])
+                                    ! $this->isFactRoutable($secondAlightingPatternStop, ['service', 'sequence', 'alighting'], $context)
                                     || ! $secondAlightingPatternStop->alighting_allowed
                                     || $secondAlightingPatternStop->sequence <= $secondBoardingPatternStop->sequence
                                 ) {
                                     continue;
                                 }
                                 $secondAlightingStop = $alightingById->get($secondAlightingPatternStop->stop_id);
-                                if (! $secondAlightingStop instanceof Stop || ! Trust::isRoutable($secondAlightingStop)) {
+                                if (! $secondAlightingStop instanceof Stop || ! $this->isRoutable($secondAlightingStop, $context)) {
                                     continue;
                                 }
 
@@ -357,6 +366,7 @@ final class JourneyPlanner
                                     $relationship,
                                     $firstAlightingPatternStop,
                                     $secondBoardingPatternStop,
+                                    $context,
                                 );
                                 $journeys[] = $this->buildJourney(
                                     id: sprintf(
@@ -381,6 +391,7 @@ final class JourneyPlanner
                                             $firstBoardingPatternStop,
                                             $firstAlightingPatternStop,
                                             $this->cueForStop($firstAlightingStop),
+                                            $context,
                                         ),
                                         $transferLeg,
                                         $this->buildRideLeg(
@@ -388,6 +399,7 @@ final class JourneyPlanner
                                             $secondBoardingPatternStop,
                                             $secondAlightingPatternStop,
                                             $this->cueForPlace($destination),
+                                            $context,
                                         ),
                                         $this->buildWalkLeg(
                                             JourneyLegType::WALK_EGRESS,
@@ -413,6 +425,7 @@ final class JourneyPlanner
                                         $secondAlightingPatternStop,
                                         $relationship,
                                     ],
+                                    context: $context,
                                 );
                                 if (count($journeys) >= $this->generatedJourneyLimit()) {
                                     return $journeys;
@@ -435,20 +448,21 @@ final class JourneyPlanner
         Collection $alightingStops,
         float $maxTransferRadiusMeters,
         int $maxTransfers,
+        ?JourneyPlanningContext $context,
     ): array {
-        $patterns = $this->candidatePatterns($origin->city_id, [], [], false);
+        $patterns = $this->candidatePatterns($origin->city_id, [], [], false, $context);
         if ($patterns->isEmpty()) {
             return [];
         }
 
-        $relationships = $this->routingTransferRelationships($origin->city_id);
-        $boardingOptions = $this->boardingOptions($patterns);
+        $relationships = $this->routingTransferRelationships($origin->city_id, $context);
+        $boardingOptions = $this->boardingOptions($patterns, $context);
         $relationshipsByFromStop = $relationships->groupBy(fn (TransferRelationship $relationship): int => (int) $relationship->from_stop_id);
         $boardingStopIds = array_fill_keys($boardingStops->modelKeys(), true);
         $initialPatterns = $patterns->filter(
             fn (RoutePattern $pattern): bool => $pattern->patternStops->contains(
                 fn (RoutePatternStop $association): bool => isset($boardingStopIds[(int) $association->stop_id])
-                    && Trust::isFactRoutable($association, ['service', 'sequence', 'boarding'])
+                    && $this->isFactRoutable($association, ['service', 'sequence', 'boarding'], $context)
                     && $association->boarding_allowed,
             ),
         );
@@ -461,7 +475,7 @@ final class JourneyPlanner
 
         foreach ($initialPatterns as $pattern) {
             foreach ($pattern->patternStops as $boardingPatternStop) {
-                if (! Trust::isFactRoutable($boardingPatternStop, ['service', 'sequence', 'boarding']) || ! $boardingPatternStop->boarding_allowed) {
+                if (! $this->isFactRoutable($boardingPatternStop, ['service', 'sequence', 'boarding'], $context) || ! $boardingPatternStop->boarding_allowed) {
                     continue;
                 }
 
@@ -471,7 +485,7 @@ final class JourneyPlanner
                 }
 
                 foreach ($pattern->patternStops as $alightingPatternStop) {
-                    if (! $this->usableRidePair($boardingPatternStop, $alightingPatternStop)) {
+                    if (! $this->usableRidePair($boardingPatternStop, $alightingPatternStop, $context)) {
                         continue;
                     }
 
@@ -485,6 +499,7 @@ final class JourneyPlanner
                         transfers: [],
                         walkingDistance: $this->distanceFromPlace($origin, $boardingStop),
                         rideStopCount: $alightingPatternStop->sequence - $boardingPatternStop->sequence,
+                        context: $context,
                     );
                     if ($this->enqueueRoutingState($state, $frontier)) {
                         $states[] = $state;
@@ -504,7 +519,7 @@ final class JourneyPlanner
             if ($state['transfer_count'] >= 2) {
                 $destinationStop = $alightingById->get($lastRide['alighting_stop']->getKey());
                 if ($destinationStop instanceof Stop) {
-                    $journeys[] = $this->buildJourneyFromRoutingState($state, $origin, $destination, $destinationStop);
+                    $journeys[] = $this->buildJourneyFromRoutingState($state, $origin, $destination, $destinationStop, $context);
                     if (count($journeys) >= $this->generatedJourneyLimit()) {
                         break;
                     }
@@ -535,6 +550,7 @@ final class JourneyPlanner
                     $maxTransferRadiusMeters,
                     $lastRide['alighting'],
                     $candidate['association'],
+                    $context,
                 );
                 if ($transfer !== null) {
                     $nextBoardingCandidates[] = [
@@ -565,6 +581,7 @@ final class JourneyPlanner
                         $maxTransferRadiusMeters,
                         $lastRide['alighting'],
                         $candidate['association'],
+                        $context,
                     );
                     if ($transfer !== null) {
                         $nextBoardingCandidates[] = [
@@ -582,7 +599,7 @@ final class JourneyPlanner
                 $nextBoardingPatternStop = $candidate['association'];
                 $nextBoardingStop = $candidate['stop'];
                 foreach ($nextPattern->patternStops as $nextAlightingPatternStop) {
-                    if (! $this->usableRidePair($nextBoardingPatternStop, $nextAlightingPatternStop)) {
+                    if (! $this->usableRidePair($nextBoardingPatternStop, $nextAlightingPatternStop, $context)) {
                         continue;
                     }
 
@@ -602,6 +619,7 @@ final class JourneyPlanner
                         transfers: array_merge($state['transfers'], [$candidate['transfer']]),
                         walkingDistance: $state['walking_distance'] + $candidate['transfer']['distance'],
                         rideStopCount: $state['ride_stop_count'] + $nextAlightingPatternStop->sequence - $nextBoardingPatternStop->sequence,
+                        context: $context,
                     );
                     if ($this->enqueueRoutingState($nextState, $frontier)) {
                         $states[] = $nextState;
@@ -625,6 +643,7 @@ final class JourneyPlanner
         array $transfers,
         float $walkingDistance,
         int $rideStopCount,
+        ?JourneyPlanningContext $context = null,
     ): array {
         $routeIds = array_values(array_unique(array_map(
             static fn (array $ride): int => (int) $ride['pattern']->route_id,
@@ -645,7 +664,8 @@ final class JourneyPlanner
         ];
         $state['trust_state'] = $this->trustState(
             $this->routingStateModels($state),
-            $this->routingStateEvidenceStates($state),
+            $this->routingStateEvidenceStates($state, $context),
+            $context,
         );
 
         return $state;
@@ -696,30 +716,33 @@ final class JourneyPlanner
     }
 
     /** @param array<string, mixed> $state @return list<string> */
-    private function routingStateEvidenceStates(array $state): array
+    private function routingStateEvidenceStates(array $state, ?JourneyPlanningContext $context): array
     {
         $states = [];
         foreach ($state['rides'] as $ride) {
-            $states = array_merge($states, $this->rideEvidenceStates($ride['boarding'], $ride['alighting']));
+            $states = array_merge($states, $this->rideEvidenceStates($ride['boarding'], $ride['alighting'], $context));
         }
 
         return $states;
     }
 
-    private function usableRidePair(RoutePatternStop $boarding, RoutePatternStop $alighting): bool
-    {
-        return Trust::isFactRoutable($boarding, ['service', 'sequence', 'boarding'])
-            && Trust::isRoutable($boarding->stop)
-            && Trust::isFactRoutable($alighting, ['service', 'sequence', 'alighting'])
-            && Trust::isRoutable($alighting->stop)
+    private function usableRidePair(
+        RoutePatternStop $boarding,
+        RoutePatternStop $alighting,
+        ?JourneyPlanningContext $context = null,
+    ): bool {
+        return $this->isFactRoutable($boarding, ['service', 'sequence', 'boarding'], $context)
+            && $this->isRoutable($boarding->stop, $context)
+            && $this->isFactRoutable($alighting, ['service', 'sequence', 'alighting'], $context)
+            && $this->isRoutable($alighting->stop, $context)
             && $alighting->alighting_allowed
             && $alighting->sequence > $boarding->sequence;
     }
 
     /** @return Collection<int, TransferRelationship> */
-    private function routingTransferRelationships(int $cityId): Collection
+    private function routingTransferRelationships(int $cityId, ?JourneyPlanningContext $context = null): Collection
     {
-        return TransferRelationship::query()
+        $loader = fn (): Collection => TransferRelationship::query()
             ->with(['provenanceSource', 'fromStop.provenanceSource', 'fromStop.boardingProvenanceSource', 'toStop.provenanceSource', 'toStop.boardingProvenanceSource'])
             ->where('city_id', $cityId)
             ->where('is_active', true)
@@ -733,19 +756,21 @@ final class JourneyPlanner
             ->limit((int) config('biyahe.routing.max_transfer_relationships', 200))
             ->get()
             ->keyBy(fn (TransferRelationship $relationship): string => $relationship->from_stop_id.':'.$relationship->to_stop_id);
+
+        return $context?->transferRelationships($cityId, $loader) ?? $loader();
     }
 
     /** @return array<int, list<array{pattern: RoutePattern, association: RoutePatternStop, stop: Stop}>> */
-    private function boardingOptions(Collection $patterns): array
+    private function boardingOptions(Collection $patterns, ?JourneyPlanningContext $context = null): array
     {
         $options = [];
         foreach ($patterns as $pattern) {
             foreach ($pattern->patternStops as $association) {
-                if (! Trust::isFactRoutable($association, ['service', 'sequence', 'boarding']) || ! $association->boarding_allowed) {
+                if (! $this->isFactRoutable($association, ['service', 'sequence', 'boarding'], $context) || ! $association->boarding_allowed) {
                     continue;
                 }
                 $stop = $association->stop;
-                if (! $stop instanceof Stop || ! Trust::isRoutable($stop)) {
+                if (! $stop instanceof Stop || ! $this->isRoutable($stop, $context)) {
                     continue;
                 }
                 $options[(int) $association->stop_id][] = [
@@ -769,8 +794,9 @@ final class JourneyPlanner
         float $maxTransferRadiusMeters,
         RoutePatternStop $fromAssociation,
         RoutePatternStop $toAssociation,
+        ?JourneyPlanningContext $context = null,
     ): ?array {
-        if (! Trust::isRoutable($fromStop) || ! Trust::isRoutable($toStop)) {
+        if (! $this->isRoutable($fromStop, $context) || ! $this->isRoutable($toStop, $context)) {
             return null;
         }
 
@@ -853,6 +879,7 @@ final class JourneyPlanner
         Place $origin,
         Place $destination,
         Stop $destinationStop,
+        ?JourneyPlanningContext $context,
     ): Journey {
         $firstRide = $state['rides'][0];
         $legs = [
@@ -872,6 +899,7 @@ final class JourneyPlanner
                 $ride['boarding'],
                 $ride['alighting'],
                 $isLastRide ? $this->cueForPlace($destination) : $this->cueForStop($ride['alighting_stop']),
+                $context,
             );
             $models = array_merge($models, [
                 $ride['boarding_stop'],
@@ -891,6 +919,7 @@ final class JourneyPlanner
                     $transfer['relationship'],
                     $transfer['from_association'],
                     $transfer['to_association'],
+                    $context,
                 );
                 $models = array_merge($models, [
                     $transfer['relationship'],
@@ -921,6 +950,7 @@ final class JourneyPlanner
             destination: $destination,
             legs: $legs,
             models: $models,
+            context: $context,
         );
     }
 
@@ -931,9 +961,14 @@ final class JourneyPlanner
         ?TransferRelationship $relationship,
         ?RoutePatternStop $fromAssociation = null,
         ?RoutePatternStop $toAssociation = null,
+        ?JourneyPlanningContext $context = null,
     ): JourneyLeg {
         $models = [$fromStop, $toStop, $relationship, $fromAssociation, $toAssociation];
-        $trustState = $this->trustState($models, [Trust::effectiveFactState($toStop, 'boarding')]);
+        $trustState = $this->trustState(
+            $models,
+            [$context?->effectiveFactState($toStop, 'boarding') ?? Trust::effectiveFactState($toStop, 'boarding')],
+            $context,
+        );
         $instruction = $distanceMeters <= 0.01
             ? 'Transfer at '.$fromStop->name.'. No separate walking distance is mapped; confirm the waiting side locally.'
             : 'Walk between stops; this is a straight-line distance estimate, not a pedestrian route.';
@@ -999,6 +1034,7 @@ final class JourneyPlanner
         RoutePatternStop $boardingPatternStop,
         RoutePatternStop $alightingPatternStop,
         ?string $driverCue,
+        ?JourneyPlanningContext $context = null,
     ): JourneyLeg {
         $route = $pattern->route;
         $models = [
@@ -1011,7 +1047,8 @@ final class JourneyPlanner
         ];
         $trustState = $this->trustState(
             [$pattern, $route, $boardingPatternStop->stop, $alightingPatternStop->stop],
-            $this->rideEvidenceStates($boardingPatternStop, $alightingPatternStop),
+            $this->rideEvidenceStates($boardingPatternStop, $alightingPatternStop, $context),
+            $context,
         );
         $driverInstruction = $driverCue === null || trim($driverCue) === ''
             ? null
@@ -1058,15 +1095,21 @@ final class JourneyPlanner
     }
 
     /** @param list<JourneyLeg> $legs @param list<\Illuminate\Database\Eloquent\Model|null> $models */
-    private function buildJourney(string $id, Place $origin, Place $destination, array $legs, array $models): Journey
-    {
+    private function buildJourney(
+        string $id,
+        Place $origin,
+        Place $destination,
+        array $legs,
+        array $models,
+        ?JourneyPlanningContext $context = null,
+    ): Journey {
         $legTrust = array_values(array_filter(array_map(
             static fn (JourneyLeg $leg): ?string => in_array($leg->type, [JourneyLegType::RIDE, JourneyLegType::TRANSFER_WALK], true)
                 ? $leg->trust?->value
                 : null,
             $legs,
         )));
-        $trustState = $this->trustState($models, $legTrust);
+        $trustState = $this->trustState($models, $legTrust, $context);
         $walkingDistance = array_sum(array_map(
             static fn (JourneyLeg $leg): float => $leg->distanceMeters ?? 0,
             array_filter($legs, static fn (JourneyLeg $leg): bool => $leg->type !== JourneyLegType::RIDE),
@@ -1094,12 +1137,15 @@ final class JourneyPlanner
     }
 
     /** @param list<Model|null> $models */
-    private function trustState(array $models, array $additionalStates = []): JourneyTrustState
-    {
+    private function trustState(
+        array $models,
+        array $additionalStates = [],
+        ?JourneyPlanningContext $context = null,
+    ): JourneyTrustState {
         $states = collect($models)
             ->filter(fn ($model): bool => $model instanceof Model)
             ->reject(fn (Model $model): bool => $model->getTable() === 'route_pattern_stops')
-            ->map(fn (Model $model): ?string => Trust::effectiveState($model))
+            ->map(fn (Model $model): ?string => $context?->effectiveState($model) ?? Trust::effectiveState($model))
             ->filter()
             ->merge($additionalStates)
             ->values();
@@ -1294,8 +1340,13 @@ final class JourneyPlanner
     }
 
     /** @return Collection<int, RoutePattern> */
-    private function candidatePatterns(int $cityId, array $boardingStopIds = [], array $alightingStopIds = [], bool $requireBoarding = true): Collection
-    {
+    private function candidatePatterns(
+        int $cityId,
+        array $boardingStopIds = [],
+        array $alightingStopIds = [],
+        bool $requireBoarding = true,
+        ?JourneyPlanningContext $context = null,
+    ): Collection {
         $query = $this->patternQuery($cityId);
         if ($requireBoarding && $boardingStopIds !== []) {
             $query->whereHas('patternStops', function (Builder $builder) use ($boardingStopIds): void {
@@ -1312,11 +1363,28 @@ final class JourneyPlanner
             });
         }
 
-        return $query
+        $query
             ->orderBy('route_patterns.route_id')
             ->orderBy('route_patterns.id')
-            ->limit((int) config('biyahe.routing.max_pattern_candidates', 50))
-            ->get();
+            ->limit((int) config('biyahe.routing.max_pattern_candidates', 50));
+
+        if ($context === null) {
+            return $query->get();
+        }
+
+        $patternIds = (clone $query)
+            ->setEagerLoads([])
+            ->select('route_patterns.id')
+            ->pluck('route_patterns.id')
+            ->map(fn ($id): int => (int) $id)
+            ->all();
+
+        return $context->patterns(
+            $patternIds,
+            fn (array $missing): Collection => $this->patternQuery($cityId)
+                ->whereIn('route_patterns.id', $missing)
+                ->get(),
+        );
     }
 
     private function hasExcludedRoutingData(int $cityId, array $boardingStopIds, array $alightingStopIds): bool
@@ -1504,13 +1572,30 @@ final class JourneyPlanner
     }
 
     /** @return list<string> */
-    private function rideEvidenceStates(RoutePatternStop $boarding, RoutePatternStop $alighting): array
-    {
+    private function rideEvidenceStates(
+        RoutePatternStop $boarding,
+        RoutePatternStop $alighting,
+        ?JourneyPlanningContext $context = null,
+    ): array {
         return [
-            Trust::effectiveFactSetState($boarding, ['service', 'sequence', 'boarding']),
-            Trust::effectiveFactSetState($alighting, ['service', 'sequence', 'alighting']),
-            Trust::effectiveFactState($boarding->stop, 'boarding'),
+            $context?->effectiveFactSetState($boarding, ['service', 'sequence', 'boarding'])
+                ?? Trust::effectiveFactSetState($boarding, ['service', 'sequence', 'boarding']),
+            $context?->effectiveFactSetState($alighting, ['service', 'sequence', 'alighting'])
+                ?? Trust::effectiveFactSetState($alighting, ['service', 'sequence', 'alighting']),
+            $context?->effectiveFactState($boarding->stop, 'boarding')
+                ?? Trust::effectiveFactState($boarding->stop, 'boarding'),
         ];
+    }
+
+    /** @param list<string> $facts */
+    private function isFactRoutable(Model $model, array $facts, ?JourneyPlanningContext $context): bool
+    {
+        return $context?->isFactRoutable($model, $facts) ?? Trust::isFactRoutable($model, $facts);
+    }
+
+    private function isRoutable(Model $model, ?JourneyPlanningContext $context): bool
+    {
+        return $context?->isRoutable($model) ?? Trust::isRoutable($model);
     }
 
     private function generatedJourneyLimit(): int
