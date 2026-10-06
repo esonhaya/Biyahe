@@ -26,6 +26,12 @@
 - ProvenanceSource records the practical source, publisher, optional URL,
   access/check date, effective dates, license, verification method, reviewer,
   and notes for important transport facts.
+- TransportSurveySession groups a bounded planned or observed field ride.
+  FieldObservation and SurveyTracePoint record ordered facts and optional
+  SRID 4326 locations; they are private evidence and never canonical route
+  geometry by themselves. FieldEvidenceClaim links reviewed observations and
+  scoped provenance to a specific production fact without changing its trust
+  state.
 - Stable IDs on imported entities make reviewed dataset re-imports
   deterministic without requiring migration edits.
 
@@ -48,3 +54,6 @@ patterns and curated transfer relationships remain UNVERIFIED while route
 identity, geography, and some place/stop facts are reviewed. Community
 submissions and moderation are future work. Until then, an administrator must
 review provenance before promoting a record.
+
+Field import/review lifecycles and the no-auto-promotion policy are documented
+in [Trusted Field Surveys](field-surveys.md).

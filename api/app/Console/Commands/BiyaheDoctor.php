@@ -2,6 +2,12 @@
 
 namespace App\Console\Commands;
 
+use App\Enums\FieldClaimStatus;
+use App\Enums\FieldLocationMethod;
+use App\Enums\FieldLocationPrecision;
+use App\Enums\FieldObservationStatus;
+use App\Enums\FieldObservationType;
+use App\Enums\SurveySessionStatus;
 use App\Enums\VerificationState;
 use App\Services\Data\DatasetValidator;
 use App\Services\Evidence\CuratedJourneySet;
@@ -31,7 +37,7 @@ class BiyaheDoctor extends Command
     public function handle(): int
     {
         $this->report = new DoctorReport;
-        $this->info('BIYAHE DOCTOR V6');
+        $this->info('BIYAHE DOCTOR V8');
         $this->check('application', 'PASS', 'Laravel booted and configuration loaded.');
 
         $databaseReady = $this->checkDatabase();
@@ -63,6 +69,7 @@ class BiyaheDoctor extends Command
             $this->runFareChecks();
             $this->runSpatialChecks($postgisReady);
             $this->runRoutingChecks($postgisReady);
+            $this->runFieldSurveyChecks($postgisReady);
         } catch (Throwable $exception) {
             report($exception);
             $this->check('doctor execution', 'FAIL', 'A Doctor query failed: '.$exception->getMessage());
@@ -858,6 +865,283 @@ class BiyaheDoctor extends Command
                AND ST_Distance(location, previous_location) > 5000',
         );
         $this->checkWarningCount('pattern geometry jumps', (int) ($geometryJumps->jump_count ?? 0), 'consecutive mapped stops are more than 5 km apart by straight-line distance.');
+    }
+
+    private function runFieldSurveyChecks(bool $postgisReady): void
+    {
+        $tables = ['transport_survey_sessions', 'field_observations', 'survey_trace_points', 'field_evidence_claims', 'field_evidence_claim_observations', 'field_evidence_claim_sources'];
+        $missing = array_values(array_filter($tables, fn (string $table): bool => ! Schema::hasTable($table)));
+        if ($missing !== []) {
+            $this->check('field survey schema', 'FAIL', 'Missing field-survey tables: '.implode(', ', $missing).'.');
+
+            return;
+        }
+        $this->check('field survey schema', 'PASS', 'Survey, observation, trace, and claim tables are available.');
+
+        $badSessionStates = DB::table('transport_survey_sessions')->whereNotIn('status', SurveySessionStatus::values())->count();
+        $badObservationStates = DB::table('field_observations')->whereNotIn('review_status', FieldObservationStatus::values())->count();
+        $badObservationTypes = DB::table('field_observations')->whereNotIn('observation_type', FieldObservationType::values())->count();
+        $badLocationMethods = DB::table('field_observations')->whereNotIn('location_method', FieldLocationMethod::values())->count()
+            + DB::table('survey_trace_points')->whereNotIn('location_method', FieldLocationMethod::values())->count();
+        $badLocationPrecision = DB::table('field_observations')->whereNotIn('location_precision', FieldLocationPrecision::values())->count()
+            + DB::table('survey_trace_points')->whereNotIn('location_precision', FieldLocationPrecision::values())->count();
+        $badClaimStates = DB::table('field_evidence_claims')->whereNotIn('review_status', FieldClaimStatus::values())->count();
+        $this->checkCount('field review lifecycle', $badSessionStates + $badObservationStates + $badObservationTypes + $badLocationMethods + $badLocationPrecision + $badClaimStates, 'field records have unknown lifecycle, location method, precision, or observation values.');
+
+        $badAccuracy = DB::table('field_observations')->where(fn (Builder $query) => $query->where('reported_accuracy_m', '<', 0)->orWhere('reported_accuracy_m', '>', 5000))->count()
+            + DB::table('survey_trace_points')->where(fn (Builder $query) => $query->where('reported_accuracy_m', '<', 0)->orWhere('reported_accuracy_m', '>', 5000))->count();
+        $badTimes = DB::table('field_observations as observations')
+            ->join('transport_survey_sessions as sessions', 'sessions.id', '=', 'observations.survey_session_id')
+            ->where(fn (Builder $query) => $query->where(fn (Builder $time) => $time->whereNotNull('sessions.started_at')->whereColumn('observations.observed_at', '<', 'sessions.started_at'))
+                ->orWhere(fn (Builder $time) => $time->whereNotNull('sessions.ended_at')->whereColumn('observations.observed_at', '>', 'sessions.ended_at')))
+            ->count()
+            + DB::table('survey_trace_points as trace')
+                ->join('transport_survey_sessions as sessions', 'sessions.id', '=', 'trace.survey_session_id')
+                ->whereNotNull('trace.observed_at')
+                ->where(fn (Builder $query) => $query->where(fn (Builder $time) => $time->whereNotNull('sessions.started_at')->whereColumn('trace.observed_at', '<', 'sessions.started_at'))
+                    ->orWhere(fn (Builder $time) => $time->whereNotNull('sessions.ended_at')->whereColumn('trace.observed_at', '>', 'sessions.ended_at')))
+                ->count();
+        $this->checkCount('field observation accuracy and time', $badAccuracy + $badTimes, 'field records have invalid accuracy or timestamps outside their survey interval.');
+
+        $badObservationFacts = DB::table('field_observations')
+            ->where(fn (Builder $query) => $query
+                ->where(fn (Builder $negative) => $negative->where('observation_type', 'SERVICE_NOT_OBSERVED')
+                    ->where(fn (Builder $window) => $window->whereNull('observation_window_minutes')->orWhere('observation_window_minutes', '<', 1)->orWhere('observation_window_minutes', '>', 720)))
+                ->orWhere(fn (Builder $fare) => $fare->where('observation_type', 'FARE_PAID')
+                    ->where(fn (Builder $amount) => $amount->whereNull('fare_amount')->orWhere('fare_amount', '<=', 0)->orWhereNull('fare_currency'))))
+            ->count();
+        $badFareCurrencies = DB::table('field_observations')->where('observation_type', 'FARE_PAID')->whereNotNull('fare_currency')
+            ->pluck('fare_currency')->filter(fn (string $currency): bool => preg_match('/^[A-Z]{3}$/D', $currency) !== 1)->count();
+        $this->checkCount('field observation fact integrity', $badObservationFacts + $badFareCurrencies, 'negative-service windows or recorded fare observations are malformed.');
+
+        $badSessionReferences = DB::table('transport_survey_sessions as sessions')
+            ->leftJoin('routes as session_routes', 'session_routes.id', '=', 'sessions.route_id')
+            ->leftJoin('route_patterns as session_patterns', 'session_patterns.id', '=', 'sessions.route_pattern_id')
+            ->leftJoin('routes as session_pattern_routes', 'session_pattern_routes.id', '=', 'session_patterns.route_id')
+            ->where(fn (Builder $query) => $query
+                ->where(fn (Builder $route) => $route->whereNotNull('sessions.route_id')->whereColumn('session_routes.city_id', '!=', 'sessions.city_id'))
+                ->orWhere(fn (Builder $pattern) => $pattern->whereNotNull('sessions.route_pattern_id')->where(fn (Builder $related) => $related
+                    ->whereColumn('session_pattern_routes.city_id', '!=', 'sessions.city_id')
+                    ->orWhere(fn (Builder $mismatch) => $mismatch->whereNotNull('sessions.route_id')->whereColumn('session_patterns.route_id', '!=', 'sessions.route_id')))))
+            ->count();
+        $plannedWithRecords = DB::table('transport_survey_sessions as sessions')
+            ->where('sessions.status', 'PLANNED')
+            ->where(fn (Builder $query) => $query->whereNotNull('sessions.started_at')->orWhereNotNull('sessions.ended_at')
+                ->orWhereExists(fn (Builder $subquery) => $subquery->selectRaw('1')->from('field_observations')->whereColumn('field_observations.survey_session_id', 'sessions.id'))
+                ->orWhereExists(fn (Builder $subquery) => $subquery->selectRaw('1')->from('survey_trace_points')->whereColumn('survey_trace_points.survey_session_id', 'sessions.id')))
+            ->count();
+        $badSessionClock = DB::table('transport_survey_sessions')
+            ->where(fn (Builder $query) => $query
+                ->where(fn (Builder $range) => $range->whereNotNull('started_at')->whereNotNull('ended_at')->whereColumn('ended_at', '<', 'started_at'))
+                ->orWhere(fn (Builder $complete) => $complete->where('status', 'COMPLETED')
+                    ->where(fn (Builder $dates) => $dates->whereNull('started_at')->orWhereNull('ended_at')))
+                ->orWhere(fn (Builder $aborted) => $aborted->where('status', 'ABORTED')
+                    ->where(fn (Builder $dates) => $dates
+                        ->where(fn (Builder $missingStart) => $missingStart->whereNull('started_at')->whereNotNull('ended_at'))
+                        ->orWhere(fn (Builder $missingEnd) => $missingEnd->whereNotNull('started_at')->whereNull('ended_at'))))
+                ->orWhere(fn (Builder $running) => $running->where('status', 'IN_PROGRESS')
+                    ->where(fn (Builder $dates) => $dates->whereNull('started_at')->orWhereNotNull('ended_at'))))
+            ->count();
+        $syntheticInReview = DB::table('transport_survey_sessions')->where('is_synthetic', true)->whereIn('status', ['UNDER_REVIEW', 'REVIEWED'])->count();
+        $this->checkCount('field survey lifecycle and references', $badSessionReferences + $plannedWithRecords + $badSessionClock + $syntheticInReview, 'survey references, collection lifecycle, or production review state are inconsistent.');
+
+        $unreviewedAudit = DB::table('field_observations')
+            ->whereIn('review_status', ['ACCEPTED_AS_EVIDENCE', 'REJECTED', 'NEEDS_CLARIFICATION'])
+            ->where(fn (Builder $query) => $query->whereNull('reviewed_by_user_id')->orWhereNull('reviewed_at'))
+            ->count();
+        $reviewedSessionGaps = DB::table('transport_survey_sessions as sessions')
+            ->where('sessions.status', 'REVIEWED')
+            ->whereExists(function (Builder $query): void {
+                $query->selectRaw('1')->from('field_observations')
+                    ->whereColumn('field_observations.survey_session_id', 'sessions.id')
+                    ->whereNotIn('field_observations.review_status', ['ACCEPTED_AS_EVIDENCE', 'REJECTED']);
+            })->count();
+        $this->checkCount('field review audit trail', $unreviewedAudit + $reviewedSessionGaps, 'field review decisions lack a reviewer or reviewed sessions still contain undecided observations.');
+
+        $emptyCompleted = DB::table('transport_survey_sessions as sessions')
+            ->whereIn('sessions.status', ['COMPLETED', 'UNDER_REVIEW', 'REVIEWED'])
+            ->whereNotExists(fn (Builder $query) => $query->selectRaw('1')->from('field_observations')->whereColumn('field_observations.survey_session_id', 'sessions.id'))
+            ->whereNotExists(fn (Builder $query) => $query->selectRaw('1')->from('survey_trace_points')->whereColumn('survey_trace_points.survey_session_id', 'sessions.id'))
+            ->count();
+        $this->checkWarningCount('empty field sessions', $emptyCompleted, 'completed or reviewed survey sessions contain no observations or trace points.');
+
+        $claimWithInvalidObservation = DB::table('field_evidence_claims as claims')
+            ->whereExists(fn (Builder $query) => $query->selectRaw('1')->from('field_evidence_claim_observations as links')
+                ->join('field_observations as observations', 'observations.id', '=', 'links.field_observation_id')
+                ->join('transport_survey_sessions as sessions', 'sessions.id', '=', 'observations.survey_session_id')
+                ->whereColumn('links.field_evidence_claim_id', 'claims.id')
+                ->where(fn (Builder $invalid) => $invalid->where('observations.review_status', '!=', 'ACCEPTED_AS_EVIDENCE')->orWhere('sessions.is_synthetic', true)))
+            ->orWhereNotExists(fn (Builder $query) => $query->selectRaw('1')->from('field_evidence_claim_observations as links')
+                ->whereColumn('links.field_evidence_claim_id', 'claims.id'))
+            ->count();
+        $this->checkCount('field claim evidence eligibility', $claimWithInvalidObservation, 'claims link undecided, rejected, synthetic, or no field observations.');
+
+        $badObservationAssociation = DB::table('field_observations as observations')
+            ->join('transport_survey_sessions as sessions', 'sessions.id', '=', 'observations.survey_session_id')
+            ->leftJoin('routes', 'routes.id', '=', 'observations.route_id')
+            ->leftJoin('route_patterns', 'route_patterns.id', '=', 'observations.route_pattern_id')
+            ->leftJoin('routes as pattern_routes', 'pattern_routes.id', '=', 'route_patterns.route_id')
+            ->leftJoin('stops', 'stops.id', '=', 'observations.stop_id')
+            ->leftJoin('stops as fare_from_stops', 'fare_from_stops.id', '=', 'observations.fare_from_stop_id')
+            ->leftJoin('stops as fare_to_stops', 'fare_to_stops.id', '=', 'observations.fare_to_stop_id')
+            ->leftJoin('places', 'places.id', '=', 'observations.place_id')
+            ->where(fn (Builder $query) => $query
+                ->where(fn (Builder $part) => $part->whereNotNull('observations.route_id')->whereColumn('routes.city_id', '!=', 'sessions.city_id'))
+                ->orWhere(fn (Builder $part) => $part->whereNotNull('observations.route_pattern_id')->where(fn (Builder $related) => $related
+                    ->where(fn (Builder $parent) => $parent->where(fn (Builder $routeCheck) => $routeCheck->whereNotNull('observations.route_id')->whereColumn('route_patterns.route_id', '!=', 'observations.route_id'))
+                        ->orWhereColumn('pattern_routes.city_id', '!=', 'sessions.city_id'))))
+                ->orWhere(fn (Builder $part) => $part->whereNotNull('observations.stop_id')->whereColumn('stops.city_id', '!=', 'sessions.city_id'))
+                ->orWhere(fn (Builder $part) => $part->whereNotNull('observations.place_id')->whereColumn('places.city_id', '!=', 'sessions.city_id'))
+                ->orWhere(fn (Builder $part) => $part->whereNotNull('observations.fare_from_stop_id')->whereColumn('fare_from_stops.city_id', '!=', 'sessions.city_id'))
+                ->orWhere(fn (Builder $part) => $part->whereNotNull('observations.fare_to_stop_id')->whereColumn('fare_to_stops.city_id', '!=', 'sessions.city_id')))
+            ->count();
+        $this->checkCount('field observation references', $badObservationAssociation, 'observation route, pattern, stop, or place references do not match the survey city/service.');
+
+        $badSequenceCount = DB::selectOne(
+            'SELECT COUNT(*) AS invalid_count
+             FROM (
+                 SELECT survey_session_id
+                 FROM field_observations
+                 GROUP BY survey_session_id
+                 HAVING MIN(sequence) <> 1 OR MAX(sequence) <> COUNT(*) OR COUNT(DISTINCT sequence) <> COUNT(*)
+                 UNION ALL
+                 SELECT survey_session_id
+                 FROM survey_trace_points
+                 GROUP BY survey_session_id
+                 HAVING MIN(sequence) <> 1 OR MAX(sequence) <> COUNT(*) OR COUNT(DISTINCT sequence) <> COUNT(*)
+             ) AS invalid_sequences',
+        );
+        $this->checkCount('field sequence integrity', (int) ($badSequenceCount->invalid_count ?? 0), 'survey observations or trace sequences are not contiguous from one.');
+
+        $badTraceTimeOrder = DB::selectOne(
+            'SELECT COUNT(*) AS invalid_count
+             FROM (
+                 SELECT observed_at,
+                        LAG(observed_at) OVER (PARTITION BY survey_session_id ORDER BY sequence) AS previous_observed_at
+                 FROM survey_trace_points
+                 WHERE observed_at IS NOT NULL
+             ) AS ordered_trace
+             WHERE previous_observed_at IS NOT NULL AND observed_at < previous_observed_at',
+        );
+        $this->checkCount('field trace time order', (int) ($badTraceTimeOrder->invalid_count ?? 0), 'trace timestamps move backwards in sequence order.');
+
+        $targetTables = [
+            'place' => 'places',
+            'stop' => 'stops',
+            'route' => 'routes',
+            'route_pattern' => 'route_patterns',
+            'route_pattern_stop' => 'route_pattern_stops',
+            'transfer_relationship' => 'transfer_relationships',
+            'fare' => 'fares',
+        ];
+        $badTargets = DB::table('field_evidence_claims')->whereNotIn('target_type', array_keys($targetTables))->count();
+        foreach ($targetTables as $targetType => $table) {
+            $badTargets += DB::table('field_evidence_claims as claims')
+                ->where('claims.target_type', $targetType)
+                ->whereNotExists(fn (Builder $query) => $query->selectRaw('1')->from($table.' as target')
+                    ->whereColumn('target.id', 'claims.target_id')
+                    ->whereColumn('target.stable_id', 'claims.target_stable_id'))
+                ->count();
+        }
+        $this->checkCount('field claim target references', $badTargets, 'field claims refer to unknown or mismatched production records.');
+
+        $claimsOnDemoTargets = 0;
+        foreach (['place' => 'places', 'stop' => 'stops', 'route' => 'routes', 'route_pattern' => 'route_patterns', 'fare' => 'fares'] as $targetType => $table) {
+            $claimsOnDemoTargets += DB::table('field_evidence_claims as claims')
+                ->join($table.' as target', 'target.id', '=', 'claims.target_id')
+                ->where('claims.target_type', $targetType)
+                ->where('target.is_demo', true)
+                ->count();
+        }
+        $claimsOnDemoTargets += DB::table('field_evidence_claims as claims')
+            ->join('route_pattern_stops as associations', 'associations.id', '=', 'claims.target_id')
+            ->join('route_patterns as patterns', 'patterns.id', '=', 'associations.route_pattern_id')
+            ->join('routes', 'routes.id', '=', 'patterns.route_id')
+            ->join('stops', 'stops.id', '=', 'associations.stop_id')
+            ->where('claims.target_type', 'route_pattern_stop')
+            ->where(fn (Builder $query) => $query->where('patterns.is_demo', true)->orWhere('routes.is_demo', true)->orWhere('stops.is_demo', true))
+            ->count();
+        $claimsOnDemoTargets += DB::table('field_evidence_claims as claims')
+            ->join('transfer_relationships as transfers', 'transfers.id', '=', 'claims.target_id')
+            ->leftJoin('stops as from_stops', 'from_stops.id', '=', 'transfers.from_stop_id')
+            ->leftJoin('stops as to_stops', 'to_stops.id', '=', 'transfers.to_stop_id')
+            ->leftJoin('route_patterns as from_patterns', 'from_patterns.id', '=', 'transfers.from_route_pattern_id')
+            ->leftJoin('routes as from_routes', 'from_routes.id', '=', 'from_patterns.route_id')
+            ->leftJoin('route_patterns as to_patterns', 'to_patterns.id', '=', 'transfers.to_route_pattern_id')
+            ->leftJoin('routes as to_routes', 'to_routes.id', '=', 'to_patterns.route_id')
+            ->where('claims.target_type', 'transfer_relationship')
+            ->where(fn (Builder $query) => $query->where('transfers.is_demo', true)
+                ->orWhere('from_stops.is_demo', true)->orWhere('to_stops.is_demo', true)
+                ->orWhere('from_patterns.is_demo', true)->orWhere('from_routes.is_demo', true)
+                ->orWhere('to_patterns.is_demo', true)->orWhere('to_routes.is_demo', true))
+            ->count();
+        $this->checkCount('field claim demo isolation', $claimsOnDemoTargets, 'field evidence claims point at demo transport records.');
+
+        $scopeMap = [
+            'PLACE_LOCATION' => 'place',
+            'STOP_LOCATION' => 'stop',
+            'BOARDING' => 'stop',
+            'ROUTE_IDENTITY' => 'route',
+            'ROUTE_PATTERN' => 'route_pattern',
+            'ROUTE_GEOMETRY' => 'route_pattern',
+            'PATTERN_STOP_SERVICE' => 'route_pattern_stop',
+            'PATTERN_STOP_SEQUENCE' => 'route_pattern_stop',
+            'PATTERN_STOP_BOARDING' => 'route_pattern_stop',
+            'PATTERN_STOP_ALIGHTING' => 'route_pattern_stop',
+            'TRANSFER' => 'transfer_relationship',
+            'FARE' => 'fare',
+            'FARE_GENERAL_TRADITIONAL_PUJ' => 'fare',
+        ];
+        $invalidScopes = 0;
+        foreach (DB::table('field_evidence_claims')->get(['id', 'claim_type', 'target_type']) as $claim) {
+            if (($scopeMap[$claim->claim_type] ?? null) !== $claim->target_type) {
+                $invalidScopes++;
+            }
+        }
+        $this->checkCount('field claim fact scope', $invalidScopes, 'field claims use a fact scope incompatible with the production target.');
+
+        $attachedClaims = DB::table('field_evidence_claims')->where('review_status', 'ATTACHED')->get(['id', 'claim_type', 'provenance_source_id']);
+        $sources = DB::table('provenance_sources')->whereIn('id', $attachedClaims->pluck('provenance_source_id')->filter())->get(['id', 'source_type', 'evidence_scope']);
+        $sourceMap = $sources->keyBy('id');
+        $linkedSources = DB::table('field_evidence_claim_sources')->get(['field_evidence_claim_id', 'provenance_source_id'])
+            ->groupBy('field_evidence_claim_id')->map(fn ($rows) => $rows->pluck('provenance_source_id')->all());
+        $invalidClaimSources = $attachedClaims->filter(function (object $claim) use ($sourceMap, $linkedSources): bool {
+            $source = $sourceMap->get($claim->provenance_source_id);
+            $scopes = $source === null ? null : (is_array($source->evidence_scope) ? $source->evidence_scope : json_decode((string) $source->evidence_scope, true));
+
+            return $source === null
+                || $source->source_type !== 'DIRECT_OBSERVATION'
+                || ! is_array($scopes)
+                || ! in_array($claim->claim_type, $scopes, true)
+                || ! in_array($source->id, $linkedSources->get($claim->id, []), true);
+        })->count();
+        $this->checkCount('field claim provenance linkage', $invalidClaimSources, 'attached field claims lack matching scoped provenance linkage.');
+
+        $realObservationCount = DB::table('field_observations as observations')
+            ->join('transport_survey_sessions as sessions', 'sessions.id', '=', 'observations.survey_session_id')
+            ->where('sessions.is_synthetic', false)
+            ->count();
+        $this->check(
+            'real field evidence coverage',
+            $realObservationCount === 0 ? 'WARN' : 'PASS',
+            "{$realObservationCount} real-world field observations imported; zero is expected until physical surveys occur.",
+        );
+
+        if ($postgisReady) {
+            $badGeometry = DB::selectOne(
+                'SELECT
+                    (SELECT COUNT(*) FROM field_observations WHERE location IS NOT NULL AND
+                        (ST_SRID(location::geometry) <> 4326 OR ST_IsEmpty(location::geometry) OR
+                         ST_X(location::geometry) NOT BETWEEN -180 AND 180 OR ST_Y(location::geometry) NOT BETWEEN -90 AND 90))
+                    +
+                    (SELECT COUNT(*) FROM survey_trace_points WHERE location IS NULL OR
+                        (ST_SRID(location::geometry) <> 4326 OR ST_IsEmpty(location::geometry) OR
+                         ST_X(location::geometry) NOT BETWEEN -180 AND 180 OR ST_Y(location::geometry) NOT BETWEEN -90 AND 90)) AS invalid_count',
+            );
+            $this->checkCount('field spatial locations', (int) ($badGeometry->invalid_count ?? 0), 'field locations have invalid points or non-4326 SRID.');
+        } else {
+            $this->check('field spatial locations', 'BLOCKED', 'PostGIS is required to validate imported survey points and GPS traces.');
+        }
     }
 
     private function checkCount(string $label, int $count, string $failureMessage): void

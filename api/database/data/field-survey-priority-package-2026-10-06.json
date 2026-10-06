@@ -1,0 +1,49 @@
+{
+  "schema_version": 1,
+  "surveys": [
+    {
+      "stable_id": "planned-pattern-12l-forward",
+      "title": "12L OUTBOUND field survey",
+      "purpose": "Planned only. Verify the high-impact 12L outbound direction, observed stop order, stop 01 and stop 04 relationships, Ayala boarding area, and B. Rodriguez boarding relationship.",
+      "city_id": "city-cebu-city",
+      "route_id": "route-12l",
+      "route_pattern_id": "pattern-12l-forward",
+      "observer_reference": "REPLACE_WITH_ACCOUNTABLE_OBSERVER_REFERENCE",
+      "status": "PLANNED",
+      "observations": [],
+      "trace_points": []
+    },
+    {
+      "stable_id": "planned-pattern-17b-forward",
+      "title": "17B OUTBOUND field survey",
+      "purpose": "Planned only. Verify the high-impact 17B outbound direction and observed stop order.",
+      "city_id": "city-cebu-city",
+      "route_id": "route-17b",
+      "route_pattern_id": "pattern-17b-forward",
+      "observer_reference": "REPLACE_WITH_ACCOUNTABLE_OBSERVER_REFERENCE",
+      "status": "PLANNED",
+      "observations": [],
+      "trace_points": []
+    },
+    {
+      "stable_id": "planned-transfer-transfer-b-rodriguez-to-fuente",
+      "title": "Transfer review: B. Rodriguez Extension to Fuente",
+      "purpose": "Planned only. Observe both services, direction, actual boarding locations, walking separation, road crossing, landmark, and interchange usability.",
+      "city_id": "city-cebu-city",
+      "observer_reference": "REPLACE_WITH_ACCOUNTABLE_OBSERVER_REFERENCE",
+      "status": "PLANNED",
+      "observations": [],
+      "trace_points": []
+    },
+    {
+      "stable_id": "planned-transfer-transfer-fuente-to-b-rodriguez",
+      "title": "Transfer review: Fuente to B. Rodriguez Extension",
+      "purpose": "Planned only. Observe both services, direction, actual boarding locations, walking separation, road crossing, landmark, and interchange usability.",
+      "city_id": "city-cebu-city",
+      "observer_reference": "REPLACE_WITH_ACCOUNTABLE_OBSERVER_REFERENCE",
+      "status": "PLANNED",
+      "observations": [],
+      "trace_points": []
+    }
+  ]
+}

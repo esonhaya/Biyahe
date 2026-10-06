@@ -1,5 +1,10 @@
 # Data verification
 
+For controlled offline field collection, observation review, claim attachment,
+privacy, and survey import rules, see [Trusted Field Surveys](field-surveys.md).
+Accepted field observations remain evidence; they do not automatically
+promote a production fact to VERIFIED.
+
 ## States
 
 Every transport entity has a verification_state and an independent is_demo

@@ -2,8 +2,16 @@
 
 namespace Tests\Feature;
 
+use App\Enums\SurveySessionStatus;
+use App\Models\City;
+use App\Models\FieldObservation;
 use App\Models\RoutePatternStop;
+use App\Models\TransportSurveySession;
+use App\Models\User;
+use App\Services\FieldSurveys\FieldSurveyReviewService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 class BiyaheDoctorTest extends TestCase
@@ -40,5 +48,38 @@ class BiyaheDoctorTest extends TestCase
             ->expectsOutputToContain('boarding and alighting permissions')
             ->expectsOutputToContain('FAIL')
             ->assertExitCode(1);
+    }
+
+    public function test_doctor_fails_for_unknown_field_location_method(): void
+    {
+        $this->seed();
+        $session = TransportSurveySession::factory()->create();
+        $observation = FieldObservation::factory()->create(['survey_session_id' => $session->id]);
+        DB::table('field_observations')->where('id', $observation->id)->update(['location_method' => 'UNSUPPORTED_METHOD']);
+
+        $this->artisan('biyahe:doctor')
+            ->expectsOutputToContain('field review lifecycle')
+            ->expectsOutputToContain('FAIL')
+            ->assertExitCode(1);
+    }
+
+    public function test_doctor_accepts_a_planned_survey_aborted_before_collection(): void
+    {
+        $this->seed();
+        $session = TransportSurveySession::factory()->create([
+            'stable_id' => 'test-only-aborted-planned-survey',
+            'city_id' => City::query()->where('stable_id', 'city-cebu-city')->value('id'),
+            'is_synthetic' => false,
+        ]);
+        app(FieldSurveyReviewService::class)->updateSessionStatus(
+            $session,
+            SurveySessionStatus::ABORTED,
+            User::factory()->create(),
+        );
+
+        $exitCode = Artisan::call('biyahe:doctor');
+        $output = Artisan::output();
+        $this->assertStringContainsString('field survey lifecycle and references', $output);
+        $this->assertSame(config('database.default') === 'pgsql' ? 0 : 2, $exitCode, $output);
     }
 }
