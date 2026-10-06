@@ -4,6 +4,7 @@ import * as maplibregl from "maplibre-gl";
 import type { Map as MapInstance, MapLayerMouseEvent, StyleSpecification } from "maplibre-gl";
 import { useEffect, useRef, useState } from "react";
 import type { Journey, Place, RoutePattern, Stop } from "@/lib/api";
+import type { CommuteInstruction } from "@/lib/commuteInstructions";
 import type { RideModeMapOverlay } from "@/lib/rideMode";
 
 type MapViewProps = {
@@ -13,6 +14,7 @@ type MapViewProps = {
   selectedPattern: RoutePattern | null;
   onStopSelect?: (stop: Stop) => void;
   rideMode?: RideModeMapOverlay | null;
+  instructionFocus?: CommuteInstruction | null;
 };
 
 const cebuCenter: [number, number] = [123.8854, 10.3157];
@@ -112,11 +114,12 @@ function patternBounds(pattern: RoutePattern): maplibregl.LngLatBounds | null {
   return bounds.isEmpty() ? null : bounds;
 }
 
-export default function MapView({ places, stops, journey, selectedPattern, onStopSelect, rideMode = null }: MapViewProps) {
+export default function MapView({ places, stops, journey, selectedPattern, onStopSelect, rideMode = null, instructionFocus = null }: MapViewProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<MapInstance | null>(null);
   const stopLookupRef = useRef(new Map<number, Stop>());
   const rideFocusRef = useRef<string | null>(null);
+  const instructionFocusRef = useRef<string | null>(null);
   const [mapReady, setMapReady] = useState(false);
 
   useEffect(() => {
@@ -248,6 +251,21 @@ export default function MapView({ places, stops, journey, selectedPattern, onSto
           "circle-stroke-width": 2,
         },
       });
+      map.addSource("instruction-focus", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
+      map.addLayer({
+        id: "instruction-focus-line",
+        type: "line",
+        source: "instruction-focus",
+        filter: ["any", ["==", ["geometry-type"], "LineString"], ["==", ["geometry-type"], "MultiLineString"]],
+        paint: { "line-color": "#f4a261", "line-width": 9, "line-opacity": 0.8 },
+      });
+      map.addLayer({
+        id: "instruction-focus-point",
+        type: "circle",
+        source: "instruction-focus",
+        filter: ["==", ["geometry-type"], "Point"],
+        paint: { "circle-color": "#f4a261", "circle-radius": 11, "circle-stroke-color": "#153b45", "circle-stroke-width": 3 },
+      });
       setMapReady(true);
     });
 
@@ -328,6 +346,21 @@ export default function MapView({ places, stops, journey, selectedPattern, onSto
 
   useEffect(() => {
     const map = mapRef.current;
+    if (!mapReady || !map || !map.isStyleLoaded()) return;
+    const source = map.getSource("instruction-focus") as maplibregl.GeoJSONSource | undefined;
+    if (!source) return;
+    const focus = instructionFocus;
+    source.setData({
+      type: "FeatureCollection",
+      features: [
+        focus?.geometry ? { type: "Feature" as const, properties: { kind: "focus" }, geometry: focus.geometry } : null,
+        focus?.focusLocation ? pointFeature("instruction-focus-point", focus.primaryAction, focus.focusLocation, { kind: "focus" }) : null,
+      ].filter((feature): feature is NonNullable<typeof feature> => feature !== null),
+    });
+  }, [instructionFocus, mapReady]);
+
+  useEffect(() => {
+    const map = mapRef.current;
     if (!mapReady || !map || !map.isStyleLoaded()) {
       return;
     }
@@ -357,6 +390,22 @@ export default function MapView({ places, stops, journey, selectedPattern, onSto
       ].filter((point): point is NonNullable<typeof point> => point !== null),
     });
   }, [mapReady, rideMode]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!mapReady || !map || !instructionFocus) return;
+    if (instructionFocusRef.current === instructionFocus.id) return;
+    instructionFocusRef.current = instructionFocus.id;
+    if (instructionFocus.focusLocation) {
+      map.easeTo({ center: [instructionFocus.focusLocation.lng, instructionFocus.focusLocation.lat], zoom: Math.max(map.getZoom(), 14), duration: 300 });
+      return;
+    }
+    const positions = instructionFocus.geometry ? geometryPositions(instructionFocus.geometry.coordinates) : [];
+    if (positions.length === 0) return;
+    const bounds = new maplibregl.LngLatBounds();
+    positions.forEach((position) => bounds.extend(position));
+    map.fitBounds(bounds, { padding: 64, maxZoom: 15, duration: 300 });
+  }, [instructionFocus, mapReady]);
 
   useEffect(() => {
     const map = mapRef.current;

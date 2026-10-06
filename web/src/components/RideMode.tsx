@@ -4,6 +4,11 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { Journey, JourneyLeg, RoutePatternStop } from "@/lib/api";
 import { getRoutePattern } from "@/lib/api";
 import {
+  generateCommuteInstructions,
+  instructionForRideMode,
+  type CommuteJourneyModel,
+} from "@/lib/commuteInstructions";
+import {
   applyRideModeAction,
   classifyLocation,
   createRideModeSession,
@@ -29,6 +34,8 @@ type LocationMode = "OFF" | "REQUESTING" | "ACTIVE" | "DENIED" | "UNAVAILABLE";
 
 type RideModeProps = {
   selectedJourney: Journey | null;
+  offlineSnapshot?: boolean;
+  allowPatternFetch?: boolean;
   onRestoreJourney: (journey: Journey) => void;
   onMapStateChange: (overlay: RideModeMapOverlay | null) => void;
 };
@@ -36,38 +43,6 @@ type RideModeProps = {
 function distanceLabel(meters: number | null): string {
   if (meters === null) return "Distance unavailable";
   return meters >= 1000 ? `${(meters / 1000).toFixed(1)} km` : `${Math.round(meters)} m`;
-}
-
-function walkLabel(leg: JourneyLeg): string {
-  if (leg.distance_type === "NOT_REQUIRED") return "No separate walking leg is mapped.";
-  const distance = distanceLabel(leg.distance_meters);
-  if (leg.distance_type === "PEDESTRIAN_NETWORK" || leg.distance_type === "PEDESTRIAN_NETWORK_WITH_APPROXIMATE_CONNECTORS") {
-    const duration = leg.estimated_duration_seconds === null ? "" : ` · about ${Math.max(1, Math.round(leg.estimated_duration_seconds / 60))} min estimated`;
-    return `${distance} mapped walking path${duration}`;
-  }
-  if (leg.access_classification === "GRAPH_COVERAGE_GAP") {
-    return `${distance} straight-line estimate · walking access could not be confirmed from available map data`;
-  }
-  if (leg.access_classification === "NO_WALKABLE_ACCESS") {
-    return `${distance} straight-line estimate · mapped access is unresolved`;
-  }
-  return `${distance} straight-line estimate · no pedestrian route is claimed`;
-}
-
-function precisionMessage(precision: string | null | undefined, kind: "boarding" | "alighting"): string {
-  if (kind === "alighting") {
-    return "Your mapped get-off area is approximate; the exact drop-off point or side is not verified.";
-  }
-  switch (precision) {
-    case "EXACT_BOARDING_POINT":
-      return "A supported boarding point is mapped, but follow the route cue and local conditions.";
-    case "BOARDING_AREA":
-      return "Mapped boarding area; the exact bay or curbside position is not verified.";
-    case "APPROXIMATE_LOCATION":
-      return "Approximate boarding area; exact position is not verified.";
-    default:
-      return "Exact boarding position is not verified; use the mapped service area only as a guide.";
-  }
 }
 
 function statusLabel(status: RideModeStatus): string {
@@ -92,8 +67,23 @@ function nextLegAfter(journey: Journey, index: number): JourneyLeg | null {
   return journey.legs[index + 1] ?? null;
 }
 
-function nextActionText(session: RideModeSession): string {
+function nextActionText(session: RideModeSession, model: CommuteJourneyModel | null): string {
   const leg = currentRideModeLeg(session);
+  if (leg && model) {
+    if (leg.type === "RIDE") {
+      const sameLeg = model.instructions.filter((instruction) => instruction.legIndex === session.currentLegIndex);
+      if (session.currentLegState === "WAITING_TO_BOARD") {
+        const ride = sameLeg.find((instruction) => instruction.type === "RIDE");
+        if (ride) return ride.primaryAction;
+      }
+      if (session.currentLegState === "RIDING") {
+        const alight = sameLeg.find((instruction) => instruction.type === "ALIGHT");
+        if (alight) return alight.primaryAction;
+      }
+    }
+  }
+  const nextInstruction = model?.instructions.find((instruction) => instruction.legIndex > session.currentLegIndex && instruction.type !== "ARRIVE");
+  if (nextInstruction) return nextInstruction.primaryAction;
   if (!leg) return "Review the journey details.";
   const next = nextLegAfter(session.journey, session.currentLegIndex);
   if (leg.type === "RIDE") {
@@ -106,14 +96,14 @@ function nextActionText(session: RideModeSession): string {
   return "Continue with the next mapped leg.";
 }
 
-function currentActionText(session: RideModeSession, evaluation: RideModeLocationEvaluation | null): string {
+function currentActionText(session: RideModeSession, evaluation: RideModeLocationEvaluation | null, instruction: ReturnType<typeof instructionForRideMode>): string {
   const leg = currentRideModeLeg(session);
   if (session.status === "COMPLETED") return "ARRIVED";
   if (!leg) return "REVIEW JOURNEY";
   if (leg.type === "WALK_ACCESS") return session.currentLegState === "WALKING" ? "WALK TO BOARDING AREA" : "START WALK TO BOARDING AREA";
   if (leg.type === "TRANSFER_WALK") return session.currentLegState === "WALKING" ? "WALK TO NEXT BOARDING AREA" : "START NEXT LEG";
   if (leg.type === "WALK_EGRESS") return session.currentLegState === "WALKING" ? "FINAL WALK" : "START FINAL WALK";
-  if (session.currentLegState === "WAITING_TO_BOARD") return `BOARD ${leg.route?.code ?? "THE DISPLAYED ROUTE"} TOWARD ${leg.pattern?.direction ?? "THE DISPLAYED DIRECTION"}`;
+  if (session.currentLegState === "WAITING_TO_BOARD") return instruction?.primaryAction.toUpperCase() ?? `BOARD ${leg.route?.code ?? "THE DISPLAYED ROUTE"} TOWARD ${leg.pattern?.direction ?? "THE DISPLAYED DIRECTION"}`;
   if (evaluation?.guidancePhase && evaluation.accepted) return phaseLabel(evaluation.guidancePhase);
   if (evaluation && !evaluation.accepted && ["POOR", "STALE"].includes(evaluation.quality)) return "RIDING — LIVE POSITION IS TOO UNCERTAIN FOR PROXIMITY GUIDANCE";
   const remaining = evaluation?.stopProgress?.stopsRemaining ?? leg.stop_count;
@@ -132,7 +122,7 @@ function trustWarning(leg: JourneyLeg): string | null {
   return null;
 }
 
-export default function RideMode({ selectedJourney, onRestoreJourney, onMapStateChange }: RideModeProps) {
+export default function RideMode({ selectedJourney, offlineSnapshot = false, allowPatternFetch = true, onRestoreJourney, onMapStateChange }: RideModeProps) {
   const [session, setSession] = useState<RideModeSession | null>(null);
   const [hydrated, setHydrated] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
@@ -149,6 +139,8 @@ export default function RideMode({ selectedJourney, onRestoreJourney, onMapState
   const patternLoadKeyRef = useRef<string | null>(null);
   const lastSampleRef = useRef<{ lat: number; lng: number; accuracy: number; timestamp: number } | null>(null);
   const metricsRef = useRef({ locationSamples: 0, samplesAccepted: 0, samplesRejected: 0, progressEvaluations: 0, backendRequestsDuringRide: 0 });
+  const instructionJourney = session?.journey ?? selectedJourney;
+  const instructionModel = useMemo(() => instructionJourney ? generateCommuteInstructions(instructionJourney) : null, [instructionJourney]);
 
   useEffect(() => {
     sessionRef.current = session;
@@ -287,7 +279,7 @@ export default function RideMode({ selectedJourney, onRestoreJourney, onMapState
   }, [evaluation, onMapStateChange, recenterToken, session]);
 
   useEffect(() => {
-    if (!session || (session.status !== "ACTIVE" && session.status !== "PLANNED")) return;
+    if (!allowPatternFetch || !session || (session.status !== "ACTIVE" && session.status !== "PLANNED")) return;
     const ids = journeyPatternIds(session.journey);
     const missing = ids.filter((id) => !session.journey.legs.some((leg) => leg.pattern?.id === id && (leg.pattern.stops?.length ?? 0) > 0));
     const key = `${session.sessionId}:${missing.join(",")}`;
@@ -320,7 +312,7 @@ export default function RideMode({ selectedJourney, onRestoreJourney, onMapState
       }) : current);
     })();
     return () => { cancelled = true; };
-  }, [session]);
+  }, [allowPatternFetch, session]);
 
   function startSelectedJourney() {
     if (!selectedJourney) {
@@ -403,12 +395,15 @@ export default function RideMode({ selectedJourney, onRestoreJourney, onMapState
 
   const currentLeg = session ? currentRideModeLeg(session) : null;
   const journeyChanged = Boolean(session && selectedJourney && session.journey.id !== selectedJourney.id);
-  const currentText = session ? currentActionText(session, evaluation) : "START RIDE MODE FOR A SELECTED JOURNEY";
+  const currentInstruction = session && currentLeg && instructionModel
+    ? instructionForRideMode(instructionModel, session.currentLegIndex, currentLeg.type, session.currentLegState)
+    : null;
+  const currentText = session ? currentActionText(session, evaluation, currentInstruction) : "START RIDE MODE FOR A SELECTED JOURNEY";
   const currentTrustWarning = currentLeg ? trustWarning(currentLeg) : null;
   const previousLeg = session && session.currentLegIndex > 0 ? session.journey.legs[session.currentLegIndex - 1] : null;
   const previousTransferWarning = previousLeg?.type === "TRANSFER_WALK" ? trustWarning(previousLeg) : null;
   const routeCue = currentLeg?.type === "RIDE"
-    ? `${currentLeg.route?.code ?? "Mapped route"} · ${currentLeg.pattern?.direction ?? "direction not recorded"}`
+    ? `${currentInstruction?.routeCode ?? currentLeg.route?.code ?? "Mapped route"}${currentInstruction?.direction ? ` · ${currentInstruction.direction}` : ""}`
     : null;
   const locationSummary = useMemo(() => {
     if (!session || session.status !== "ACTIVE") return null;
@@ -439,7 +434,7 @@ export default function RideMode({ selectedJourney, onRestoreJourney, onMapState
       </div>
       {!session && selectedJourney && (
         <div className={styles.rideStartCard}>
-          <p className={styles.sectionCopy}>Already on this planned journey? Ride Mode keeps progress on this device, supports manual confirmations, and can optionally use foreground location while this page is open.</p>
+          <p className={styles.sectionCopy}>{offlineSnapshot ? "This is a saved journey snapshot. Manual Ride Mode can start without the journey API; live replanning needs connectivity." : "Already on this planned journey? Ride Mode keeps progress on this device, supports manual confirmations, and can optionally use foreground location while this page is open."}</p>
           <button type="button" className={styles.primaryButton} onClick={startSelectedJourney}>Start Ride Mode</button>
         </div>
       )}
@@ -458,16 +453,15 @@ export default function RideMode({ selectedJourney, onRestoreJourney, onMapState
             {currentLeg?.type === "RIDE" && routeCue && <p className={styles.rideRouteCue}>{routeCue}</p>}
             {currentLeg?.type === "RIDE" && session.currentLegState === "WAITING_TO_BOARD" && (
               <div className={styles.rideGuidance}>
-                <p><strong>Boarding area:</strong> {currentLeg.boarding_stop?.name ?? currentLeg.origin.name}</p>
-                {currentLeg.boarding_instruction && <p>{currentLeg.boarding_instruction}</p>}
-                <p>{precisionMessage(currentLeg.boarding_stop?.boarding_precision, "boarding")}</p>
-                {currentLeg.driver_instruction && <p><strong>{currentLeg.driver_instruction}</strong></p>}
+                {currentInstruction?.secondaryDetail && <p><strong>{currentInstruction.secondaryDetail}</strong></p>}
+                {currentInstruction?.uncertainty && <p>{currentInstruction.uncertainty}</p>}
+                {currentInstruction?.driverInstruction && <p><strong>{currentInstruction.driverInstruction}</strong></p>}
               </div>
             )}
             {currentLeg?.type === "RIDE" && session.currentLegState === "RIDING" && (
               <div className={styles.rideGuidance}>
-                <p>{currentLeg.get_off_guidance ?? `Get off near ${currentLeg.alighting_stop?.name ?? currentLeg.destination.name}.`}</p>
-                <p>{precisionMessage(currentLeg.alighting_stop?.alighting_precision, "alighting")}</p>
+                {currentInstruction?.secondaryDetail && <p>{currentInstruction.secondaryDetail}</p>}
+                {currentInstruction?.uncertainty && <p>{currentInstruction.uncertainty}</p>}
                 {evaluation?.distanceToTargetMeters !== null && evaluation?.distanceToTargetMeters !== undefined && (
                   <p><strong>{distanceLabel(evaluation.distanceToTargetMeters)}</strong> remaining {evaluation.distanceBasis === "ALONG_ROUTE" ? "along the selected route" : "approximately by map distance"}.</p>
                 )}
@@ -477,8 +471,8 @@ export default function RideMode({ selectedJourney, onRestoreJourney, onMapState
             )}
             {currentLeg && ["WALK_ACCESS", "TRANSFER_WALK", "WALK_EGRESS"].includes(currentLeg.type) && (
               <div className={styles.rideGuidance}>
-                <p>{currentLeg.instruction ?? `Walk from ${currentLeg.origin.name} to ${currentLeg.destination.name}.`}</p>
-                <p>{walkLabel(currentLeg)}</p>
+                {currentInstruction?.secondaryDetail && <p>{currentInstruction.secondaryDetail}</p>}
+                {currentInstruction?.uncertainty && <p>{currentInstruction.uncertainty}</p>}
                 {evaluation?.distanceToTargetMeters !== null && evaluation?.distanceToTargetMeters !== undefined && <p><strong>{distanceLabel(evaluation.distanceToTargetMeters)}</strong> approximate device-to-target distance.</p>}
               </div>
             )}
@@ -503,7 +497,7 @@ export default function RideMode({ selectedJourney, onRestoreJourney, onMapState
 
           {session.status === "ACTIVE" && (
             <div className={styles.rideStatusGrid}>
-              <div><p className={styles.cardKicker}>NEXT</p><p>{nextActionText(session)}</p></div>
+              <div><p className={styles.cardKicker}>NEXT</p><p>{nextActionText(session, instructionModel)}</p></div>
               <div><p className={styles.cardKicker}>LOCATION</p><p>{locationSummary}</p></div>
               {locationMode === "OFF" && <button type="button" className={styles.secondaryButton} onClick={enableLocation}>Enable foreground location</button>}
               {locationMode === "DENIED" && <button type="button" className={styles.secondaryButton} onClick={enableLocation}>Try location again</button>}

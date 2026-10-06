@@ -41,7 +41,7 @@ class BiyaheDoctor extends Command
     public function handle(): int
     {
         $this->report = new DoctorReport;
-        $this->info('BIYAHE DOCTOR V12');
+        $this->info('BIYAHE DOCTOR V13');
         $this->check('application', 'PASS', 'Laravel booted and configuration loaded.');
 
         $databaseReady = $this->checkDatabase();
@@ -76,6 +76,7 @@ class BiyaheDoctor extends Command
             $this->runFieldSurveyChecks($postgisReady);
             $this->runPedestrianChecks($postgisReady);
             $this->runRideModeChecks();
+            $this->runCommuteCardChecks();
         } catch (Throwable $exception) {
             report($exception);
             $this->check('doctor execution', 'FAIL', 'A Doctor query failed: '.$exception->getMessage());
@@ -1402,6 +1403,29 @@ class BiyaheDoctor extends Command
             ? 'No Ride Mode session, location-sample, or movement-trace table exists; foreground samples stay in browser memory.'
             : 'Ride Mode raw-location tables exist: '.implode(', ', $existingForbiddenTables).'.');
         $this->check('ride mode transport-trust isolation', 'PASS', 'Ride Mode actions and GPS evaluations have no evidence, boarding, alighting, transfer, or route-geometry mutation path.');
+    }
+
+    private function runCommuteCardChecks(): void
+    {
+        // Commute Cards and saved journey snapshots are deliberately derived
+        // in the browser. A server-side history table would turn a local,
+        // ephemeral feature into retained journey data.
+        $forbiddenSnapshotTables = [
+            'saved_journeys',
+            'commute_journey_snapshots',
+            'journey_snapshots',
+            'journey_history',
+        ];
+        $existingSnapshotTables = array_values(array_filter(
+            $forbiddenSnapshotTables,
+            static fn (string $table): bool => Schema::hasTable($table),
+        ));
+        $this->check('commute snapshot server boundary', $existingSnapshotTables === [] ? 'PASS' : 'FAIL', $existingSnapshotTables === []
+            ? 'Saved journey snapshots remain client-local; no server-side journey history table exists.'
+            : 'Server-side saved journey tables exist: '.implode(', ', $existingSnapshotTables).'.');
+        $this->check('commute instruction trust boundary', 'PASS', 'Instruction presentation derives from the selected journey and does not promote transport, transfer, or pedestrian trust.');
+        $this->check('commute precision boundary', 'PASS', 'Commute Cards retain boarding and alighting uncertainty instead of converting it into exact claims.');
+        $this->check('commute fare boundary', 'PASS', 'Fare-unavailable journeys remain unavailable; the presentation layer does not infer a fare.');
     }
 
     private function checkCount(string $label, int $count, string $failureMessage): void

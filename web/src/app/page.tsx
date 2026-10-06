@@ -4,8 +4,17 @@ import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
 import type { CanIRideResponse, Journey, PedestrianAccessLeg, Place, Route, RoutePattern, Stop } from "@/lib/api";
 import { canIRide, getRoutePattern, listPlaces, listRoutes, listStops, planJourney, searchPlaces } from "@/lib/api";
+import CommuteCard from "@/components/CommuteCard";
 import RideMode from "@/components/RideMode";
+import type { CommuteInstruction } from "@/lib/commuteInstructions";
 import type { RideModeMapOverlay } from "@/lib/rideMode";
+import {
+  loadSavedJourneys,
+  persistSavedJourneys,
+  removeSavedJourney,
+  upsertSavedJourney,
+  type SavedJourney,
+} from "@/lib/savedJourneys";
 import styles from "./page.module.css";
 
 const MapView = dynamic(() => import("@/components/MapView"), {
@@ -54,31 +63,6 @@ function formatDistance(distance: number | null) {
   return `Approx. ${Math.round(distance)} m`;
 }
 
-function formatWalkLeg(leg: Journey["legs"][number]) {
-  if (leg.distance_type === "NOT_REQUIRED") return "No separate walk mapped";
-  if (leg.access_classification === "NO_WALKABLE_ACCESS") {
-    return `${formatDistance(leg.distance_meters)} straight-line estimate · mapped access is unresolved`;
-  }
-  if (leg.access_classification === "GRAPH_COVERAGE_GAP") {
-    return `${formatDistance(leg.distance_meters)} straight-line estimate · walking access could not be confirmed from map data`;
-  }
-  if (leg.access_classification === "ROUTING_UNAVAILABLE") {
-    return `${formatDistance(leg.distance_meters)} straight-line estimate · pedestrian routing unavailable`;
-  }
-  if (leg.routing_status === "NO_ROUTE") {
-    return `${formatDistance(leg.distance_meters)} straight-line estimate · no pedestrian path mapped`;
-  }
-  if (leg.distance_type === "PEDESTRIAN_NETWORK") {
-    const duration = leg.estimated_duration_seconds === null ? "" : ` · about ${Math.max(1, Math.round(leg.estimated_duration_seconds / 60))} min estimated`;
-    return `${formatDistance(leg.distance_meters)} pedestrian path${duration}`;
-  }
-  if (leg.distance_type === "PEDESTRIAN_NETWORK_WITH_APPROXIMATE_CONNECTORS") {
-    const duration = leg.estimated_duration_seconds === null ? "" : ` · about ${Math.max(1, Math.round(leg.estimated_duration_seconds / 60))} min estimated`;
-    return `${formatDistance(leg.distance_meters)} mapped path with approximate endpoint connectors${duration}`;
-  }
-  return `${formatDistance(leg.distance_meters)} straight-line estimate · no pedestrian route shown`;
-}
-
 function formatAccessLeg(leg: PedestrianAccessLeg) {
   if (leg.distance_type === "PEDESTRIAN_NETWORK") {
     return `${formatDistance(leg.distance_meters)} pedestrian path`;
@@ -105,72 +89,22 @@ function trustLabel(state: string | null | undefined) {
   }
 }
 
-function JourneyCard({ journey, recommended, onSelect }: { journey: Journey; recommended: boolean; onSelect: () => void }) {
+function JourneyCard({ journey, recommended, onSelect, onInstructionFocus }: {
+  journey: Journey;
+  recommended: boolean;
+  onSelect: () => void;
+  onInstructionFocus: (instruction: CommuteInstruction) => void;
+}) {
   return (
-    <article className={`${styles.journeyCard} ${recommended ? styles.recommended : ""}`}>
-      <div className={styles.journeyCardHeader}>
-        <div>
-          <p className={styles.cardKicker}>{recommended ? "RECOMMENDED" : "ALTERNATIVE"}</p>
-          <h3>
-            {journey.transfer_count === 0
-              ? "Direct ride"
-              : journey.transfer_count + " transfer" + (journey.transfer_count === 1 ? "" : "s")}
-          </h3>
-        </div>
-        <span className={styles.trustBadge}>{trustLabel(journey.trust.state)}</span>
-      </div>
-      {journey.ranking.reasons.length > 0 && <p className={styles.rankingReasons}>{journey.ranking.reasons.join(" · ")}</p>}
-      <div className={styles.legList}>
-        {journey.legs.map((leg, index) => {
-          if (leg.type === "RIDE") {
-            return (
-              <div className={styles.rideLeg} key={`${journey.id}-${index}`}>
-                <div className={styles.legMarker}>{leg.route?.code ?? "Ride"}</div>
-                <div className={styles.legBody}>
-                  <p className={styles.legLabel}>Ride · {leg.pattern?.direction ?? "direction not recorded"}</p>
-                  <p><strong>Board at:</strong> {leg.boarding_stop?.name ?? leg.origin.name}</p>
-                  {leg.boarding_instruction && <p>{leg.boarding_instruction}</p>}
-                  {leg.driver_instruction && <p><strong>{leg.driver_instruction}</strong></p>}
-                  <p><strong>{leg.get_off_guidance ?? `Get off near ${leg.alighting_stop?.name ?? leg.destination.name}.`}</strong></p>
-                  {leg.stop_count !== null && <small>{leg.stop_count} stops · {leg.route?.name ?? "Route details"}</small>}
-                </div>
-              </div>
-            );
-          }
-
-          if (leg.type === "TRANSFER_WALK") {
-            return (
-              <div className={styles.walkLeg} key={`${journey.id}-${index}`}>
-                <div className={styles.legMarker}>↳</div>
-                <div className={styles.legBody}>
-                  <p className={styles.legLabel}>Transfer walk</p>
-                  <p>{leg.instruction ?? `From ${leg.origin.name} to ${leg.destination.name}`}</p>
-                  <small>{formatWalkLeg(leg)}</small>
-                  {leg.warnings.map((warning) => <small className={styles.warning} key={warning}>{warning}</small>)}
-                </div>
-              </div>
-            );
-          }
-
-          return (
-            <div className={styles.walkLeg} key={`${journey.id}-${index}`}>
-              <div className={styles.legMarker}>⌁</div>
-              <div className={styles.legBody}>
-                <p className={styles.legLabel}>{leg.type === "WALK_ACCESS" ? "Walk to boarding point" : "Walk to destination"}</p>
-                <p>{leg.instruction ?? `Walk from ${leg.origin.name} to ${leg.destination.name}.`}</p>
-                <small>{formatWalkLeg(leg)}</small>
-                {leg.warnings.map((warning) => <small className={styles.warning} key={warning}>{warning}</small>)}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-      <div className={styles.journeyFooter}>
-        <span>Fare: {journey.fare.label}</span>
-        <button type="button" onClick={onSelect} className={styles.secondaryButton}>Show on map</button>
-      </div>
-      {journey.warnings.map((warning) => <p className={styles.warning} key={warning}>{warning}</p>)}
-    </article>
+    <div className={`${styles.journeyCard} ${recommended ? styles.recommended : ""}`}>
+      <CommuteCard
+        journey={journey}
+        variant="compact"
+        recommended={recommended}
+        onSelect={onSelect}
+        onInstructionFocus={onInstructionFocus}
+      />
+    </div>
   );
 }
 
@@ -241,6 +175,10 @@ export default function Home() {
   const [canRideResult, setCanRideResult] = useState<CanIRideResponse["data"] | null>(null);
   const [loadingCanRide, setLoadingCanRide] = useState(false);
   const [rideMapState, setRideMapState] = useState<RideModeMapOverlay | null>(null);
+  const [instructionFocus, setInstructionFocus] = useState<CommuteInstruction | null>(null);
+  const [savedJourneys, setSavedJourneys] = useState<SavedJourney[]>([]);
+  const [offlineSavedJourneyId, setOfflineSavedJourneyId] = useState<string | null>(null);
+  const [saveMessage, setSaveMessage] = useState<string | null>(null);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -255,6 +193,17 @@ export default function Home() {
       .finally(() => setLoadingNetwork(false));
 
     return () => controller.abort();
+  }, []);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      try {
+        setSavedJourneys(loadSavedJourneys(window.localStorage));
+      } catch {
+        setSavedJourneys([]);
+      }
+    }, 0);
+    return () => window.clearTimeout(timer);
   }, []);
 
   useEffect(() => {
@@ -282,6 +231,8 @@ export default function Home() {
     setJourneys([]);
     setSelectedJourney(null);
     setSelectedPattern(null);
+    setInstructionFocus(null);
+    setOfflineSavedJourneyId(null);
     setNoRouteMessage(null);
     setCanRideResult(null);
   }
@@ -293,6 +244,8 @@ export default function Home() {
     setJourneys([]);
     setSelectedJourney(null);
     setSelectedPattern(null);
+    setInstructionFocus(null);
+    setOfflineSavedJourneyId(null);
     setNoRouteMessage(null);
     setCanRideResult(null);
   }
@@ -304,6 +257,8 @@ export default function Home() {
     setJourneys([]);
     setSelectedJourney(null);
     setSelectedPattern(null);
+    setInstructionFocus(null);
+    setOfflineSavedJourneyId(null);
     setNoRouteMessage(null);
     setCanRideResult(null);
   }
@@ -315,6 +270,8 @@ export default function Home() {
     setJourneys([]);
     setSelectedJourney(null);
     setSelectedPattern(null);
+    setInstructionFocus(null);
+    setOfflineSavedJourneyId(null);
     setNoRouteMessage(null);
     setCanRideResult(null);
   }
@@ -334,6 +291,8 @@ export default function Home() {
     setJourneys([]);
     setSelectedJourney(null);
     setSelectedPattern(null);
+    setInstructionFocus(null);
+    setOfflineSavedJourneyId(null);
     setNoRouteMessage(null);
     try {
       const response = await planJourney(origin.id, destination.id);
@@ -352,6 +311,8 @@ export default function Home() {
   async function showPattern(pattern: RoutePattern) {
     setSelectedJourney(null);
     setSelectedPattern(pattern);
+    setInstructionFocus(null);
+    setOfflineSavedJourneyId(null);
     if (pattern.stops) {
       return;
     }
@@ -386,6 +347,58 @@ export default function Home() {
     }
   }
 
+  function selectJourney(journey: Journey, offlineSnapshot = false) {
+    setSelectedPattern(null);
+    setSelectedJourney(journey);
+    setOfflineSavedJourneyId(offlineSnapshot ? journey.id : null);
+    setInstructionFocus(null);
+    setSaveMessage(null);
+  }
+
+  function saveCurrentJourney() {
+    if (!selectedJourney) return;
+    try {
+      const next = upsertSavedJourney(savedJourneys, selectedJourney);
+      persistSavedJourneys(window.localStorage, next);
+      setSavedJourneys(next);
+      setSaveMessage("Journey saved on this device.");
+    } catch {
+      setSaveMessage("This journey could not be saved; browser storage may be full.");
+    }
+  }
+
+  function deleteSavedJourney(id: string) {
+    const next = removeSavedJourney(savedJourneys, id);
+    try {
+      persistSavedJourneys(window.localStorage, next);
+      setSavedJourneys(next);
+      if (offlineSavedJourneyId === id) setOfflineSavedJourneyId(null);
+      setSaveMessage("Saved journey removed.");
+    } catch {
+      setSaveMessage("The saved journey could not be removed from browser storage.");
+    }
+  }
+
+  function openSavedJourney(saved: SavedJourney) {
+    selectJourney(saved.journey, true);
+    setStatus("Opened an offline journey snapshot. It may be out of date.");
+  }
+
+  async function refreshSavedJourney(saved: SavedJourney) {
+    setLoadingJourney(true);
+    setError(null);
+    try {
+      const response = await planJourney(saved.journey.origin.id, saved.journey.destination.id);
+      setJourneys(response.data);
+      setStatus(response.meta.no_route?.message ?? `${response.data.length} current journey${response.data.length === 1 ? "" : "s"} found.`);
+      if (response.data[0]) selectJourney(response.data[0]);
+    } catch {
+      setError("A current journey could not be loaded. The saved snapshot remains available.");
+    } finally {
+      setLoadingJourney(false);
+    }
+  }
+
   return (
     <main className={styles.page}>
       <section className={styles.hero}>
@@ -417,14 +430,75 @@ export default function Home() {
           <p className={styles.emptyState}>{loadingJourney ? "Looking for direct, one- or two-transfer rides…" : noRouteMessage ?? "Your supported journeys will appear here."}</p>
         ) : (
           <div className={styles.journeyGrid}>
-            {journeys.map((journey, index) => <JourneyCard key={journey.id} journey={journey} recommended={index === 0} onSelect={() => { setSelectedPattern(null); setSelectedJourney(journey); }} />)}
+            {journeys.map((journey, index) => <JourneyCard
+              key={journey.id}
+              journey={journey}
+              recommended={index === 0}
+              onSelect={() => selectJourney(journey)}
+              onInstructionFocus={(instruction) => { selectJourney(journey); setInstructionFocus(instruction); }}
+            />)}
           </div>
         )}
       </section>
 
+      {selectedJourney && (
+        <section className={styles.detailSection} aria-labelledby="instructions-heading">
+          <div className={styles.sectionHeading}>
+            <div><p className={styles.eyebrow}>One shared instruction layer</p><h2 id="instructions-heading">Your commute card</h2></div>
+            {offlineSavedJourneyId === selectedJourney.id && <span className={styles.fixtureBadge}>OFFLINE SNAPSHOT</span>}
+          </div>
+          <p className={styles.sectionCopy}>Follow the steps in order. Route confidence, boarding precision, transfer uncertainty, and walking estimates stay visible.</p>
+          <CommuteCard
+            journey={selectedJourney}
+            variant="detail"
+            offlineSnapshot={offlineSavedJourneyId === selectedJourney.id}
+            isSaved={savedJourneys.some((saved) => saved.id === selectedJourney.id)}
+            onInstructionFocus={setInstructionFocus}
+            onSave={saveCurrentJourney}
+          />
+          {saveMessage && <p className={styles.status} role="status">{saveMessage}</p>}
+        </section>
+      )}
+
+      {savedJourneys.length > 0 && (
+        <section className={styles.savedSection} aria-labelledby="saved-heading">
+          <div className={styles.sectionHeading}>
+            <div><p className={styles.eyebrow}>On this device</p><h2 id="saved-heading">Saved journeys</h2></div>
+            <span className={styles.fixtureBadge}>{savedJourneys.length}/20</span>
+          </div>
+          <p className={styles.sectionCopy}>Saved journeys are local snapshots. They can reopen without the journey API, but may be out of date. New route search requires connectivity.</p>
+          <div className={styles.savedGrid}>
+            {savedJourneys.map((saved) => (
+              <CommuteCard
+                key={saved.id}
+                journey={saved.journey}
+                variant="saved"
+                offlineSnapshot
+                savedAt={saved.savedAt}
+                isSaved
+                onInstructionFocus={(instruction) => { openSavedJourney(saved); setInstructionFocus(instruction); }}
+                onOpen={() => openSavedJourney(saved)}
+                onRefresh={() => { void refreshSavedJourney(saved); }}
+                onRemove={() => deleteSavedJourney(saved.id)}
+              />
+            ))}
+          </div>
+        </section>
+      )}
+
       <RideMode
         selectedJourney={selectedJourney}
-        onRestoreJourney={(journey) => setSelectedJourney(journey)}
+        offlineSnapshot={Boolean(selectedJourney && offlineSavedJourneyId === selectedJourney.id)}
+        allowPatternFetch={!Boolean(selectedJourney && offlineSavedJourneyId === selectedJourney.id)}
+        onRestoreJourney={(journey) => {
+          setSelectedJourney(journey);
+          try {
+            const restoredIsSaved = loadSavedJourneys(window.localStorage).some((saved) => saved.id === journey.id);
+            setOfflineSavedJourneyId(restoredIsSaved ? journey.id : null);
+          } catch {
+            setOfflineSavedJourneyId(null);
+          }
+        }}
         onMapStateChange={setRideMapState}
       />
 
@@ -455,7 +529,7 @@ export default function Home() {
         </div>
         <p className={styles.sectionCopy}>Transit and computed pedestrian paths are shown separately. If a walking path is unavailable, Biyahe labels straight-line estimates and does not draw a street route.</p>
         <div className={styles.mapPanel}>
-          <MapView places={places} stops={stops} journey={selectedJourney} selectedPattern={selectedPattern} onStopSelect={setSelectedStop} rideMode={rideMapState} />
+          <MapView places={places} stops={stops} journey={selectedJourney} selectedPattern={selectedPattern} onStopSelect={setSelectedStop} rideMode={rideMapState} instructionFocus={instructionFocus} />
           <div className={styles.mapLegend}><span><i className={styles.placeDot} /> places</span><span><i className={styles.stopDot} /> stops</span><span><i className={styles.routeDot} /> transit route</span><span><i className={styles.walkingDot} /> walking path</span><span><i className={styles.transferDot} /> transfer</span></div>
         </div>
         <p className={styles.mapAttribution}>Computed pedestrian paths follow mapped OpenStreetMap ways (© OpenStreetMap contributors); they do not verify transit boarding or current ground conditions.</p>
@@ -497,7 +571,7 @@ export default function Home() {
         )}
       </section>
 
-      <footer className={styles.footer}><span>BIYAHE Batch 005</span><span>© OpenStreetMap contributors · route confidence is shown, not hidden.</span></footer>
+      <footer className={styles.footer}><span>BIYAHE Batch 013</span><span>© OpenStreetMap contributors · route confidence is shown, not hidden.</span></footer>
     </main>
   );
 }
