@@ -1,0 +1,12 @@
+<?php
+
+namespace App\Enums;
+
+enum PedestrianAccessClassification: string
+{
+    case NETWORK_ROUTE = 'NETWORK_ROUTE';
+    case STRAIGHT_LINE_ESTIMATE = 'STRAIGHT_LINE_ESTIMATE';
+    case NO_WALKABLE_ACCESS = 'NO_WALKABLE_ACCESS';
+    case GRAPH_COVERAGE_GAP = 'GRAPH_COVERAGE_GAP';
+    case ROUTING_UNAVAILABLE = 'ROUTING_UNAVAILABLE';
+}

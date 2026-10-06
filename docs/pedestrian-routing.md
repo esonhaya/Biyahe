@@ -9,7 +9,12 @@ service, routing server, Redis, or tile-server routing request is required.
 
 PostGIS proximity queries discover candidate stops. For each small candidate
 set, the local provider snaps to the nearest walkable OSM node within 25 m and
-runs a bounded, direction-aware Dijkstra search. It has configurable edge,
+runs a bounded, direction-aware Dijkstra search. If no node is within that
+limit, it may use one bounded (10 m maximum) virtual anchor on a nearby edge
+whose OSM semantics explicitly support pedestrian access. Primary/secondary
+edges need an explicit sidewalk or foot-access tag; unqualified service roads
+are not anchors. The anchor connector is checked against mapped barriers and
+is never a fabricated graph edge. It has configurable edge,
 visited-node, distance, and per-request cache limits. Each HTTP/planning scope
 memoizes identical requests; no persistent route cache is used. Access and
 egress are bounded to 2,000 m, explicit transfers to 600 m, and initial
@@ -38,17 +43,19 @@ itself: graph connectivity requires an explicitly shared OSM node/way
 reference. No legal or safe crossing is inferred from intersecting geometry.
 
 Successful legs expose separate `LineString` geometry and `PEDESTRIAN_NETWORK`
-distance. When a point is connected by a short endpoint snap, the leg reports
-`PEDESTRIAN_NETWORK_WITH_APPROXIMATE_CONNECTORS` and warns that the straight
-connector is not part of the displayed network geometry. Walking duration is
-only an estimate: network distance divided by
+distance. When a point is connected by a short endpoint or edge-anchor snap,
+the leg reports `PEDESTRIAN_NETWORK_WITH_APPROXIMATE_CONNECTORS` and warns
+that the straight connector is not part of the displayed network geometry.
+Walking duration is only an estimate: network distance divided by
 `BIYAHE_WALKING_SPEED_METERS_PER_SECOND` (default 1.2 m/s), not a traffic- or
 condition-aware ETA.
 
 Without a graph, outside its extent, or when routing is unavailable, geometry
 and duration are absent. A straight-line fallback is explicitly tagged
-`STRAIGHT_LINE_ESTIMATE`; it is not a walking route. `NO_ROUTE` means no path
-was found in the extracted graph and does not prove that no legal path exists,
+`STRAIGHT_LINE_ESTIMATE`; it is not a walking route. The API also exposes an
+access classification: `NETWORK_ROUTE`, `GRAPH_COVERAGE_GAP`,
+`NO_WALKABLE_ACCESS`, or `ROUTING_UNAVAILABLE`. `NO_ROUTE` means no path was
+found in the extracted graph and does not prove that no legal path exists,
 because map coverage can be incomplete. A route longer than the configured
 walk bound is not offered as feasible. These statuses never alter transit
 verification, boarding precision, or transfer evidence.

@@ -4,6 +4,7 @@ namespace App\Services\Routing;
 
 use App\Enums\JourneyLegType;
 use App\Enums\JourneyTrustState;
+use App\Enums\PedestrianAccessClassification;
 use App\Enums\PedestrianRoutePurpose;
 use App\Enums\PedestrianRouteStatus;
 use App\Enums\VerificationState;
@@ -1039,13 +1040,12 @@ final class JourneyPlanner
         if ($pedestrianRoute?->status->isAvailable()) {
             $distanceMeters = $pedestrianRoute->totalDistanceMeters() ?? $distanceMeters;
         }
+        $accessClassification = $pedestrianRoute?->accessClassification;
         $instruction = $distanceMeters <= 0.01
             ? 'Transfer at '.$fromStop->name.'. No separate walking distance is mapped; confirm the waiting side locally.'
             : ($pedestrianRoute?->status->isAvailable()
                 ? 'Walk between the mapped transfer locations using the displayed pedestrian path. Transfer usability has not been field-verified.'
-            : ($pedestrianRoute?->status === PedestrianRouteStatus::NO_ROUTE
-                    ? 'No pedestrian path is mapped between these locations. Coverage may be incomplete; the displayed straight-line distance is not a walking route. Transfer usability remains governed by transport evidence.'
-                    : 'Walk between the mapped stops; the distance is a straight-line estimate, not a pedestrian route. Transfer usability remains governed by transport evidence.'));
+                : 'Walk between the mapped stops; '.($this->pedestrianFallbackExplanation($accessClassification)).' Transfer usability remains governed by transport evidence.');
         if ($relationship?->landmark !== null && trim($relationship->landmark) !== '') {
             $instruction = 'Transfer near '.$relationship->landmark.'. '.$instruction;
         }
@@ -1085,6 +1085,7 @@ final class JourneyPlanner
             distanceType: $pedestrianRoute?->status->isAvailable() ? 'PEDESTRIAN_NETWORK' : ($distanceMeters <= 0.01 ? 'NOT_REQUIRED' : 'STRAIGHT_LINE_ESTIMATE'),
             routingStatus: $pedestrianRoute?->status->value ?? ($distanceMeters <= 0.01 ? 'NOT_REQUIRED' : 'UNAVAILABLE'),
             routingSource: $pedestrianRoute?->source,
+            accessClassification: $accessClassification?->value ?? ($distanceMeters <= 0.01 ? null : PedestrianAccessClassification::STRAIGHT_LINE_ESTIMATE->value),
             estimatedDurationSeconds: $pedestrianRoute?->estimatedDurationSeconds,
             originPrecision: 'UNKNOWN',
             destinationPrecision: $this->boardingPrecision($toStop),
@@ -1114,17 +1115,19 @@ final class JourneyPlanner
         $pedestrianRoute = $this->routeBetween($origin, $destination, $purpose, $maximumDistance);
         $networkAvailable = $pedestrianRoute?->status->isAvailable() ?? false;
         $noRoute = in_array($pedestrianRoute?->status, [PedestrianRouteStatus::NO_ROUTE, PedestrianRouteStatus::DISTANCE_LIMIT], true);
+        $accessClassification = $pedestrianRoute?->accessClassification
+            ?? ($networkAvailable ? PedestrianAccessClassification::NETWORK_ROUTE : PedestrianAccessClassification::STRAIGHT_LINE_ESTIMATE);
         $distance = $networkAvailable ? ($pedestrianRoute->totalDistanceMeters() ?? $distanceMeters) : $distanceMeters;
         $distanceType = $networkAvailable
             ? ($pedestrianRoute->status === PedestrianRouteStatus::PARTIAL ? 'PEDESTRIAN_NETWORK_WITH_APPROXIMATE_CONNECTORS' : 'PEDESTRIAN_NETWORK')
             : 'STRAIGHT_LINE_ESTIMATE';
-        $instruction = $this->walkInstruction($type, $origin, $destination, $distance, $networkAvailable, $noRoute);
+        $instruction = $this->walkInstruction($type, $origin, $destination, $distance, $networkAvailable, $noRoute, $accessClassification);
         $warnings = $pedestrianRoute?->warnings ?? [];
         if (! $networkAvailable && ! $noRoute) {
-            $warnings[] = 'Straight-line distance is for rough comparison only; no pedestrian path has been computed.';
+            $warnings[] = $this->pedestrianFallbackExplanation($accessClassification);
         }
         if ($noRoute) {
-            $warnings[] = 'No connection was found within the current mapped pedestrian-network coverage and distance limit.';
+            $warnings[] = $this->pedestrianFallbackExplanation($accessClassification);
         }
 
         return new JourneyLeg(
@@ -1136,6 +1139,7 @@ final class JourneyPlanner
             distanceType: $distanceType,
             routingStatus: $pedestrianRoute?->status->value ?? 'UNAVAILABLE',
             routingSource: $pedestrianRoute?->source,
+            accessClassification: $accessClassification->value,
             estimatedDurationSeconds: $networkAvailable ? $pedestrianRoute->estimatedDurationSeconds : null,
             originPrecision: $origin instanceof Stop ? 'UNKNOWN' : 'NOT_APPLICABLE',
             destinationPrecision: $destination instanceof Stop ? $this->boardingPrecision($destination) : 'NOT_APPLICABLE',
@@ -1677,9 +1681,10 @@ final class JourneyPlanner
         ?float $distance,
         bool $networkAvailable,
         bool $noRoute,
+        PedestrianAccessClassification $accessClassification,
     ): string {
         if ($noRoute) {
-            return 'No pedestrian path was found in the mapped network; coverage may be incomplete. Straight-line estimate: about '.(int) round($distance ?? 0).' m, not a walking route.';
+            return $this->pedestrianFallbackExplanation($accessClassification).' Straight-line estimate: about '.(int) round($distance ?? 0).' m, not a walking route.';
         }
 
         if ($type === JourneyLegType::WALK_ACCESS && $destination instanceof Stop) {
@@ -1694,7 +1699,17 @@ final class JourneyPlanner
             return $guide.' Pedestrian-network distance: about '.(int) round($distance ?? 0).' m; walking time is an estimate.';
         }
 
-        return $guide.' Straight-line estimate: about '.(int) round($distance ?? 0).' m; no pedestrian route is available for this area.';
+        return $guide.' Straight-line estimate: about '.(int) round($distance ?? 0).' m; '.$this->pedestrianFallbackExplanation($accessClassification);
+    }
+
+    private function pedestrianFallbackExplanation(?PedestrianAccessClassification $classification): string
+    {
+        return match ($classification) {
+            PedestrianAccessClassification::GRAPH_COVERAGE_GAP => 'walking access could not be confirmed from the available map data.',
+            PedestrianAccessClassification::NO_WALKABLE_ACCESS => 'mapped barriers or missing walkable access prevent confirmation.',
+            PedestrianAccessClassification::ROUTING_UNAVAILABLE => 'pedestrian routing is unavailable; no walking route is claimed.',
+            default => 'no pedestrian route is claimed.',
+        };
     }
 
     /** @return array<string, mixed> */

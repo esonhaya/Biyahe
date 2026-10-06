@@ -40,7 +40,7 @@ class BiyaheDoctor extends Command
     public function handle(): int
     {
         $this->report = new DoctorReport;
-        $this->info('BIYAHE DOCTOR V10');
+        $this->info('BIYAHE DOCTOR V11');
         $this->check('application', 'PASS', 'Laravel booted and configuration loaded.');
 
         $databaseReady = $this->checkDatabase();
@@ -1163,6 +1163,7 @@ class BiyaheDoctor extends Command
             'maximum_egress_walk_meters' => [1, 10000],
             'maximum_transfer_walk_meters' => [1, 2000],
             'maximum_snap_distance_meters' => [1, 100],
+            'maximum_edge_anchor_distance_meters' => [0.1, 25],
             'maximum_snap_candidates' => [1, 10],
             'maximum_edges_per_route' => [1, 100000],
             'maximum_visited_nodes_per_route' => [1, 50000],
@@ -1195,6 +1196,13 @@ class BiyaheDoctor extends Command
         $this->check('pedestrian routing config', $configurationValid ? 'PASS' : 'FAIL', $configurationValid
             ? 'Walking bounds, speed, resource limits, and Cebu extract extent are valid.'
             : 'Invalid walking configuration: '.implode(', ', [...$invalidNumericConfig, ...($validCoverage ? [] : ['coverage'])]).'.');
+        $snapMeters = $pedestrianConfig['maximum_snap_distance_meters'] ?? null;
+        $anchorMeters = $pedestrianConfig['maximum_edge_anchor_distance_meters'] ?? null;
+        $accessAnchorPolicyValid = is_numeric($snapMeters) && is_numeric($anchorMeters)
+            && (float) $anchorMeters > 0 && (float) $anchorMeters <= (float) $snapMeters;
+        $this->check('pedestrian access-anchor policy', $accessAnchorPolicyValid ? 'PASS' : 'FAIL', $accessAnchorPolicyValid
+            ? 'Edge projection is bounded, uses explicit pedestrian semantics, and cannot widen the configured node snap limit.'
+            : 'The edge-anchor distance must be positive and no greater than the node snap limit.');
 
         $tables = ['pedestrian_network_datasets', 'pedestrian_network_nodes', 'pedestrian_network_edges'];
         $missing = array_values(array_filter($tables, fn (string $table): bool => ! Schema::hasTable($table)));

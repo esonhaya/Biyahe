@@ -27,6 +27,7 @@ return [
         'maximum_egress_walk_meters' => 2000,
         'maximum_transfer_walk_meters' => 600,
         'maximum_snap_distance_meters' => 25,
+        'maximum_edge_anchor_distance_meters' => 10,
         'maximum_snap_candidates' => 1,
         'maximum_edges_per_route' => 50000,
         'maximum_visited_nodes_per_route' => 20000,

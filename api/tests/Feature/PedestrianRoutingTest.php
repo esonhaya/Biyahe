@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Enums\PedestrianAccessClassification;
 use App\Enums\PedestrianRoutePurpose;
 use App\Enums\PedestrianRouteStatus;
 use App\Models\Place;
@@ -37,6 +38,7 @@ final class PedestrianRoutingTest extends TestCase
                 ['lat' => 10.3002, 'lng' => 123.87],
             ));
             $this->assertSame(PedestrianRouteStatus::AVAILABLE, $route->status);
+            $this->assertSame(PedestrianAccessClassification::NETWORK_ROUTE, $route->accessClassification);
             $this->assertGreaterThan(60, $route->totalDistanceMeters());
             $this->assertNotNull($route->geometry);
             $this->assertSame('LineString', $route->geometry['type']);
@@ -48,6 +50,7 @@ final class PedestrianRoutingTest extends TestCase
                 ['lat' => 10.3004, 'lng' => 123.87],
             ));
             $this->assertSame(PedestrianRouteStatus::NO_ROUTE, $disconnected->status);
+            $this->assertSame(PedestrianAccessClassification::GRAPH_COVERAGE_GAP, $disconnected->accessClassification);
             $this->assertNull($disconnected->geometry);
 
             $metrics = $router->metrics();
@@ -307,6 +310,7 @@ final class PedestrianRoutingTest extends TestCase
             ['lat' => 10.3002, 'lng' => 123.87],
         ));
         $this->assertSame(PedestrianRouteStatus::UNAVAILABLE, $result->status);
+        $this->assertSame(PedestrianAccessClassification::ROUTING_UNAVAILABLE, $result->accessClassification);
         $this->assertNull($result->geometry);
         $this->assertNull($result->distanceMeters);
     }
@@ -336,6 +340,7 @@ final class PedestrianRoutingTest extends TestCase
                 ['lat' => 10.3, 'lng' => 123.8702],
             ));
             $this->assertSame(PedestrianRouteStatus::UNAVAILABLE, $route->status);
+            $this->assertSame(PedestrianAccessClassification::NO_WALKABLE_ACCESS, $route->accessClassification);
             $this->assertStringContainsString('mapped barrier', $route->warnings[0]);
             $this->assertNull($route->geometry);
         } finally {
@@ -380,6 +385,7 @@ final class PedestrianRoutingTest extends TestCase
             foreach ($walkingLegs as $leg) {
                 $this->assertSame('PEDESTRIAN_NETWORK', $leg['distance_type']);
                 $this->assertSame('AVAILABLE', $leg['routing_status']);
+                $this->assertSame('NETWORK_ROUTE', $leg['access_classification']);
                 $this->assertSame('LineString', $leg['geometry']['type']);
                 $this->assertNotNull($leg['estimated_duration_seconds']);
             }

@@ -3,6 +3,7 @@
 namespace App\Services\Routing;
 
 use App\Enums\JourneyTrustState;
+use App\Enums\PedestrianAccessClassification;
 use App\Enums\PedestrianRoutePurpose;
 use App\Enums\PedestrianRouteStatus;
 use App\Enums\VerificationState;
@@ -360,6 +361,7 @@ final class CanIRideChecker
 
         return [
             'status' => $route?->status->value ?? 'UNAVAILABLE',
+            'access_classification' => $route?->accessClassification->value ?? PedestrianAccessClassification::ROUTING_UNAVAILABLE->value,
             'distance_meters' => $available ? $route->totalDistanceMeters() : $straightLineDistance,
             'distance_type' => $available ? 'PEDESTRIAN_NETWORK' : 'STRAIGHT_LINE_ESTIMATE',
             'estimated_duration_seconds' => $available ? $route->estimatedDurationSeconds : null,
@@ -367,8 +369,8 @@ final class CanIRideChecker
             'source' => $route?->source,
             'precision' => $destination instanceof Stop ? ($destination->boarding_precision?->value ?? $destination->boarding_precision ?? 'UNKNOWN') : 'NOT_APPLICABLE',
             'warnings' => $noRoute
-                ? ['No pedestrian path is mapped here; coverage may be incomplete. The distance is straight-line only.']
-                : ($available ? $route->warnings : ['Straight-line distance only; no pedestrian route is available for this area.']),
+                ? ['Walking access could not be confirmed from the available map data; the distance is straight-line only.']
+                : ($available ? $route->warnings : ['Straight-line distance only; no pedestrian route is claimed.']),
         ];
     }
 

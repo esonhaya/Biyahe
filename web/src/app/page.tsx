@@ -54,6 +54,15 @@ function formatDistance(distance: number | null) {
 
 function formatWalkLeg(leg: Journey["legs"][number]) {
   if (leg.distance_type === "NOT_REQUIRED") return "No separate walk mapped";
+  if (leg.access_classification === "NO_WALKABLE_ACCESS") {
+    return `${formatDistance(leg.distance_meters)} straight-line estimate · mapped access is unresolved`;
+  }
+  if (leg.access_classification === "GRAPH_COVERAGE_GAP") {
+    return `${formatDistance(leg.distance_meters)} straight-line estimate · walking access could not be confirmed from map data`;
+  }
+  if (leg.access_classification === "ROUTING_UNAVAILABLE") {
+    return `${formatDistance(leg.distance_meters)} straight-line estimate · pedestrian routing unavailable`;
+  }
   if (leg.routing_status === "NO_ROUTE") {
     return `${formatDistance(leg.distance_meters)} straight-line estimate · no pedestrian path mapped`;
   }
@@ -71,6 +80,12 @@ function formatWalkLeg(leg: Journey["legs"][number]) {
 function formatAccessLeg(leg: PedestrianAccessLeg) {
   if (leg.distance_type === "PEDESTRIAN_NETWORK") {
     return `${formatDistance(leg.distance_meters)} pedestrian path`;
+  }
+  if (leg.access_classification === "GRAPH_COVERAGE_GAP") {
+    return `${formatDistance(leg.distance_meters)} straight-line estimate · walking access could not be confirmed`;
+  }
+  if (leg.access_classification === "NO_WALKABLE_ACCESS") {
+    return `${formatDistance(leg.distance_meters)} straight-line estimate · mapped access is unresolved`;
   }
   return `${formatDistance(leg.distance_meters)} straight-line estimate · no route shown`;
 }

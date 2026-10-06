@@ -2,6 +2,7 @@
 
 namespace App\Services\Routing;
 
+use App\Enums\PedestrianAccessClassification;
 use App\Enums\PedestrianRouteStatus;
 
 final readonly class PedestrianRouteResult
@@ -16,6 +17,7 @@ final readonly class PedestrianRouteResult
         public PedestrianRouteStatus $status,
         public array $origin,
         public array $destination,
+        public PedestrianAccessClassification $accessClassification = PedestrianAccessClassification::ROUTING_UNAVAILABLE,
         public ?float $distanceMeters = null,
         public ?int $estimatedDurationSeconds = null,
         public ?array $geometry = null,

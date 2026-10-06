@@ -2,6 +2,7 @@
 
 namespace App\Services\Routing;
 
+use App\Enums\PedestrianAccessClassification;
 use App\Enums\PedestrianRouteStatus;
 use App\Support\Geo;
 use Illuminate\Support\Facades\DB;
@@ -35,6 +36,8 @@ final class LocalPedestrianGraphRouter implements PedestrianRouter
     private bool $datasetLoaded = false;
 
     private ?object $dataset = null;
+
+    private int $nextVirtualNodeId = -1;
 
     public function route(PedestrianRouteRequest $request): PedestrianRouteResult
     {
@@ -154,13 +157,18 @@ final class LocalPedestrianGraphRouter implements PedestrianRouter
             );
         }
 
+        $this->nextVirtualNodeId = -1;
         $snapDistance = (float) config('biyahe.pedestrian.maximum_snap_distance_meters', 25);
         $startCandidates = $this->nearbyNodes($request->origin, (int) $dataset->id, $snapDistance);
         $endCandidates = $this->nearbyNodes($request->destination, (int) $dataset->id, $snapDistance);
         $originBarrierBlocked = false;
         $destinationBarrierBlocked = false;
-        $startNodes = $this->safeSnapNodes($request->origin, $startCandidates, (int) $dataset->id, $originBarrierBlocked);
-        $endNodes = $this->safeSnapNodes($request->destination, $endCandidates, (int) $dataset->id, $destinationBarrierBlocked);
+        $startNodes = $startCandidates === []
+            ? $this->nearbyEdgeAnchors($request->origin, (int) $dataset->id, $originBarrierBlocked)
+            : $this->safeSnapNodes($request->origin, $startCandidates, (int) $dataset->id, $originBarrierBlocked);
+        $endNodes = $endCandidates === []
+            ? $this->nearbyEdgeAnchors($request->destination, (int) $dataset->id, $destinationBarrierBlocked)
+            : $this->safeSnapNodes($request->destination, $endCandidates, (int) $dataset->id, $destinationBarrierBlocked);
         if ($startNodes === [] || $endNodes === []) {
             $this->providerStatus = 'ACTIVE_DATASET';
             $warning = $originBarrierBlocked || $destinationBarrierBlocked
@@ -172,6 +180,9 @@ final class LocalPedestrianGraphRouter implements PedestrianRouter
                 $request,
                 [$warning],
                 $dataset,
+                $originBarrierBlocked || $destinationBarrierBlocked
+                    ? PedestrianAccessClassification::NO_WALKABLE_ACCESS
+                    : PedestrianAccessClassification::GRAPH_COVERAGE_GAP,
             );
         }
 
@@ -188,6 +199,7 @@ final class LocalPedestrianGraphRouter implements PedestrianRouter
         }
 
         [$adjacency, $coordinates] = $this->adjacency($edges);
+        $this->addEdgeAnchors($adjacency, $coordinates, [...$startNodes, ...$endNodes]);
         $destinationNodeIds = array_fill_keys(array_map(static fn (array $node): int => $node['id'], $endNodes), true);
         $best = null;
         $distanceLimited = false;
@@ -253,6 +265,7 @@ final class LocalPedestrianGraphRouter implements PedestrianRouter
                 status: $partial ? PedestrianRouteStatus::PARTIAL : PedestrianRouteStatus::AVAILABLE,
                 origin: $request->origin,
                 destination: $request->destination,
+                accessClassification: PedestrianAccessClassification::NETWORK_ROUTE,
                 distanceMeters: $best['network_distance'],
                 estimatedDurationSeconds: (int) round($best['total_distance'] / max(0.1, (float) config('biyahe.pedestrian.walking_speed_meters_per_second', 1.2))),
                 geometry: ['type' => 'LineString', 'coordinates' => $best['path']],
@@ -290,7 +303,7 @@ final class LocalPedestrianGraphRouter implements PedestrianRouter
         );
     }
 
-    /** @param array{lat: float, lng: float} $point @return list<array{id: int, lat: float, lng: float, snap_meters: float}> */
+    /** @param array{lat: float, lng: float} $point @return list<array<string, mixed>> */
     private function nearbyNodes(array $point, int $datasetId, float $maximumSnapMeters): array
     {
         $latitudeDelta = $maximumSnapMeters / 111_320;
@@ -316,7 +329,7 @@ final class LocalPedestrianGraphRouter implements PedestrianRouter
         return array_slice($nodes, 0, max(1, (int) config('biyahe.pedestrian.maximum_snap_candidates', 6)));
     }
 
-    /** @param array{lat: float, lng: float} $point @param list<array{id: int, lat: float, lng: float, snap_meters: float}> $candidates @return list<array{id: int, lat: float, lng: float, snap_meters: float}> */
+    /** @param array{lat: float, lng: float} $point @param list<array<string, mixed>> $candidates @return list<array<string, mixed>> */
     private function safeSnapNodes(array $point, array $candidates, int $datasetId, bool &$barrierBlocked): array
     {
         if (DB::connection()->getDriverName() !== 'pgsql') {
@@ -336,7 +349,7 @@ final class LocalPedestrianGraphRouter implements PedestrianRouter
         return $safe;
     }
 
-    /** @param array{lat: float, lng: float} $point @param array{id: int, lat: float, lng: float, snap_meters: float} $node */
+    /** @param array{lat: float, lng: float} $point @param array<string, mixed> $node */
     private function connectorCrossesMappedBarrier(array $point, array $node, int $datasetId): bool
     {
         return DB::table('pedestrian_network_nodes')
@@ -347,6 +360,97 @@ final class LocalPedestrianGraphRouter implements PedestrianRouter
                 [$point['lng'], $point['lat'], $node['lng'], $node['lat']],
             )
             ->exists();
+    }
+
+    /** @param array{lat: float, lng: float} $point @param-out bool $barrierBlocked @return list<array<string, mixed>> */
+    private function nearbyEdgeAnchors(array $point, int $datasetId, bool &$barrierBlocked): array
+    {
+        $barrierBlocked = false;
+        if (DB::connection()->getDriverName() !== 'pgsql') {
+            return [];
+        }
+
+        $maximumMeters = (float) config('biyahe.pedestrian.maximum_edge_anchor_distance_meters', 10);
+        if (! is_finite($maximumMeters) || $maximumMeters <= 0) {
+            return [];
+        }
+        $latitudeDelta = $maximumMeters / 111_320;
+        $longitudeDelta = $maximumMeters / max(1, 111_320 * cos(deg2rad($point['lat'])));
+        $pointExpression = 'ST_SetSRID(ST_MakePoint(?, ?), 4326)';
+        $rows = DB::table('pedestrian_network_edges as edges')
+            ->join('pedestrian_network_nodes as from_nodes', 'from_nodes.id', '=', 'edges.from_node_id')
+            ->join('pedestrian_network_nodes as to_nodes', 'to_nodes.id', '=', 'edges.to_node_id')
+            ->where('edges.dataset_id', $datasetId)
+            ->where('from_nodes.is_walkable', true)
+            ->where('to_nodes.is_walkable', true)
+            ->where('edges.max_latitude', '>=', $point['lat'] - $latitudeDelta)
+            ->where('edges.min_latitude', '<=', $point['lat'] + $latitudeDelta)
+            ->where('edges.max_longitude', '>=', $point['lng'] - $longitudeDelta)
+            ->where('edges.min_longitude', '<=', $point['lng'] + $longitudeDelta)
+            ->whereRaw("ST_DWithin(edges.geometry::geography, {$pointExpression}::geography, ?)", [$point['lng'], $point['lat'], $maximumMeters])
+            ->select([
+                'edges.id', 'edges.from_node_id', 'edges.to_node_id', 'edges.bidirectional',
+                'edges.length_meters', 'edges.highway', 'edges.properties',
+            ])
+            ->selectRaw("ST_Distance(edges.geometry::geography, {$pointExpression}::geography) AS anchor_distance", [$point['lng'], $point['lat']])
+            ->selectRaw("ST_X(ST_ClosestPoint(edges.geometry, {$pointExpression})) AS anchor_longitude", [$point['lng'], $point['lat']])
+            ->selectRaw("ST_Y(ST_ClosestPoint(edges.geometry, {$pointExpression})) AS anchor_latitude", [$point['lng'], $point['lat']])
+            ->selectRaw("ST_LineLocatePoint(edges.geometry, {$pointExpression}) AS anchor_fraction", [$point['lng'], $point['lat']])
+            ->orderByRaw("ST_Distance(edges.geometry::geography, {$pointExpression}::geography)", [$point['lng'], $point['lat']])
+            ->limit(24)
+            ->get();
+
+        $rows = $rows->sortBy(fn (object $row): float => (float) $row->anchor_distance)->values();
+        foreach ($rows as $row) {
+            $properties = is_string($row->properties) ? json_decode($row->properties, true) : $row->properties;
+            $properties = is_array($properties) ? $properties : [];
+            if (! $this->edgeAllowsReferenceAccess((string) $row->highway, $properties)) {
+                continue;
+            }
+            $anchor = [
+                'id' => $this->nextVirtualNodeId--,
+                'lat' => (float) $row->anchor_latitude,
+                'lng' => (float) $row->anchor_longitude,
+                'snap_meters' => (float) $row->anchor_distance,
+                'is_anchor' => true,
+                'from_node_id' => (int) $row->from_node_id,
+                'to_node_id' => (int) $row->to_node_id,
+                'bidirectional' => (bool) $row->bidirectional,
+                'length_meters' => (float) $row->length_meters,
+                'fraction' => min(1, max(0, (float) $row->anchor_fraction)),
+            ];
+            if ($this->connectorCrossesMappedBarrier($point, $anchor, $datasetId)) {
+                $barrierBlocked = true;
+
+                continue;
+            }
+
+            return [$anchor];
+        }
+
+        return [];
+    }
+
+    /** @param array<string, mixed> $properties */
+    private function edgeAllowsReferenceAccess(string $highway, array $properties): bool
+    {
+        $highway = strtolower(trim($highway));
+        $foot = strtolower(trim((string) ($properties['foot'] ?? '')));
+        $access = strtolower(trim((string) ($properties['access'] ?? '')));
+        $sidewalk = strtolower(trim((string) ($properties['sidewalk'] ?? '')));
+        $blocked = ['no', 'private', 'customers', 'permit', 'use_sidepath'];
+        if (in_array($foot, $blocked, true) || in_array($access, $blocked, true)) {
+            return false;
+        }
+        if (in_array($foot, ['yes', 'designated', 'permissive', 'official'], true)
+            || in_array($access, ['yes', 'designated', 'permissive', 'official'], true)) {
+            return true;
+        }
+        if (in_array($sidewalk, ['yes', 'both', 'left', 'right', 'continuous'], true)) {
+            return true;
+        }
+
+        return in_array($highway, ['footway', 'path', 'pedestrian', 'steps', 'living_street', 'residential'], true);
     }
 
     /** @param list<array{id: int, lat: float, lng: float, snap_meters: float}> $startNodes @param list<array{id: int, lat: float, lng: float, snap_meters: float}> $endNodes @return list<object>|null */
@@ -414,6 +518,34 @@ final class LocalPedestrianGraphRouter implements PedestrianRouter
         unset($neighbors);
 
         return [$adjacency, $coordinates];
+    }
+
+    /** @param array<int, list<array{to: int, length: float}>> $adjacency @param array<int, array{0: float, 1: float}> $coordinates @param list<array<string, mixed>> $nodes */
+    private function addEdgeAnchors(array &$adjacency, array &$coordinates, array $nodes): void
+    {
+        foreach ($nodes as $node) {
+            if (($node['is_anchor'] ?? false) !== true) {
+                continue;
+            }
+            $virtual = (int) $node['id'];
+            $from = (int) $node['from_node_id'];
+            $to = (int) $node['to_node_id'];
+            $length = (float) $node['length_meters'];
+            $fraction = (float) $node['fraction'];
+            $fromLength = max(0.01, $length * $fraction);
+            $toLength = max(0.01, $length * (1 - $fraction));
+            $coordinates[$virtual] = [(float) $node['lng'], (float) $node['lat']];
+            $adjacency[$from][] = ['to' => $virtual, 'length' => $fromLength];
+            $adjacency[$virtual][] = ['to' => $to, 'length' => $toLength];
+            if ((bool) $node['bidirectional']) {
+                $adjacency[$to][] = ['to' => $virtual, 'length' => $toLength];
+                $adjacency[$virtual][] = ['to' => $from, 'length' => $fromLength];
+            }
+        }
+        foreach ($adjacency as &$neighbors) {
+            usort($neighbors, static fn (array $left, array $right): int => $left['to'] <=> $right['to']);
+        }
+        unset($neighbors);
     }
 
     /** @param array<int, list<array{to: int, length: float}>> $adjacency @param array<int, true> $destinations @return array{distances: array<int, float>, parents: array<int, int>, limited: bool, distance_limited: bool} */
@@ -501,12 +633,21 @@ final class LocalPedestrianGraphRouter implements PedestrianRouter
     }
 
     /** @param array{lat: float, lng: float} $point */
-    private function result(PedestrianRouteStatus $status, PedestrianRouteRequest $request, array $warnings, ?object $dataset): PedestrianRouteResult
-    {
+    private function result(
+        PedestrianRouteStatus $status,
+        PedestrianRouteRequest $request,
+        array $warnings,
+        ?object $dataset,
+        ?PedestrianAccessClassification $accessClassification = null,
+    ): PedestrianRouteResult {
         return new PedestrianRouteResult(
             status: $status,
             origin: $request->origin,
             destination: $request->destination,
+            accessClassification: $accessClassification ?? match ($status) {
+                PedestrianRouteStatus::NO_ROUTE, PedestrianRouteStatus::DISTANCE_LIMIT, PedestrianRouteStatus::OUT_OF_COVERAGE => PedestrianAccessClassification::GRAPH_COVERAGE_GAP,
+                default => PedestrianAccessClassification::ROUTING_UNAVAILABLE,
+            },
             source: $dataset === null ? null : 'OPENSTREETMAP',
             dataset: $dataset === null ? null : (string) $dataset->stable_id,
             warnings: $warnings,

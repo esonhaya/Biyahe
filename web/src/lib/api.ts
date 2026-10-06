@@ -102,6 +102,8 @@ export type JourneyLegType = "WALK_ACCESS" | "RIDE" | "TRANSFER_WALK" | "WALK_EG
 
 export type JourneyTrustState = "VERIFIED" | "MIXED" | "UNVERIFIED";
 
+export type PedestrianAccessClassification = "NETWORK_ROUTE" | "STRAIGHT_LINE_ESTIMATE" | "NO_WALKABLE_ACCESS" | "GRAPH_COVERAGE_GAP" | "ROUTING_UNAVAILABLE";
+
 export type JourneyPoint = {
   type: "PLACE" | "STOP";
   id: number;
@@ -128,6 +130,7 @@ export type JourneyLeg = {
   distance_type: "PEDESTRIAN_NETWORK" | "PEDESTRIAN_NETWORK_WITH_APPROXIMATE_CONNECTORS" | "STRAIGHT_LINE_ESTIMATE" | "NOT_REQUIRED" | "UNAVAILABLE" | null;
   routing_status: string | null;
   routing_source: string | null;
+  access_classification: PedestrianAccessClassification | null;
   estimated_duration_seconds: number | null;
   origin_precision: string | null;
   destination_precision: string | null;
@@ -211,6 +214,7 @@ export type CanIRideOption = {
 
 export type PedestrianAccessLeg = {
   status: string;
+  access_classification: PedestrianAccessClassification;
   distance_meters: number | null;
   distance_type: "PEDESTRIAN_NETWORK" | "STRAIGHT_LINE_ESTIMATE";
   estimated_duration_seconds: number | null;
