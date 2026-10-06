@@ -23,3 +23,11 @@ NEXT_PUBLIC_MAP_STYLE_URL in a later deployment; the development fallback
 uses public OpenStreetMap raster tiles and must not be treated as a production
 tile service. Walking overlays are points and distance estimates only; the
 interface does not imply a pedestrian path that Biyahe has not computed.
+
+Ride Mode is a foreground-only, browser-local guide for a selected journey.
+It keeps manual boarding/alighting controls available without location,
+optionally evaluates fresh device fixes locally while the page is active, and
+does not send or persist a raw GPS trail. Run its deterministic domain harness
+with:
+
+    npm run test:ride-mode

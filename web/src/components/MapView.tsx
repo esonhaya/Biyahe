@@ -4,6 +4,7 @@ import * as maplibregl from "maplibre-gl";
 import type { Map as MapInstance, MapLayerMouseEvent, StyleSpecification } from "maplibre-gl";
 import { useEffect, useRef, useState } from "react";
 import type { Journey, Place, RoutePattern, Stop } from "@/lib/api";
+import type { RideModeMapOverlay } from "@/lib/rideMode";
 
 type MapViewProps = {
   places: Place[];
@@ -11,6 +12,7 @@ type MapViewProps = {
   journey: Journey | null;
   selectedPattern: RoutePattern | null;
   onStopSelect?: (stop: Stop) => void;
+  rideMode?: RideModeMapOverlay | null;
 };
 
 const cebuCenter: [number, number] = [123.8854, 10.3157];
@@ -110,10 +112,11 @@ function patternBounds(pattern: RoutePattern): maplibregl.LngLatBounds | null {
   return bounds.isEmpty() ? null : bounds;
 }
 
-export default function MapView({ places, stops, journey, selectedPattern, onStopSelect }: MapViewProps) {
+export default function MapView({ places, stops, journey, selectedPattern, onStopSelect, rideMode = null }: MapViewProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<MapInstance | null>(null);
   const stopLookupRef = useRef(new Map<number, Stop>());
+  const rideFocusRef = useRef<string | null>(null);
   const [mapReady, setMapReady] = useState(false);
 
   useEffect(() => {
@@ -219,6 +222,32 @@ export default function MapView({ places, stops, journey, selectedPattern, onSto
           "line-dasharray": [2, 1.5],
         },
       });
+      map.addSource("ride-active-leg", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
+      map.addLayer({
+        id: "ride-active-line",
+        type: "line",
+        source: "ride-active-leg",
+        paint: { "line-color": "#153b45", "line-width": 8, "line-opacity": 0.72 },
+      });
+      map.addSource("ride-location", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
+      map.addLayer({
+        id: "ride-location-point",
+        type: "circle",
+        source: "ride-location",
+        paint: { "circle-color": "#176b87", "circle-radius": 8, "circle-stroke-color": "#fff", "circle-stroke-width": 3 },
+      });
+      map.addSource("ride-targets", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
+      map.addLayer({
+        id: "ride-target-points",
+        type: "circle",
+        source: "ride-targets",
+        paint: {
+          "circle-color": ["match", ["get", "kind"], "boarding", "#f4a261", "#d3624d"],
+          "circle-radius": 9,
+          "circle-stroke-color": "#fff",
+          "circle-stroke-width": 2,
+        },
+      });
       setMapReady(true);
     });
 
@@ -296,6 +325,55 @@ export default function MapView({ places, stops, journey, selectedPattern, onSto
       map.fitBounds(bounds, { padding: 48, maxZoom: 14, duration: 0 });
     }
   }, [journey, mapReady, places, selectedPattern, stops]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!mapReady || !map || !map.isStyleLoaded()) {
+      return;
+    }
+    const rideActiveSource = map.getSource("ride-active-leg") as maplibregl.GeoJSONSource | undefined;
+    const rideLocationSource = map.getSource("ride-location") as maplibregl.GeoJSONSource | undefined;
+    const rideTargetSource = map.getSource("ride-targets") as maplibregl.GeoJSONSource | undefined;
+    if (!rideActiveSource || !rideLocationSource || !rideTargetSource) {
+      return;
+    }
+    rideActiveSource.setData({
+      type: "FeatureCollection",
+      features: rideMode?.activeGeometry ? [{
+        type: "Feature" as const,
+        properties: { kind: "active" },
+        geometry: rideMode.activeGeometry,
+      }] : [],
+    });
+    rideLocationSource.setData({
+      type: "FeatureCollection",
+      features: rideMode?.currentLocation ? [pointFeature("ride-current", "Current device location", rideMode.currentLocation, { kind: "current" })] : [],
+    });
+    rideTargetSource.setData({
+      type: "FeatureCollection",
+      features: [
+        rideMode?.boardingLocation ? pointFeature("ride-boarding", "Mapped boarding area", rideMode.boardingLocation, { kind: "boarding" }) : null,
+        rideMode?.alightingLocation ? pointFeature("ride-alighting", "Mapped get-off area", rideMode.alightingLocation, { kind: "alighting" }) : null,
+      ].filter((point): point is NonNullable<typeof point> => point !== null),
+    });
+  }, [mapReady, rideMode]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!mapReady || !map || !rideMode) {
+      return;
+    }
+
+    const focusKey = `${rideMode.journeyId}:${rideMode.activeLegIndex}:${rideMode.recenterToken}`;
+    if (rideFocusRef.current === focusKey) {
+      return;
+    }
+    rideFocusRef.current = focusKey;
+    const focus = rideMode.currentLocation ?? rideMode.alightingLocation ?? rideMode.boardingLocation;
+    if (focus) {
+      map.easeTo({ center: [focus.lng, focus.lat], zoom: Math.max(map.getZoom(), 14), duration: 300 });
+    }
+  }, [mapReady, rideMode]);
 
   return <div className="map-frame" ref={containerRef} aria-label="Biyahe journey review map" />;
 }

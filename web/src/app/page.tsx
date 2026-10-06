@@ -4,6 +4,8 @@ import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
 import type { CanIRideResponse, Journey, PedestrianAccessLeg, Place, Route, RoutePattern, Stop } from "@/lib/api";
 import { canIRide, getRoutePattern, listPlaces, listRoutes, listStops, planJourney, searchPlaces } from "@/lib/api";
+import RideMode from "@/components/RideMode";
+import type { RideModeMapOverlay } from "@/lib/rideMode";
 import styles from "./page.module.css";
 
 const MapView = dynamic(() => import("@/components/MapView"), {
@@ -238,6 +240,7 @@ export default function Home() {
   const [rideRouteCode, setRideRouteCode] = useState("");
   const [canRideResult, setCanRideResult] = useState<CanIRideResponse["data"] | null>(null);
   const [loadingCanRide, setLoadingCanRide] = useState(false);
+  const [rideMapState, setRideMapState] = useState<RideModeMapOverlay | null>(null);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -419,6 +422,12 @@ export default function Home() {
         )}
       </section>
 
+      <RideMode
+        selectedJourney={selectedJourney}
+        onRestoreJourney={(journey) => setSelectedJourney(journey)}
+        onMapStateChange={setRideMapState}
+      />
+
       <section className={styles.decisionSection} aria-labelledby="can-ride-heading">
         <div className={styles.sectionHeading}>
           <div><p className={styles.eyebrow}>Standing at a stop?</p><h2 id="can-ride-heading">Can I ride this?</h2></div>
@@ -446,7 +455,7 @@ export default function Home() {
         </div>
         <p className={styles.sectionCopy}>Transit and computed pedestrian paths are shown separately. If a walking path is unavailable, Biyahe labels straight-line estimates and does not draw a street route.</p>
         <div className={styles.mapPanel}>
-          <MapView places={places} stops={stops} journey={selectedJourney} selectedPattern={selectedPattern} onStopSelect={setSelectedStop} />
+          <MapView places={places} stops={stops} journey={selectedJourney} selectedPattern={selectedPattern} onStopSelect={setSelectedStop} rideMode={rideMapState} />
           <div className={styles.mapLegend}><span><i className={styles.placeDot} /> places</span><span><i className={styles.stopDot} /> stops</span><span><i className={styles.routeDot} /> transit route</span><span><i className={styles.walkingDot} /> walking path</span><span><i className={styles.transferDot} /> transfer</span></div>
         </div>
         <p className={styles.mapAttribution}>Computed pedestrian paths follow mapped OpenStreetMap ways (© OpenStreetMap contributors); they do not verify transit boarding or current ground conditions.</p>

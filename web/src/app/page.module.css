@@ -80,4 +80,21 @@
 .patternList button { display: flex; min-width: 120px; flex-direction: column; gap: 3px; border: 1px solid #d4dcd9; border-radius: 9px; padding: 8px 10px; text-align: left; color: #153b45; background: #fbfcfa; cursor: pointer; font: inherit; font-size: .78rem; }
 .patternList button:hover, .patternActive { border-color: #e07a5f !important; background: #fff5f1 !important; }
 .emptyState { margin: 18px 0; color: #6d858b; }.footer { display: flex; justify-content: space-between; gap: 16px; width: min(1120px, calc(100% - 32px)); margin: 60px auto 0; border-top: 1px solid #d8ddd7; padding: 18px 0 28px; color: #799096; font-size: .74rem; }
+.rideModeSection { width: min(880px, calc(100% - 32px)); margin: 0 auto; padding: 42px 0 0; }
+.rideStartCard, .rideModeCard { border: 1px solid #d8ddd7; border-radius: 18px; padding: 18px; background: #fff; box-shadow: 0 10px 28px rgba(21, 59, 69, .05); }
+.rideActionCard { border: 2px solid #176b87; border-radius: 16px; padding: 18px; background: #f8fcfb; }
+.rideActionCard h3 { margin: 5px 0 8px; color: #153b45; font-size: clamp(1.25rem, 4vw, 1.75rem); line-height: 1.08; }
+.rideRouteCue { margin: 0 0 12px; color: #d3624d; font-weight: 800; letter-spacing: .04em; }
+.rideGuidance { display: grid; gap: 4px; margin: 14px 0; }
+.rideGuidance p { margin: 0; color: #4f6d74; line-height: 1.5; }
+.rideGuidance p strong { color: #153b45; }
+.rideActions { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 16px; }
+.rideActions .primaryButton, .rideActions .secondaryButton { align-self: auto; }
+.rideStatusGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 12px; }
+.rideStatusGrid > div { border: 1px solid #e1e6e1; border-radius: 12px; padding: 12px; background: #fbfcfa; }
+.rideStatusGrid p { margin: 4px 0 0; color: #5d777e; font-size: .84rem; line-height: 1.45; }
+.rideStatusGrid .secondaryButton { align-self: start; }
+.rideNotice { display: grid; gap: 6px; margin-bottom: 12px; border: 1px solid #e6b9ac; border-radius: 12px; padding: 12px; color: #7d4238; background: #fff7f4; font-size: .84rem; line-height: 1.4; }
+.rideNotice .secondaryButton { justify-self: start; }
+.osmNote { margin: 12px 0 0; color: #6d858b; font-size: .76rem; line-height: 1.45; }
 @media (max-width: 700px) { .hero { padding-top: 28px; }.searchCard { grid-template-columns: 1fr; }.primaryButton { width: 100%; }.suggestions { top: 72px; }.map-frame { min-height: 360px; }.routeGrid { grid-template-columns: 1fr; }.infoCard { align-items: start; flex-direction: column; }.footer { flex-direction: column; }.journeyCard { padding: 14px; }.journeyFooter { align-items: start; flex-direction: column; }.secondaryButton { width: 100%; }.resultsSection { padding-top: 28px; }.decisionForm { grid-template-columns: 1fr; }.decisionForm select { width: 100%; }.decisionForm .primaryButton { margin-top: 2px; } }

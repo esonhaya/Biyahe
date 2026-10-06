@@ -121,6 +121,14 @@ export type JourneyPoint = {
   verification: { state: VerificationState; is_demo: boolean; trusted: boolean };
 };
 
+export type JourneyPatternSummary = {
+  id: number;
+  name: string;
+  direction: string;
+  verification: JourneyPoint["verification"];
+  stops?: RoutePatternStop[];
+};
+
 export type JourneyLeg = {
   type: JourneyLegType;
   origin: JourneyPoint;
@@ -137,7 +145,7 @@ export type JourneyLeg = {
   warnings: string[];
   instruction: string | null;
   route: { id: number; code: string; name: string; vehicle_type: { code: string; name: string } | null; verification: JourneyPoint["verification"] } | null;
-  pattern: { id: number; name: string; direction: string; verification: JourneyPoint["verification"] } | null;
+  pattern: JourneyPatternSummary | null;
   boarding_stop: JourneyPoint | null;
   alighting_stop: JourneyPoint | null;
   stop_count: number | null;
@@ -150,7 +158,7 @@ export type JourneyLeg = {
   get_off_guidance: string | null;
   trust: JourneyTrustState | null;
   provenance: Provenance[];
-  geometry: RoutePattern["geometry"] | { type: "LineString"; coordinates: number[][] };
+  geometry: RoutePattern["geometry"] | { type: "LineString"; coordinates: number[][] } | null;
 };
 
 export type Journey = {

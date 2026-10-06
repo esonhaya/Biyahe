@@ -10,7 +10,8 @@
     "build": "next build --webpack",
     "typecheck": "tsc --noEmit",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test:ride-mode": "node --experimental-strip-types scripts/ride-mode-harness.mjs"
   },
   "dependencies": {
     "maplibre-gl": "^6.12.0",

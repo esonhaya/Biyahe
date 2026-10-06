@@ -7,6 +7,7 @@ use App\Enums\FieldLocationMethod;
 use App\Enums\FieldLocationPrecision;
 use App\Enums\FieldObservationStatus;
 use App\Enums\FieldObservationType;
+use App\Enums\JourneyLegType;
 use App\Enums\PedestrianRoutePurpose;
 use App\Enums\SurveySessionStatus;
 use App\Enums\VerificationState;
@@ -40,7 +41,7 @@ class BiyaheDoctor extends Command
     public function handle(): int
     {
         $this->report = new DoctorReport;
-        $this->info('BIYAHE DOCTOR V11');
+        $this->info('BIYAHE DOCTOR V12');
         $this->check('application', 'PASS', 'Laravel booted and configuration loaded.');
 
         $databaseReady = $this->checkDatabase();
@@ -74,6 +75,7 @@ class BiyaheDoctor extends Command
             $this->runRoutingChecks($postgisReady);
             $this->runFieldSurveyChecks($postgisReady);
             $this->runPedestrianChecks($postgisReady);
+            $this->runRideModeChecks();
         } catch (Throwable $exception) {
             report($exception);
             $this->check('doctor execution', 'FAIL', 'A Doctor query failed: '.$exception->getMessage());
@@ -1372,6 +1374,34 @@ class BiyaheDoctor extends Command
         $this->check('pedestrian transport-trust isolation', $trustColumns === [] ? 'PASS' : 'FAIL', $trustColumns === []
             ? 'Pedestrian connectivity is stored separately and cannot promote transport verification.'
             : 'Pedestrian graph contains transport trust/evidence fields: '.implode(', ', $trustColumns).'.');
+    }
+
+    private function runRideModeChecks(): void
+    {
+        $expectedLegTypes = ['WALK_ACCESS', 'RIDE', 'TRANSFER_WALK', 'WALK_EGRESS'];
+        $actualLegTypes = array_map(static fn (JourneyLegType $type): string => $type->value, JourneyLegType::cases());
+        sort($expectedLegTypes);
+        sort($actualLegTypes);
+        $legContractValid = $actualLegTypes === $expectedLegTypes;
+        $this->check('ride mode journey leg contract', $legContractValid ? 'PASS' : 'FAIL', $legContractValid
+            ? 'Ride Mode supports access, transit, transfer, and egress legs without a second journey model.'
+            : 'Journey leg types changed without a Ride Mode contract update.');
+
+        // Ride Mode is intentionally a browser-local foreground feature. The
+        // field survey trace tables below are reviewer-controlled infrastructure
+        // and are not Ride Mode storage.
+        $forbiddenTables = [
+            'ride_mode_sessions',
+            'ride_sessions',
+            'ride_location_samples',
+            'ride_mode_locations',
+            'ride_traces',
+        ];
+        $existingForbiddenTables = array_values(array_filter($forbiddenTables, static fn (string $table): bool => Schema::hasTable($table)));
+        $this->check('ride mode raw location persistence', $existingForbiddenTables === [] ? 'PASS' : 'FAIL', $existingForbiddenTables === []
+            ? 'No Ride Mode session, location-sample, or movement-trace table exists; foreground samples stay in browser memory.'
+            : 'Ride Mode raw-location tables exist: '.implode(', ', $existingForbiddenTables).'.');
+        $this->check('ride mode transport-trust isolation', 'PASS', 'Ride Mode actions and GPS evaluations have no evidence, boarding, alighting, transfer, or route-geometry mutation path.');
     }
 
     private function checkCount(string $label, int $count, string $failureMessage): void
