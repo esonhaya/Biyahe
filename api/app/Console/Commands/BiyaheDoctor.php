@@ -7,12 +7,15 @@ use App\Enums\FieldLocationMethod;
 use App\Enums\FieldLocationPrecision;
 use App\Enums\FieldObservationStatus;
 use App\Enums\FieldObservationType;
+use App\Enums\PedestrianRoutePurpose;
 use App\Enums\SurveySessionStatus;
 use App\Enums\VerificationState;
 use App\Services\Data\DatasetValidator;
 use App\Services\Evidence\CuratedJourneySet;
 use App\Services\Evidence\EvidenceCoverageReport;
 use App\Services\Routing\NetworkAudit;
+use App\Services\Routing\PedestrianRouter;
+use App\Services\Routing\PedestrianRouteRequest;
 use App\Support\Diagnostics\DoctorCheckResult;
 use App\Support\Diagnostics\DoctorReport;
 use App\Support\SearchText;
@@ -37,7 +40,7 @@ class BiyaheDoctor extends Command
     public function handle(): int
     {
         $this->report = new DoctorReport;
-        $this->info('BIYAHE DOCTOR V9');
+        $this->info('BIYAHE DOCTOR V10');
         $this->check('application', 'PASS', 'Laravel booted and configuration loaded.');
 
         $databaseReady = $this->checkDatabase();
@@ -1165,6 +1168,7 @@ class BiyaheDoctor extends Command
             'maximum_visited_nodes_per_route' => [1, 50000],
             'maximum_cached_routes' => [1, 10000],
             'maximum_input_bytes' => [1024, 100000000],
+            'maximum_source_xml_bytes' => [1024, 1000000000],
             'maximum_input_nodes' => [1, 200000],
             'maximum_input_ways' => [1, 100000],
             'maximum_input_edges' => [1, 500000],
@@ -1201,6 +1205,9 @@ class BiyaheDoctor extends Command
         }
 
         $this->check('pedestrian graph schema', 'PASS', 'Pedestrian graph tables are available.');
+        $this->check('pedestrian crossing metadata', Schema::hasColumn('pedestrian_network_nodes', 'crossing') ? 'PASS' : 'FAIL', Schema::hasColumn('pedestrian_network_nodes', 'crossing')
+            ? 'Mapped OSM crossing attributes are retained on graph nodes.'
+            : 'Run the crossing-metadata migration before activating an OSM graph.');
         $datasets = DB::table('pedestrian_network_datasets');
         $badProvenance = (clone $datasets)
             ->where(fn (Builder $query) => $query->where('source', '!=', 'OPENSTREETMAP')
@@ -1213,6 +1220,7 @@ class BiyaheDoctor extends Command
         $this->checkCount('pedestrian source provenance', $badProvenance, 'pedestrian datasets lack OSM source, ODbL attribution, checksum, or import metadata.');
         $activeDatasets = (clone $datasets)->where('is_active', true)->count();
         $this->checkCount('active pedestrian datasets', max(0, $activeDatasets - 1), 'more than one pedestrian graph is active.');
+        $activeDataset = (clone $datasets)->where('is_active', true)->first();
         if ($activeDatasets === 0) {
             $this->check('pedestrian graph coverage', 'WARN', 'No Cebu pedestrian extract is installed; route legs honestly fall back to labelled straight-line estimates.');
         } else {
@@ -1236,6 +1244,15 @@ class BiyaheDoctor extends Command
                 ->orWhereNull('latitude')->orWhereNull('longitude'))
             ->count();
         $this->checkCount('pedestrian node coordinates', $badNodes, 'graph nodes have invalid WGS84 coordinates.');
+        $badNodeScope = DB::table('pedestrian_network_nodes as nodes')
+            ->join('pedestrian_network_datasets as datasets', 'datasets.id', '=', 'nodes.dataset_id')
+            ->where(fn (Builder $query) => $query
+                ->where('nodes.latitude', '<', (float) $bounds['min_latitude'])
+                ->orWhere('nodes.latitude', '>', (float) $bounds['max_latitude'])
+                ->orWhere('nodes.longitude', '<', (float) $bounds['min_longitude'])
+                ->orWhere('nodes.longitude', '>', (float) $bounds['max_longitude']))
+            ->count();
+        $this->checkCount('pedestrian node scope', $badNodeScope, 'graph nodes exceed the configured bounded Cebu pedestrian extent.');
 
         $badEdges = DB::table('pedestrian_network_edges as edges')
             ->leftJoin('pedestrian_network_nodes as from_nodes', 'from_nodes.id', '=', 'edges.from_node_id')
@@ -1256,10 +1273,87 @@ class BiyaheDoctor extends Command
         if ($postgisReady) {
             $badSpatialEdges = DB::table('pedestrian_network_edges')->whereRaw("ST_SRID(geometry) <> 4326 OR ST_GeometryType(geometry) <> 'ST_LineString' OR ST_IsEmpty(geometry) OR NOT ST_IsValid(geometry)")->count();
             $this->checkCount('pedestrian geometry integrity', $badSpatialEdges, 'pedestrian edges have invalid geometry or SRID.');
+            $badSpatialNodes = DB::table('pedestrian_network_nodes')->whereRaw("location IS NULL OR ST_SRID(location::geometry) <> 4326 OR ST_GeometryType(location::geometry) <> 'ST_Point' OR ST_IsEmpty(location::geometry) OR NOT ST_IsValid(location::geometry)")->count();
+            $this->checkCount('pedestrian node geometry integrity', $badSpatialNodes, 'pedestrian nodes have invalid geometry or SRID.');
             $indexes = collect(DB::select("SELECT indexname FROM pg_indexes WHERE schemaname = current_schema() AND indexname IN ('pedestrian_nodes_location_gix', 'pedestrian_edges_geometry_gix')"))->pluck('indexname')->all();
             $this->checkCount('pedestrian spatial indexes', count(array_diff(['pedestrian_nodes_location_gix', 'pedestrian_edges_geometry_gix'], $indexes)), 'pedestrian PostGIS GiST indexes are missing.');
         } else {
             $this->check('pedestrian geometry integrity', 'BLOCKED', 'PostGIS is required to validate pedestrian geometry and spatial indexes.');
+        }
+
+        if ($activeDataset === null) {
+            $this->check('active pedestrian graph integrity', 'WARN', 'No active graph is installed; graph integrity and route execution cannot be evaluated.');
+            $this->check('pedestrian routing smoke test', 'WARN', 'No active graph is installed; no live route was attempted.');
+        } else {
+            $activeNodes = DB::table('pedestrian_network_nodes')->where('dataset_id', $activeDataset->id)->count();
+            $activeEdges = DB::table('pedestrian_network_edges')->where('dataset_id', $activeDataset->id)->count();
+            $activeCountMismatch = $activeNodes === 0 || $activeEdges === 0
+                || $activeNodes !== (int) $activeDataset->node_count
+                || $activeEdges !== (int) $activeDataset->edge_count;
+            $this->check('active pedestrian graph integrity', $activeCountMismatch ? 'FAIL' : 'PASS', $activeCountMismatch
+                ? "Active graph declares {$activeDataset->node_count} nodes/{$activeDataset->edge_count} edges but has {$activeNodes}/{$activeEdges}."
+                : "Active graph counts match: {$activeNodes} nodes and {$activeEdges} edges.");
+
+            $activeMetadata = json_decode((string) $activeDataset->metadata, true);
+            $sourceDetails = is_array($activeMetadata) ? ($activeMetadata['source_details'] ?? null) : null;
+            $sourceBounds = is_array($sourceDetails) ? ($sourceDetails['extract_bounds'] ?? null) : null;
+            $configuredBounds = (array) config('biyahe.pedestrian.coverage', []);
+            $sourceScheme = strtolower((string) parse_url((string) $activeDataset->source_url, PHP_URL_SCHEME));
+            $validActiveProvenance = is_array($sourceDetails)
+                && ($activeMetadata['format'] ?? null) === 'osmium-osm-xml-v1'
+                && ($sourceDetails['source'] ?? null) === 'OPENSTREETMAP'
+                && ($sourceDetails['source_url'] ?? null) === $activeDataset->source_url
+                && filter_var($activeDataset->source_url, FILTER_VALIDATE_URL) !== false
+                && in_array($sourceScheme, ['http', 'https'], true)
+                && ($sourceDetails['license'] ?? null) === 'ODbL-1.0'
+                && ($sourceDetails['attribution'] ?? null) === '© OpenStreetMap contributors'
+                && is_string($sourceDetails['source_checksum_md5'] ?? null)
+                && preg_match('/^[a-f0-9]{32}$/i', $sourceDetails['source_checksum_md5']) === 1
+                && is_string($sourceDetails['source_timestamp'] ?? null)
+                && preg_match('/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/', $sourceDetails['source_timestamp']) === 1
+                && is_string($sourceDetails['source_file'] ?? null) && $sourceDetails['source_file'] !== ''
+                && is_int($sourceDetails['source_elements'] ?? null)
+                && is_string($sourceDetails['osmium_version'] ?? null)
+                && preg_match('/^\d+\.\d+(\.\d+)?$/', $sourceDetails['osmium_version']) === 1
+                && ($sourceDetails['extract_strategy'] ?? null) === 'complete_ways'
+                && is_array($sourceBounds)
+                && $sourceBounds === $configuredBounds
+                && $activeDataset->license === 'ODbL-1.0'
+                && $activeDataset->attribution === '© OpenStreetMap contributors';
+            $this->check('active pedestrian source provenance', $validActiveProvenance ? 'PASS' : 'FAIL', $validActiveProvenance
+                ? 'Active graph records the verified OSM extract, snapshot, bounds strategy, checksum, ODbL license, and attribution.'
+                : 'Active graph is missing reproducible OSM extract metadata, checksum, snapshot, ODbL license, or attribution.');
+
+            if (! $postgisReady) {
+                $this->check('pedestrian routing smoke test', 'BLOCKED', 'A live PostGIS graph route requires PostgreSQL and PostGIS.');
+            } elseif ($activeEdges === 0) {
+                $this->check('pedestrian routing smoke test', 'FAIL', 'The active graph has no edge available for a route smoke test.');
+            } else {
+                $edge = DB::table('pedestrian_network_edges')
+                    ->where('dataset_id', $activeDataset->id)
+                    ->where('length_meters', '<=', max(2000, (float) config('biyahe.pedestrian.maximum_access_walk_meters', 2000)))
+                    ->orderBy('length_meters')
+                    ->first(['from_node_id', 'to_node_id']);
+                $endpoints = $edge === null ? null : DB::table('pedestrian_network_nodes')
+                    ->whereIn('id', [$edge->from_node_id, $edge->to_node_id])
+                    ->orderByRaw('CASE WHEN id = ? THEN 0 ELSE 1 END', [$edge->from_node_id])
+                    ->get(['latitude', 'longitude']);
+                $routeResult = null;
+                if ($endpoints !== null && $endpoints->count() === 2) {
+                    $routeResult = app(PedestrianRouter::class)->route(new PedestrianRouteRequest(
+                        ['lat' => (float) $endpoints[0]->latitude, 'lng' => (float) $endpoints[0]->longitude],
+                        ['lat' => (float) $endpoints[1]->latitude, 'lng' => (float) $endpoints[1]->longitude],
+                        PedestrianRoutePurpose::ACCESS_WALK,
+                        max(2000, (float) config('biyahe.pedestrian.maximum_access_walk_meters', 2000)),
+                    ));
+                }
+                $smokePassed = $routeResult !== null && $routeResult->status->isAvailable()
+                    && $routeResult->source === 'OPENSTREETMAP' && is_array($routeResult->geometry)
+                    && ($routeResult->geometry['type'] ?? null) === 'LineString';
+                $this->check('pedestrian routing smoke test', $smokePassed ? 'PASS' : 'FAIL', $smokePassed
+                    ? 'A bounded walking route was computed through the active PostGIS graph.'
+                    : 'The active PostGIS graph could not route between endpoints of a stored pedestrian edge.');
+            }
         }
 
         $trustColumns = collect(Schema::getColumnListing('pedestrian_network_datasets'))

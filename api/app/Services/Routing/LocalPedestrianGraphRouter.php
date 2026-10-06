@@ -85,6 +85,7 @@ final class LocalPedestrianGraphRouter implements PedestrianRouter
             'candidates' => $this->candidates,
             'routes_computed' => $this->routesComputed,
             'routes_available' => $this->routesAvailable,
+            'route_failures' => $this->routesComputed - $this->routesAvailable,
             'cache_hits' => $this->cacheHits,
             'no_route_results' => $this->noRouteResults,
             'routing_time_milliseconds' => round($this->routingMilliseconds, 2),
@@ -154,15 +155,22 @@ final class LocalPedestrianGraphRouter implements PedestrianRouter
         }
 
         $snapDistance = (float) config('biyahe.pedestrian.maximum_snap_distance_meters', 25);
-        $startNodes = $this->nearbyNodes($request->origin, (int) $dataset->id, $snapDistance);
-        $endNodes = $this->nearbyNodes($request->destination, (int) $dataset->id, $snapDistance);
+        $startCandidates = $this->nearbyNodes($request->origin, (int) $dataset->id, $snapDistance);
+        $endCandidates = $this->nearbyNodes($request->destination, (int) $dataset->id, $snapDistance);
+        $originBarrierBlocked = false;
+        $destinationBarrierBlocked = false;
+        $startNodes = $this->safeSnapNodes($request->origin, $startCandidates, (int) $dataset->id, $originBarrierBlocked);
+        $endNodes = $this->safeSnapNodes($request->destination, $endCandidates, (int) $dataset->id, $destinationBarrierBlocked);
         if ($startNodes === [] || $endNodes === []) {
             $this->providerStatus = 'ACTIVE_DATASET';
+            $warning = $originBarrierBlocked || $destinationBarrierBlocked
+                ? 'Connecting a reference point to the graph would cross a mapped barrier; no walkable access route is claimed.'
+                : 'No mapped pedestrian node is close enough to one or both reference points; no route is claimed.';
 
             return $this->result(
                 PedestrianRouteStatus::UNAVAILABLE,
                 $request,
-                ['No mapped pedestrian node is close enough to one or both reference points; no route is claimed.'],
+                [$warning],
                 $dataset,
             );
         }
@@ -235,9 +243,9 @@ final class LocalPedestrianGraphRouter implements PedestrianRouter
 
         if ($best !== null) {
             $partial = $best['start_snap'] > 1 || $best['end_snap'] > 1;
-            $warnings = ['Path follows mapped OSM pedestrian ways; sidewalks, temporary closures, and on-the-ground conditions may be incomplete.'];
+            $warnings = ['Path follows OSM ways treated as pedestrian-accessible; mapped road centerlines may not represent a sidewalk, and temporary or on-the-ground conditions may be incomplete.'];
             if ($partial) {
-                $warnings[] = 'The short connectors from mapped points to the nearest graph nodes are straight-line approximations; they are not part of the displayed network geometry.';
+                $warnings[] = 'Short straight-line connectors to the graph are approximate and are not part of the displayed network geometry; they do not establish safe access where barriers or paths are unmapped.';
             }
             $this->providerStatus = 'ACTIVE_DATASET';
 
@@ -306,6 +314,39 @@ final class LocalPedestrianGraphRouter implements PedestrianRouter
         usort($nodes, static fn (array $left, array $right): int => ($left['snap_meters'] <=> $right['snap_meters']) ?: ($left['id'] <=> $right['id']));
 
         return array_slice($nodes, 0, max(1, (int) config('biyahe.pedestrian.maximum_snap_candidates', 6)));
+    }
+
+    /** @param array{lat: float, lng: float} $point @param list<array{id: int, lat: float, lng: float, snap_meters: float}> $candidates @return list<array{id: int, lat: float, lng: float, snap_meters: float}> */
+    private function safeSnapNodes(array $point, array $candidates, int $datasetId, bool &$barrierBlocked): array
+    {
+        if (DB::connection()->getDriverName() !== 'pgsql') {
+            return $candidates;
+        }
+
+        $safe = [];
+        foreach ($candidates as $candidate) {
+            if ($candidate['snap_meters'] > 1 && $this->connectorCrossesMappedBarrier($point, $candidate, $datasetId)) {
+                $barrierBlocked = true;
+
+                continue;
+            }
+            $safe[] = $candidate;
+        }
+
+        return $safe;
+    }
+
+    /** @param array{lat: float, lng: float} $point @param array{id: int, lat: float, lng: float, snap_meters: float} $node */
+    private function connectorCrossesMappedBarrier(array $point, array $node, int $datasetId): bool
+    {
+        return DB::table('pedestrian_network_nodes')
+            ->where('dataset_id', $datasetId)
+            ->where('is_walkable', false)
+            ->whereRaw(
+                'ST_DWithin(location, ST_SetSRID(ST_MakeLine(ST_MakePoint(?, ?), ST_MakePoint(?, ?)), 4326)::geography, 1.5)',
+                [$point['lng'], $point['lat'], $node['lng'], $node['lat']],
+            )
+            ->exists();
     }
 
     /** @param list<array{id: int, lat: float, lng: float, snap_meters: float}> $startNodes @param list<array{id: int, lat: float, lng: float, snap_meters: float}> $endNodes @return list<object>|null */

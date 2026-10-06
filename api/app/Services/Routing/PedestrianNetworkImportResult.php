@@ -9,5 +9,10 @@ final readonly class PedestrianNetworkImportResult
         public int $nodes,
         public int $edges,
         public bool $alreadyImported,
+        public int $sourceElements,
+        public int $candidateElements,
+        public int $rejectedElements,
+        public int $restrictedElements,
+        public float $runtimeMilliseconds,
     ) {}
 }

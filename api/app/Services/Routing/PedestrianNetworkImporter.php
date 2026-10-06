@@ -6,6 +6,7 @@ use App\Support\Geo;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
 use JsonException;
+use RuntimeException;
 
 final class PedestrianNetworkImporter
 {
@@ -21,6 +22,7 @@ final class PedestrianNetworkImporter
 
     public function import(string $path, string $sourceUrl): PedestrianNetworkImportResult
     {
+        $startedAt = hrtime(true);
         $maximumBytes = max(1024, (int) config('biyahe.pedestrian.maximum_input_bytes', 20_000_000));
         if (! is_file($path) || ! is_readable($path) || filesize($path) === false || filesize($path) > $maximumBytes) {
             throw new InvalidArgumentException('Input must be a readable JSON file within the configured byte limit.');
@@ -42,25 +44,67 @@ final class PedestrianNetworkImporter
             throw new InvalidArgumentException('Input must contain an Overpass elements array.');
         }
 
-        [$nodes, $ways] = $this->parseElements($document['elements']);
-        [$selectedNodes, $edges] = $this->buildGraph($nodes, $ways);
+        $sourceMetadata = $this->sourceMetadata($document, $sourceUrl);
+        [$nodes, $ways, $parseMetrics] = $this->parseElements($document['elements']);
+        [$selectedNodes, $edges, $acceptedWays, $restrictedWays] = $this->buildGraph($nodes, $ways);
         if ($selectedNodes === [] || $edges === []) {
             throw new InvalidArgumentException('Input contains no usable pedestrian network inside the configured Cebu scope.');
         }
 
+        $candidateElements = count($document['elements']);
+        $rejectedElements = max(0, $candidateElements - count($selectedNodes) - $acceptedWays);
+        $restrictedElements = $parseMetrics['restricted_nodes'] + $restrictedWays;
+        $sourceElements = $sourceMetadata['source_elements'] ?? $candidateElements;
         $contentHash = hash('sha256', $contents);
         $stableId = 'osm-cebu-walk-'.substr($contentHash, 0, 32);
         $sourceTimestamp = $document['osm3s']['timestamp_osm_base'] ?? null;
+        $sourceTimestamp ??= $sourceMetadata['source_timestamp'] ?? null;
         $sourceTimestamp = is_string($sourceTimestamp) ? $this->validTimestamp($sourceTimestamp) : null;
         $bounds = $this->bounds($selectedNodes);
+        $importMetrics = [
+            'source_elements' => $sourceElements,
+            'candidate_elements' => $candidateElements,
+            'candidate_nodes' => $parseMetrics['input_nodes'],
+            'candidate_ways' => $parseMetrics['input_ways'],
+            'imported_nodes' => count($selectedNodes),
+            'imported_edges' => count($edges),
+            'rejected_elements' => $rejectedElements,
+            'restricted_elements' => $restrictedElements,
+        ];
+        $datasetMetadata = [
+            'format' => $sourceMetadata['format'] ?? 'overpass-json',
+            'extract_scope' => config('biyahe.pedestrian.coverage'),
+            'importer' => 'local-pedestrian-network-v2',
+            'source_details' => $sourceMetadata,
+            'import_metrics' => $importMetrics,
+        ];
 
-        return DB::transaction(function () use ($stableId, $sourceUrl, $sourceTimestamp, $contentHash, $bounds, $selectedNodes, $edges): PedestrianNetworkImportResult {
+        return DB::transaction(function () use ($startedAt, $stableId, $sourceUrl, $sourceTimestamp, $contentHash, $bounds, $selectedNodes, $edges, $datasetMetadata, $importMetrics): PedestrianNetworkImportResult {
+            if (DB::connection()->getDriverName() === 'pgsql') {
+                DB::selectOne('SELECT pg_advisory_xact_lock(hashtext(?))', ['biyahe:pedestrian-network-import']);
+            }
+
             $existing = DB::table('pedestrian_network_datasets')->where('content_hash', $contentHash)->first();
             if ($existing !== null) {
+                $this->validateDatasetGraph((int) $existing->id, (int) $existing->node_count, (int) $existing->edge_count);
                 DB::table('pedestrian_network_datasets')->update(['is_active' => false, 'updated_at' => now()]);
                 DB::table('pedestrian_network_datasets')->where('id', $existing->id)->update(['is_active' => true, 'updated_at' => now()]);
+                $existingMetadata = json_decode((string) $existing->metadata, true);
+                $existingMetrics = is_array($existingMetadata) && is_array($existingMetadata['import_metrics'] ?? null)
+                    ? $existingMetadata['import_metrics']
+                    : $importMetrics;
 
-                return new PedestrianNetworkImportResult($existing->stable_id, (int) $existing->node_count, (int) $existing->edge_count, true);
+                return new PedestrianNetworkImportResult(
+                    $existing->stable_id,
+                    (int) $existing->node_count,
+                    (int) $existing->edge_count,
+                    true,
+                    (int) ($existingMetrics['source_elements'] ?? 0),
+                    (int) ($existingMetrics['candidate_elements'] ?? 0),
+                    (int) ($existingMetrics['rejected_elements'] ?? 0),
+                    (int) ($existingMetrics['restricted_elements'] ?? 0),
+                    round((hrtime(true) - $startedAt) / 1_000_000, 2),
+                );
             }
 
             $datasetId = DB::table('pedestrian_network_datasets')->insertGetId([
@@ -78,11 +122,7 @@ final class PedestrianNetworkImporter
                 'node_count' => count($selectedNodes),
                 'edge_count' => count($edges),
                 'content_hash' => $contentHash,
-                'metadata' => json_encode([
-                    'format' => 'overpass-json',
-                    'extract_scope' => config('biyahe.pedestrian.coverage'),
-                    'importer' => 'local-pedestrian-network-v1',
-                ], JSON_THROW_ON_ERROR),
+                'metadata' => json_encode($datasetMetadata, JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES),
                 'is_active' => false,
                 'graph_retained' => true,
                 'created_at' => now(),
@@ -103,6 +143,7 @@ final class PedestrianNetworkImporter
                         'longitude' => $node['lng'],
                         'is_walkable' => $node['walkable'],
                         'barrier' => $node['barrier'],
+                        'crossing' => $node['crossing'],
                         'location' => $location,
                     ];
                 }
@@ -139,25 +180,124 @@ final class PedestrianNetworkImporter
                 DB::table('pedestrian_network_edges')->insert($rows);
             }
 
+            $this->validateDatasetGraph($datasetId, count($selectedNodes), count($edges));
             DB::table('pedestrian_network_datasets')->update(['is_active' => false, 'updated_at' => now()]);
             DB::table('pedestrian_network_datasets')->where('id', $datasetId)->update(['is_active' => true, 'updated_at' => now()]);
 
-            return new PedestrianNetworkImportResult($stableId, count($selectedNodes), count($edges), false);
+            return new PedestrianNetworkImportResult(
+                $stableId,
+                count($selectedNodes),
+                count($edges),
+                false,
+                (int) $importMetrics['source_elements'],
+                (int) $importMetrics['candidate_elements'],
+                (int) $importMetrics['rejected_elements'],
+                (int) $importMetrics['restricted_elements'],
+                round((hrtime(true) - $startedAt) / 1_000_000, 2),
+            );
         });
     }
 
-    /** @return array{array<int, array{lat: float, lng: float, walkable: bool, barrier: ?string}>, array<int, array{nodes: list<int>, tags: array<string, string>}>} */
+    private function validateDatasetGraph(int $datasetId, int $expectedNodes, int $expectedEdges): void
+    {
+        $nodeCount = DB::table('pedestrian_network_nodes')->where('dataset_id', $datasetId)->count();
+        $edgeCount = DB::table('pedestrian_network_edges')->where('dataset_id', $datasetId)->count();
+        $bounds = (array) config('biyahe.pedestrian.coverage');
+
+        $invalidNodes = DB::table('pedestrian_network_nodes')
+            ->where('dataset_id', $datasetId)
+            ->where(function ($query) use ($bounds): void {
+                $query->where('latitude', '<', (float) $bounds['min_latitude'])
+                    ->orWhere('latitude', '>', (float) $bounds['max_latitude'])
+                    ->orWhere('longitude', '<', (float) $bounds['min_longitude'])
+                    ->orWhere('longitude', '>', (float) $bounds['max_longitude'])
+                    ->orWhere('latitude', '<', -90)
+                    ->orWhere('latitude', '>', 90)
+                    ->orWhere('longitude', '<', -180)
+                    ->orWhere('longitude', '>', 180);
+            })
+            ->count();
+
+        $invalidEdges = DB::table('pedestrian_network_edges as edges')
+            ->leftJoin('pedestrian_network_nodes as from_nodes', 'from_nodes.id', '=', 'edges.from_node_id')
+            ->leftJoin('pedestrian_network_nodes as to_nodes', 'to_nodes.id', '=', 'edges.to_node_id')
+            ->where('edges.dataset_id', $datasetId)
+            ->where(function ($query): void {
+                $query->whereNull('from_nodes.id')
+                    ->orWhereNull('to_nodes.id')
+                    ->orWhereColumn('from_nodes.dataset_id', '!=', 'edges.dataset_id')
+                    ->orWhereColumn('to_nodes.dataset_id', '!=', 'edges.dataset_id')
+                    ->orWhere('from_nodes.is_walkable', false)
+                    ->orWhere('to_nodes.is_walkable', false)
+                    ->orWhereColumn('edges.from_node_id', '=', 'edges.to_node_id')
+                    ->orWhere('edges.length_meters', '<=', 0)
+                    ->orWhere('edges.length_meters', '>', 10000)
+                    ->orWhereNull('edges.geometry')
+                    ->orWhereNull('edges.stable_id')
+                    ->orWhere('edges.stable_id', '');
+            })
+            ->count();
+
+        $issues = [];
+        if ($nodeCount !== $expectedNodes || $edgeCount !== $expectedEdges) {
+            $issues[] = "expected {$expectedNodes} nodes/{$expectedEdges} edges, found {$nodeCount}/{$edgeCount}";
+        }
+        if ($nodeCount === 0 || $edgeCount === 0) {
+            $issues[] = 'the graph is empty';
+        }
+        if ($invalidNodes > 0) {
+            $issues[] = "{$invalidNodes} nodes have invalid coordinates or exceed the configured bounds";
+        }
+        if ($invalidEdges > 0) {
+            $issues[] = "{$invalidEdges} edges have invalid lengths, geometry, or endpoint references";
+        }
+
+        if (DB::connection()->getDriverName() === 'pgsql') {
+            $invalidSpatialNodes = DB::table('pedestrian_network_nodes')
+                ->where('dataset_id', $datasetId)
+                ->whereRaw("location IS NULL OR ST_SRID(location::geometry) <> 4326 OR ST_GeometryType(location::geometry) <> 'ST_Point' OR ST_IsEmpty(location::geometry) OR NOT ST_IsValid(location::geometry)")
+                ->count();
+            $invalidSpatialEdges = DB::table('pedestrian_network_edges')
+                ->where('dataset_id', $datasetId)
+                ->whereRaw("geometry IS NULL OR ST_SRID(geometry) <> 4326 OR ST_GeometryType(geometry) <> 'ST_LineString' OR ST_IsEmpty(geometry) OR NOT ST_IsValid(geometry)")
+                ->count();
+            $misalignedEdges = DB::table('pedestrian_network_edges as edges')
+                ->join('pedestrian_network_nodes as from_nodes', 'from_nodes.id', '=', 'edges.from_node_id')
+                ->join('pedestrian_network_nodes as to_nodes', 'to_nodes.id', '=', 'edges.to_node_id')
+                ->where('edges.dataset_id', $datasetId)
+                ->whereRaw('ST_Distance(ST_StartPoint(edges.geometry)::geography, from_nodes.location) > 0.05 OR ST_Distance(ST_EndPoint(edges.geometry)::geography, to_nodes.location) > 0.05')
+                ->count();
+
+            if ($invalidSpatialNodes > 0) {
+                $issues[] = "{$invalidSpatialNodes} nodes have invalid PostGIS geometry or SRID";
+            }
+            if ($invalidSpatialEdges > 0) {
+                $issues[] = "{$invalidSpatialEdges} edges have invalid PostGIS geometry or SRID";
+            }
+            if ($misalignedEdges > 0) {
+                $issues[] = "{$misalignedEdges} edge geometries do not match their node endpoints";
+            }
+        }
+
+        if ($issues !== []) {
+            throw new RuntimeException('Pedestrian graph validation failed before activation: '.implode('; ', $issues).'.');
+        }
+    }
+
+    /** @return array{array<int, array{lat: float, lng: float, walkable: bool, barrier: ?string, crossing: ?string}>, array<int, array{nodes: list<int>, tags: array<string, string>}>, array{input_nodes: int, input_ways: int, restricted_nodes: int}} */
     private function parseElements(array $elements): array
     {
         $maxNodes = max(1, (int) config('biyahe.pedestrian.maximum_input_nodes', 50000));
         $maxWays = max(1, (int) config('biyahe.pedestrian.maximum_input_ways', 25000));
         $nodes = [];
         $ways = [];
+        $metrics = ['input_nodes' => 0, 'input_ways' => 0, 'restricted_nodes' => 0];
         foreach ($elements as $element) {
             if (! is_array($element) || ! is_int($element['id'] ?? null) || $element['id'] <= 0) {
                 throw new InvalidArgumentException('Every OSM element must have a positive integer ID.');
             }
             if (($element['type'] ?? null) === 'node') {
+                $metrics['input_nodes']++;
                 if (count($nodes) >= $maxNodes) {
                     throw new InvalidArgumentException('OSM input exceeds the configured node limit.');
                 }
@@ -171,13 +311,19 @@ final class PedestrianNetworkImporter
                     throw new InvalidArgumentException('Duplicate OSM node ID in input.');
                 }
                 $tags = $this->tags($element['tags'] ?? []);
+                $walkable = ! $this->blockedNode($tags);
+                if (! $walkable) {
+                    $metrics['restricted_nodes']++;
+                }
                 $nodes[$element['id']] = [
                     'lat' => (float) $latitude,
                     'lng' => (float) $longitude,
-                    'walkable' => ! $this->blockedNode($tags),
+                    'walkable' => $walkable,
                     'barrier' => $tags['barrier'] ?? null,
+                    'crossing' => $tags['crossing'] ?? (($tags['highway'] ?? null) === 'crossing' ? 'MAPPED' : null),
                 ];
             } elseif (($element['type'] ?? null) === 'way') {
+                $metrics['input_ways']++;
                 if (count($ways) >= $maxWays) {
                     throw new InvalidArgumentException('OSM input exceeds the configured way limit.');
                 }
@@ -192,17 +338,22 @@ final class PedestrianNetworkImporter
             }
         }
 
-        return [$nodes, $ways];
+        return [$nodes, $ways, $metrics];
     }
 
-    /** @return array{array<int, array{lat: float, lng: float, walkable: bool, barrier: ?string}>, list<array<string, mixed>>} */
+    /** @return array{array<int, array{lat: float, lng: float, walkable: bool, barrier: ?string, crossing: ?string}>, list<array<string, mixed>>, int, int} */
     private function buildGraph(array $nodes, array $ways): array
     {
         $scope = config('biyahe.pedestrian.coverage');
         $selectedNodes = [];
         $edges = [];
+        $acceptedWays = 0;
+        $restrictedWays = 0;
         foreach ($ways as $wayId => $way) {
             $tags = $way['tags'];
+            if ($this->explicitlyRestrictedWay($tags)) {
+                $restrictedWays++;
+            }
             if (! $this->walkableWay($tags)) {
                 continue;
             }
@@ -218,8 +369,9 @@ final class PedestrianNetworkImporter
             }
             $highway = $tags['highway'];
             $properties = array_intersect_key($tags, array_flip([
-                'surface', 'smoothness', 'bridge', 'tunnel', 'layer', 'sidewalk', 'foot', 'access', 'oneway:foot', 'foot:forward', 'foot:backward',
+                'surface', 'smoothness', 'bridge', 'tunnel', 'layer', 'sidewalk', 'footway', 'crossing', 'crossing:markings', 'crossing:signals', 'foot', 'access', 'oneway:foot', 'foot:forward', 'foot:backward',
             ]));
+            $edgesBeforeWay = count($edges);
             for ($index = 0; $index < count($refs) - 1; $index++) {
                 $fromId = $refs[$index];
                 $toId = $refs[$index + 1];
@@ -245,9 +397,33 @@ final class PedestrianNetworkImporter
                     $edges[] = ['way' => $wayId, 'segment' => $index, 'from' => $toId, 'to' => $fromId, 'bidirectional' => false, 'length' => $length, 'highway' => $highway, 'properties' => $properties];
                 }
             }
+            if (count($edges) > $edgesBeforeWay) {
+                $acceptedWays++;
+            }
         }
 
-        return [$selectedNodes, $edges];
+        foreach ($nodes as $nodeId => $node) {
+            if (! $node['walkable'] && $this->insideScope($node, $scope)) {
+                $selectedNodes[$nodeId] = $node;
+            }
+        }
+
+        return [$selectedNodes, $edges, $acceptedWays, $restrictedWays];
+    }
+
+    private function explicitlyRestrictedWay(array $tags): bool
+    {
+        $restricted = ['no', 'private', 'destination', 'customers', 'permit', 'agricultural', 'forestry', 'delivery', 'use_sidepath', 'discouraged'];
+
+        return isset($tags['foot:conditional'])
+            || isset($tags['access:conditional'])
+            || ! $this->supportedAccessValue($tags['foot'] ?? null)
+            || (! isset($tags['foot']) && ! $this->supportedAccessValue($tags['access'] ?? null))
+            || $this->privateServiceWay($tags)
+            || in_array($tags['foot'] ?? null, $restricted, true)
+            || (! isset($tags['foot']) && in_array($tags['access'] ?? null, $restricted, true))
+            || in_array($tags['foot:forward'] ?? null, $restricted, true)
+            || in_array($tags['foot:backward'] ?? null, $restricted, true);
     }
 
     private function walkableWay(array $tags): bool
@@ -260,6 +436,9 @@ final class PedestrianNetworkImporter
         if (! in_array($highway, self::WALKABLE_HIGHWAYS, true)) {
             return false;
         }
+        if ($this->privateServiceWay($tags)) {
+            return false;
+        }
         if (isset($tags['foot:conditional']) || isset($tags['access:conditional'])) {
             return false;
         }
@@ -267,15 +446,15 @@ final class PedestrianNetworkImporter
             return false;
         }
         foreach (['foot:forward', 'foot:backward'] as $direction) {
-            if (isset($tags[$direction]) && ! in_array($tags[$direction], ['yes', 'no', 'designated', 'official', 'permissive'], true)) {
+            if (isset($tags[$direction]) && ! $this->supportedAccessValue($tags[$direction])) {
                 return false;
             }
         }
         $restricted = ['no', 'private', 'destination', 'customers', 'permit', 'agricultural', 'forestry', 'delivery', 'use_sidepath', 'discouraged'];
-        if (in_array($tags['foot'] ?? null, $restricted, true)) {
+        if (! $this->supportedAccessValue($tags['foot'] ?? null) || in_array($tags['foot'] ?? null, $restricted, true)) {
             return false;
         }
-        if (! isset($tags['foot']) && in_array($tags['access'] ?? null, $restricted, true)) {
+        if (! isset($tags['foot']) && (! $this->supportedAccessValue($tags['access'] ?? null) || in_array($tags['access'] ?? null, $restricted, true))) {
             return false;
         }
 
@@ -309,6 +488,10 @@ final class PedestrianNetworkImporter
         if (isset($tags['foot:conditional']) || isset($tags['access:conditional'])) {
             return true;
         }
+        if (! $this->supportedAccessValue($tags['foot'] ?? null)
+            || (! isset($tags['foot']) && ! $this->supportedAccessValue($tags['access'] ?? null))) {
+            return true;
+        }
         if (in_array($tags['foot'] ?? null, $restricted, true)) {
             return true;
         }
@@ -316,7 +499,30 @@ final class PedestrianNetworkImporter
             return true;
         }
 
-        return in_array($tags['barrier'] ?? null, ['wall', 'fence', 'retaining_wall', 'ditch', 'hedge', 'block'], true);
+        $barrier = $tags['barrier'] ?? null;
+        if ($barrier === null) {
+            return false;
+        }
+
+        return ! in_array($barrier, [
+            'gate', 'lift_gate', 'swing_gate', 'sliding_gate', 'entrance', 'bollard',
+            'cycle_barrier', 'stile', 'kissing_gate', 'turnstile',
+        ], true);
+    }
+
+    private function supportedAccessValue(?string $value): bool
+    {
+        return $value === null || in_array($value, ['yes', 'permissive', 'designated', 'official', 'no', 'private', 'destination', 'customers', 'permit', 'agricultural', 'forestry', 'delivery', 'use_sidepath', 'discouraged'], true);
+    }
+
+    private function privateServiceWay(array $tags): bool
+    {
+        $restrictedServiceTypes = ['driveway', 'private', 'drive-through', 'emergency_access'];
+        $explicitFootAccess = in_array($tags['foot'] ?? null, ['yes', 'permissive', 'designated', 'official'], true);
+
+        return ($tags['highway'] ?? null) === 'service'
+            && in_array($tags['service'] ?? null, $restrictedServiceTypes, true)
+            && ! $explicitFootAccess;
     }
 
     private function insideScope(array $node, array $scope): bool
@@ -339,6 +545,64 @@ final class PedestrianNetworkImporter
         }
 
         return $normalized;
+    }
+
+    /** @return array<string, mixed> */
+    private function sourceMetadata(array $document, string $sourceUrl): array
+    {
+        if (! array_key_exists('biyahe_source', $document)) {
+            return [];
+        }
+        $metadata = $document['biyahe_source'];
+        if (! is_array($metadata)) {
+            throw new InvalidArgumentException('Biyahe OSM source metadata must be an object.');
+        }
+
+        $format = $metadata['format'] ?? null;
+        $metadataUrl = $metadata['source_url'] ?? null;
+        $sourceFile = $metadata['source_file'] ?? null;
+        $checksum = $metadata['source_checksum_md5'] ?? null;
+        $sourceTimestamp = $metadata['source_timestamp'] ?? null;
+        $sourceElements = $metadata['source_elements'] ?? null;
+        $osmiumVersion = $metadata['osmium_version'] ?? null;
+        $extractBounds = $metadata['extract_bounds'] ?? null;
+        $configuredBounds = config('biyahe.pedestrian.coverage');
+
+        if ($format !== 'osmium-osm-xml-v1' || ($metadata['source'] ?? null) !== 'OPENSTREETMAP'
+            || ! is_string($metadataUrl) || $metadataUrl !== $sourceUrl || ! $this->validSourceUrl($metadataUrl)
+            || ! is_string($sourceFile) || $sourceFile === '' || strlen($sourceFile) > 255
+            || ! is_string($metadata['extract_strategy'] ?? null) || $metadata['extract_strategy'] !== 'complete_ways'
+            || ($metadata['license'] ?? null) !== self::LICENSE || ($metadata['attribution'] ?? null) !== self::ATTRIBUTION
+            || ! is_array($extractBounds) || $extractBounds !== $configuredBounds) {
+            throw new InvalidArgumentException('Biyahe OSM metadata is incomplete or inconsistent with the import source.');
+        }
+        if (! is_string($checksum) || ! preg_match('/^[a-f0-9]{32}$/i', $checksum)) {
+            throw new InvalidArgumentException('Biyahe OSM source MD5 metadata is malformed.');
+        }
+        if (! is_string($sourceTimestamp) || trim($sourceTimestamp) === '') {
+            throw new InvalidArgumentException('Biyahe OSM source timestamp metadata is malformed.');
+        }
+        if (! is_int($sourceElements) || $sourceElements < 0 || $sourceElements > 10_000_000) {
+            throw new InvalidArgumentException('Biyahe OSM source element count is outside the supported bound.');
+        }
+        if (! is_string($osmiumVersion) || trim($osmiumVersion) === '' || strlen($osmiumVersion) > 80) {
+            throw new InvalidArgumentException('Biyahe Osmium version metadata is malformed.');
+        }
+
+        return [
+            'format' => $format,
+            'source' => 'OPENSTREETMAP',
+            'source_url' => $metadataUrl,
+            'source_file' => basename($sourceFile),
+            'source_checksum_md5' => $checksum === null ? null : strtolower($checksum),
+            'source_timestamp' => $this->validTimestamp($sourceTimestamp),
+            'source_elements' => $sourceElements,
+            'osmium_version' => $osmiumVersion,
+            'extract_strategy' => 'complete_ways',
+            'extract_bounds' => $extractBounds,
+            'license' => self::LICENSE,
+            'attribution' => self::ATTRIBUTION,
+        ];
     }
 
     private function validSourceUrl(string $url): bool

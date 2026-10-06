@@ -8,7 +8,7 @@ can be replaced without binding journey code to a commercial API. No paid
 service, routing server, Redis, or tile-server routing request is required.
 
 PostGIS proximity queries discover candidate stops. For each small candidate
-set, the local provider snaps to the nearest walkable OSM node within 12 m and
+set, the local provider snaps to the nearest walkable OSM node within 25 m and
 runs a bounded, direction-aware Dijkstra search. It has configurable edge,
 visited-node, distance, and per-request cache limits. Each HTTP/planning scope
 memoizes identical requests; no persistent route cache is used. Access and
@@ -19,11 +19,23 @@ found, request-cache hits, and routing time.
 
 The imported graph includes selected roads, paths, footways, pedestrian
 streets, steps, and service roads. Explicit `access`/`foot` prohibitions,
-barrier nodes, conditional access restrictions, motorways, and unsupported
-road classes are excluded. `oneway:foot` and `foot:forward` /
+conditional access restrictions, mapped blocking barrier nodes, motorways,
+unsupported access values, and unsupported road classes are excluded.
+Ambiguous private driveways and explicitly private/emergency service ways
+require an explicit affirmative `foot` tag to be included.
+`oneway:foot` and `foot:forward` /
 `foot:backward` restrictions are represented. An OSM graph path is not a
 guarantee of a sidewalk, safe crossing, open gate, accessibility, or current
-ground conditions; those facts are not inferred.
+ground conditions; those facts are not inferred. OSM highway geometry may be
+the roadway centerline rather than a mapped footway/sidewalk. Only tagged
+barrier nodes in the extract are available to block an approximate graph
+connector; unmapped barriers remain a coverage limitation.
+
+OSM crossing tags are retained on their referenced graph nodes, and explicit
+`footway=crossing`/crossing way attributes are retained as edge metadata. A
+crossing tag or geometric line intersection does not create a connection by
+itself: graph connectivity requires an explicitly shared OSM node/way
+reference. No legal or safe crossing is inferred from intersecting geometry.
 
 Successful legs expose separate `LineString` geometry and `PEDESTRIAN_NETWORK`
 distance. When a point is connected by a short endpoint snap, the leg reports
@@ -43,67 +55,78 @@ verification, boarding precision, or transfer evidence.
 
 ## Data provenance and rebuild
 
-OpenStreetMap data is licensed under the ODbL and requires attribution to
-OpenStreetMap contributors; see the [OpenStreetMap copyright and license
-page](https://www.openstreetmap.org/copyright). Imported datasets retain the
-source URL, ODbL identifier, attribution, source snapshot timestamp when
-provided, import timestamp, Cebu extent, counts, checksum, and importer
-metadata. Pedestrian-map provenance is not transit evidence.
+OpenStreetMap data is available under the ODbL and requires attribution to
+OpenStreetMap contributors; see the [OpenStreetMap France extract
+catalogue](https://download.openstreetmap.fr/extracts/asia/philippines/) and the
+[OpenStreetMap copyright page](https://www.openstreetmap.org/copyright).
+Pedestrian data has separate geographic provenance; it is never transport
+evidence. It cannot verify a jeepney route, stop, boarding practice, transfer,
+fare, or signboard.
 
-The current configured extent is `10.282, 123.860` to `10.381, 123.935`
-(south, west, north, east). Fetch a bounded Overpass JSON extract when the
-service is available; do not issue frequent repeated queries to public
-instances. The official [Overpass QL documentation](https://wiki.openstreetmap.org/wiki/Overpass_API/Overpass_QL)
-describes the query syntax.
+The pinned Cebu extent is `10.282, 123.860` to `10.381, 123.935` (south, west,
+north, east). A review of the current production dataset found all 48 mapped
+stops and all 22 mapped places with coordinates inside these bounds. The
+extent covers Cebu City's current mapped transport area plus a modest access
+margin; it does not include Cebu Province. Do not expand it or import extra
+regions without a transport-coverage review.
 
-From Termux or another machine with `curl`:
+### Rebuild or update
 
-```sh
-cat > cebu-pedestrians.overpassql <<'EOF'
-[out:json][timeout:120];
-(
-  way["highway"~"^(footway|path|pedestrian|steps|living_street|residential|unclassified|service|track|tertiary|secondary|primary|tertiary_link|secondary_link|primary_link)$"](10.282,123.860,10.381,123.935);
-);
-(._;>;);
-out body;
-EOF
+Use the date-stamped Central Visayas regional PBF from OpenStreetMap France, not
+a consumer map service or a public tile server. The updater verifies the
+source MD5 sidecar, captures `Last-Modified`, and records the exact URL, source
+filename, checksum, snapshot, ODbL license, attribution, extraction bounds,
+and Osmium version. The source was published as
+`central_visayas.osm.pbf` with `Last-Modified: 2026-10-05 00:57:57 UTC` and
+MD5 `a3d5d3fb3666005f018b078bd3a7981d`. `osmium extract
+--strategy=complete_ways` preserves all nodes needed by ways crossing the
+extract boundary. The preceding `tags-filter` reduces memory use while
+retaining highway ways and tagged barriers/crossings; Biyahe's allow-list then
+excludes unsupported road types and ambiguous/restricted pedestrian access.
+See the [Osmium Tool manual](https://osmcode.org/osmium-tool/manual.html)
+for extraction and filtering semantics.
 
-curl --fail --max-time 180 \
-  -A 'Biyahe Cebu pedestrian-data import (contact: project maintainers)' \
-  --data-urlencode data@cebu-pedestrians.overpassql \
-  https://overpass-api.de/api/interpreter \
-  -o cebu-pedestrians.json
-```
-
-If Overpass returns a timeout or rate limit, stop and retry later or use a
-cached, legally compatible extract; do not repeatedly hammer public
-endpoints. The import is bounded by 20 MB, 50,000 input nodes, 25,000 ways,
-and 100,000 resulting edges. The importer accepts one complete, deduplicated
-extract for the configured extent; it rejects duplicate source IDs and
-missing way nodes. Do not import separate partial tiles as if they were full
-Cebu coverage. If this extent exceeds a cap, review a reproducible single
-extract and a deliberate cap change before importing; do not silently shrink
-the production coverage.
-
-After applying the API migrations to the intended PostGIS database, validate
-and import the extract:
+Prerequisites: `curl`, `md5sum`, Osmium Tool, PHP/Laravel dependencies, and an
+application database configured for PostgreSQL with PostGIS. The recovered
+Batch 010 uses the OpenStreetMap France source at
+`https://download.openstreetmap.fr/extracts/asia/philippines/central_visayas.osm.pbf`.
+Its data is licensed under ODbL-1.0. The updater checks the file against the
+source MD5 sidecar and records the source timestamp and checksum in the
+imported dataset. Future refreshes should preserve the exact URL, timestamp,
+and checksum used for the installed dataset.
 
 ```sh
 cd api
-php artisan migrate --force
-php artisan biyahe:pedestrian:import /path/to/cebu-pedestrians.json \
-  --source-url='https://overpass-api.de/api/interpreter'
-php artisan biyahe:doctor
+BIYAHE_DB_CONNECTION=pgsql \
+BIYAHE_DB_HOST=127.0.0.1 BIYAHE_DB_PORT=5432 \
+BIYAHE_DB_DATABASE=biyahe BIYAHE_DB_USERNAME="$(id -un)" \
+BIYAHE_PHP_MEMORY_LIMIT=512M \
+BIYAHE_PEDESTRIAN_DATA_DIR="$PWD/.runtime/b010-central-visayas-20261005" \
+  bash scripts/update-cebu-pedestrian-graph.sh 20261005
 ```
 
-The importer validates coordinates, unique stable source IDs, complete way
-references, access restrictions, and scope before a transaction. It stores
-one record per directed or bidirectional segment, checksums the input, and
-activates the dataset only after the graph has been written successfully.
-Reimporting identical bytes reuses the stable dataset ID. Use a bounded export
-with full way-node references; malformed or partial data fails without
-replacing the currently active graph. Raw extracts are not committed to the
-repository.
+The script downloads/resumes the configured Central Visayas PBF, verifies its
+MD5, filters the regional graph and clips the bounded graph with Osmium,
+applies pending migrations,
+prepares bounded import JSON, then runs the transactional import, status
+check, and Doctor. It retains
+rebuild artifacts in the configured cache directory, outside Git; no raw PBF
+or large extract is committed. To reproduce an exact installed dataset, use
+its recorded source URL and checksum. A refreshed snapshot gets a new stable
+dataset ID and metadata. A failed validation/import leaves the prior active
+dataset in service. `php artisan biyahe:pedestrian:status --json` exposes the
+active snapshot, bounds, counts, provenance, graph validation, weak
+connectivity summary, and the active dataset's last successful import
+metrics. Failed import attempts are reported to the command output/log and
+never replace the active dataset.
+
+The prepared import is capped at 20 MB, 100,000 nodes, 25,000 ways, and 100,000
+edges. Inputs are validated for coordinates, duplicate IDs, complete way
+references, supported access tags, scope, and metadata before writing. The
+active flag changes in the same transaction as the dataset rows. Reimporting
+identical prepared JSON reuses its stable dataset ID; failed imports do not
+deactivate a valid graph. If a pinned extract exceeds limits, stop and review
+the extent and limits rather than silently clipping away transport coverage.
 
 ## Precision, privacy, and tests
 

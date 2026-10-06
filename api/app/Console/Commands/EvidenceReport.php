@@ -101,7 +101,9 @@ final class EvidenceReport extends Command
         $this->line('plan_cache_hits: '.$report['performance']['result_cache_hits']);
         $this->line('cached_pattern_models: '.$report['performance']['cached_patterns']);
         $this->line('pedestrian_candidates: '.$report['pedestrian_routing']['candidates']);
+        $this->line('pedestrian_route_requests: '.$report['pedestrian_routing']['routes_computed']);
         $this->line('pedestrian_routes_computed: '.$report['pedestrian_routing']['routes_computed']);
+        $this->line('pedestrian_route_failures: '.$report['pedestrian_routing']['route_failures']);
         $this->line('pedestrian_cache_hits: '.$report['pedestrian_routing']['cache_hits']);
         $this->line('pedestrian_routing_milliseconds: '.$report['pedestrian_routing']['routing_time_milliseconds']);
         $this->line('priority_items: '.count($report['priority']['items']));

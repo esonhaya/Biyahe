@@ -71,15 +71,27 @@ class CanIRideController
             boardingStopId: isset($validated['boarding_stop_id']) ? (int) $validated['boarding_stop_id'] : null,
         );
 
+        $resultData = $result->toArray();
+        $pedestrianDistanceTypes = collect($resultData['option']['pedestrian_access'] ?? [])
+            ->pluck('distance_type')
+            ->filter()
+            ->values();
+        $walkingDistanceType = $pedestrianDistanceTypes->isEmpty()
+            || $pedestrianDistanceTypes->every(fn (string $type): bool => $type === 'STRAIGHT_LINE_ESTIMATE')
+            ? 'straight_line_estimate'
+            : ($pedestrianDistanceTypes->every(fn (string $type): bool => str_starts_with($type, 'PEDESTRIAN_NETWORK'))
+                ? 'pedestrian_network'
+                : 'per_leg');
+
         return response()->json([
             'data' => [
                 'origin' => $this->placeSummary($origin),
                 'destination' => $this->placeSummary($destination),
-                ...$result->toArray(),
+                ...$resultData,
             ],
             'meta' => [
                 'distance_unit' => 'meters',
-                'walking_distance_type' => 'straight_line_estimate',
+                'walking_distance_type' => $walkingDistanceType,
                 'pedestrian_leg_distance_type' => 'per_leg',
                 'access_radius_meters' => (int) config('biyahe.routing.max_access_radius_meters', 1000),
             ],
