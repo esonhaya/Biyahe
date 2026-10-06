@@ -3,6 +3,8 @@
 namespace App\Services\Routing;
 
 use App\Enums\JourneyTrustState;
+use App\Enums\PedestrianRoutePurpose;
+use App\Enums\PedestrianRouteStatus;
 use App\Enums\VerificationState;
 use App\Models\Place;
 use App\Models\ProvenanceSource;
@@ -26,7 +28,10 @@ final class CanIRideChecker
     /** @var array<string, Collection<int, Stop>> */
     private array $nearbyStopCache = [];
 
-    public function __construct(private readonly NearbyStopFinder $nearbyStopFinder) {}
+    public function __construct(
+        private readonly NearbyStopFinder $nearbyStopFinder,
+        private readonly PedestrianRouter $pedestrianRouter,
+    ) {}
 
     public function check(
         Place $origin,
@@ -69,7 +74,7 @@ final class CanIRideChecker
         $forward = $this->matchingOption($route, $patterns, $origin, $destination, $boardingStops, $alightingStops);
         if ($forward !== null) {
             $pattern = $forward['pattern_model'] ?? null;
-            $option = $this->publicOption($forward);
+            $option = $this->publicOption($this->addPedestrianAccess($forward, $origin, $destination));
 
             return new CanIRideResult(
                 status: 'YES',
@@ -86,7 +91,7 @@ final class CanIRideChecker
         $opposite = $this->matchingOption($route, $patterns, $destination, $origin, $reverseBoardingStops, $reverseAlightingStops);
         if ($opposite !== null) {
             $pattern = $opposite['pattern_model'] ?? null;
-            $option = $this->publicOption($opposite);
+            $option = $this->publicOption($this->addPedestrianAccess($opposite, $destination, $origin));
 
             return new CanIRideResult(
                 status: 'DIRECTION_DEPENDENT',
@@ -252,6 +257,8 @@ final class CanIRideChecker
                     ]);
                     $options[] = [
                         'pattern_model' => $pattern,
+                        'boarding_stop_model' => $boardingStop,
+                        'alighting_stop_model' => $alightingStop,
                         'pattern' => $this->patternSummary($pattern),
                         'boarding_stop' => $this->stopSummary($boardingStop),
                         'alighting_stop' => $this->stopSummary($alightingStop),
@@ -259,7 +266,7 @@ final class CanIRideChecker
                         'alighting_association' => Trust::status($alightingAssociation),
                         'boarding_instruction' => $this->boardingInstruction($boardingStop),
                         'driver_instruction' => 'Tell the driver: "'.$this->cueForPlace($destination).'".',
-                        'get_off_guidance' => 'Get off near '.$alightingStop->name.'.',
+                        'get_off_guidance' => 'Get off near '.$alightingStop->name.'. The exact drop-off point or side is not verified.',
                         'stop_count' => $alightingAssociation->sequence - $boardingAssociation->sequence,
                         'boarding_sequence' => $boardingAssociation->sequence,
                         'alighting_sequence' => $alightingAssociation->sequence,
@@ -306,8 +313,63 @@ final class CanIRideChecker
     private function publicOption(array $option): array
     {
         unset($option['pattern_model']);
+        unset($option['boarding_stop_model']);
+        unset($option['alighting_stop_model']);
 
         return $option;
+    }
+
+    /** @param array<string, mixed> $option @return array<string, mixed> */
+    private function addPedestrianAccess(array $option, Place $origin, Place $destination): array
+    {
+        $boardingStop = $option['boarding_stop_model'] ?? null;
+        $alightingStop = $option['alighting_stop_model'] ?? null;
+        if (! $boardingStop instanceof Stop || ! $alightingStop instanceof Stop) {
+            return $option;
+        }
+
+        $option['pedestrian_access'] = [
+            'to_boarding' => $this->pedestrianLeg($origin, $boardingStop, PedestrianRoutePurpose::ACCESS_WALK),
+            'from_alighting' => $this->pedestrianLeg($alightingStop, $destination, PedestrianRoutePurpose::EGRESS_WALK),
+        ];
+
+        return $option;
+    }
+
+    /** @return array<string, mixed> */
+    private function pedestrianLeg(Place|Stop $origin, Place|Stop $destination, PedestrianRoutePurpose $purpose): array
+    {
+        $originLocation = $origin->location_point;
+        $destinationLocation = $destination->location_point;
+        $straightLineDistance = $originLocation === null || $destinationLocation === null
+            ? null
+            : Geo::distanceMeters($originLocation['lat'], $originLocation['lng'], $destinationLocation['lat'], $destinationLocation['lng']);
+        $maximumDistance = $purpose === PedestrianRoutePurpose::ACCESS_WALK
+            ? (float) config('biyahe.pedestrian.maximum_access_walk_meters', 2000)
+            : (float) config('biyahe.pedestrian.maximum_egress_walk_meters', 2000);
+        $route = $originLocation === null || $destinationLocation === null
+            ? null
+            : $this->pedestrianRouter->route(new PedestrianRouteRequest(
+                origin: $originLocation,
+                destination: $destinationLocation,
+                purpose: $purpose,
+                maximumDistanceMeters: $maximumDistance,
+            ));
+        $available = $route?->status->isAvailable() ?? false;
+        $noRoute = $route?->status === PedestrianRouteStatus::NO_ROUTE;
+
+        return [
+            'status' => $route?->status->value ?? 'UNAVAILABLE',
+            'distance_meters' => $available ? $route->totalDistanceMeters() : $straightLineDistance,
+            'distance_type' => $available ? 'PEDESTRIAN_NETWORK' : 'STRAIGHT_LINE_ESTIMATE',
+            'estimated_duration_seconds' => $available ? $route->estimatedDurationSeconds : null,
+            'geometry' => $available ? $route->geometry : null,
+            'source' => $route?->source,
+            'precision' => $destination instanceof Stop ? ($destination->boarding_precision?->value ?? $destination->boarding_precision ?? 'UNKNOWN') : 'NOT_APPLICABLE',
+            'warnings' => $noRoute
+                ? ['No pedestrian path is mapped here; coverage may be incomplete. The distance is straight-line only.']
+                : ($available ? $route->warnings : ['Straight-line distance only; no pedestrian route is available for this area.']),
+        ];
     }
 
     private function trustState(array $models, array $additionalStates = []): JourneyTrustState
@@ -366,6 +428,7 @@ final class CanIRideChecker
             'boarding_side' => $stop->boarding_side,
             'direction_note' => $stop->direction_note,
             'boarding_precision' => $stop->boarding_precision?->value ?? $stop->boarding_precision,
+            'alighting_precision' => 'UNKNOWN',
             'boarding_verification' => Trust::effectiveFactState($stop, 'boarding'),
             'nearby_place' => $stop->relationLoaded('nearbyPlace') && $stop->nearbyPlace !== null
                 ? ['id' => $stop->nearbyPlace->getKey(), 'name' => $stop->nearbyPlace->name]
@@ -380,11 +443,13 @@ final class CanIRideChecker
             ? $stop->name.' near '.$stop->nearbyPlace->name
             : $stop->name;
 
-        $prefix = match ($stop->boarding_precision?->value ?? $stop->boarding_precision) {
-            'EXACT_BOARDING_POINT' => 'Wait at '.$location.'.',
-            'BOARDING_AREA' => 'Wait in the mapped boarding area near '.$location.'.',
-            'APPROXIMATE_LOCATION' => 'Wait near '.$location.'.',
-            default => 'Wait near '.$location.'. Exact boarding is not confirmed.',
+        $precision = $stop->boarding_precision?->value ?? $stop->boarding_precision;
+        $verified = Trust::effectiveFactState($stop, 'boarding') === VerificationState::VERIFIED->value;
+        $prefix = match ($precision) {
+            'EXACT_BOARDING_POINT' => $verified ? 'Walk to the verified boarding point at '.$location.'.' : 'Walk toward '.$location.'. The exact boarding point is not yet verified.',
+            'BOARDING_AREA' => 'Walk to the '.$location.' boarding area. The exact bay or curbside position is not yet verified.',
+            'APPROXIMATE_LOCATION' => 'Walk toward the approximate boarding area near '.$location.'.',
+            default => 'The boarding location is not yet precisely verified. This reaches the mapped service area, not a confirmed curbside boarding point near '.$location.'.',
         };
         $details = array_values(array_filter([
             $stop->boarding_notes,

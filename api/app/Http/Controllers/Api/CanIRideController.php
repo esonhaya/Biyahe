@@ -80,6 +80,7 @@ class CanIRideController
             'meta' => [
                 'distance_unit' => 'meters',
                 'walking_distance_type' => 'straight_line_estimate',
+                'pedestrian_leg_distance_type' => 'per_leg',
                 'access_radius_meters' => (int) config('biyahe.routing.max_access_radius_meters', 1000),
             ],
         ]);

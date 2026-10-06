@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
-import type { CanIRideResponse, Journey, Place, Route, RoutePattern, Stop } from "@/lib/api";
+import type { CanIRideResponse, Journey, PedestrianAccessLeg, Place, Route, RoutePattern, Stop } from "@/lib/api";
 import { canIRide, getRoutePattern, listPlaces, listRoutes, listStops, planJourney, searchPlaces } from "@/lib/api";
 import styles from "./page.module.css";
 
@@ -50,6 +50,29 @@ function formatDistance(distance: number | null) {
     return "Distance unavailable";
   }
   return `Approx. ${Math.round(distance)} m`;
+}
+
+function formatWalkLeg(leg: Journey["legs"][number]) {
+  if (leg.distance_type === "NOT_REQUIRED") return "No separate walk mapped";
+  if (leg.routing_status === "NO_ROUTE") {
+    return `${formatDistance(leg.distance_meters)} straight-line estimate · no pedestrian path mapped`;
+  }
+  if (leg.distance_type === "PEDESTRIAN_NETWORK") {
+    const duration = leg.estimated_duration_seconds === null ? "" : ` · about ${Math.max(1, Math.round(leg.estimated_duration_seconds / 60))} min estimated`;
+    return `${formatDistance(leg.distance_meters)} pedestrian path${duration}`;
+  }
+  if (leg.distance_type === "PEDESTRIAN_NETWORK_WITH_APPROXIMATE_CONNECTORS") {
+    const duration = leg.estimated_duration_seconds === null ? "" : ` · about ${Math.max(1, Math.round(leg.estimated_duration_seconds / 60))} min estimated`;
+    return `${formatDistance(leg.distance_meters)} mapped path with approximate endpoint connectors${duration}`;
+  }
+  return `${formatDistance(leg.distance_meters)} straight-line estimate · no pedestrian route shown`;
+}
+
+function formatAccessLeg(leg: PedestrianAccessLeg) {
+  if (leg.distance_type === "PEDESTRIAN_NETWORK") {
+    return `${formatDistance(leg.distance_meters)} pedestrian path`;
+  }
+  return `${formatDistance(leg.distance_meters)} straight-line estimate · no route shown`;
 }
 
 function trustLabel(state: string | null | undefined) {
@@ -104,8 +127,9 @@ function JourneyCard({ journey, recommended, onSelect }: { journey: Journey; rec
                 <div className={styles.legMarker}>↳</div>
                 <div className={styles.legBody}>
                   <p className={styles.legLabel}>Transfer walk</p>
-                  <p>From {leg.origin.name} to {leg.destination.name}</p>
-                  <small>{formatDistance(leg.distance_meters)} · estimate only</small>
+                  <p>{leg.instruction ?? `From ${leg.origin.name} to ${leg.destination.name}`}</p>
+                  <small>{formatWalkLeg(leg)}</small>
+                  {leg.warnings.map((warning) => <small className={styles.warning} key={warning}>{warning}</small>)}
                 </div>
               </div>
             );
@@ -116,8 +140,9 @@ function JourneyCard({ journey, recommended, onSelect }: { journey: Journey; rec
               <div className={styles.legMarker}>⌁</div>
               <div className={styles.legBody}>
                 <p className={styles.legLabel}>{leg.type === "WALK_ACCESS" ? "Walk to boarding point" : "Walk to destination"}</p>
-                <p>{leg.type === "WALK_ACCESS" ? `Walk to ${leg.destination.name}.` : `Walk from ${leg.origin.name} to ${leg.destination.name}.`}</p>
-                <small>{formatDistance(leg.distance_meters)} · estimate only</small>
+                <p>{leg.instruction ?? `Walk from ${leg.origin.name} to ${leg.destination.name}.`}</p>
+                <small>{formatWalkLeg(leg)}</small>
+                {leg.warnings.map((warning) => <small className={styles.warning} key={warning}>{warning}</small>)}
               </div>
             </div>
           );
@@ -167,6 +192,7 @@ function CanIRideResultCard({ result }: { result: CanIRideResponse["data"] }) {
           <p>{option.boarding_instruction}</p>
           <p><strong>{option.driver_instruction}</strong></p>
           <p><strong>{option.get_off_guidance}</strong></p>
+          {option.pedestrian_access && <small>Access: {formatAccessLeg(option.pedestrian_access.to_boarding)} · Egress: {formatAccessLeg(option.pedestrian_access.from_alighting)}</small>}
           <small>{option.stop_count} stops · route details {option.trust.toLowerCase()}</small>
         </div>
       )}
@@ -403,11 +429,12 @@ export default function Home() {
         <div className={styles.sectionHeading}>
           <div><p className={styles.eyebrow}>Journey map</p><h2 id="map-heading">See the boarding points</h2></div>
         </div>
-        <p className={styles.sectionCopy}>Ride geometry is shown from the reviewed network. Walking distances are estimates only; the map does not pretend to know a pedestrian path.</p>
+        <p className={styles.sectionCopy}>Transit and computed pedestrian paths are shown separately. If a walking path is unavailable, Biyahe labels straight-line estimates and does not draw a street route.</p>
         <div className={styles.mapPanel}>
           <MapView places={places} stops={stops} journey={selectedJourney} selectedPattern={selectedPattern} onStopSelect={setSelectedStop} />
-          <div className={styles.mapLegend}><span><i className={styles.placeDot} /> places</span><span><i className={styles.stopDot} /> stops</span><span><i className={styles.routeDot} /> transit route</span><span><i className={styles.transferDot} /> transfer</span></div>
+          <div className={styles.mapLegend}><span><i className={styles.placeDot} /> places</span><span><i className={styles.stopDot} /> stops</span><span><i className={styles.routeDot} /> transit route</span><span><i className={styles.walkingDot} /> walking path</span><span><i className={styles.transferDot} /> transfer</span></div>
         </div>
+        <p className={styles.mapAttribution}>Computed pedestrian paths follow mapped OpenStreetMap ways (© OpenStreetMap contributors); they do not verify transit boarding or current ground conditions.</p>
         {selectedStop && (
           <div className={styles.infoCard}>
             <div><p className={styles.cardKicker}>STOP DETAIL</p><h3>{selectedStop.name}</h3></div>

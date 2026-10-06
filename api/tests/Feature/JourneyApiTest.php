@@ -35,6 +35,27 @@ class JourneyApiTest extends TestCase
         $this->assertSame('MIXED', $journey['trust']['state']);
         $this->assertSame('UNAVAILABLE', $journey['fare']['status']);
         $this->assertStringContainsString('Tell the driver', $rideLeg['driver_instruction']);
+        $this->assertSame('UNKNOWN', $rideLeg['alighting_stop']['alighting_precision']);
+
+        $accessLeg = $journey['legs'][0];
+        $this->assertSame('STRAIGHT_LINE_ESTIMATE', $accessLeg['distance_type']);
+        $this->assertSame('UNAVAILABLE', $accessLeg['routing_status']);
+        $this->assertNull($accessLeg['geometry']);
+        $this->assertNull($accessLeg['estimated_duration_seconds']);
+        $this->assertStringContainsString('Straight-line estimate', $accessLeg['instruction']);
+        $this->assertSame('straight_line_estimate', $response->json('meta.walking_distance_type'));
+    }
+
+    public function test_can_i_ride_exposes_access_estimates_without_changing_transport_decision(): void
+    {
+        $origin = Place::where('slug', 'lahug-market')->firstOrFail();
+        $destination = Place::where('slug', 'carbon-market-unit-3')->firstOrFail();
+
+        $response = $this->getJson('/api/v1/can-i-ride?route_code=17B&from_place_id='.$origin->id.'&to_place_id='.$destination->id);
+        $response->assertOk()->assertJsonPath('data.status', 'YES');
+        $this->assertSame('STRAIGHT_LINE_ESTIMATE', $response->json('data.option.pedestrian_access.to_boarding.distance_type'));
+        $this->assertNull($response->json('data.option.pedestrian_access.to_boarding.geometry'));
+        $this->assertSame('UNKNOWN', $response->json('data.option.alighting_stop.alighting_precision'));
     }
 
     public function test_reverse_journey_uses_the_opposite_pattern_not_a_backwards_ride(): void

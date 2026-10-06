@@ -37,7 +37,7 @@ class BiyaheDoctor extends Command
     public function handle(): int
     {
         $this->report = new DoctorReport;
-        $this->info('BIYAHE DOCTOR V8');
+        $this->info('BIYAHE DOCTOR V9');
         $this->check('application', 'PASS', 'Laravel booted and configuration loaded.');
 
         $databaseReady = $this->checkDatabase();
@@ -70,6 +70,7 @@ class BiyaheDoctor extends Command
             $this->runSpatialChecks($postgisReady);
             $this->runRoutingChecks($postgisReady);
             $this->runFieldSurveyChecks($postgisReady);
+            $this->runPedestrianChecks($postgisReady);
         } catch (Throwable $exception) {
             report($exception);
             $this->check('doctor execution', 'FAIL', 'A Doctor query failed: '.$exception->getMessage());
@@ -1142,6 +1143,133 @@ class BiyaheDoctor extends Command
         } else {
             $this->check('field spatial locations', 'BLOCKED', 'PostGIS is required to validate imported survey points and GPS traces.');
         }
+    }
+
+    private function runPedestrianChecks(bool $postgisReady): void
+    {
+        if (config('biyahe.pedestrian.provider') !== 'local_osm_graph') {
+            $this->check('pedestrian provider config', 'FAIL', 'Only the replaceable local OSM graph provider is supported by this build.');
+        } else {
+            $this->check('pedestrian provider config', 'PASS', 'Local OSM graph routing is selected; no paid routing API is required.');
+        }
+
+        $pedestrianConfig = (array) config('biyahe.pedestrian', []);
+        $numericRanges = [
+            'walking_speed_meters_per_second' => [0.1, 5],
+            'maximum_access_walk_meters' => [1, 10000],
+            'maximum_egress_walk_meters' => [1, 10000],
+            'maximum_transfer_walk_meters' => [1, 2000],
+            'maximum_snap_distance_meters' => [1, 100],
+            'maximum_snap_candidates' => [1, 10],
+            'maximum_edges_per_route' => [1, 100000],
+            'maximum_visited_nodes_per_route' => [1, 50000],
+            'maximum_cached_routes' => [1, 10000],
+            'maximum_input_bytes' => [1024, 100000000],
+            'maximum_input_nodes' => [1, 200000],
+            'maximum_input_ways' => [1, 100000],
+            'maximum_input_edges' => [1, 500000],
+            'search_margin_meters' => [1, 20000],
+        ];
+        $invalidNumericConfig = collect($numericRanges)->filter(function (array $range, string $key) use ($pedestrianConfig): bool {
+            $value = $pedestrianConfig[$key] ?? null;
+
+            return ! is_numeric($value) || ! is_finite((float) $value)
+                || (float) $value < $range[0] || (float) $value > $range[1];
+        })->keys()->all();
+        $bounds = $pedestrianConfig['coverage'] ?? null;
+        $validCoverage = is_array($bounds)
+            && isset($bounds['min_latitude'], $bounds['min_longitude'], $bounds['max_latitude'], $bounds['max_longitude'])
+            && is_numeric($bounds['min_latitude']) && is_numeric($bounds['min_longitude'])
+            && is_numeric($bounds['max_latitude']) && is_numeric($bounds['max_longitude'])
+            && (float) $bounds['min_latitude'] >= 9.5 && (float) $bounds['max_latitude'] <= 11.5
+            && (float) $bounds['min_longitude'] >= 123.5 && (float) $bounds['max_longitude'] <= 124.5
+            && (float) $bounds['min_latitude'] < (float) $bounds['max_latitude']
+            && (float) $bounds['min_longitude'] < (float) $bounds['max_longitude']
+            && (float) $bounds['max_latitude'] - (float) $bounds['min_latitude'] <= 0.25
+            && (float) $bounds['max_longitude'] - (float) $bounds['min_longitude'] <= 0.25;
+        $configurationValid = $invalidNumericConfig === [] && $validCoverage;
+        $this->check('pedestrian routing config', $configurationValid ? 'PASS' : 'FAIL', $configurationValid
+            ? 'Walking bounds, speed, resource limits, and Cebu extract extent are valid.'
+            : 'Invalid walking configuration: '.implode(', ', [...$invalidNumericConfig, ...($validCoverage ? [] : ['coverage'])]).'.');
+
+        $tables = ['pedestrian_network_datasets', 'pedestrian_network_nodes', 'pedestrian_network_edges'];
+        $missing = array_values(array_filter($tables, fn (string $table): bool => ! Schema::hasTable($table)));
+        if ($missing !== []) {
+            $this->check('pedestrian graph schema', 'WARN', 'Run migrations to enable the bounded graph: '.implode(', ', $missing).'. Walking stays a labelled straight-line estimate until graph data is installed.');
+
+            return;
+        }
+
+        $this->check('pedestrian graph schema', 'PASS', 'Pedestrian graph tables are available.');
+        $datasets = DB::table('pedestrian_network_datasets');
+        $badProvenance = (clone $datasets)
+            ->where(fn (Builder $query) => $query->where('source', '!=', 'OPENSTREETMAP')
+                ->orWhere('license', '!=', 'ODbL-1.0')
+                ->orWhereNull('attribution')->orWhere('attribution', '')
+                ->orWhereNull('source_url')->orWhere('source_url', '')
+                ->orWhereNull('content_hash')->orWhere('content_hash', '')
+                ->orWhereNull('imported_at'))
+            ->count();
+        $this->checkCount('pedestrian source provenance', $badProvenance, 'pedestrian datasets lack OSM source, ODbL attribution, checksum, or import metadata.');
+        $activeDatasets = (clone $datasets)->where('is_active', true)->count();
+        $this->checkCount('active pedestrian datasets', max(0, $activeDatasets - 1), 'more than one pedestrian graph is active.');
+        if ($activeDatasets === 0) {
+            $this->check('pedestrian graph coverage', 'WARN', 'No Cebu pedestrian extract is installed; route legs honestly fall back to labelled straight-line estimates.');
+        } else {
+            $this->check('pedestrian graph coverage', 'PASS', 'One bounded pedestrian extract is active; OSM coverage and ground conditions may still be incomplete.');
+        }
+
+        $bounds = config('biyahe.pedestrian.coverage');
+        $badBounds = (clone $datasets)->where(fn (Builder $query) => $query
+            ->whereColumn('min_latitude', '>', 'max_latitude')
+            ->orWhereColumn('min_longitude', '>', 'max_longitude')
+            ->orWhere('min_latitude', '<', (float) $bounds['min_latitude'])
+            ->orWhere('max_latitude', '>', (float) $bounds['max_latitude'])
+            ->orWhere('min_longitude', '<', (float) $bounds['min_longitude'])
+            ->orWhere('max_longitude', '>', (float) $bounds['max_longitude']))->count();
+        $this->checkCount('pedestrian graph scope', $badBounds, 'pedestrian datasets exceed the configured Cebu-only bounds or have inverted extents.');
+
+        $badNodes = DB::table('pedestrian_network_nodes')
+            ->where(fn (Builder $query) => $query
+                ->where('latitude', '<', -90)->orWhere('latitude', '>', 90)
+                ->orWhere('longitude', '<', -180)->orWhere('longitude', '>', 180)
+                ->orWhereNull('latitude')->orWhereNull('longitude'))
+            ->count();
+        $this->checkCount('pedestrian node coordinates', $badNodes, 'graph nodes have invalid WGS84 coordinates.');
+
+        $badEdges = DB::table('pedestrian_network_edges as edges')
+            ->leftJoin('pedestrian_network_nodes as from_nodes', 'from_nodes.id', '=', 'edges.from_node_id')
+            ->leftJoin('pedestrian_network_nodes as to_nodes', 'to_nodes.id', '=', 'edges.to_node_id')
+            ->where(fn (Builder $query) => $query
+                ->whereNull('from_nodes.id')->orWhereNull('to_nodes.id')
+                ->orWhereColumn('from_nodes.dataset_id', '!=', 'edges.dataset_id')
+                ->orWhereColumn('to_nodes.dataset_id', '!=', 'edges.dataset_id')
+                ->orWhereColumn('edges.from_node_id', '=', 'edges.to_node_id')
+                ->orWhere('edges.length_meters', '<=', 0)->orWhere('edges.length_meters', '>', 10000)
+                ->orWhereNull('edges.geometry')->orWhereNull('edges.stable_id')->orWhere('edges.stable_id', ''))
+            ->count();
+        $duplicateSegments = DB::table('pedestrian_network_edges')
+            ->select('dataset_id', 'osm_way_id', 'segment_index')->groupBy('dataset_id', 'osm_way_id', 'segment_index')
+            ->havingRaw('COUNT(*) > 1')->count();
+        $this->checkCount('pedestrian edge integrity', $badEdges + $duplicateSegments, 'graph edges have broken endpoints, invalid lengths, absent geometry, or duplicate segment identifiers.');
+
+        if ($postgisReady) {
+            $badSpatialEdges = DB::table('pedestrian_network_edges')->whereRaw("ST_SRID(geometry) <> 4326 OR ST_GeometryType(geometry) <> 'ST_LineString' OR ST_IsEmpty(geometry) OR NOT ST_IsValid(geometry)")->count();
+            $this->checkCount('pedestrian geometry integrity', $badSpatialEdges, 'pedestrian edges have invalid geometry or SRID.');
+            $indexes = collect(DB::select("SELECT indexname FROM pg_indexes WHERE schemaname = current_schema() AND indexname IN ('pedestrian_nodes_location_gix', 'pedestrian_edges_geometry_gix')"))->pluck('indexname')->all();
+            $this->checkCount('pedestrian spatial indexes', count(array_diff(['pedestrian_nodes_location_gix', 'pedestrian_edges_geometry_gix'], $indexes)), 'pedestrian PostGIS GiST indexes are missing.');
+        } else {
+            $this->check('pedestrian geometry integrity', 'BLOCKED', 'PostGIS is required to validate pedestrian geometry and spatial indexes.');
+        }
+
+        $trustColumns = collect(Schema::getColumnListing('pedestrian_network_datasets'))
+            ->merge(Schema::getColumnListing('pedestrian_network_nodes'))
+            ->merge(Schema::getColumnListing('pedestrian_network_edges'))
+            ->intersect(['verification_state', 'trust_state', 'boarding_precision', 'field_observation_id'])
+            ->all();
+        $this->check('pedestrian transport-trust isolation', $trustColumns === [] ? 'PASS' : 'FAIL', $trustColumns === []
+            ? 'Pedestrian connectivity is stored separately and cannot promote transport verification.'
+            : 'Pedestrian graph contains transport trust/evidence fields: '.implode(', ', $trustColumns).'.');
     }
 
     private function checkCount(string $label, int $count, string $failureMessage): void

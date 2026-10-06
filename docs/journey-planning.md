@@ -27,9 +27,10 @@ is stale, draft, or otherwise not eligible for guidance.
 ## Candidate generation
 
 1. The API resolves active, non-demo canonical places.
-2. PostGIS finds bounded nearby boarding and alighting stops using geography
-   `ST_DWithin` and `ST_Distance`. SQLite tests use the same WGS 84 haversine
-   fallback but do not represent production spatial behavior.
+2. PostGIS finds bounded nearby boarding and alighting candidates using
+   geography `ST_DWithin` and `ST_Distance`. These are proximity/discovery
+   operations only, not pedestrian routes. SQLite tests use the same WGS 84
+   haversine fallback but do not represent production spatial behavior.
 3. Direct candidates require one active, non-demo route pattern that serves a
    boarding stop before an alighting stop in the stored sequence. Boarding and
    alighting permissions are enforced, so an opposite-direction pattern cannot
@@ -69,12 +70,30 @@ it is not a general graph engine.
 
 ## Walking and geometry
 
-Walking legs are separate from ride legs and expose meters as a
-`straight_line_estimate`. They do not contain a pedestrian polyline or turn
-instruction. The interface shows the access, transfer, and egress points but
-does not draw a made-up street path. A future pedestrian routing provider can
-replace the distance-estimate adapter without changing the journey leg
-contract.
+Walking legs remain distinct from ride legs. If a bounded local OSM
+pedestrian graph is installed, the planner computes access, egress, and
+explicit-transfer paths over walkable edges and returns separate GeoJSON
+`LineString` geometry, network distance, a configurable walking-time estimate,
+provider/source, status, endpoint precision, and limitations. MapLibre renders
+these paths as dashed walking lines, distinct from transit geometry. The local
+shortest-path search, import bounds, licensing, and rebuild steps are in
+`docs/pedestrian-routing.md`.
+
+When no graph is installed, outside its bounds, or a route cannot be computed,
+the API may return a `STRAIGHT_LINE_ESTIMATE` for rough discovery/comparison.
+It has no walking geometry or walking-time estimate and the UI labels it as a
+straight-line estimate, never as a walkable route. `NO_ROUTE` means that the
+current mapped graph has no connected path; because OSM coverage can be
+incomplete, it is not proof that no legal path exists. `NO_WALKABLE_ACCESS`
+responses state this limitation. Candidates exceeding the configured
+network-walk bound are not presented as feasible.
+
+Walking distance is kept separate from transport evidence and journey trust.
+An OSM path cannot verify a route, boarding practice, stop sequence, or
+transfer. A transfer relationship remains subject to transport evidence even
+when a pedestrian connection is mapped. Unknown or area-level boarding
+precision remains visible; reaching a mapped coordinate never implies a
+verified curb, bay, or drop-off side.
 
 Ride geometry is the reviewed pattern `MultiLineString` in SRID 4326. Map
 overlays show route geometry and stop points distinctly; origin, destination,
@@ -90,15 +109,19 @@ route identity are reviewed, while exact passenger stop service associations
 still need stronger evidence.
 
 Ride legs expose the boarding note, nearby landmark when recorded, boarding
-and alighting association trust, route direction, stop sequences, and a
-plain-language instruction to wait near the mapped point. Generic OSM platform
-members are explicitly described as unconfirmed curbside boarding leads.
+and alighting association trust, route direction, stop sequences, and
+precision-aware instructions. Exact boarding is claimed only for a verified
+exact point; area-level, approximate, and unknown locations are described at
+their actual precision. Alighting guidance says “near” and does not claim a
+verified curb or street side. Generic OSM platform members remain unconfirmed
+curbside boarding leads.
 
 The rank policy is lexicographic and deterministic:
 
 1. verified data before mixed data before unverified data;
 2. fewer transit transfers;
-3. lower total walking estimate;
+3. lower total walking burden, preferring computed network distance when
+   available and explicitly labelled straight-line estimates otherwise;
 4. fewer ride stops;
 5. stable journey identifier as a final tie-breaker.
 
@@ -152,8 +175,7 @@ source, ordered pattern-stop evidence, and explicit verification state. Use
 the dataset importer rather than editing migrations. Use UNVERIFIED when a
 source proves a route exists but not the exact ordered passenger service.
 
-Future batches may add better transfer evidence, schedules, accessibility
-rules, fare products, and a real pedestrian router. They must not silently
-turn straight-line distances into walking directions, promote an incomplete
-pattern to VERIFIED, or expand this bounded search into unrestricted road or
-multi-transfer navigation.
+Future work may add better transfer evidence, schedules, accessibility rules,
+and fare products. It must not silently turn straight-line distances into
+walking directions, promote an incomplete pattern to VERIFIED, or expand this
+bounded search into unrestricted road or multi-transfer navigation.

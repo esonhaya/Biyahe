@@ -38,6 +38,17 @@ class BiyaheDoctorTest extends TestCase
             ->assertExitCode(2);
     }
 
+    public function test_doctor_fails_for_invalid_pedestrian_routing_bounds(): void
+    {
+        $this->seed();
+        config(['biyahe.pedestrian.maximum_transfer_walk_meters' => 0]);
+
+        $this->artisan('biyahe:doctor')
+            ->expectsOutputToContain('pedestrian routing config')
+            ->expectsOutputToContain('FAIL')
+            ->assertExitCode(1);
+    }
+
     public function test_doctor_fails_when_a_routing_pattern_loses_usable_permissions(): void
     {
         $this->seed();

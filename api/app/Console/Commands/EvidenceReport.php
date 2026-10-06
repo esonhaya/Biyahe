@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Services\Evidence\EvidenceCoverageReport;
 use App\Services\Evidence\EvidenceJourneyPlanCache;
 use App\Services\Evidence\EvidencePriorityEngine;
+use App\Services\Routing\PedestrianRouter;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 
@@ -18,6 +19,7 @@ final class EvidenceReport extends Command
         EvidenceCoverageReport $coverage,
         EvidencePriorityEngine $priority,
         EvidenceJourneyPlanCache $planCache,
+        PedestrianRouter $pedestrianRouter,
     ): int {
         $connection = DB::connection();
         $wasLoggingQueries = $connection->logging();
@@ -50,6 +52,7 @@ final class EvidenceReport extends Command
             'database_queries' => $databaseQueries,
             ...$planCache->metrics(),
         ];
+        $report['pedestrian_routing'] = $pedestrianRouter->metrics();
 
         if ($this->option('json')) {
             $this->line((string) json_encode($report, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
@@ -97,6 +100,10 @@ final class EvidenceReport extends Command
         $this->line('planner_runs: '.$report['performance']['planner_runs']);
         $this->line('plan_cache_hits: '.$report['performance']['result_cache_hits']);
         $this->line('cached_pattern_models: '.$report['performance']['cached_patterns']);
+        $this->line('pedestrian_candidates: '.$report['pedestrian_routing']['candidates']);
+        $this->line('pedestrian_routes_computed: '.$report['pedestrian_routing']['routes_computed']);
+        $this->line('pedestrian_cache_hits: '.$report['pedestrian_routing']['cache_hits']);
+        $this->line('pedestrian_routing_milliseconds: '.$report['pedestrian_routing']['routing_time_milliseconds']);
         $this->line('priority_items: '.count($report['priority']['items']));
         foreach ($report['priority']['items'] as $item) {
             $this->line(sprintf(

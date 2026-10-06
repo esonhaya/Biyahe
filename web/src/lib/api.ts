@@ -113,6 +113,8 @@ export type JourneyPoint = {
   boarding_notes?: string | null;
   boarding_side?: string | null;
   direction_note?: string | null;
+  boarding_precision?: "EXACT_BOARDING_POINT" | "BOARDING_AREA" | "APPROXIMATE_LOCATION" | "UNKNOWN" | null;
+  alighting_precision?: "UNKNOWN";
   nearby_place?: { id: number; name: string } | null;
   verification: { state: VerificationState; is_demo: boolean; trusted: boolean };
 };
@@ -123,6 +125,13 @@ export type JourneyLeg = {
   destination: JourneyPoint;
   distance_meters: number | null;
   distance_is_estimate: boolean;
+  distance_type: "PEDESTRIAN_NETWORK" | "PEDESTRIAN_NETWORK_WITH_APPROXIMATE_CONNECTORS" | "STRAIGHT_LINE_ESTIMATE" | "NOT_REQUIRED" | "UNAVAILABLE" | null;
+  routing_status: string | null;
+  routing_source: string | null;
+  estimated_duration_seconds: number | null;
+  origin_precision: string | null;
+  destination_precision: string | null;
+  warnings: string[];
   instruction: string | null;
   route: { id: number; code: string; name: string; vehicle_type: { code: string; name: string } | null; verification: JourneyPoint["verification"] } | null;
   pattern: { id: number; name: string; direction: string; verification: JourneyPoint["verification"] } | null;
@@ -138,7 +147,7 @@ export type JourneyLeg = {
   get_off_guidance: string | null;
   trust: JourneyTrustState | null;
   provenance: Provenance[];
-  geometry: RoutePattern["geometry"];
+  geometry: RoutePattern["geometry"] | { type: "LineString"; coordinates: number[][] };
 };
 
 export type Journey = {
@@ -162,7 +171,16 @@ export type JourneyResponse = {
     result_count: number;
     max_transfers: number;
     distance_unit: "meters";
-    walking_distance_type: "straight_line_estimate";
+    walking_distance_type: "straight_line_estimate" | "pedestrian_network" | "per_leg";
+    pedestrian_routing: {
+      candidates: number;
+      routes_computed: number;
+      routes_available: number;
+      cache_hits: number;
+      no_route_results: number;
+      routing_time_milliseconds: number;
+      provider_status: string;
+    };
     boarding_candidates: number;
     alighting_candidates: number;
     no_route: { code: string; message: string } | null;
@@ -185,6 +203,21 @@ export type CanIRideOption = {
   egress_distance_meters: number;
   trust: JourneyTrustState;
   provenance: Provenance[];
+  pedestrian_access: {
+    to_boarding: PedestrianAccessLeg;
+    from_alighting: PedestrianAccessLeg;
+  };
+};
+
+export type PedestrianAccessLeg = {
+  status: string;
+  distance_meters: number | null;
+  distance_type: "PEDESTRIAN_NETWORK" | "STRAIGHT_LINE_ESTIMATE";
+  estimated_duration_seconds: number | null;
+  geometry: { type: "LineString"; coordinates: number[][] } | null;
+  source: string | null;
+  precision: JourneyPoint["boarding_precision"] | "NOT_APPLICABLE";
+  warnings: string[];
 };
 
 export type CanIRideResponse = {
@@ -203,6 +236,7 @@ export type CanIRideResponse = {
   meta: {
     distance_unit: "meters";
     walking_distance_type: "straight_line_estimate";
+    pedestrian_leg_distance_type: "per_leg";
     access_radius_meters: number;
   };
 };

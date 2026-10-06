@@ -68,13 +68,21 @@ function journeyPointFeatures(journey: Journey) {
 
 function journeyRouteFeatures(journey: Journey) {
   return journey.legs
-    .map((leg, index) => leg.type === "RIDE" && leg.geometry ? {
+    .map((leg, index) => leg.geometry ? {
       type: "Feature" as const,
-      id: `ride-${index}`,
-      properties: { route: leg.route?.code ?? "route" },
+      id: `leg-${index}`,
+      properties: { kind: leg.type, route: leg.route?.code ?? "route" },
       geometry: leg.geometry,
     } : null)
     .filter((feature): feature is NonNullable<typeof feature> => feature !== null);
+}
+
+function geometryPositions(coordinates: unknown): [number, number][] {
+  if (!Array.isArray(coordinates)) return [];
+  if (coordinates.length >= 2 && typeof coordinates[0] === "number" && typeof coordinates[1] === "number") {
+    return [[coordinates[0], coordinates[1]]];
+  }
+  return coordinates.flatMap(geometryPositions);
 }
 
 function journeyBounds(journey: Journey): maplibregl.LngLatBounds | null {
@@ -83,11 +91,7 @@ function journeyBounds(journey: Journey): maplibregl.LngLatBounds | null {
   points.forEach((point) => bounds.extend(point.geometry.coordinates as [number, number]));
 
   journeyRouteFeatures(journey).forEach((feature) => {
-    feature.geometry.coordinates.flat().forEach((coordinate) => {
-      if (Array.isArray(coordinate) && coordinate.length >= 2 && typeof coordinate[0] === "number" && typeof coordinate[1] === "number") {
-        bounds.extend([coordinate[0], coordinate[1]]);
-      }
-    });
+    geometryPositions(feature.geometry.coordinates).forEach((coordinate) => bounds.extend(coordinate));
   });
 
   return bounds.isEmpty() ? null : bounds;
@@ -197,10 +201,23 @@ export default function MapView({ places, stops, journey, selectedPattern, onSto
       });
       map.addSource("journey-routes", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
       map.addLayer({
-        id: "journey-route-lines",
+        id: "journey-transit-lines",
         type: "line",
         source: "journey-routes",
+        filter: ["==", ["get", "kind"], "RIDE"],
         paint: { "line-color": "#d3624d", "line-width": 5, "line-opacity": 0.88 },
+      });
+      map.addLayer({
+        id: "journey-walking-lines",
+        type: "line",
+        source: "journey-routes",
+        filter: ["!=", ["get", "kind"], "RIDE"],
+        paint: {
+          "line-color": ["match", ["get", "kind"], "TRANSFER_WALK", "#7b61a8", "#087f8c"],
+          "line-width": 4,
+          "line-opacity": 0.92,
+          "line-dasharray": [2, 1.5],
+        },
       });
       setMapReady(true);
     });

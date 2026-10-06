@@ -4,6 +4,8 @@ namespace App\Services\Routing;
 
 use App\Enums\JourneyLegType;
 use App\Enums\JourneyTrustState;
+use App\Enums\PedestrianRoutePurpose;
+use App\Enums\PedestrianRouteStatus;
 use App\Enums\VerificationState;
 use App\Models\Place;
 use App\Models\ProvenanceSource;
@@ -25,6 +27,7 @@ final class JourneyPlanner
     public function __construct(
         private readonly NearbyStopFinder $nearbyStopFinder,
         private readonly JourneyRanker $journeyRanker,
+        private readonly PedestrianRouter $pedestrianRouter,
     ) {}
 
     public function plan(
@@ -62,6 +65,7 @@ final class JourneyPlanner
                 noRouteCode: 'NO_NEARBY_BOARDING',
                 noRouteMessage: 'No supported boarding point is currently mapped near the starting place.',
                 alightingCandidates: $alightingStops->count(),
+                pedestrianMetrics: $this->pedestrianRouter->metrics(),
             );
         }
 
@@ -71,6 +75,7 @@ final class JourneyPlanner
                 noRouteCode: 'NO_NEARBY_ALIGHTING',
                 noRouteMessage: 'No supported alighting point is currently mapped near the destination.',
                 boardingCandidates: $boardingStops->count(),
+                pedestrianMetrics: $this->pedestrianRouter->metrics(),
             );
         }
 
@@ -90,6 +95,7 @@ final class JourneyPlanner
 
         $journeys = $this->deduplicate($journeys);
         if ($journeys === []) {
+            $pedestrianMetrics = $this->pedestrianRouter->metrics();
             $hasExcludedData = $this->hasExcludedRoutingData(
                 $origin->city_id,
                 $boardingStops->modelKeys(),
@@ -98,12 +104,17 @@ final class JourneyPlanner
 
             return new JourneySearchResult(
                 journeys: [],
-                noRouteCode: $hasExcludedData ? 'ROUTING_DATA_NOT_READY' : 'NO_KNOWN_JOURNEY',
-                noRouteMessage: $hasExcludedData
+                noRouteCode: ($pedestrianMetrics['no_route_results'] ?? 0) > 0
+                    ? 'NO_WALKABLE_ACCESS'
+                    : ($hasExcludedData ? 'ROUTING_DATA_NOT_READY' : 'NO_KNOWN_JOURNEY'),
+                noRouteMessage: ($pedestrianMetrics['no_route_results'] ?? 0) > 0
+                    ? 'No mapped pedestrian path was found within the configured distance. OpenStreetMap coverage may be incomplete; this is not proof that no walkable path exists.'
+                    : ($hasExcludedData
                     ? 'Biyahe knows transport data near these places, but its service details are not ready to guide this journey yet.'
-                    : 'Biyahe does not currently know a supported journey within the configured transfer limit. Coverage is still incomplete.',
+                    : 'Biyahe does not currently know a supported journey within the configured transfer limit. Coverage is still incomplete.'),
                 boardingCandidates: $boardingStops->count(),
                 alightingCandidates: $alightingStops->count(),
+                pedestrianMetrics: $pedestrianMetrics,
             );
         }
 
@@ -111,6 +122,7 @@ final class JourneyPlanner
             journeys: $this->journeyRanker->rank($journeys),
             boardingCandidates: $boardingStops->count(),
             alightingCandidates: $alightingStops->count(),
+            pedestrianMetrics: $this->pedestrianRouter->metrics(),
         );
     }
 
@@ -154,7 +166,7 @@ final class JourneyPlanner
                         continue;
                     }
 
-                    $journeys[] = $this->buildJourney(
+                    $journey = $this->buildJourney(
                         id: sprintf('direct-%d-%d-%d', $pattern->getKey(), $boardingStop->getKey(), $alightingStop->getKey()),
                         origin: $origin,
                         destination: $destination,
@@ -191,6 +203,9 @@ final class JourneyPlanner
                         ],
                         context: $context,
                     );
+                    if ($journey !== null) {
+                        $journeys[] = $journey;
+                    }
                     if (count($journeys) >= $this->generatedJourneyLimit()) {
                         return $journeys;
                     }
@@ -344,6 +359,21 @@ final class JourneyPlanner
                                 if ($transferDistance > $maxTransferRadiusMeters) {
                                     continue;
                                 }
+                                $pedestrianRoute = $this->routeBetween(
+                                    $firstAlightingStop,
+                                    $secondBoardingStop,
+                                    PedestrianRoutePurpose::TRANSFER_WALK,
+                                    min($maxTransferRadiusMeters, (float) config('biyahe.pedestrian.maximum_transfer_walk_meters', 600)),
+                                );
+                                if ($pedestrianRoute?->status === PedestrianRouteStatus::DISTANCE_LIMIT) {
+                                    continue;
+                                }
+                                if ($pedestrianRoute?->status->isAvailable()) {
+                                    $transferDistance = $pedestrianRoute->totalDistanceMeters() ?? $transferDistance;
+                                    if ($transferDistance > $maxTransferRadiusMeters) {
+                                        continue;
+                                    }
+                                }
                             }
 
                             foreach ($secondPattern->patternStops as $secondAlightingPatternStop) {
@@ -368,7 +398,10 @@ final class JourneyPlanner
                                     $secondBoardingPatternStop,
                                     $context,
                                 );
-                                $journeys[] = $this->buildJourney(
+                                if ($transferLeg === null) {
+                                    continue;
+                                }
+                                $journey = $this->buildJourney(
                                     id: sprintf(
                                         'transfer-%d-%d-%d-%d-%d',
                                         $firstPattern->getKey(),
@@ -427,6 +460,9 @@ final class JourneyPlanner
                                     ],
                                     context: $context,
                                 );
+                                if ($journey !== null) {
+                                    $journeys[] = $journey;
+                                }
                                 if (count($journeys) >= $this->generatedJourneyLimit()) {
                                     return $journeys;
                                 }
@@ -497,7 +533,7 @@ final class JourneyPlanner
                     $state = $this->makeRoutingState(
                         rides: [$this->rideDefinition($pattern, $boardingPatternStop, $alightingPatternStop, $boardingStop, $alightingStop)],
                         transfers: [],
-                        walkingDistance: $this->distanceFromPlace($origin, $boardingStop),
+                        walkingDistance: $this->walkingDistanceFor($origin, $boardingStop),
                         rideStopCount: $alightingPatternStop->sequence - $boardingPatternStop->sequence,
                         context: $context,
                     );
@@ -519,7 +555,10 @@ final class JourneyPlanner
             if ($state['transfer_count'] >= 2) {
                 $destinationStop = $alightingById->get($lastRide['alighting_stop']->getKey());
                 if ($destinationStop instanceof Stop) {
-                    $journeys[] = $this->buildJourneyFromRoutingState($state, $origin, $destination, $destinationStop, $context);
+                    $journey = $this->buildJourneyFromRoutingState($state, $origin, $destination, $destinationStop, $context);
+                    if ($journey !== null) {
+                        $journeys[] = $journey;
+                    }
                     if (count($journeys) >= $this->generatedJourneyLimit()) {
                         break;
                     }
@@ -826,6 +865,21 @@ final class JourneyPlanner
         if (! is_finite($distance) || $distance > $maxTransferRadiusMeters) {
             return null;
         }
+        $pedestrianRoute = $this->routeBetween(
+            $fromStop,
+            $toStop,
+            PedestrianRoutePurpose::TRANSFER_WALK,
+            min($maxTransferRadiusMeters, (float) config('biyahe.pedestrian.maximum_transfer_walk_meters', 600)),
+        );
+        if ($pedestrianRoute?->status === PedestrianRouteStatus::DISTANCE_LIMIT) {
+            return null;
+        }
+        if ($pedestrianRoute?->status->isAvailable()) {
+            $distance = $pedestrianRoute->totalDistanceMeters() ?? $distance;
+            if ($distance > $maxTransferRadiusMeters) {
+                return null;
+            }
+        }
 
         return [
             'from_stop' => $fromStop,
@@ -880,7 +934,7 @@ final class JourneyPlanner
         Place $destination,
         Stop $destinationStop,
         ?JourneyPlanningContext $context,
-    ): Journey {
+    ): ?Journey {
         $firstRide = $state['rides'][0];
         $legs = [
             $this->buildWalkLeg(
@@ -912,7 +966,7 @@ final class JourneyPlanner
 
             if (! $isLastRide) {
                 $transfer = $state['transfers'][$index];
-                $legs[] = $this->buildTransferLeg(
+                $transferLeg = $this->buildTransferLeg(
                     $transfer['from_stop'],
                     $transfer['to_stop'],
                     $transfer['distance'],
@@ -921,6 +975,10 @@ final class JourneyPlanner
                     $transfer['to_association'],
                     $context,
                 );
+                if ($transferLeg === null) {
+                    return null;
+                }
+                $legs[] = $transferLeg;
                 $models = array_merge($models, [
                     $transfer['relationship'],
                     $transfer['from_association'],
@@ -962,16 +1020,32 @@ final class JourneyPlanner
         ?RoutePatternStop $fromAssociation = null,
         ?RoutePatternStop $toAssociation = null,
         ?JourneyPlanningContext $context = null,
-    ): JourneyLeg {
+    ): ?JourneyLeg {
         $models = [$fromStop, $toStop, $relationship, $fromAssociation, $toAssociation];
         $trustState = $this->trustState(
             $models,
             [$context?->effectiveFactState($toStop, 'boarding') ?? Trust::effectiveFactState($toStop, 'boarding')],
             $context,
         );
+        $pedestrianRoute = $fromStop->getKey() === $toStop->getKey() ? null : $this->routeBetween(
+            $fromStop,
+            $toStop,
+            PedestrianRoutePurpose::TRANSFER_WALK,
+            (float) config('biyahe.pedestrian.maximum_transfer_walk_meters', 600),
+        );
+        if ($pedestrianRoute?->status === PedestrianRouteStatus::DISTANCE_LIMIT) {
+            return null;
+        }
+        if ($pedestrianRoute?->status->isAvailable()) {
+            $distanceMeters = $pedestrianRoute->totalDistanceMeters() ?? $distanceMeters;
+        }
         $instruction = $distanceMeters <= 0.01
             ? 'Transfer at '.$fromStop->name.'. No separate walking distance is mapped; confirm the waiting side locally.'
-            : 'Walk between stops; this is a straight-line distance estimate, not a pedestrian route.';
+            : ($pedestrianRoute?->status->isAvailable()
+                ? 'Walk between the mapped transfer locations using the displayed pedestrian path. Transfer usability has not been field-verified.'
+            : ($pedestrianRoute?->status === PedestrianRouteStatus::NO_ROUTE
+                    ? 'No pedestrian path is mapped between these locations. Coverage may be incomplete; the displayed straight-line distance is not a walking route. Transfer usability remains governed by transport evidence.'
+                    : 'Walk between the mapped stops; the distance is a straight-line estimate, not a pedestrian route. Transfer usability remains governed by transport evidence.'));
         if ($relationship?->landmark !== null && trim($relationship->landmark) !== '') {
             $instruction = 'Transfer near '.$relationship->landmark.'. '.$instruction;
         }
@@ -983,7 +1057,7 @@ final class JourneyPlanner
             type: JourneyLegType::TRANSFER_WALK,
             origin: $this->stopSummary($fromStop),
             destination: $this->stopSummary($toStop),
-            distanceMeters: $distanceMeters,
+            distanceMeters: $pedestrianRoute?->status->isAvailable() ? $distanceMeters : ($distanceMeters <= 0.01 ? 0.0 : $distanceMeters),
             trust: $trustState,
             provenance: $this->provenanceFor($models),
             evidence: [
@@ -1008,6 +1082,14 @@ final class JourneyPlanner
                 'to_association' => $toAssociation === null ? null : $this->patternStopEvidence($toAssociation),
             ],
             instruction: $instruction,
+            distanceType: $pedestrianRoute?->status->isAvailable() ? 'PEDESTRIAN_NETWORK' : ($distanceMeters <= 0.01 ? 'NOT_REQUIRED' : 'STRAIGHT_LINE_ESTIMATE'),
+            routingStatus: $pedestrianRoute?->status->value ?? ($distanceMeters <= 0.01 ? 'NOT_REQUIRED' : 'UNAVAILABLE'),
+            routingSource: $pedestrianRoute?->source,
+            estimatedDurationSeconds: $pedestrianRoute?->estimatedDurationSeconds,
+            originPrecision: 'UNKNOWN',
+            destinationPrecision: $this->boardingPrecision($toStop),
+            geometry: $pedestrianRoute?->geometry,
+            warnings: $pedestrianRoute?->warnings ?? [],
         );
     }
 
@@ -1019,13 +1101,46 @@ final class JourneyPlanner
     ): JourneyLeg {
         $from = $origin instanceof Place ? $this->placeSummary($origin) : $this->stopSummary($origin);
         $to = $destination instanceof Place ? $this->placeSummary($destination) : $this->stopSummary($destination);
+        $purpose = match ($type) {
+            JourneyLegType::WALK_ACCESS => PedestrianRoutePurpose::ACCESS_WALK,
+            JourneyLegType::WALK_EGRESS => PedestrianRoutePurpose::EGRESS_WALK,
+            default => PedestrianRoutePurpose::TRANSFER_WALK,
+        };
+        $maximumDistance = match ($purpose) {
+            PedestrianRoutePurpose::ACCESS_WALK => (float) config('biyahe.pedestrian.maximum_access_walk_meters', 2000),
+            PedestrianRoutePurpose::EGRESS_WALK => (float) config('biyahe.pedestrian.maximum_egress_walk_meters', 2000),
+            PedestrianRoutePurpose::TRANSFER_WALK => (float) config('biyahe.pedestrian.maximum_transfer_walk_meters', 600),
+        };
+        $pedestrianRoute = $this->routeBetween($origin, $destination, $purpose, $maximumDistance);
+        $networkAvailable = $pedestrianRoute?->status->isAvailable() ?? false;
+        $noRoute = in_array($pedestrianRoute?->status, [PedestrianRouteStatus::NO_ROUTE, PedestrianRouteStatus::DISTANCE_LIMIT], true);
+        $distance = $networkAvailable ? ($pedestrianRoute->totalDistanceMeters() ?? $distanceMeters) : $distanceMeters;
+        $distanceType = $networkAvailable
+            ? ($pedestrianRoute->status === PedestrianRouteStatus::PARTIAL ? 'PEDESTRIAN_NETWORK_WITH_APPROXIMATE_CONNECTORS' : 'PEDESTRIAN_NETWORK')
+            : 'STRAIGHT_LINE_ESTIMATE';
+        $instruction = $this->walkInstruction($type, $origin, $destination, $distance, $networkAvailable, $noRoute);
+        $warnings = $pedestrianRoute?->warnings ?? [];
+        if (! $networkAvailable && ! $noRoute) {
+            $warnings[] = 'Straight-line distance is for rough comparison only; no pedestrian path has been computed.';
+        }
+        if ($noRoute) {
+            $warnings[] = 'No connection was found within the current mapped pedestrian-network coverage and distance limit.';
+        }
 
         return new JourneyLeg(
             type: $type,
             origin: $from,
             destination: $to,
-            distanceMeters: $distanceMeters,
-            instruction: 'Walking distance estimate only; no pedestrian route is shown.',
+            distanceMeters: $distance,
+            instruction: $instruction,
+            distanceType: $distanceType,
+            routingStatus: $pedestrianRoute?->status->value ?? 'UNAVAILABLE',
+            routingSource: $pedestrianRoute?->source,
+            estimatedDurationSeconds: $networkAvailable ? $pedestrianRoute->estimatedDurationSeconds : null,
+            originPrecision: $origin instanceof Stop ? 'UNKNOWN' : 'NOT_APPLICABLE',
+            destinationPrecision: $destination instanceof Stop ? $this->boardingPrecision($destination) : 'NOT_APPLICABLE',
+            geometry: $networkAvailable ? $pedestrianRoute->geometry : null,
+            warnings: $warnings,
         );
     }
 
@@ -1054,7 +1169,7 @@ final class JourneyPlanner
             ? null
             : 'Tell the driver: "'.$driverCue.'".';
         $boardingInstruction = $this->boardingInstruction($boardingPatternStop->stop);
-        $getOffGuidance = 'Get off near '.$alightingPatternStop->stop->name.'.';
+        $getOffGuidance = 'Get off near '.$alightingPatternStop->stop->name.'. The exact drop-off point or side is not verified.';
         if ($trustState !== JourneyTrustState::VERIFIED) {
             $getOffGuidance .= ' The mapped stop association is still being checked.';
         }
@@ -1102,7 +1217,12 @@ final class JourneyPlanner
         array $legs,
         array $models,
         ?JourneyPlanningContext $context = null,
-    ): Journey {
+    ): ?Journey {
+        foreach ($legs as $leg) {
+            if ($leg->routingStatus === PedestrianRouteStatus::DISTANCE_LIMIT->value) {
+                return null;
+            }
+        }
         $legTrust = array_values(array_filter(array_map(
             static fn (JourneyLeg $leg): ?string => in_array($leg->type, [JourneyLegType::RIDE, JourneyLegType::TRANSFER_WALK], true)
                 ? $leg->trust?->value
@@ -1132,7 +1252,10 @@ final class JourneyPlanner
             rideStopCount: $rideStopCount,
             trustState: $trustState,
             provenance: $this->provenanceFor($models),
-            warnings: $this->warningsFor($trustState),
+            warnings: array_values(array_unique(array_merge(
+                $this->warningsFor($trustState),
+                ...array_map(static fn (JourneyLeg $leg): array => $leg->warnings, $legs),
+            ))),
         );
     }
 
@@ -1248,6 +1371,7 @@ final class JourneyPlanner
             'boarding_side' => $stop->boarding_side,
             'direction_note' => $stop->direction_note,
             'boarding_precision' => $stop->boarding_precision?->value ?? $stop->boarding_precision,
+            'alighting_precision' => 'UNKNOWN',
             'boarding_verification' => $stop->boarding_verification_state?->value ?? $stop->boarding_verification_state,
             'nearby_place' => $stop->relationLoaded('nearbyPlace') && $stop->nearbyPlace !== null
                 ? ['id' => $stop->nearbyPlace->getKey(), 'name' => $stop->nearbyPlace->name]
@@ -1337,6 +1461,28 @@ final class JourneyPlanner
             $toLocation['lat'],
             $toLocation['lng'],
         );
+    }
+
+    private function walkingDistanceFor(Place|Stop $origin, Place|Stop $destination): float
+    {
+        $purpose = $origin instanceof Place
+            ? PedestrianRoutePurpose::ACCESS_WALK
+            : PedestrianRoutePurpose::TRANSFER_WALK;
+        $maximumDistance = $purpose === PedestrianRoutePurpose::ACCESS_WALK
+            ? (float) config('biyahe.pedestrian.maximum_access_walk_meters', 2000)
+            : (float) config('biyahe.pedestrian.maximum_transfer_walk_meters', 600);
+        $route = $this->routeBetween($origin, $destination, $purpose, $maximumDistance);
+        if ($route?->status->isAvailable()) {
+            return $route->totalDistanceMeters() ?? 0;
+        }
+        if ($origin instanceof Place && $destination instanceof Stop) {
+            return $this->distanceFromPlace($origin, $destination);
+        }
+        if ($origin instanceof Stop && $destination instanceof Stop) {
+            return $this->distanceBetweenStops($origin, $destination);
+        }
+
+        return 0;
     }
 
     /** @return Collection<int, RoutePattern> */
@@ -1480,11 +1626,15 @@ final class JourneyPlanner
             $stop->direction_note,
         ], static fn (?string $detail): bool => $detail !== null && trim($detail) !== ''));
 
-        $prefix = match ($stop->boarding_precision?->value ?? $stop->boarding_precision) {
-            'EXACT_BOARDING_POINT' => 'Wait at '.$location.'.',
-            'BOARDING_AREA' => 'Wait in the mapped boarding area near '.$location.'.',
-            'APPROXIMATE_LOCATION' => 'Wait near '.$location.'.',
-            default => 'Wait near '.$location.'. Exact boarding is not confirmed.',
+        $precision = $this->boardingPrecision($stop);
+        $verified = Trust::effectiveFactState($stop, 'boarding') === VerificationState::VERIFIED->value;
+        $prefix = match ($precision) {
+            'EXACT_BOARDING_POINT' => $verified
+                ? 'Walk to the verified boarding point at '.$location.'.'
+                : 'Walk toward '.$location.'. The exact boarding point is not yet verified.',
+            'BOARDING_AREA' => 'Walk to the mapped boarding area near '.$location.'. The exact bay or curbside position is not yet verified.',
+            'APPROXIMATE_LOCATION' => 'Walk toward the approximate boarding area near '.$location.'.',
+            default => 'The boarding location is not yet precisely verified. This reaches the mapped service area, not a confirmed curbside boarding point near '.$location.'.',
         };
 
         if ($details === []) {
@@ -1492,6 +1642,59 @@ final class JourneyPlanner
         }
 
         return $prefix.' '.implode(' ', $details);
+    }
+
+    private function boardingPrecision(Stop $stop): string
+    {
+        return $stop->boarding_precision?->value ?? $stop->boarding_precision ?? 'UNKNOWN';
+    }
+
+    private function routeBetween(
+        Place|Stop $origin,
+        Place|Stop $destination,
+        PedestrianRoutePurpose $purpose,
+        float $maximumDistanceMeters,
+    ): ?PedestrianRouteResult {
+        $originLocation = $origin->location_point;
+        $destinationLocation = $destination->location_point;
+        if (! is_array($originLocation) || ! is_array($destinationLocation)
+            || ! isset($originLocation['lat'], $originLocation['lng'], $destinationLocation['lat'], $destinationLocation['lng'])) {
+            return null;
+        }
+
+        return $this->pedestrianRouter->route(new PedestrianRouteRequest(
+            origin: ['lat' => (float) $originLocation['lat'], 'lng' => (float) $originLocation['lng']],
+            destination: ['lat' => (float) $destinationLocation['lat'], 'lng' => (float) $destinationLocation['lng']],
+            purpose: $purpose,
+            maximumDistanceMeters: $maximumDistanceMeters,
+        ));
+    }
+
+    private function walkInstruction(
+        JourneyLegType $type,
+        Place|Stop $origin,
+        Place|Stop $destination,
+        ?float $distance,
+        bool $networkAvailable,
+        bool $noRoute,
+    ): string {
+        if ($noRoute) {
+            return 'No pedestrian path was found in the mapped network; coverage may be incomplete. Straight-line estimate: about '.(int) round($distance ?? 0).' m, not a walking route.';
+        }
+
+        if ($type === JourneyLegType::WALK_ACCESS && $destination instanceof Stop) {
+            $guide = $this->boardingInstruction($destination);
+        } elseif ($type === JourneyLegType::WALK_EGRESS && $origin instanceof Stop) {
+            $guide = 'Get off near '.$origin->name.', then walk to '.$destination->name.'. The exact drop-off point or side is not verified.';
+        } else {
+            $guide = 'Walk from '.$origin->name.' to '.$destination->name.'.';
+        }
+
+        if ($networkAvailable) {
+            return $guide.' Pedestrian-network distance: about '.(int) round($distance ?? 0).' m; walking time is an estimate.';
+        }
+
+        return $guide.' Straight-line estimate: about '.(int) round($distance ?? 0).' m; no pedestrian route is available for this area.';
     }
 
     /** @return array<string, mixed> */

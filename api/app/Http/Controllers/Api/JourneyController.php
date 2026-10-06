@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Models\Place;
+use App\Services\Routing\Journey;
 use App\Services\Routing\JourneyPlanner;
 use App\Support\Geo;
 use App\Support\Trust;
@@ -75,7 +76,8 @@ class JourneyController
                 'result_count' => count($journeys),
                 'max_transfers' => $maxTransfers,
                 'distance_unit' => 'meters',
-                'walking_distance_type' => 'straight_line_estimate',
+                'walking_distance_type' => $this->walkingDistanceType($journeys),
+                'pedestrian_routing' => $result->pedestrianMetrics,
                 'boarding_candidates' => $result->boardingCandidates,
                 'alighting_candidates' => $result->alightingCandidates,
                 'no_route' => $result->hasJourneys() ? null : [
@@ -110,6 +112,26 @@ class JourneyController
                 'message' => 'Choose a place from the Biyahe search suggestions.',
             ],
         ], 404);
+    }
+
+    /** @param list<Journey> $journeys */
+    private function walkingDistanceType(array $journeys): string
+    {
+        $types = collect($journeys)
+            ->flatMap(static fn ($journey) => $journey->legs)
+            ->filter(static fn ($leg): bool => $leg->type->value !== 'RIDE')
+            ->map(static fn ($leg): ?string => $leg->distanceType)
+            ->filter()
+            ->unique()
+            ->values();
+        if ($types->isEmpty() || $types->every(static fn (string $type): bool => in_array($type, ['STRAIGHT_LINE_ESTIMATE', 'NOT_REQUIRED'], true))) {
+            return 'straight_line_estimate';
+        }
+        if ($types->every(static fn (string $type): bool => in_array($type, ['PEDESTRIAN_NETWORK', 'NOT_REQUIRED'], true))) {
+            return 'pedestrian_network';
+        }
+
+        return 'per_leg';
     }
 
     /** @return array<string, mixed> */
