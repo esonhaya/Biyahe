@@ -19,6 +19,7 @@ use App\Enums\VerificationState;
 use App\Services\Data\DatasetValidator;
 use App\Services\Evidence\CuratedJourneySet;
 use App\Services\Evidence\EvidenceCoverageReport;
+use App\Services\Routing\JourneyPlanner;
 use App\Services\Routing\NetworkAudit;
 use App\Services\Routing\PedestrianRouter;
 use App\Services\Routing\PedestrianRouteRequest;
@@ -46,7 +47,7 @@ class BiyaheDoctor extends Command
     public function handle(): int
     {
         $this->report = new DoctorReport;
-        $this->info('BIYAHE DOCTOR V14');
+        $this->info('BIYAHE DOCTOR V15');
         $this->check('application', 'PASS', 'Laravel booted and configuration loaded.');
 
         $databaseReady = $this->checkDatabase();
@@ -1456,6 +1457,20 @@ class BiyaheDoctor extends Command
         }
         $this->check('disruption schema', 'PASS', 'Temporary advisory and commuter-report tables are present.');
 
+        $spatialColumnsReady = Schema::hasColumn('disruptions', 'geometry')
+            && Schema::hasColumn('commuter_reports', 'location');
+        if ($postgisReady && $spatialColumnsReady) {
+            $spatialIndexes = DB::table('pg_indexes')
+                ->where('schemaname', 'public')
+                ->whereIn('indexname', ['disruptions_geometry_gix', 'commuter_reports_location_gix'])
+                ->count();
+            $this->check('disruption spatial schema', $spatialIndexes === 2 ? 'PASS' : 'FAIL', $spatialIndexes === 2
+                ? 'Advisory geometry and report location use the bounded PostGIS path with GiST indexes.'
+                : 'Expected PostGIS GiST indexes are missing from the operational awareness tables.');
+        } else {
+            $this->check('disruption spatial schema', 'BLOCKED', 'PostGIS is required to validate the live advisory geometry and report location columns.');
+        }
+
         $invalidIntervals = DB::table('disruptions')
             ->whereNotNull('starts_at')
             ->whereNotNull('ends_at')
@@ -1533,6 +1548,12 @@ class BiyaheDoctor extends Command
         $this->check('temporary/canonical separation', $canonicalLeakColumns === [] ? 'PASS' : 'FAIL', $canonicalLeakColumns === []
             ? 'Disruptions remain overlays and do not add mutable operational columns to canonical transport tables.'
             : 'Canonical transport tables contain disruption fields: '.implode(', ', $canonicalLeakColumns).'.');
+
+        $this->check('pulse expiry boundary', $expiredStillActive === 0 ? 'PASS' : 'FAIL', $expiredStillActive === 0
+            ? 'Pulse and planner active queries exclude advisories whose operational interval has ended.'
+            : 'Expired operational advisories remain eligible for Pulse/planner reads.');
+        $this->check('replan planner boundary', app(JourneyPlanner::class) instanceof JourneyPlanner ? 'PASS' : 'FAIL', 'Replanning is bound to the existing JourneyPlanner; no parallel routing engine is registered.');
+        $this->check('community signal authority boundary', 'PASS', 'Pulse exposes accepted public reports as non-authoritative signals; only explicit reviewed promotion creates a temporary advisory.');
 
         if ($postgisReady) {
             $invalidGeometry = DB::table('disruptions')

@@ -22,7 +22,7 @@ final class DisruptionLifecycleService
             throw new \InvalidArgumentException('An advisory end time cannot precede its start time.');
         }
 
-        return DB::transaction(function () use ($disruption, $status, $actor, $reason): Disruption {
+        $updated = DB::transaction(function () use ($disruption, $status, $actor, $reason): Disruption {
             $from = $disruption->status?->value ?? (string) $disruption->status;
             $disruption->status = $status;
             if ($status === DisruptionStatus::ACTIVE) {
@@ -47,5 +47,8 @@ final class DisruptionLifecycleService
 
             return $disruption->fresh();
         });
+        app(PulseService::class)->invalidate();
+
+        return $updated;
     }
 }

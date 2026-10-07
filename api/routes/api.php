@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\HealthController;
 use App\Http\Controllers\Api\JourneyController;
 use App\Http\Controllers\Api\PlaceController;
 use App\Http\Controllers\Api\PlaceSearchController;
+use App\Http\Controllers\Api\PulseController;
 use App\Http\Controllers\Api\RouteController;
 use App\Http\Controllers\Api\RoutePatternController;
 use App\Http\Controllers\Api\StopController;
@@ -23,9 +24,11 @@ Route::prefix('v1')->group(function (): void {
     Route::get('places/{place}', [PlaceController::class, 'show']);
 
     Route::get('journeys', JourneyController::class);
+    Route::post('journeys/replan', [JourneyController::class, 'replan']);
     Route::get('can-i-ride', CanIRideController::class);
     Route::get('disruptions', [DisruptionController::class, 'index']);
     Route::get('disruptions/{disruption}', [DisruptionController::class, 'show']);
+    Route::get('pulse', PulseController::class);
     Route::post('commuter-reports', CommuterReportController::class)->middleware('throttle:commuter-reports');
 
     Route::get('stops/nearby', [StopController::class, 'nearby']);

@@ -16,7 +16,17 @@ class JourneyController
 {
     public function __invoke(Request $request, JourneyPlanner $planner): JsonResponse
     {
-        $validator = Validator::make($request->query(), [
+        return $this->search($request, $planner, false);
+    }
+
+    public function replan(Request $request, JourneyPlanner $planner): JsonResponse
+    {
+        return $this->search($request, $planner, true);
+    }
+
+    private function search(Request $request, JourneyPlanner $planner, bool $replan): JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
             'from_place_id' => ['required', 'integer', 'min:1'],
             'to_place_id' => ['required', 'integer', 'min:1'],
             'access_radius' => ['nullable', 'numeric', 'min:50', 'max:'.(int) config('biyahe.routing.max_access_radius_meters', 1000)],
@@ -25,7 +35,7 @@ class JourneyController
             'limit' => ['nullable', 'integer', 'min:1', 'max:10'],
         ]);
         $validator->after(function ($validator) use ($request): void {
-            if ((int) $request->query('from_place_id') === (int) $request->query('to_place_id')) {
+            if ((int) $request->input('from_place_id') === (int) $request->input('to_place_id')) {
                 $validator->errors()->add('to_place_id', 'Choose a different destination place.');
             }
         });
@@ -79,6 +89,8 @@ class JourneyController
                 'walking_distance_type' => $this->walkingDistanceType($journeys),
                 'pedestrian_routing' => $result->pedestrianMetrics,
                 'disruption_awareness' => $result->disruptionMetrics,
+                'replan' => $replan,
+                'replan_status' => $replan ? $this->replanStatus($result->noRouteCode, $journeys) : null,
                 'boarding_candidates' => $result->boardingCandidates,
                 'alighting_candidates' => $result->alightingCandidates,
                 'no_route' => $result->hasJourneys() ? null : [
@@ -87,6 +99,20 @@ class JourneyController
                 ],
             ],
         ]);
+    }
+
+    /** @param list<Journey> $journeys */
+    private function replanStatus(?string $noRouteCode, array $journeys): string
+    {
+        if ($journeys === []) {
+            return $noRouteCode === 'TEMPORARILY_UNAVAILABLE'
+                ? 'TEMPORARILY_UNAVAILABLE'
+                : 'NO_ALTERNATIVE_FOUND';
+        }
+
+        return collect($journeys)->every(static fn (Journey $journey): bool => $journey->operationalImpact !== 'INFORMATIONAL')
+            ? 'ALL_KNOWN_ALTERNATIVES_AFFECTED'
+            : 'ALTERNATIVES_FOUND';
     }
 
     private function findPlace(int $placeId): ?Place

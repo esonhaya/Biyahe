@@ -2,11 +2,13 @@
 
 import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
-import type { CanIRideResponse, DisruptionSummary, Journey, PedestrianAccessLeg, Place, Route, RoutePattern, Stop } from "@/lib/api";
-import { canIRide, getRoutePattern, listDisruptions, listPlaces, listRoutes, listStops, planJourney, searchPlaces } from "@/lib/api";
+import type { CanIRideResponse, DisruptionSummary, Journey, JourneyResponse, PedestrianAccessLeg, Place, PulseResponse, Route, RoutePattern, Stop } from "@/lib/api";
+import { canIRide, getPulse, getRoutePattern, listPlaces, listRoutes, listStops, planJourney, replanJourney, searchPlaces } from "@/lib/api";
+import BiyahePulse from "@/components/BiyahePulse";
 import CommuteCard from "@/components/CommuteCard";
 import CommuterReportForm from "@/components/CommuterReportForm";
 import DisruptionNotice from "@/components/DisruptionNotice";
+import ReplanPanel from "@/components/ReplanPanel";
 import RideMode from "@/components/RideMode";
 import type { CommuteInstruction } from "@/lib/commuteInstructions";
 import type { RideModeMapOverlay } from "@/lib/rideMode";
@@ -196,6 +198,12 @@ export default function Home() {
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
   const [activeAdvisories, setActiveAdvisories] = useState<DisruptionSummary[]>([]);
   const [selectedDisruption, setSelectedDisruption] = useState<DisruptionSummary | null>(null);
+  const [pulse, setPulse] = useState<PulseResponse["data"] | null>(null);
+  const [pulseFilter, setPulseFilter] = useState<"ALL" | "ROUTES" | "STOPS" | "AREAS" | "MAJOR">("ALL");
+  const [loadingPulse, setLoadingPulse] = useState(false);
+  const [replanResult, setReplanResult] = useState<JourneyResponse | null>(null);
+  const [replanError, setReplanError] = useState<string | null>(null);
+  const [loadingReplan, setLoadingReplan] = useState(false);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -214,16 +222,50 @@ export default function Home() {
 
   useEffect(() => {
     const controller = new AbortController();
-    listDisruptions({}, controller.signal).then(setActiveAdvisories).catch(() => setActiveAdvisories([]));
+    getPulse({ filter: pulseFilter }, controller.signal).then((loaded) => {
+      setPulse(loaded);
+      setActiveAdvisories(loaded.items);
+    }).catch(() => { setPulse(null); setActiveAdvisories([]); });
     return () => controller.abort();
-  }, []);
+  }, [pulseFilter]);
 
   async function refreshAdvisories() {
+    setLoadingPulse(true);
     try {
-      setActiveAdvisories(await listDisruptions());
+      const loaded = await getPulse({ filter: pulseFilter });
+      setPulse(loaded);
+      setActiveAdvisories(loaded.items);
     } catch {
       setError("Current advisories could not be refreshed. Existing journey guidance remains available.");
+    } finally {
+      setLoadingPulse(false);
     }
+  }
+
+  async function requestReplan(journey: Journey | null = selectedJourney) {
+    if (!journey) return;
+    if (offlineSavedJourneyId === journey.id) {
+      setReplanError("New route search requires connectivity. The saved snapshot remains available offline.");
+      return;
+    }
+    setLoadingReplan(true);
+    setReplanError(null);
+    try {
+      const response = await replanJourney(journey.origin.id, journey.destination.id);
+      setReplanResult(response);
+    } catch {
+      setReplanError("A current alternative could not be loaded. Your existing journey remains selected.");
+      setReplanResult(null);
+    } finally {
+      setLoadingReplan(false);
+    }
+  }
+
+  function chooseReplannedJourney(journey: Journey) {
+    selectJourney(journey);
+    setJourneys((current) => [journey, ...current.filter((candidate) => candidate.id !== journey.id)]);
+    setReplanResult(null);
+    setStatus("Alternative selected. Confirm any Ride Mode switch explicitly.");
   }
 
   useEffect(() => {
@@ -266,6 +308,7 @@ export default function Home() {
     setOfflineSavedJourneyId(null);
     setNoRouteMessage(null);
     setCanRideResult(null);
+    setReplanResult(null);
   }
 
   function changeDestination(value: string) {
@@ -279,6 +322,7 @@ export default function Home() {
     setOfflineSavedJourneyId(null);
     setNoRouteMessage(null);
     setCanRideResult(null);
+    setReplanResult(null);
   }
 
   function chooseOrigin(place: Place) {
@@ -292,6 +336,7 @@ export default function Home() {
     setOfflineSavedJourneyId(null);
     setNoRouteMessage(null);
     setCanRideResult(null);
+    setReplanResult(null);
   }
 
   function chooseDestination(place: Place) {
@@ -305,6 +350,7 @@ export default function Home() {
     setOfflineSavedJourneyId(null);
     setNoRouteMessage(null);
     setCanRideResult(null);
+    setReplanResult(null);
   }
 
   async function findRoute() {
@@ -325,6 +371,7 @@ export default function Home() {
     setInstructionFocus(null);
     setOfflineSavedJourneyId(null);
     setNoRouteMessage(null);
+    setReplanResult(null);
     try {
       const response = await planJourney(origin.id, destination.id);
       setJourneys(response.data);
@@ -452,13 +499,14 @@ export default function Home() {
         </div>
       </section>
 
-      {activeAdvisories.length > 0 && (
-        <section className={styles.advisorySection} aria-labelledby="advisories-heading">
-          <div className={styles.sectionHeading}><div><p className={styles.eyebrow}>Temporary operational awareness</p><h2 id="advisories-heading">{activeAdvisories.length} active commute {activeAdvisories.length === 1 ? "advisory" : "advisories"}</h2></div><button type="button" className={styles.secondaryButton} onClick={() => { void refreshAdvisories(); }}>Refresh</button></div>
-          <p className={styles.sectionCopy}>These reviewed overlays may change what is practical right now. They do not rewrite Biyahe&apos;s normal route data.</p>
-          <div className={styles.advisoryGrid}>{activeAdvisories.slice(0, 3).map((advisory) => <DisruptionNotice key={advisory.stable_id} advisory={advisory} />)}</div>
-        </section>
-      )}
+      <BiyahePulse
+        pulse={pulse}
+        loading={loadingPulse}
+        selectedJourney={selectedJourney}
+        onRefresh={() => { void refreshAdvisories(); }}
+        onFilter={setPulseFilter}
+        onAdvisorySelect={setSelectedDisruption}
+      />
 
       <section className={styles.resultsSection} aria-labelledby="results-heading">
         <div className={styles.sectionHeading}>
@@ -494,8 +542,19 @@ export default function Home() {
             isSaved={savedJourneys.some((saved) => saved.id === selectedJourney.id)}
             onInstructionFocus={setInstructionFocus}
             onSave={saveCurrentJourney}
+            onReplan={selectedJourney.disruptions?.some((impact) => impact.impact_level !== "INFORMATIONAL") ? () => { void requestReplan(selectedJourney); } : undefined}
           />
           {saveMessage && <p className={styles.status} role="status">{saveMessage}</p>}
+          {selectedJourney.disruptions?.some((impact) => impact.impact_level !== "INFORMATIONAL") && (
+            <ReplanPanel
+              currentJourney={selectedJourney}
+              result={replanResult}
+              loading={loadingReplan}
+              error={replanError}
+              onRequest={() => { void requestReplan(selectedJourney); }}
+              onChoose={chooseReplannedJourney}
+            />
+          )}
         </section>
       )}
 
@@ -519,6 +578,7 @@ export default function Home() {
                 onOpen={() => openSavedJourney(saved)}
                 onRefresh={() => { void refreshSavedJourney(saved); }}
                 onRemove={() => deleteSavedJourney(saved.id)}
+                onReplan={saved.journey.disruptions?.some((impact) => impact.impact_level !== "INFORMATIONAL") ? () => { void requestReplan(saved.journey); } : undefined}
               />
             ))}
           </div>
@@ -531,6 +591,7 @@ export default function Home() {
         allowPatternFetch={!Boolean(selectedJourney && offlineSavedJourneyId === selectedJourney.id)}
         activeAdvisories={activeAdvisories}
         onRefreshAdvisories={() => { void refreshAdvisories(); }}
+        onReplan={selectedJourney && selectedJourney.disruptions?.some((impact) => impact.impact_level !== "INFORMATIONAL") ? () => { void requestReplan(selectedJourney); } : undefined}
         onRestoreJourney={(journey) => {
           setSelectedJourney(journey);
           try {
@@ -583,7 +644,7 @@ export default function Home() {
         <p className={styles.mapAttribution}>Computed pedestrian paths follow mapped OpenStreetMap ways (© OpenStreetMap contributors); they do not verify transit boarding or current ground conditions.</p>
         {selectedStop && (
           <div className={styles.infoCard}>
-            <div><p className={styles.cardKicker}>STOP DETAIL</p><h3>{selectedStop.name}</h3></div>
+            <div><p className={styles.cardKicker}>STOP DETAIL</p><h3>{selectedStop.name}</h3><p>{activeAdvisories.some((advisory) => advisory.affected_entities.stops.some((affected) => affected.id === selectedStop.id)) ? "Active reviewed advisory for this stop" : "No known active reviewed advisory for this stop"}</p></div>
             <p>{selectedStop.boarding_notes ?? "No extra boarding note is recorded."}</p>
             <button type="button" onClick={() => setSelectedStop(null)}>Dismiss</button>
           </div>
@@ -603,9 +664,9 @@ export default function Home() {
         {loadingNetwork ? <p className={styles.emptyState}>Loading route patterns…</p> : routes.length === 0 ? <p className={styles.emptyState}>No route patterns are available from the API.</p> : (
           <div className={styles.routeGrid}>
             {routes.map((route) => (
-              <article className={styles.routeCard} key={route.id}>
+            <article className={styles.routeCard} key={route.id}>
                 <div className={styles.routeCode}>{route.code}</div>
-                <div><h3>{route.name}</h3><p>{route.vehicle_type?.name ?? "Transport service"} · {route.patterns?.length ?? 0} pattern(s) · {route.verification.state}</p></div>
+                <div><h3>{route.name}</h3><p>{route.vehicle_type?.name ?? "Transport service"} · {route.patterns?.length ?? 0} pattern(s) · {route.verification.state}</p><p>{activeAdvisories.some((advisory) => advisory.affected_entities.routes.some((affected) => affected.id === route.id)) ? "Active reviewed advisory" : "No known active reviewed advisory"}</p></div>
                 <div className={styles.patternList}>
                   {route.patterns?.map((pattern) => (
                     <button type="button" key={pattern.id} className={selectedPattern?.id === pattern.id ? styles.patternActive : ""} onClick={() => showPattern(pattern)}>
@@ -619,7 +680,7 @@ export default function Home() {
         )}
       </section>
 
-      <footer className={styles.footer}><span>BIYAHE Batch 014</span><span>© OpenStreetMap contributors · route confidence is shown, not hidden.</span></footer>
+      <footer className={styles.footer}><span>BIYAHE Batch 015</span><span>© OpenStreetMap contributors · operational advisories remain temporary overlays.</span></footer>
     </main>
   );
 }

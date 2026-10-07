@@ -242,9 +242,61 @@ export type JourneyResponse = {
       disruption_queries: number;
       match_time_milliseconds: number;
     };
+    replan?: boolean;
+    replan_status?: "ALTERNATIVES_FOUND" | "NO_ALTERNATIVE_FOUND" | "ALL_KNOWN_ALTERNATIVES_AFFECTED" | "TEMPORARILY_UNAVAILABLE" | null;
     boarding_candidates: number;
     alighting_candidates: number;
     no_route: { code: string; message: string } | null;
+  };
+};
+
+export type PulseNetworkStatus = {
+  code: "NO_KNOWN_ACTIVE_ADVISORIES" | "MINOR_ISSUES" | "DISRUPTED" | "MAJOR_DISRUPTION" | "STATUS_UNCERTAIN";
+  label: string;
+  explanation: string;
+};
+
+export type PulseItem = DisruptionSummary & {
+  freshness_label: string;
+  expected_end_label: string | null;
+  affected_entity_count: number;
+  conflict_status?: string | null;
+};
+
+export type PulseCommunitySignal = {
+  category: CommuterReportCategory;
+  count: number;
+  observed_at: string | null;
+  freshness_label: string;
+  route: { id: number; code: string; name: string } | null;
+  stop: { id: number; name: string } | null;
+  place: { id: number; name: string } | null;
+  message: string;
+  conflicted: boolean;
+  authoritative: false;
+};
+
+export type PulseResponse = {
+  data: {
+    summary: {
+      active_advisories: number;
+      major_or_critical: number;
+      routes_affected: number;
+      stops_affected: number;
+      areas_affected: number;
+      unresolved_public_signals: number;
+      open_conflicts: number;
+    };
+    network_status: PulseNetworkStatus;
+    items: PulseItem[];
+    community_signals: PulseCommunitySignal[];
+    meta: {
+      generated_at: string;
+      filter: "ALL" | "ROUTES" | "STOPS" | "AREAS" | "MAJOR";
+      temporary_overlay: true;
+      community_signals_are_non_authoritative: true;
+      journey_context: "ROUTE" | "STOP" | "PLACE" | null;
+    };
   };
 };
 
@@ -355,6 +407,19 @@ export async function listDisruptions(filters: { route_id?: number; stop_id?: nu
   return response.data;
 }
 
+export async function getPulse(
+  filters: { filter?: "ALL" | "ROUTES" | "STOPS" | "AREAS" | "MAJOR"; route_id?: number; stop_id?: number; place_id?: number } = {},
+  signal?: AbortSignal,
+): Promise<PulseResponse["data"]> {
+  const params = new URLSearchParams();
+  if (filters.filter) params.set("filter", filters.filter);
+  if (filters.route_id) params.set("route_id", String(filters.route_id));
+  if (filters.stop_id) params.set("stop_id", String(filters.stop_id));
+  if (filters.place_id) params.set("place_id", String(filters.place_id));
+  const response = await getJson<PulseResponse>("/pulse" + (params.toString() ? "?" + params.toString() : ""), signal);
+  return response.data;
+}
+
 export type CommuterReportPayload = {
   category: CommuterReportCategory;
   description: string;
@@ -396,6 +461,22 @@ export async function planJourney(
   });
 
   return getJson<JourneyResponse>("/journeys?" + params.toString(), signal);
+}
+
+export async function replanJourney(
+  fromPlaceId: number,
+  toPlaceId: number,
+  signal?: AbortSignal,
+): Promise<JourneyResponse> {
+  const response = await fetch(apiUrl + "/journeys/replan", {
+    method: "POST",
+    headers: { Accept: "application/json", "Content-Type": "application/json" },
+    body: JSON.stringify({ from_place_id: fromPlaceId, to_place_id: toPlaceId }),
+    signal,
+    cache: "no-store",
+  });
+  if (!response.ok) throw new Error("Replan request failed with status " + response.status);
+  return response.json() as Promise<JourneyResponse>;
 }
 
 export async function canIRide(

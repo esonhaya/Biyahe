@@ -48,6 +48,10 @@ return [
     ],
     'disruptions' => [
         'public_limit' => 50,
+        'pulse_cache_seconds' => 10,
+        'pulse_signal_window_hours' => 24,
+        'pulse_signal_limit' => 100,
+        'pulse_item_limit' => 20,
         'report_description_max_length' => 1000,
         'report_source_reference_max_length' => 500,
         'report_rate_limit_per_minute' => 5,

@@ -40,6 +40,7 @@ type RideModeProps = {
   allowPatternFetch?: boolean;
   activeAdvisories?: DisruptionSummary[];
   onRefreshAdvisories?: () => void;
+  onReplan?: () => void;
   onRestoreJourney: (journey: Journey) => void;
   onMapStateChange: (overlay: RideModeMapOverlay | null) => void;
 };
@@ -126,7 +127,7 @@ function trustWarning(leg: JourneyLeg): string | null {
   return null;
 }
 
-export default function RideMode({ selectedJourney, offlineSnapshot = false, allowPatternFetch = true, activeAdvisories = [], onRefreshAdvisories, onRestoreJourney, onMapStateChange }: RideModeProps) {
+export default function RideMode({ selectedJourney, offlineSnapshot = false, allowPatternFetch = true, activeAdvisories = [], onRefreshAdvisories, onReplan, onRestoreJourney, onMapStateChange }: RideModeProps) {
   const [session, setSession] = useState<RideModeSession | null>(null);
   const [hydrated, setHydrated] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
@@ -464,6 +465,7 @@ export default function RideMode({ selectedJourney, offlineSnapshot = false, all
             <h3>{currentText}</h3>
             {session.journey.disruptions?.map((impact: JourneyDisruptionImpact) => <DisruptionNotice key={impact.advisory.stable_id} impact={impact} staleSnapshot={offlineSnapshot} />)}
             {!offlineSnapshot && currentAdvisories.map((advisory) => <DisruptionNotice key={advisory.stable_id} advisory={advisory} />)}
+            {!offlineSnapshot && onReplan && session.journey.disruptions?.some((impact) => impact.impact_level !== "INFORMATIONAL") && <button type="button" className={styles.secondaryButton} onClick={onReplan}>Find another way</button>}
             {offlineSnapshot && session.journey.disruptions?.length === 0 && <p className={styles.snapshotNote}>Current disruption status is unavailable offline. This saved journey remains usable as a manual guide.</p>}
             {currentLeg?.type === "RIDE" && routeCue && <p className={styles.rideRouteCue}>{routeCue}</p>}
             {currentLeg?.type === "RIDE" && session.currentLegState === "WAITING_TO_BOARD" && (

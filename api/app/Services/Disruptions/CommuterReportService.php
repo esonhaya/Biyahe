@@ -47,7 +47,7 @@ final class CommuterReportService
         }
         $report->save();
 
-        return $report->fresh([
+        $report = $report->fresh([
             'route',
             'routePattern',
             'stop',
@@ -55,6 +55,9 @@ final class CommuterReportService
             'transferRelationship',
             'duplicateOf',
         ]);
+        app(PulseService::class)->invalidate();
+
+        return $report;
     }
 
     public function review(
@@ -75,7 +78,7 @@ final class CommuterReportService
             throw new \InvalidArgumentException('Reports can only move through the review lifecycle.');
         }
 
-        return DB::transaction(function () use ($report, $status, $actor, $reason, $duplicateOfId): CommuterReport {
+        $updated = DB::transaction(function () use ($report, $status, $actor, $reason, $duplicateOfId): CommuterReport {
             $from = $report->status?->value ?? (string) $report->status;
             $report->status = $status;
             $report->reviewed_by_user_id = $actor?->getKey();
@@ -95,6 +98,9 @@ final class CommuterReportService
 
             return $report->fresh();
         });
+        app(PulseService::class)->invalidate();
+
+        return $updated;
     }
 
     public function corroboration(CommuterReport $report): array
@@ -138,7 +144,7 @@ final class CommuterReportService
 
         $report->loadMissing(['route', 'routePattern.route', 'stop', 'place', 'transferRelationship']);
 
-        return DB::transaction(function () use ($report, $actor, $reviewNote): Disruption {
+        $disruption = DB::transaction(function () use ($report, $actor, $reviewNote): Disruption {
             $source = ProvenanceSource::query()->create([
                 'source_type' => DisruptionSourceClass::PUBLIC_REPORT->value,
                 'title' => 'Reviewed commuter report '.$report->stable_id,
@@ -204,6 +210,9 @@ final class CommuterReportService
 
             return $disruption->fresh(['provenanceSource', 'routes', 'patterns', 'stops', 'places', 'transfers']);
         });
+        app(PulseService::class)->invalidate();
+
+        return $disruption;
     }
 
     private function findDuplicate(array $data, string $description, CarbonImmutable $observedAt): ?CommuterReport

@@ -24,6 +24,7 @@ type CommuteCardProps = {
   onRemove?: () => void;
   onOpen?: () => void;
   onRefresh?: () => void;
+  onReplan?: () => void;
 };
 
 function typeLabel(type: CommuteInstructionType): string {
@@ -83,6 +84,7 @@ export default function CommuteCard({
   onRemove,
   onOpen,
   onRefresh,
+  onReplan,
 }: CommuteCardProps) {
   const model = useMemo(() => generateCommuteInstructions(journey), [journey]);
   const [shareStatus, setShareStatus] = useState<string | null>(null);
@@ -186,6 +188,7 @@ export default function CommuteCard({
         {onOpen && <button type="button" onClick={onOpen} className={styles.primaryButton}>Open saved journey</button>}
         {onSave && !isSaved && <button type="button" onClick={onSave} className={styles.secondaryButton}>Save journey</button>}
         {onRefresh && <button type="button" onClick={onRefresh} className={styles.secondaryButton}>Refresh journey online</button>}
+        {onReplan && <button type="button" onClick={onReplan} className={styles.secondaryButton}>Find another way</button>}
         {onRemove && <button type="button" onClick={onRemove} className={styles.secondaryButton}>Remove saved</button>}
         <button type="button" onClick={share} className={styles.secondaryButton}>Share</button>
         <button type="button" onClick={copy} className={styles.secondaryButton}>Copy</button>
