@@ -14,6 +14,7 @@ final class JourneySearchResult
         public readonly int $boardingCandidates = 0,
         public readonly int $alightingCandidates = 0,
         public readonly array $pedestrianMetrics = [],
+        public readonly array $disruptionMetrics = [],
     ) {}
 
     public function hasJourneys(): bool

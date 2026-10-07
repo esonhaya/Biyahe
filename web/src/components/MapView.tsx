@@ -3,7 +3,7 @@
 import * as maplibregl from "maplibre-gl";
 import type { Map as MapInstance, MapLayerMouseEvent, StyleSpecification } from "maplibre-gl";
 import { useEffect, useRef, useState } from "react";
-import type { Journey, Place, RoutePattern, Stop } from "@/lib/api";
+import type { DisruptionSummary, Journey, Place, RoutePattern, Stop } from "@/lib/api";
 import type { CommuteInstruction } from "@/lib/commuteInstructions";
 import type { RideModeMapOverlay } from "@/lib/rideMode";
 
@@ -15,6 +15,8 @@ type MapViewProps = {
   onStopSelect?: (stop: Stop) => void;
   rideMode?: RideModeMapOverlay | null;
   instructionFocus?: CommuteInstruction | null;
+  disruptions?: DisruptionSummary[];
+  onDisruptionSelect?: (disruption: DisruptionSummary) => void;
 };
 
 const cebuCenter: [number, number] = [123.8854, 10.3157];
@@ -81,6 +83,25 @@ function journeyRouteFeatures(journey: Journey) {
     .filter((feature): feature is NonNullable<typeof feature> => feature !== null);
 }
 
+function disruptionFeatures(disruptions: DisruptionSummary[]): GeoJSON.Feature[] {
+  const features: GeoJSON.Feature[] = [];
+  disruptions.forEach((advisory) => {
+    const properties = { disruptionId: advisory.id, headline: advisory.headline, severity: advisory.severity };
+    if (advisory.geometry) {
+      features.push({ type: "Feature", id: `disruption-${advisory.id}`, properties, geometry: advisory.geometry as GeoJSON.Geometry });
+      return;
+    }
+    advisory.affected_entities.stops.filter((stop) => stop.location).forEach((stop) => {
+      features.push(pointFeature(`disruption-stop-${advisory.id}-${stop.id}`, advisory.headline, stop.location!, { ...properties, kind: "disruption" }) as GeoJSON.Feature);
+    });
+    advisory.affected_entities.places.filter((place) => place.location).forEach((place) => {
+      features.push(pointFeature(`disruption-place-${advisory.id}-${place.id}`, advisory.headline, place.location!, { ...properties, kind: "disruption" }) as GeoJSON.Feature);
+    });
+  });
+
+  return features;
+}
+
 function geometryPositions(coordinates: unknown): [number, number][] {
   if (!Array.isArray(coordinates)) return [];
   if (coordinates.length >= 2 && typeof coordinates[0] === "number" && typeof coordinates[1] === "number") {
@@ -114,12 +135,13 @@ function patternBounds(pattern: RoutePattern): maplibregl.LngLatBounds | null {
   return bounds.isEmpty() ? null : bounds;
 }
 
-export default function MapView({ places, stops, journey, selectedPattern, onStopSelect, rideMode = null, instructionFocus = null }: MapViewProps) {
+export default function MapView({ places, stops, journey, selectedPattern, disruptions = [], onStopSelect, onDisruptionSelect, rideMode = null, instructionFocus = null }: MapViewProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<MapInstance | null>(null);
   const stopLookupRef = useRef(new Map<number, Stop>());
   const rideFocusRef = useRef<string | null>(null);
   const instructionFocusRef = useRef<string | null>(null);
+  const disruptionLookupRef = useRef(new Map<number, DisruptionSummary>());
   const [mapReady, setMapReady] = useState(false);
 
   useEffect(() => {
@@ -266,6 +288,35 @@ export default function MapView({ places, stops, journey, selectedPattern, onSto
         filter: ["==", ["geometry-type"], "Point"],
         paint: { "circle-color": "#f4a261", "circle-radius": 11, "circle-stroke-color": "#153b45", "circle-stroke-width": 3 },
       });
+      map.addSource("disruptions", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
+      map.addLayer({
+        id: "disruption-areas",
+        type: "fill",
+        source: "disruptions",
+        filter: ["any", ["==", ["geometry-type"], "Polygon"], ["==", ["geometry-type"], "MultiPolygon"]],
+        paint: { "fill-color": ["match", ["get", "severity"], "CRITICAL", "#b42318", "MAJOR", "#d3624d", "MINOR", "#f4a261", "#f7c948"], "fill-opacity": 0.22 },
+      });
+      map.addLayer({
+        id: "disruption-lines",
+        type: "line",
+        source: "disruptions",
+        filter: ["any", ["==", ["geometry-type"], "LineString"], ["==", ["geometry-type"], "MultiLineString"]],
+        paint: { "line-color": ["match", ["get", "severity"], "CRITICAL", "#b42318", "MAJOR", "#d3624d", "MINOR", "#f4a261", "#7b61a8"], "line-width": 5, "line-dasharray": [1.5, 1] },
+      });
+      map.addLayer({
+        id: "disruption-points",
+        type: "circle",
+        source: "disruptions",
+        filter: ["==", ["geometry-type"], "Point"],
+        paint: { "circle-color": ["match", ["get", "severity"], "CRITICAL", "#b42318", "MAJOR", "#d3624d", "MINOR", "#f4a261", "#7b61a8"], "circle-radius": 9, "circle-stroke-color": "#fff", "circle-stroke-width": 2 },
+      });
+      map.addLayer({
+        id: "disruption-labels",
+        type: "symbol",
+        source: "disruptions",
+        layout: { "text-field": ["get", "headline"], "text-size": 10, "text-offset": [0, 1.1], "text-anchor": "top" },
+        paint: { "text-color": "#7a2e2e", "text-halo-color": "#fff", "text-halo-width": 1 },
+      });
       setMapReady(true);
     });
 
@@ -283,13 +334,22 @@ export default function MapView({ places, stops, journey, selectedPattern, onSto
     map.on("mouseleave", "stop-points", () => {
       map.getCanvas().style.cursor = "";
     });
+    for (const layer of ["disruption-points", "disruption-lines", "disruption-areas"]) {
+      map.on("click", layer, (event: MapLayerMouseEvent) => {
+        const id = Number(event.features?.[0]?.properties?.disruptionId);
+        const disruption = disruptionLookupRef.current.get(id);
+        if (disruption) onDisruptionSelect?.(disruption);
+      });
+      map.on("mouseenter", layer, () => { map.getCanvas().style.cursor = "pointer"; });
+      map.on("mouseleave", layer, () => { map.getCanvas().style.cursor = ""; });
+    }
 
     return () => {
       map.remove();
       mapRef.current = null;
       setMapReady(false);
     };
-  }, [onStopSelect]);
+  }, [onDisruptionSelect, onStopSelect]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -303,7 +363,8 @@ export default function MapView({ places, stops, journey, selectedPattern, onSto
     const patternRouteSource = map.getSource("route-pattern") as maplibregl.GeoJSONSource | undefined;
     const journeyPointSource = map.getSource("journey-points") as maplibregl.GeoJSONSource | undefined;
     const journeyRouteSource = map.getSource("journey-routes") as maplibregl.GeoJSONSource | undefined;
-    if (!placeSource || !stopSource || !patternStopSource || !patternRouteSource || !journeyPointSource || !journeyRouteSource) {
+    const disruptionSource = map.getSource("disruptions") as maplibregl.GeoJSONSource | undefined;
+    if (!placeSource || !stopSource || !patternStopSource || !patternRouteSource || !journeyPointSource || !journeyRouteSource || !disruptionSource) {
       return;
     }
 
@@ -337,12 +398,14 @@ export default function MapView({ places, stops, journey, selectedPattern, onSto
       type: "FeatureCollection",
       features: journey ? journeyRouteFeatures(journey) : [],
     });
+    disruptionLookupRef.current = new Map(disruptions.map((disruption) => [disruption.id, disruption]));
+    disruptionSource.setData({ type: "FeatureCollection", features: disruptionFeatures(disruptions) });
 
     const bounds = journey ? journeyBounds(journey) : selectedPattern ? patternBounds(selectedPattern) : null;
     if (bounds) {
       map.fitBounds(bounds, { padding: 48, maxZoom: 14, duration: 0 });
     }
-  }, [journey, mapReady, places, selectedPattern, stops]);
+  }, [disruptions, journey, mapReady, places, selectedPattern, stops]);
 
   useEffect(() => {
     const map = mapRef.current;

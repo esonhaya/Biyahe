@@ -104,6 +104,46 @@ export type JourneyTrustState = "VERIFIED" | "MIXED" | "UNVERIFIED";
 
 export type PedestrianAccessClassification = "NETWORK_ROUTE" | "STRAIGHT_LINE_ESTIMATE" | "NO_WALKABLE_ACCESS" | "GRAPH_COVERAGE_GAP" | "ROUTING_UNAVAILABLE";
 
+export type DisruptionCategory = "SERVICE_SUSPENDED" | "SERVICE_REDUCED" | "REROUTED" | "STOP_UNAVAILABLE" | "BOARDING_AREA_UNAVAILABLE" | "ROAD_CLOSURE" | "FLOODING" | "EVENT" | "TRAFFIC_DISRUPTION" | "TRANSFER_UNAVAILABLE" | "OTHER";
+export type DisruptionStatus = "DRAFT" | "SCHEDULED" | "ACTIVE" | "RESOLVED" | "EXPIRED" | "REJECTED";
+export type DisruptionSeverity = "INFO" | "MINOR" | "MAJOR" | "CRITICAL";
+export type DisruptionImpactLevel = "INFORMATIONAL" | "POSSIBLY_AFFECTED" | "AFFECTED" | "SERVICE_UNAVAILABLE";
+export type CommuterReportCategory = "ROUTE_NOT_SEEN" | "SERVICE_STOPPED" | "REROUTE" | "STOP_BLOCKED" | "FLOODING" | "ROAD_CLOSURE" | "TRANSFER_PROBLEM" | "FARE_OBSERVATION" | "OTHER";
+
+export type DisruptionSummary = {
+  id: number;
+  stable_id: string;
+  category: DisruptionCategory;
+  headline: string;
+  description: string;
+  severity: DisruptionSeverity;
+  status: DisruptionStatus;
+  starts_at: string | null;
+  ends_at: string | null;
+  source_class: string;
+  source: { type: string; title: string; publisher: string | null; url: string | null; checked_at: string | null; observed_at: string | null; attribution: string; conflict_status?: string | null } | null;
+  checked_at: string | null;
+  geometry: { type: string; coordinates: unknown } | null;
+  affected_entities: {
+    routes: { id: number; code: string; name: string }[];
+    patterns: { id: number; name: string; direction: string; route_code: string | null }[];
+    stops: { id: number; name: string; location: LocationPoint | null }[];
+    places: { id: number; name: string; location: LocationPoint | null }[];
+    transfers: { id: number; stable_id: string; from_stop_id: number; to_stop_id: number }[];
+  };
+};
+
+export type JourneyDisruptionImpact = {
+  advisory: DisruptionSummary;
+  impact_level: DisruptionImpactLevel;
+  hard_closure: boolean;
+  affected_leg_index: number | null;
+  affected_leg_type: JourneyLegType | null;
+  affected_legs?: { index: number; type: JourneyLegType; matched_by: string[] }[];
+  matched_by: string[];
+  warning: string;
+};
+
 export type JourneyPoint = {
   type: "PLACE" | "STOP";
   id: number;
@@ -148,6 +188,7 @@ export type JourneyLeg = {
   pattern: JourneyPatternSummary | null;
   boarding_stop: JourneyPoint | null;
   alighting_stop: JourneyPoint | null;
+  transfer?: { type: "TRANSFER" | "SHARED_STOP"; id: number | null; stable_id: string | null } | null;
   stop_count: number | null;
   boarding_sequence: number | null;
   alighting_sequence: number | null;
@@ -170,6 +211,8 @@ export type Journey = {
   ranking: { walking_distance_meters: number; ride_stop_count: number; policy: string; reasons: string[] };
   trust: { state: JourneyTrustState; warning: string | null };
   warnings: string[];
+  operational_impact?: DisruptionImpactLevel;
+  disruptions?: JourneyDisruptionImpact[];
   fare: { status: "UNAVAILABLE" | "AVAILABLE"; label: string; amount: number | null; currency: string | null };
   provenance: Provenance[];
 };
@@ -191,6 +234,13 @@ export type JourneyResponse = {
       no_route_results: number;
       routing_time_milliseconds: number;
       provider_status: string;
+    };
+    disruption_awareness?: {
+      journeys_checked: number;
+      active_advisories: number;
+      impact_matches: number;
+      disruption_queries: number;
+      match_time_milliseconds: number;
     };
     boarding_candidates: number;
     alighting_candidates: number;
@@ -236,13 +286,15 @@ export type CanIRideResponse = {
   data: {
     origin: JourneyPoint;
     destination: JourneyPoint;
-    status: "YES" | "NO" | "DIRECTION_DEPENDENT" | "UNKNOWN";
+    status: "YES" | "YES_BUT_AFFECTED" | "TEMPORARILY_UNAVAILABLE" | "UNCERTAIN_DUE_TO_REPORT" | "NO" | "DIRECTION_DEPENDENT" | "UNKNOWN";
     message: string;
     route: { id: number; code: string; name: string; vehicle_type: { code: string; name: string } | null; verification: JourneyPoint["verification"] } | null;
     option: CanIRideOption | null;
     opposite_direction: CanIRideOption | null;
     trust: JourneyTrustState | null;
     warnings: string[];
+    operational_impact?: DisruptionImpactLevel;
+    disruptions?: JourneyDisruptionImpact[];
     provenance: Provenance[];
   };
   meta: {
@@ -292,6 +344,40 @@ export async function listStops(signal?: AbortSignal): Promise<Stop[]> {
 export async function listRoutes(signal?: AbortSignal): Promise<Route[]> {
   const page = await getJson<ApiPage<Route>>("/routes?per_page=50", signal);
   return page.data;
+}
+
+export async function listDisruptions(filters: { route_id?: number; stop_id?: number; place_id?: number } = {}, signal?: AbortSignal): Promise<DisruptionSummary[]> {
+  const params = new URLSearchParams({ limit: "50" });
+  if (filters.route_id) params.set("route_id", String(filters.route_id));
+  if (filters.stop_id) params.set("stop_id", String(filters.stop_id));
+  if (filters.place_id) params.set("place_id", String(filters.place_id));
+  const response = await getJson<{ data: DisruptionSummary[] }>("/disruptions?" + params.toString(), signal);
+  return response.data;
+}
+
+export type CommuterReportPayload = {
+  category: CommuterReportCategory;
+  description: string;
+  observed_at: string;
+  route_id?: number;
+  route_pattern_id?: number;
+  stop_id?: number;
+  place_id?: number;
+  transfer_relationship_id?: number;
+  location?: LocationPoint;
+  location_accuracy_m?: number;
+  source_reference?: string;
+};
+
+export async function submitCommuterReport(payload: CommuterReportPayload): Promise<{ data: { stable_id: string; category: CommuterReportCategory; status: string; description: string; observed_at: string; location: LocationPoint | null } }> {
+  const response = await fetch(apiUrl + "/commuter-reports", {
+    method: "POST",
+    headers: { Accept: "application/json", "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+    cache: "no-store",
+  });
+  if (!response.ok) throw new Error("Report request failed with status " + response.status);
+  return response.json() as Promise<{ data: { stable_id: string; category: CommuterReportCategory; status: string; description: string; observed_at: string; location: LocationPoint | null } }>;
 }
 
 export async function getRoutePattern(patternId: number, signal?: AbortSignal): Promise<RoutePattern> {

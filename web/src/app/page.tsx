@@ -2,9 +2,11 @@
 
 import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
-import type { CanIRideResponse, Journey, PedestrianAccessLeg, Place, Route, RoutePattern, Stop } from "@/lib/api";
-import { canIRide, getRoutePattern, listPlaces, listRoutes, listStops, planJourney, searchPlaces } from "@/lib/api";
+import type { CanIRideResponse, DisruptionSummary, Journey, PedestrianAccessLeg, Place, Route, RoutePattern, Stop } from "@/lib/api";
+import { canIRide, getRoutePattern, listDisruptions, listPlaces, listRoutes, listStops, planJourney, searchPlaces } from "@/lib/api";
 import CommuteCard from "@/components/CommuteCard";
+import CommuterReportForm from "@/components/CommuterReportForm";
+import DisruptionNotice from "@/components/DisruptionNotice";
 import RideMode from "@/components/RideMode";
 import type { CommuteInstruction } from "@/lib/commuteInstructions";
 import type { RideModeMapOverlay } from "@/lib/rideMode";
@@ -112,6 +114,12 @@ function CanIRideResultCard({ result }: { result: CanIRideResponse["data"] }) {
   const option = result.option ?? result.opposite_direction;
   const tone = result.status === "YES"
     ? styles.decisionYes
+    : result.status === "YES_BUT_AFFECTED"
+      ? styles.decisionAffected
+      : result.status === "TEMPORARILY_UNAVAILABLE"
+        ? styles.decisionNo
+        : result.status === "UNCERTAIN_DUE_TO_REPORT"
+          ? styles.decisionUncertain
     : result.status === "DIRECTION_DEPENDENT"
       ? styles.decisionDirection
       : result.status === "NO"
@@ -126,6 +134,12 @@ function CanIRideResultCard({ result }: { result: CanIRideResponse["data"] }) {
           <h3>
             {result.status === "YES"
               ? "YES — ride " + (result.route?.code ?? "this route")
+              : result.status === "YES_BUT_AFFECTED"
+                ? "YES, BUT CHECK THE ADVISORY"
+                : result.status === "TEMPORARILY_UNAVAILABLE"
+                  ? "TEMPORARILY UNAVAILABLE"
+                  : result.status === "UNCERTAIN_DUE_TO_REPORT"
+                    ? "UNCERTAIN — REPORT UNDER REVIEW"
               : result.status === "DIRECTION_DEPENDENT"
                 ? "NOT THIS DIRECTION"
                 : result.status === "NO"
@@ -148,6 +162,7 @@ function CanIRideResultCard({ result }: { result: CanIRideResponse["data"] }) {
         </div>
       )}
       {result.warnings.map((warning) => <p className={styles.warning} key={warning}>{warning}</p>)}
+      {result.disruptions?.map((impact) => <DisruptionNotice key={impact.advisory.stable_id} impact={impact} />)}
     </div>
   );
 }
@@ -179,6 +194,8 @@ export default function Home() {
   const [savedJourneys, setSavedJourneys] = useState<SavedJourney[]>([]);
   const [offlineSavedJourneyId, setOfflineSavedJourneyId] = useState<string | null>(null);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
+  const [activeAdvisories, setActiveAdvisories] = useState<DisruptionSummary[]>([]);
+  const [selectedDisruption, setSelectedDisruption] = useState<DisruptionSummary | null>(null);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -194,6 +211,20 @@ export default function Home() {
 
     return () => controller.abort();
   }, []);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    listDisruptions({}, controller.signal).then(setActiveAdvisories).catch(() => setActiveAdvisories([]));
+    return () => controller.abort();
+  }, []);
+
+  async function refreshAdvisories() {
+    try {
+      setActiveAdvisories(await listDisruptions());
+    } catch {
+      setError("Current advisories could not be refreshed. Existing journey guidance remains available.");
+    }
+  }
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -421,6 +452,14 @@ export default function Home() {
         </div>
       </section>
 
+      {activeAdvisories.length > 0 && (
+        <section className={styles.advisorySection} aria-labelledby="advisories-heading">
+          <div className={styles.sectionHeading}><div><p className={styles.eyebrow}>Temporary operational awareness</p><h2 id="advisories-heading">{activeAdvisories.length} active commute {activeAdvisories.length === 1 ? "advisory" : "advisories"}</h2></div><button type="button" className={styles.secondaryButton} onClick={() => { void refreshAdvisories(); }}>Refresh</button></div>
+          <p className={styles.sectionCopy}>These reviewed overlays may change what is practical right now. They do not rewrite Biyahe&apos;s normal route data.</p>
+          <div className={styles.advisoryGrid}>{activeAdvisories.slice(0, 3).map((advisory) => <DisruptionNotice key={advisory.stable_id} advisory={advisory} />)}</div>
+        </section>
+      )}
+
       <section className={styles.resultsSection} aria-labelledby="results-heading">
         <div className={styles.sectionHeading}>
           <div><p className={styles.eyebrow}>What to do next</p><h2 id="results-heading">Journey results</h2></div>
@@ -490,6 +529,8 @@ export default function Home() {
         selectedJourney={selectedJourney}
         offlineSnapshot={Boolean(selectedJourney && offlineSavedJourneyId === selectedJourney.id)}
         allowPatternFetch={!Boolean(selectedJourney && offlineSavedJourneyId === selectedJourney.id)}
+        activeAdvisories={activeAdvisories}
+        onRefreshAdvisories={() => { void refreshAdvisories(); }}
         onRestoreJourney={(journey) => {
           setSelectedJourney(journey);
           try {
@@ -523,15 +564,22 @@ export default function Home() {
         </div>
       </section>
 
+      <section className={styles.reportSection} aria-labelledby="report-heading">
+        <div className={styles.sectionHeading}><div><p className={styles.eyebrow}>Help keep temporary awareness useful</p><h2 id="report-heading">Report a current commute problem</h2></div></div>
+        <p className={styles.sectionCopy}>Reports are signals for review, not automatic route verification or service closures. Do not include personal information.</p>
+        <CommuterReportForm routes={routes} stops={stops} places={places} />
+      </section>
+
       <section className={styles.exploration} aria-labelledby="map-heading">
         <div className={styles.sectionHeading}>
           <div><p className={styles.eyebrow}>Journey map</p><h2 id="map-heading">See the boarding points</h2></div>
         </div>
         <p className={styles.sectionCopy}>Transit and computed pedestrian paths are shown separately. If a walking path is unavailable, Biyahe labels straight-line estimates and does not draw a street route.</p>
         <div className={styles.mapPanel}>
-          <MapView places={places} stops={stops} journey={selectedJourney} selectedPattern={selectedPattern} onStopSelect={setSelectedStop} rideMode={rideMapState} instructionFocus={instructionFocus} />
+          <MapView places={places} stops={stops} journey={selectedJourney} selectedPattern={selectedPattern} disruptions={activeAdvisories} onDisruptionSelect={setSelectedDisruption} onStopSelect={setSelectedStop} rideMode={rideMapState} instructionFocus={instructionFocus} />
           <div className={styles.mapLegend}><span><i className={styles.placeDot} /> places</span><span><i className={styles.stopDot} /> stops</span><span><i className={styles.routeDot} /> transit route</span><span><i className={styles.walkingDot} /> walking path</span><span><i className={styles.transferDot} /> transfer</span></div>
         </div>
+        {selectedDisruption && <DisruptionNotice advisory={selectedDisruption} onSelect={() => setSelectedDisruption(null)} />}
         <p className={styles.mapAttribution}>Computed pedestrian paths follow mapped OpenStreetMap ways (© OpenStreetMap contributors); they do not verify transit boarding or current ground conditions.</p>
         {selectedStop && (
           <div className={styles.infoCard}>
@@ -571,7 +619,7 @@ export default function Home() {
         )}
       </section>
 
-      <footer className={styles.footer}><span>BIYAHE Batch 013</span><span>© OpenStreetMap contributors · route confidence is shown, not hidden.</span></footer>
+      <footer className={styles.footer}><span>BIYAHE Batch 014</span><span>© OpenStreetMap contributors · route confidence is shown, not hidden.</span></footer>
     </main>
   );
 }

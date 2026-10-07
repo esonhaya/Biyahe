@@ -15,6 +15,7 @@ use App\Models\RoutePattern;
 use App\Models\RoutePatternStop;
 use App\Models\Stop;
 use App\Models\TransferRelationship;
+use App\Services\Disruptions\JourneyImpactService;
 use App\Services\Evidence\EvidenceFreshnessPolicy;
 use App\Support\Geo;
 use App\Support\Trust;
@@ -29,6 +30,7 @@ final class JourneyPlanner
         private readonly NearbyStopFinder $nearbyStopFinder,
         private readonly JourneyRanker $journeyRanker,
         private readonly PedestrianRouter $pedestrianRouter,
+        private readonly JourneyImpactService $journeyImpactService,
     ) {}
 
     public function plan(
@@ -119,11 +121,26 @@ final class JourneyPlanner
             );
         }
 
+        $journeys = $this->journeyImpactService->decorate($journeys);
+        $usableJourneys = $this->journeyImpactService->removeHardClosures($journeys);
+        if ($usableJourneys === []) {
+            return new JourneySearchResult(
+                journeys: [],
+                noRouteCode: 'TEMPORARILY_UNAVAILABLE',
+                noRouteMessage: 'No currently usable journey was found because the available service or access point is temporarily marked unavailable.',
+                boardingCandidates: $boardingStops->count(),
+                alightingCandidates: $alightingStops->count(),
+                pedestrianMetrics: $this->pedestrianRouter->metrics(),
+                disruptionMetrics: $this->journeyImpactService->metrics(),
+            );
+        }
+
         return new JourneySearchResult(
-            journeys: $this->journeyRanker->rank($journeys),
+            journeys: $this->journeyRanker->rank($usableJourneys),
             boardingCandidates: $boardingStops->count(),
             alightingCandidates: $alightingStops->count(),
             pedestrianMetrics: $this->pedestrianRouter->metrics(),
+            disruptionMetrics: $this->journeyImpactService->metrics(),
         );
     }
 
@@ -1058,6 +1075,15 @@ final class JourneyPlanner
             origin: $this->stopSummary($fromStop),
             destination: $this->stopSummary($toStop),
             distanceMeters: $pedestrianRoute?->status->isAvailable() ? $distanceMeters : ($distanceMeters <= 0.01 ? 0.0 : $distanceMeters),
+            transfer: $relationship === null ? [
+                'type' => 'SHARED_STOP',
+                'id' => null,
+                'stable_id' => null,
+            ] : [
+                'type' => 'TRANSFER',
+                'id' => $relationship->getKey(),
+                'stable_id' => $relationship->stable_id,
+            ],
             trust: $trustState,
             provenance: $this->provenanceFor($models),
             evidence: [

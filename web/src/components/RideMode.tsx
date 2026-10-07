@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { Journey, JourneyLeg, RoutePatternStop } from "@/lib/api";
+import type { DisruptionSummary, Journey, JourneyDisruptionImpact, JourneyLeg, RoutePatternStop } from "@/lib/api";
 import { getRoutePattern } from "@/lib/api";
+import DisruptionNotice from "@/components/DisruptionNotice";
+import { matchesEntity } from "@/lib/disruptions";
 import {
   generateCommuteInstructions,
   instructionForRideMode,
@@ -36,6 +38,8 @@ type RideModeProps = {
   selectedJourney: Journey | null;
   offlineSnapshot?: boolean;
   allowPatternFetch?: boolean;
+  activeAdvisories?: DisruptionSummary[];
+  onRefreshAdvisories?: () => void;
   onRestoreJourney: (journey: Journey) => void;
   onMapStateChange: (overlay: RideModeMapOverlay | null) => void;
 };
@@ -122,7 +126,7 @@ function trustWarning(leg: JourneyLeg): string | null {
   return null;
 }
 
-export default function RideMode({ selectedJourney, offlineSnapshot = false, allowPatternFetch = true, onRestoreJourney, onMapStateChange }: RideModeProps) {
+export default function RideMode({ selectedJourney, offlineSnapshot = false, allowPatternFetch = true, activeAdvisories = [], onRefreshAdvisories, onRestoreJourney, onMapStateChange }: RideModeProps) {
   const [session, setSession] = useState<RideModeSession | null>(null);
   const [hydrated, setHydrated] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
@@ -405,6 +409,14 @@ export default function RideMode({ selectedJourney, offlineSnapshot = false, all
   const routeCue = currentLeg?.type === "RIDE"
     ? `${currentInstruction?.routeCode ?? currentLeg.route?.code ?? "Mapped route"}${currentInstruction?.direction ? ` · ${currentInstruction.direction}` : ""}`
     : null;
+  const currentAdvisories = currentLeg
+    ? activeAdvisories.filter((advisory) => matchesEntity(
+      advisory,
+      currentLeg.route?.id,
+      currentLeg.boarding_stop?.id ?? currentLeg.alighting_stop?.id ?? (currentLeg.origin.type === "STOP" ? currentLeg.origin.id : undefined),
+      currentLeg.origin.type === "PLACE" ? currentLeg.origin.id : currentLeg.destination.type === "PLACE" ? currentLeg.destination.id : undefined,
+    ))
+    : [];
   const locationSummary = useMemo(() => {
     if (!session || session.status !== "ACTIVE") return null;
     if (locationMode === "DENIED") return "Manual mode · location permission denied";
@@ -450,6 +462,9 @@ export default function RideMode({ selectedJourney, offlineSnapshot = false, all
           <div className={styles.rideActionCard}>
             <p className={styles.cardKicker}>CURRENT ACTION</p>
             <h3>{currentText}</h3>
+            {session.journey.disruptions?.map((impact: JourneyDisruptionImpact) => <DisruptionNotice key={impact.advisory.stable_id} impact={impact} staleSnapshot={offlineSnapshot} />)}
+            {!offlineSnapshot && currentAdvisories.map((advisory) => <DisruptionNotice key={advisory.stable_id} advisory={advisory} />)}
+            {offlineSnapshot && session.journey.disruptions?.length === 0 && <p className={styles.snapshotNote}>Current disruption status is unavailable offline. This saved journey remains usable as a manual guide.</p>}
             {currentLeg?.type === "RIDE" && routeCue && <p className={styles.rideRouteCue}>{routeCue}</p>}
             {currentLeg?.type === "RIDE" && session.currentLegState === "WAITING_TO_BOARD" && (
               <div className={styles.rideGuidance}>
@@ -503,6 +518,7 @@ export default function RideMode({ selectedJourney, offlineSnapshot = false, all
               {locationMode === "DENIED" && <button type="button" className={styles.secondaryButton} onClick={enableLocation}>Try location again</button>}
               {locationMode === "UNAVAILABLE" && <button type="button" className={styles.secondaryButton} onClick={enableLocation}>Try live position again</button>}
               {evaluation?.accepted && <button type="button" className={styles.secondaryButton} onClick={() => setRecenterToken((token) => token + 1)}>Center map on me</button>}
+              {onRefreshAdvisories && !offlineSnapshot && <button type="button" className={styles.secondaryButton} onClick={onRefreshAdvisories}>Check current advisories</button>}
             </div>
           )}
           {locationError && <p className={styles.warning}>{locationError}</p>}

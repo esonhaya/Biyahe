@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Models\Place;
+use App\Services\Disruptions\JourneyImpactService;
 use App\Services\Routing\CanIRideChecker;
 use App\Support\Geo;
 use App\Support\Trust;
@@ -13,7 +14,7 @@ use Illuminate\Support\Facades\Validator;
 
 class CanIRideController
 {
-    public function __invoke(Request $request, CanIRideChecker $checker): JsonResponse
+    public function __invoke(Request $request, CanIRideChecker $checker, JourneyImpactService $impactService): JsonResponse
     {
         $validator = Validator::make($request->query(), [
             'route_code' => ['nullable', 'string', 'max:40'],
@@ -70,6 +71,19 @@ class CanIRideController
             routeId: isset($validated['route_id']) ? (int) $validated['route_id'] : null,
             boardingStopId: isset($validated['boarding_stop_id']) ? (int) $validated['boarding_stop_id'] : null,
         );
+
+        $resultOption = $result->option ?? $result->oppositeOption;
+        $disruptions = $result->route === null
+            ? []
+            : $impactService->forCanIRide(
+                (int) $result->route['id'],
+                isset($resultOption['pattern']['id']) ? (int) $resultOption['pattern']['id'] : null,
+                array_values(array_filter([
+                    isset($resultOption['boarding_stop']['id']) ? (int) $resultOption['boarding_stop']['id'] : null,
+                    isset($resultOption['alighting_stop']['id']) ? (int) $resultOption['alighting_stop']['id'] : null,
+                ])),
+            );
+        $result = $result->withOperationalImpacts($disruptions);
 
         $resultData = $result->toArray();
         $pedestrianDistanceTypes = collect($resultData['option']['pedestrian_access'] ?? [])

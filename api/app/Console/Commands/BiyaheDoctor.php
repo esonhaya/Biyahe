@@ -2,6 +2,11 @@
 
 namespace App\Console\Commands;
 
+use App\Enums\CommuterReportCategory;
+use App\Enums\CommuterReportStatus;
+use App\Enums\DisruptionCategory;
+use App\Enums\DisruptionSourceClass;
+use App\Enums\DisruptionStatus;
 use App\Enums\FieldClaimStatus;
 use App\Enums\FieldLocationMethod;
 use App\Enums\FieldLocationPrecision;
@@ -41,7 +46,7 @@ class BiyaheDoctor extends Command
     public function handle(): int
     {
         $this->report = new DoctorReport;
-        $this->info('BIYAHE DOCTOR V13');
+        $this->info('BIYAHE DOCTOR V14');
         $this->check('application', 'PASS', 'Laravel booted and configuration loaded.');
 
         $databaseReady = $this->checkDatabase();
@@ -77,6 +82,7 @@ class BiyaheDoctor extends Command
             $this->runPedestrianChecks($postgisReady);
             $this->runRideModeChecks();
             $this->runCommuteCardChecks();
+            $this->runDisruptionChecks($postgisReady);
         } catch (Throwable $exception) {
             report($exception);
             $this->check('doctor execution', 'FAIL', 'A Doctor query failed: '.$exception->getMessage());
@@ -596,6 +602,7 @@ class BiyaheDoctor extends Command
         }
         $referencedSourceIds = $referencedSourceIds
             ->merge(DB::table('provenance_sources')->whereNotNull('superseded_by_id')->pluck('superseded_by_id'))
+            ->merge(Schema::hasTable('disruptions') ? DB::table('disruptions')->whereNotNull('provenance_source_id')->pluck('provenance_source_id') : collect())
             ->unique()
             ->values();
         $orphanSources = DB::table('provenance_sources')->whereNotIn('id', $referencedSourceIds)->count();
@@ -1426,6 +1433,118 @@ class BiyaheDoctor extends Command
         $this->check('commute instruction trust boundary', 'PASS', 'Instruction presentation derives from the selected journey and does not promote transport, transfer, or pedestrian trust.');
         $this->check('commute precision boundary', 'PASS', 'Commute Cards retain boarding and alighting uncertainty instead of converting it into exact claims.');
         $this->check('commute fare boundary', 'PASS', 'Fare-unavailable journeys remain unavailable; the presentation layer does not infer a fare.');
+    }
+
+    private function runDisruptionChecks(bool $postgisReady): void
+    {
+        $tables = [
+            'disruptions',
+            'disruption_routes',
+            'disruption_route_patterns',
+            'disruption_stops',
+            'disruption_places',
+            'disruption_transfers',
+            'commuter_reports',
+            'commuter_report_reviews',
+            'disruption_reviews',
+        ];
+        $missingTables = array_values(array_filter($tables, static fn (string $table): bool => ! Schema::hasTable($table)));
+        if ($missingTables !== []) {
+            $this->check('disruption schema', 'FAIL', 'Disruption awareness tables are missing: '.implode(', ', $missingTables).'.');
+
+            return;
+        }
+        $this->check('disruption schema', 'PASS', 'Temporary advisory and commuter-report tables are present.');
+
+        $invalidIntervals = DB::table('disruptions')
+            ->whereNotNull('starts_at')
+            ->whereNotNull('ends_at')
+            ->whereColumn('ends_at', '<', 'starts_at')
+            ->count();
+        $this->checkCount('disruption time intervals', $invalidIntervals, 'advisories have an end before their start.');
+
+        $invalidStatuses = DB::table('disruptions')->whereNotIn('status', DisruptionStatus::values())->count();
+        $invalidStatuses += DB::table('commuter_reports')->whereNotIn('status', CommuterReportStatus::values())->count();
+        $invalidCategories = DB::table('disruptions')->whereNotIn('category', DisruptionCategory::values())->count();
+        $invalidCategories += DB::table('commuter_reports')->whereNotIn('category', CommuterReportCategory::values())->count();
+        $this->checkCount('disruption enum validity', $invalidStatuses + $invalidCategories, 'advisories or reports use unsupported lifecycle/category values.');
+
+        $activeMissingProvenance = DB::table('disruptions')
+            ->whereIn('status', [DisruptionStatus::ACTIVE->value, DisruptionStatus::SCHEDULED->value])
+            ->whereNull('provenance_source_id')
+            ->count();
+        $this->checkCount('disruption provenance', $activeMissingProvenance, 'active or scheduled advisories lack a provenance source.');
+
+        $expiredStillActive = DB::table('disruptions')
+            ->whereIn('status', [DisruptionStatus::ACTIVE->value, DisruptionStatus::SCHEDULED->value])
+            ->whereNotNull('ends_at')
+            ->where('ends_at', '<=', now())
+            ->count();
+        $this->checkCount('expired advisory isolation', $expiredStillActive, 'expired advisories would still be eligible for operational matching.');
+
+        $scheduledInPast = DB::table('disruptions')
+            ->where('status', DisruptionStatus::SCHEDULED->value)
+            ->whereNotNull('starts_at')
+            ->where('starts_at', '<=', now())
+            ->count();
+        $this->checkWarningCount('scheduled advisory freshness', $scheduledInPast, 'scheduled advisories have reached their start time and should be reviewed/activated.');
+
+        $publicReportsWithAuthority = DB::table('commuter_reports')
+            ->where('status', CommuterReportStatus::SUBMITTED->value)
+            ->whereNotNull('disruption_id')
+            ->count();
+        $this->checkCount('report review gate', $publicReportsWithAuthority, 'unreviewed public reports are linked to advisories.');
+
+        $publicHardCategories = DB::table('disruptions')
+            ->where('source_class', DisruptionSourceClass::PUBLIC_REPORT->value)
+            ->whereIn('category', array_map(static fn ($category): string => $category->value, array_filter(DisruptionCategory::cases(), static fn ($category): bool => $category->canHardClose())))
+            ->count();
+        $this->check('public report operational boundary', $publicHardCategories === 0 ? 'PASS' : 'WARN', $publicHardCategories === 0
+            ? 'No public report advisory is currently using a hard-close category.'
+            : $publicHardCategories.' public-report advisory record(s) remain warning-only; the impact engine cannot hard-close them.');
+
+        $syntheticProduction = DB::table('disruptions')->where('is_synthetic', true)->count()
+            + DB::table('commuter_reports')->where('is_synthetic', true)->count();
+        $this->checkCount('synthetic disruption isolation', $syntheticProduction, 'synthetic operational records are present in the database.');
+
+        $missingEntityReferences = 0;
+        foreach ([
+            ['table' => 'disruption_routes', 'column' => 'route_id', 'parent' => 'routes'],
+            ['table' => 'disruption_route_patterns', 'column' => 'route_pattern_id', 'parent' => 'route_patterns'],
+            ['table' => 'disruption_stops', 'column' => 'stop_id', 'parent' => 'stops'],
+            ['table' => 'disruption_places', 'column' => 'place_id', 'parent' => 'places'],
+            ['table' => 'disruption_transfers', 'column' => 'transfer_relationship_id', 'parent' => 'transfer_relationships'],
+        ] as $reference) {
+            $missingEntityReferences += DB::table($reference['table'])
+                ->whereNotExists(function (Builder $query) use ($reference): void {
+                    $query->selectRaw('1')->from($reference['parent'])->whereColumn($reference['parent'].'.id', $reference['table'].'.'.$reference['column']);
+                })->count();
+        }
+        $this->checkCount('disruption entity references', $missingEntityReferences, 'advisory links reference missing transport entities.');
+
+        $canonicalLeakColumns = [];
+        foreach (['routes', 'route_patterns', 'route_pattern_stops', 'stops', 'fares'] as $table) {
+            foreach (['disruption_id', 'disruption_status', 'temporary_disruption'] as $column) {
+                if (Schema::hasColumn($table, $column)) {
+                    $canonicalLeakColumns[] = $table.'.'.$column;
+                }
+            }
+        }
+        $this->check('temporary/canonical separation', $canonicalLeakColumns === [] ? 'PASS' : 'FAIL', $canonicalLeakColumns === []
+            ? 'Disruptions remain overlays and do not add mutable operational columns to canonical transport tables.'
+            : 'Canonical transport tables contain disruption fields: '.implode(', ', $canonicalLeakColumns).'.');
+
+        if ($postgisReady) {
+            $invalidGeometry = DB::table('disruptions')
+                ->whereNotNull('geometry')
+                ->whereRaw('ST_SRID(geometry) <> 4326 OR ST_IsEmpty(geometry) OR NOT ST_IsValid(geometry)')
+                ->count();
+            $this->checkCount('disruption geometry integrity', $invalidGeometry, 'advisories have invalid, empty, or non-WGS84 geometry.');
+        } else {
+            $this->check('disruption geometry integrity', 'BLOCKED', 'PostGIS is required to validate optional advisory geometry.');
+        }
+
+        $this->check('disruption trust boundary', 'PASS', 'Temporary advisories, commuter reports, and Ride Mode observations do not mutate canonical transport evidence or trust.');
     }
 
     private function checkCount(string $label, int $count, string $failureMessage): void

@@ -72,4 +72,9 @@ class RoutePattern extends Model
     {
         return $this->hasMany(Fare::class);
     }
+
+    public function disruptions(): BelongsToMany
+    {
+        return $this->belongsToMany(Disruption::class, 'disruption_route_patterns');
+    }
 }

@@ -13,6 +13,7 @@ final class Journey
      * @param  list<array<string, mixed>>  $provenance
      * @param  list<string>  $warnings
      * @param  list<string>  $rankingReasons
+     * @param  list<array<string, mixed>>  $disruptions
      */
     public function __construct(
         public readonly string $id,
@@ -32,6 +33,8 @@ final class Journey
             'amount' => null,
             'currency' => null,
         ],
+        public readonly array $disruptions = [],
+        public readonly string $operationalImpact = 'INFORMATIONAL',
     ) {}
 
     /** @return array<string, mixed> */
@@ -57,6 +60,8 @@ final class Journey
                 'warning' => $this->warnings[0] ?? null,
             ],
             'warnings' => $this->warnings,
+            'operational_impact' => $this->operationalImpact,
+            'disruptions' => $this->disruptions,
             'fare' => $this->fare,
             'provenance' => $this->provenance,
         ];
@@ -77,6 +82,39 @@ final class Journey
             warnings: $this->warnings,
             rankingReasons: $rankingReasons,
             fare: $this->fare,
+            disruptions: $this->disruptions,
+            operationalImpact: $this->operationalImpact,
         );
+    }
+
+    /** @param list<array<string, mixed>> $disruptions */
+    public function withOperationalImpacts(array $disruptions, string $operationalImpact): self
+    {
+        return new self(
+            id: $this->id,
+            origin: $this->origin,
+            destination: $this->destination,
+            legs: $this->legs,
+            transferCount: $this->transferCount,
+            walkingDistanceMeters: $this->walkingDistanceMeters,
+            rideStopCount: $this->rideStopCount,
+            trustState: $this->trustState,
+            provenance: $this->provenance,
+            warnings: $this->warnings,
+            rankingReasons: $this->rankingReasons,
+            fare: $this->fare,
+            disruptions: $disruptions,
+            operationalImpact: $operationalImpact,
+        );
+    }
+
+    public function operationalImpactRank(): int
+    {
+        return match ($this->operationalImpact) {
+            'SERVICE_UNAVAILABLE' => 3,
+            'AFFECTED' => 2,
+            'POSSIBLY_AFFECTED' => 1,
+            default => 0,
+        };
     }
 }

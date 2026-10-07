@@ -126,6 +126,49 @@ final class Geo
         return 'SRID=4326;MULTILINESTRING('.implode(',', $lines).')';
     }
 
+    /**
+     * Convert the bounded GeoJSON geometry shapes accepted for temporary
+     * advisories into PostGIS-compatible WKT.  Geometry is optional; callers
+     * should prefer explicit entity links when they have them.
+     */
+    public static function geometryWkt(array $geometry): string
+    {
+        $type = $geometry['type'] ?? null;
+        $coordinates = $geometry['coordinates'] ?? null;
+
+        if ($type === 'Point' && is_array($coordinates) && count($coordinates) === 2) {
+            return self::pointWkt((float) $coordinates[1], (float) $coordinates[0]);
+        }
+
+        if ($type === 'LineString') {
+            return 'SRID=4326;LINESTRING('.self::coordinatePairs($coordinates, 2).')';
+        }
+
+        if ($type === 'MultiLineString') {
+            $lines = array_map(fn ($line): string => '('.self::coordinatePairs($line, 2).')', self::nestedCoordinates($coordinates, 2));
+
+            return 'SRID=4326;MULTILINESTRING('.implode(',', $lines).')';
+        }
+
+        if ($type === 'Polygon') {
+            $rings = array_map(fn ($ring): string => '('.self::coordinatePairs($ring, 4, true).')', self::nestedCoordinates($coordinates, 2));
+
+            return 'SRID=4326;POLYGON('.implode(',', $rings).')';
+        }
+
+        if ($type === 'MultiPolygon') {
+            $polygons = [];
+            foreach (self::nestedCoordinates($coordinates, 3) as $polygon) {
+                $rings = array_map(fn ($ring): string => '('.self::coordinatePairs($ring, 4, true).')', self::nestedCoordinates($polygon, 2));
+                $polygons[] = '('.implode(',', $rings).')';
+            }
+
+            return 'SRID=4326;MULTIPOLYGON('.implode(',', $polygons).')';
+        }
+
+        throw new InvalidArgumentException('Temporary advisory geometry must be a bounded WGS 84 GeoJSON geometry.');
+    }
+
     public static function distanceMeters(float $latitudeA, float $longitudeA, float $latitudeB, float $longitudeB): float
     {
         $earthRadius = 6371000;
@@ -147,5 +190,43 @@ final class Geo
     private static function formatCoordinate(float $coordinate): string
     {
         return rtrim(rtrim(sprintf('%.8F', $coordinate), '0'), '.');
+    }
+
+    private static function coordinatePairs(mixed $coordinates, int $minimum, bool $closed = false): string
+    {
+        if (! is_array($coordinates) || count($coordinates) < $minimum) {
+            throw new InvalidArgumentException('Geometry must contain enough coordinate pairs.');
+        }
+
+        $pairs = [];
+        foreach ($coordinates as $coordinate) {
+            if (! is_array($coordinate) || count($coordinate) < 2 || ! is_numeric($coordinate[0]) || ! is_numeric($coordinate[1])) {
+                throw new InvalidArgumentException('Geometry coordinates must be [longitude, latitude].');
+            }
+            self::assertCoordinates((float) $coordinate[1], (float) $coordinate[0]);
+            $pairs[] = self::formatCoordinate((float) $coordinate[0]).' '.self::formatCoordinate((float) $coordinate[1]);
+        }
+
+        if ($closed && $pairs[0] !== $pairs[array_key_last($pairs)]) {
+            $pairs[] = $pairs[0];
+        }
+
+        return implode(',', $pairs);
+    }
+
+    /** @return list<array<int, mixed>> */
+    private static function nestedCoordinates(mixed $coordinates, int $depth): array
+    {
+        if (! is_array($coordinates) || $depth < 1) {
+            throw new InvalidArgumentException('Geometry coordinates are malformed.');
+        }
+        if ($depth === 1) {
+            return $coordinates;
+        }
+
+        return array_values(array_map(
+            fn ($value): array => self::nestedCoordinates($value, $depth - 1),
+            $coordinates,
+        ));
     }
 }

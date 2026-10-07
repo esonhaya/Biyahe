@@ -79,4 +79,9 @@ class Stop extends Model
             ])
             ->orderBy('route_pattern_stops.sequence');
     }
+
+    public function disruptions(): BelongsToMany
+    {
+        return $this->belongsToMany(Disruption::class, 'disruption_stops');
+    }
 }

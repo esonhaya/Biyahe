@@ -78,6 +78,7 @@ class JourneyController
                 'distance_unit' => 'meters',
                 'walking_distance_type' => $this->walkingDistanceType($journeys),
                 'pedestrian_routing' => $result->pedestrianMetrics,
+                'disruption_awareness' => $result->disruptionMetrics,
                 'boarding_candidates' => $result->boardingCandidates,
                 'alighting_candidates' => $result->alightingCandidates,
                 'no_route' => $result->hasJourneys() ? null : [

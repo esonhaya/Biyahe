@@ -8,6 +8,7 @@ use App\Services\Routing\TransferReviewFingerprint;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class TransferRelationship extends Model
 {
@@ -71,5 +72,10 @@ class TransferRelationship extends Model
     public function provenanceSource(): BelongsTo
     {
         return $this->belongsTo(ProvenanceSource::class);
+    }
+
+    public function disruptions(): BelongsToMany
+    {
+        return $this->belongsToMany(Disruption::class, 'disruption_transfers');
     }
 }

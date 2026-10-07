@@ -76,6 +76,7 @@
 .decisionHeader h3 { margin: 4px 0 0; font-size: 1.15rem; }
 .decisionResult > p { margin: 10px 0 0; color: #5d777e; line-height: 1.5; }
 .decisionYes { border-color: #8dc7ad; background: #f3fbf6; }
+.decisionAffected { border-color: #e6b9ac; background: #fff8f4; }.decisionUncertain { border-color: #e6c779; background: #fff8e9; }
 .decisionDirection { border-color: #e6b9ac; background: #fff8f4; }
 .decisionNo, .decisionUnknown { border-color: #d6d2c8; background: #fbfaf6; }
 .decisionDetails { margin-top: 12px; border-top: 1px solid rgba(21, 59, 69, .1); padding-top: 10px; }
@@ -123,4 +124,21 @@
 .rideNotice { display: grid; gap: 6px; margin-bottom: 12px; border: 1px solid #e6b9ac; border-radius: 12px; padding: 12px; color: #7d4238; background: #fff7f4; font-size: .84rem; line-height: 1.4; }
 .rideNotice .secondaryButton { justify-self: start; }
 .osmNote { margin: 12px 0 0; color: #6d858b; font-size: .76rem; line-height: 1.45; }
-@media (max-width: 700px) { .hero { padding-top: 28px; }.searchCard { grid-template-columns: 1fr; }.primaryButton { width: 100%; }.suggestions { top: 72px; }.map-frame { min-height: 360px; }.routeGrid { grid-template-columns: 1fr; }.infoCard { align-items: start; flex-direction: column; }.footer { flex-direction: column; }.journeyCard { padding: 14px; }.journeyFooter { align-items: start; flex-direction: column; }.secondaryButton { width: 100%; }.resultsSection { padding-top: 28px; }.decisionForm { grid-template-columns: 1fr; }.decisionForm select { width: 100%; }.decisionForm .primaryButton { margin-top: 2px; } }
+.advisorySection, .reportSection { width: min(880px, calc(100% - 32px)); margin: 0 auto; padding: 32px 0 0; }
+.advisoryGrid { display: grid; gap: 10px; margin-top: 14px; }
+.disruptionNotice { display: grid; gap: 5px; margin-top: 10px; border: 1px solid #d6d2c8; border-radius: 11px; padding: 10px 12px; font-size: .78rem; line-height: 1.4; }
+.disruptionNotice p, .disruptionNotice small { margin: 0; color: #5d777e; }
+.disruptionNotice strong { color: #153b45; }
+.disruptionNoticeHeader { display: flex; align-items: flex-start; gap: 8px; }
+.disruptionIcon { display: grid; width: 20px; height: 20px; flex: 0 0 20px; place-items: center; border-radius: 50%; color: #fff; background: #7b61a8; font-size: .72rem; font-weight: 900; }
+.disruptionMajor { border-color: #d3624d; background: #fff5f1; }.disruptionMajor .disruptionIcon { background: #b42318; }
+.disruptionUncertain { border-color: #e6b9ac; background: #fff8e9; }.disruptionUncertain .disruptionIcon { background: #8b5a31; }
+.disruptionInfo { background: #fbfcfa; }
+.textButton { justify-self: start; border: 0; padding: 0; color: #176b87; background: transparent; cursor: pointer; font-size: .76rem; font-weight: 700; }
+.reportForm { display: grid; gap: 12px; border: 1px solid #dfded7; border-radius: 18px; padding: 18px; background: #fff; }
+.reportForm label { display: grid; gap: 5px; color: #658087; font-size: .75rem; font-weight: 700; letter-spacing: .04em; }
+.reportForm select, .reportForm input, .reportForm textarea { width: 100%; border: 1px solid #d4dcd9; border-radius: 9px; padding: 10px; color: #153b45; background: #fbfcfa; font: inherit; font-weight: 400; letter-spacing: normal; }
+.reportForm textarea { min-height: 92px; resize: vertical; }
+.formGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.checkboxLabel { display: flex !important; grid-template-columns: auto 1fr; align-items: center; gap: 8px !important; font-weight: 400 !important; letter-spacing: normal !important; }.checkboxLabel input { width: auto; }
+@media (max-width: 700px) { .hero { padding-top: 28px; }.searchCard { grid-template-columns: 1fr; }.primaryButton { width: 100%; }.suggestions { top: 72px; }.map-frame { min-height: 360px; }.routeGrid { grid-template-columns: 1fr; }.infoCard { align-items: start; flex-direction: column; }.footer { flex-direction: column; }.journeyCard { padding: 14px; }.journeyFooter { align-items: start; flex-direction: column; }.secondaryButton { width: 100%; }.resultsSection { padding-top: 28px; }.decisionForm { grid-template-columns: 1fr; }.decisionForm select { width: 100%; }.decisionForm .primaryButton { margin-top: 2px; }.formGrid { grid-template-columns: 1fr; } }

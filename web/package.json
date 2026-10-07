@@ -12,7 +12,8 @@
     "start": "next start",
     "lint": "eslint",
     "test:ride-mode": "node --experimental-strip-types scripts/ride-mode-harness.mjs",
-    "test:commute-cards": "node --experimental-strip-types scripts/commute-card-harness.mjs"
+    "test:commute-cards": "node --experimental-strip-types scripts/commute-card-harness.mjs",
+    "test:disruptions": "node --experimental-strip-types scripts/disruption-harness.mjs"
   },
   "dependencies": {
     "maplibre-gl": "^6.12.0",

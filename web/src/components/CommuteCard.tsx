@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import type { Journey } from "@/lib/api";
+import DisruptionNotice from "@/components/DisruptionNotice";
 import {
   buildShareText,
   generateCommuteInstructions,
@@ -89,7 +90,8 @@ export default function CommuteCard({
   const savedDate = savedAt ? new Date(savedAt) : null;
 
   async function share() {
-    const text = buildShareText(model);
+    const advisory = journey.disruptions?.find((impact) => impact.impact_level !== "INFORMATIONAL")?.warning;
+    const text = [buildShareText(model), advisory ? `Important: ${advisory}` : null].filter(Boolean).join("\n");
     try {
       if (typeof navigator !== "undefined" && typeof navigator.share === "function") {
         await navigator.share({ title: `Biyahe: ${model.title}`, text });
@@ -106,7 +108,8 @@ export default function CommuteCard({
 
   async function copy() {
     try {
-      await copyText(buildShareText(model));
+      const advisory = journey.disruptions?.find((impact) => impact.impact_level !== "INFORMATIONAL")?.warning;
+      await copyText([buildShareText(model), advisory ? `Important: ${advisory}` : null].filter(Boolean).join("\n"));
       setShareStatus("Copied");
     } catch {
       setShareStatus("Copy is unavailable");
@@ -134,13 +137,21 @@ export default function CommuteCard({
           Offline saved snapshot{savedDate && Number.isFinite(savedDate.getTime()) ? ` · saved ${savedDate.toLocaleDateString()}` : ""}. It may be out of date.
         </p>
       )}
+      {(journey.disruptions ?? []).filter((impact) => impact.affected_leg_index === null || impact.affected_leg_index === undefined).map((impact) => (
+        <DisruptionNotice key={impact.advisory.stable_id} impact={impact} staleSnapshot={offlineSnapshot} />
+      ))}
 
       <ol className={styles.instructionList}>
         {model.instructions.map((instruction) => {
+          const legDisruptions = (journey.disruptions ?? []).filter((impact) => {
+            if (impact.affected_leg_index === instruction.legIndex) return true;
+            return (impact.affected_legs ?? []).some((leg) => leg.index === instruction.legIndex);
+          });
           const content = (
             <>
               <span className={styles.instructionMarker}>{instruction.type === "RIDE" ? instruction.routeCode ?? "RIDE" : instruction.type === "ARRIVE" ? "✓" : "•"}</span>
               <span className={styles.instructionBody}>
+                {legDisruptions.map((impact) => <DisruptionNotice key={`${impact.advisory.stable_id}-${instruction.id}`} impact={impact} staleSnapshot={offlineSnapshot} />)}
                 <span className={styles.instructionLabel}>{typeLabel(instruction.type)}</span>
                 <strong>{instruction.primaryAction}</strong>
                 {instruction.secondaryDetail && <span>{instruction.secondaryDetail}</span>}

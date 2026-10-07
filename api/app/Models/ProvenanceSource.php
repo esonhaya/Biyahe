@@ -68,6 +68,11 @@ class ProvenanceSource extends Model
         return $this->hasMany(TransferRelationship::class);
     }
 
+    public function disruptions(): HasMany
+    {
+        return $this->hasMany(Disruption::class);
+    }
+
     public function supersededBy(): BelongsTo
     {
         return $this->belongsTo(self::class, 'superseded_by_id');

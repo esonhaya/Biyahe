@@ -46,6 +46,28 @@ return [
         ],
         'search_margin_meters' => 1800,
     ],
+    'disruptions' => [
+        'public_limit' => 50,
+        'report_description_max_length' => 1000,
+        'report_source_reference_max_length' => 500,
+        'report_rate_limit_per_minute' => 5,
+        'report_duplicate_window_minutes' => 20,
+        'report_max_age_days' => 7,
+        'report_future_skew_minutes' => 5,
+        'default_expiry_hours' => [
+            'TRAFFIC_DISRUPTION' => 6,
+            'FLOODING' => 12,
+            'ROAD_CLOSURE' => 24,
+            'EVENT' => 24,
+            'SERVICE_SUSPENDED' => 24,
+            'SERVICE_REDUCED' => 24,
+            'REROUTED' => 24,
+            'STOP_UNAVAILABLE' => 24,
+            'BOARDING_AREA_UNAVAILABLE' => 24,
+            'TRANSFER_UNAVAILABLE' => 24,
+            'OTHER' => 12,
+        ],
+    ],
     'evidence' => [
         'source_quality' => [
             'OFFICIAL' => ['rank' => 1, 'label' => 'Government or competent authority'],

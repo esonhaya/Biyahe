@@ -9,6 +9,7 @@ final class JourneyRanker
     {
         usort($journeys, function (Journey $left, Journey $right): int {
             return ($left->trustState->rank() <=> $right->trustState->rank())
+                ?: ($left->operationalImpactRank() <=> $right->operationalImpactRank())
                 ?: ($left->transferCount <=> $right->transferCount)
                 ?: ($left->walkingDistanceMeters <=> $right->walkingDistanceMeters)
                 ?: ($left->rideStopCount <=> $right->rideStopCount)
@@ -71,6 +72,9 @@ final class JourneyRanker
         }
         if ($journey->trustState->rank() > $best->trustState->rank()) {
             $reasons[] = 'Less verified information';
+        }
+        if ($journey->operationalImpactRank() > $best->operationalImpactRank()) {
+            $reasons[] = 'More exposed to an active commute advisory';
         }
 
         return $reasons === [] ? ['Alternative boarding point or route'] : $reasons;
