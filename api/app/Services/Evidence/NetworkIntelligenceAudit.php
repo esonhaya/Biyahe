@@ -259,16 +259,8 @@ final class NetworkIntelligenceAudit
     /** @return array<string, mixed> */
     private function dataQuality(): array
     {
-        $nearDuplicateStops = config('database.default') === 'pgsql'
-            ? (int) DB::selectOne(
-                "SELECT COUNT(*) AS count FROM stops a JOIN stops b ON a.id < b.id
-                 WHERE a.is_demo=false AND b.is_demo=false AND a.is_active=true AND b.is_active=true
-                   AND a.location IS NOT NULL AND b.location IS NOT NULL
-                   AND ST_DWithin(a.location,b.location,30)
-                   AND lower(regexp_replace(coalesce(a.name,''),'[^a-z0-9]','','g')) =
-                       lower(regexp_replace(coalesce(b.name,''),'[^a-z0-9]','','g'))",
-            )->count
-            : 0;
+        $duplicateReview = $this->nearDuplicateReview();
+        $nearDuplicateStops = $duplicateReview['total'];
         $aliasCollisions = DB::table('place_aliases')
             ->where('is_active', true)
             ->select('normalized_alias')
@@ -299,6 +291,7 @@ final class NetworkIntelligenceAudit
         return [
             'near_duplicate_stop_candidates' => $nearDuplicateStops,
             'auto_merged_stops' => 0,
+            'near_duplicate_review' => $duplicateReview,
             'alias_collisions' => $aliasCollisions,
             'route_collisions' => $routeCollisions,
             'pattern_defects' => [
@@ -306,6 +299,86 @@ final class NetworkIntelligenceAudit
                 'duplicate_sequences' => $duplicateSequences,
                 'invalid_geometry' => $invalidGeometry,
             ],
+        ];
+    }
+
+    /** @return array<string, mixed> */
+    private function nearDuplicateReview(): array
+    {
+        if (config('database.default') !== 'pgsql') {
+            return [
+                'total' => 0,
+                'classified' => [],
+                'examples' => [],
+                'auto_merged' => 0,
+            ];
+        }
+
+        $pairs = DB::select(
+            "SELECT a.id AS a_id, b.id AS b_id, a.stable_id AS a_stable_id, b.stable_id AS b_stable_id,
+                    a.name AS a_name, b.name AS b_name, ST_Distance(a.location,b.location) AS distance_meters
+             FROM stops a JOIN stops b ON a.id < b.id
+             WHERE a.is_demo=false AND b.is_demo=false AND a.is_active=true AND b.is_active=true
+               AND a.location IS NOT NULL AND b.location IS NOT NULL
+               AND ST_DWithin(a.location,b.location,30)
+               AND lower(regexp_replace(coalesce(a.name,''),'[^a-z0-9]','','g')) =
+                   lower(regexp_replace(coalesce(b.name,''),'[^a-z0-9]','','g'))
+             ORDER BY ST_Distance(a.location,b.location), a.id, b.id",
+        );
+        if ($pairs === []) {
+            return ['total' => 0, 'classified' => [], 'examples' => [], 'auto_merged' => 0];
+        }
+
+        $stopIds = collect($pairs)->flatMap(static fn (object $pair): array => [(int) $pair->a_id, (int) $pair->b_id])->unique()->values();
+        $contexts = DB::table('route_pattern_stops as rps')
+            ->join('route_patterns as rp', 'rp.id', '=', 'rps.route_pattern_id')
+            ->whereIn('rps.stop_id', $stopIds)
+            ->where('rp.is_demo', false)
+            ->where('rp.is_active', true)
+            ->get(['rps.stop_id', 'rps.route_pattern_id', 'rp.route_id', 'rp.direction', 'rps.sequence', 'rps.boarding_allowed', 'rps.alighting_allowed'])
+            ->groupBy('stop_id');
+        $classified = [];
+        $examples = [];
+        foreach ($pairs as $pair) {
+            $left = $contexts->get((int) $pair->a_id, collect());
+            $right = $contexts->get((int) $pair->b_id, collect());
+            $leftPatterns = $left->pluck('route_pattern_id')->map(fn ($id): int => (int) $id)->unique()->values()->all();
+            $rightPatterns = $right->pluck('route_pattern_id')->map(fn ($id): int => (int) $id)->unique()->values()->all();
+            $sharedPatterns = array_values(array_intersect($leftPatterns, $rightPatterns));
+            $leftRoutes = $left->pluck('route_id')->map(fn ($id): int => (int) $id)->unique()->values()->all();
+            $rightRoutes = $right->pluck('route_id')->map(fn ($id): int => (int) $id)->unique()->values()->all();
+            $sharedRoutes = array_values(array_intersect($leftRoutes, $rightRoutes));
+            $sameContext = $left->isNotEmpty() && $right->isNotEmpty()
+                && $left->map(fn ($row): string => implode(':', [(int) $row->route_pattern_id, (int) $row->sequence, (int) $row->boarding_allowed, (int) $row->alighting_allowed]))
+                    ->sort()->values()->all()
+                    === $right->map(fn ($row): string => implode(':', [(int) $row->route_pattern_id, (int) $row->sequence, (int) $row->boarding_allowed, (int) $row->alighting_allowed]))
+                        ->sort()->values()->all();
+            $distance = (float) $pair->distance_meters;
+            $classification = $distance <= 0.5 && $sameContext
+                ? 'TRUE_DUPLICATE'
+                : ($distance <= 3 && $sameContext
+                    ? 'LIKELY_DUPLICATE'
+                    : ($sharedPatterns !== [] && $sharedRoutes !== []
+                        ? 'DISTINCT_DIRECTIONS'
+                        : ($sharedRoutes !== [] ? 'DISTINCT_BOARDING_AREAS' : 'SAME_NAME_DIFFERENT_PLACE')));
+            $classified[$classification] = ($classified[$classification] ?? 0) + 1;
+            if (count($examples) < 12) {
+                $examples[] = [
+                    'classification' => $classification,
+                    'a' => $pair->a_stable_id,
+                    'b' => $pair->b_stable_id,
+                    'distance_meters' => round($distance, 2),
+                    'shared_patterns' => count($sharedPatterns),
+                    'shared_routes' => count($sharedRoutes),
+                ];
+            }
+        }
+
+        return [
+            'total' => count($pairs),
+            'classified' => $classified,
+            'examples' => $examples,
+            'auto_merged' => 0,
         ];
     }
 }

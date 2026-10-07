@@ -139,6 +139,18 @@ final class ResumableCoverageAudit
                     'id' => $journey->id,
                     'trust' => $journey->trustState->value,
                     'transfers' => $journey->transferCount,
+                    'transfer_modes' => collect($journey->legs)
+                        ->filter(static fn ($leg): bool => $leg->type === JourneyLegType::TRANSFER_WALK)
+                        ->map(static function ($leg): string {
+                            if (($leg->transfer['type'] ?? null) === 'TRANSFER') {
+                                return 'EXPLICIT_TRANSFER';
+                            }
+                            return (($leg->origin['id'] ?? null) === ($leg->destination['id'] ?? null))
+                                ? 'SHARED_STOP_TRANSFER'
+                                : 'WALKING_PROXIMITY_TRANSFER';
+                        })
+                        ->values()
+                        ->all(),
                     'fallback_walk' => collect($journey->legs)->contains(
                         static fn ($leg): bool => $leg->distanceType === 'STRAIGHT_LINE_ESTIMATE',
                     ),
@@ -199,6 +211,11 @@ final class ResumableCoverageAudit
             'temporarily_unavailable' => 0,
             'network_walk' => 0,
             'fallback_walk' => 0,
+            'transfer_usage' => [
+                'EXPLICIT_TRANSFER' => 0,
+                'SHARED_STOP_TRANSFER' => 0,
+                'WALKING_PROXIMITY_TRANSFER' => 0,
+            ],
             'suspicious_journeys' => 0,
             'trust' => $trust,
         ];
@@ -223,6 +240,13 @@ final class ResumableCoverageAudit
             }
             foreach (($result['trust_counts'] ?? []) as $state => $count) {
                 $summary['trust'][$state] = ($summary['trust'][$state] ?? 0) + (int) $count;
+            }
+            foreach (($result['journey_refs'] ?? []) as $journeyRef) {
+                foreach (($journeyRef['transfer_modes'] ?? []) as $transferMode) {
+                    if (isset($summary['transfer_usage'][$transferMode])) {
+                        $summary['transfer_usage'][$transferMode]++;
+                    }
+                }
             }
             $summary['suspicious_journeys'] += count($result['suspicious_flags'] ?? []);
         }

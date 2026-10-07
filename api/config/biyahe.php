@@ -43,10 +43,10 @@ return [
         'maximum_input_ways' => 25000,
         'maximum_input_edges' => 100000,
         'coverage' => [
-            'min_latitude' => 10.282,
-            'min_longitude' => 123.860,
+            'min_latitude' => 10.250,
+            'min_longitude' => 123.845,
             'max_latitude' => 10.381,
-            'max_longitude' => 123.935,
+            'max_longitude' => 123.960,
             'margin_degrees' => 0.012,
         ],
         'search_margin_meters' => 1800,

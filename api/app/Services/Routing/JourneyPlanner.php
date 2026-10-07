@@ -34,6 +34,21 @@ final class JourneyPlanner
     /** @var array<int, array<string, mixed>|null> */
     private array $patternGeometryCache = [];
 
+    /** @var array<string, PedestrianRouteResult|null> */
+    private array $pedestrianRouteCache = [];
+
+    /** @var array<string, JourneyTrustState> */
+    private array $stateRideTrustCache = [];
+
+    /** @var array<string, JourneyTrustState> */
+    private array $stateTransferTrustCache = [];
+
+    /** @var array<string, JourneyLeg|null> */
+    private array $transferLegCache = [];
+
+    /** @var array<string, JourneyLeg> */
+    private array $rideLegCache = [];
+
     /** @var array<string, array<string, mixed>|null> */
     private array $transferConnectionCache = [];
 
@@ -59,6 +74,11 @@ final class JourneyPlanner
         $previousContext = $this->activePlanningContext;
         $this->activePlanningContext = $context;
         $this->patternGeometryCache = [];
+        $this->pedestrianRouteCache = [];
+        $this->stateRideTrustCache = [];
+        $this->stateTransferTrustCache = [];
+        $this->transferLegCache = [];
+        $this->rideLegCache = [];
         $this->transferConnectionCache = [];
         $this->patternRideOptionsCache = [];
         try {
@@ -525,6 +545,7 @@ final class JourneyPlanner
                                     $relationship,
                                     $firstAlightingPatternStop,
                                     $secondBoardingPatternStop,
+                                    $transfer['pedestrian_route'] ?? null,
                                     $context,
                                 );
                                 if ($transferLeg === null) {
@@ -827,6 +848,7 @@ final class JourneyPlanner
                         transfers: array_merge($state['transfers'], [$candidate['transfer']]),
                         walkingDistance: $state['walking_distance'] + $candidate['transfer']['distance'],
                         rideStopCount: $state['ride_stop_count'] + $nextAlightingPatternStop->sequence - $nextBoardingPatternStop->sequence,
+                        baseTrustState: $state['trust_state'],
                         context: $context,
                     );
                     if ($this->measure($context, 'STATE_ENQUEUE_MS', fn (): bool => $this->enqueueRoutingState($nextState, $frontier))) {
@@ -977,12 +999,13 @@ final class JourneyPlanner
         array $transfers,
         float $walkingDistance,
         int $rideStopCount,
+        ?JourneyTrustState $baseTrustState = null,
         ?JourneyPlanningContext $context = null,
     ): array {
         return $this->measure(
             $context,
             'STATE_BUILD_MS',
-            fn (): array => $this->makeRoutingStateInternal($rides, $transfers, $walkingDistance, $rideStopCount, $context),
+            fn (): array => $this->makeRoutingStateInternal($rides, $transfers, $walkingDistance, $rideStopCount, $baseTrustState, $context),
         );
     }
 
@@ -992,6 +1015,7 @@ final class JourneyPlanner
         array $transfers,
         float $walkingDistance,
         int $rideStopCount,
+        ?JourneyTrustState $baseTrustState = null,
         ?JourneyPlanningContext $context = null,
     ): array {
         $routeIds = array_values(array_unique(array_map(
@@ -1014,13 +1038,93 @@ final class JourneyPlanner
             // Eloquent models when checking whether a capped state survived.
             'frontier_token' => ++$this->nextRoutingStateToken,
         ];
-        $state['trust_state'] = $this->trustState(
-            $this->routingStateModels($state),
-            $this->routingStateEvidenceStates($state, $context),
-            $context,
-        );
+        $stateTrust = $baseTrustState;
+        $componentRides = $baseTrustState === null ? $rides : [end($rides)];
+        $componentTransfers = $baseTrustState === null ? $transfers : (end($transfers) === false ? [] : [end($transfers)]);
+        foreach ($componentRides as $ride) {
+            $stateTrust = $this->combineTrustStates(
+                $stateTrust,
+                $this->stateRideTrust($ride, $context),
+            );
+        }
+        foreach ($componentTransfers as $transfer) {
+            $stateTrust = $this->combineTrustStates(
+                $stateTrust,
+                $this->stateTransferTrust($transfer, $context),
+            );
+        }
+        $state['trust_state'] = $stateTrust ?? JourneyTrustState::UNVERIFIED;
 
         return $state;
+    }
+
+    /** @param array<string, mixed> $ride */
+    private function stateRideTrust(array $ride, ?JourneyPlanningContext $context): JourneyTrustState
+    {
+        $key = implode(':', [
+            (int) $ride['pattern']->getKey(),
+            (int) $ride['boarding']->getKey(),
+            (int) $ride['alighting']->getKey(),
+        ]);
+        if (isset($this->stateRideTrustCache[$key])) {
+            $context?->increment('state_trust_cache_hits');
+
+            return $this->stateRideTrustCache[$key];
+        }
+
+        return $this->stateRideTrustCache[$key] = $this->trustState(
+            [
+                $ride['pattern'],
+                $ride['pattern']->route,
+                $ride['boarding_stop'],
+                $ride['alighting_stop'],
+            ],
+            $this->rideEvidenceStates($ride['boarding'], $ride['alighting'], $context),
+            $context,
+        );
+    }
+
+    /** @param array<string, mixed> $transfer */
+    private function stateTransferTrust(array $transfer, ?JourneyPlanningContext $context): JourneyTrustState
+    {
+        $key = implode(':', [
+            $transfer['relationship']?->getKey() ?? 'shared',
+            (int) $transfer['from_stop']->getKey(),
+            (int) $transfer['to_stop']->getKey(),
+        ]);
+        if (isset($this->stateTransferTrustCache[$key])) {
+            $context?->increment('state_trust_cache_hits');
+
+            return $this->stateTransferTrustCache[$key];
+        }
+
+        return $this->stateTransferTrustCache[$key] = $this->trustState(
+            [
+                $transfer['relationship'],
+                $transfer['from_stop'],
+                $transfer['to_stop'],
+            ],
+            [],
+            $context,
+        );
+    }
+
+    private function combineTrustStates(?JourneyTrustState $left, JourneyTrustState $right): JourneyTrustState
+    {
+        if ($left === null) {
+            return $right;
+        }
+        if ($left === JourneyTrustState::MIXED || $right === JourneyTrustState::MIXED) {
+            return JourneyTrustState::MIXED;
+        }
+        if ($left === JourneyTrustState::VERIFIED && $right === JourneyTrustState::VERIFIED) {
+            return JourneyTrustState::VERIFIED;
+        }
+        if ($left === JourneyTrustState::VERIFIED || $right === JourneyTrustState::VERIFIED) {
+            return JourneyTrustState::MIXED;
+        }
+
+        return JourneyTrustState::UNVERIFIED;
     }
 
     /** @return array<string, mixed> */
@@ -1203,6 +1307,7 @@ final class JourneyPlanner
                 'relationship' => null,
                 'from_association' => $fromAssociation,
                 'to_association' => $toAssociation,
+                'pedestrian_route' => null,
             ];
         }
 
@@ -1244,6 +1349,7 @@ final class JourneyPlanner
             'relationship' => $relationship,
             'from_association' => $fromAssociation,
             'to_association' => $toAssociation,
+            'pedestrian_route' => $pedestrianRoute,
         ];
     }
 
@@ -1338,6 +1444,7 @@ final class JourneyPlanner
                     $transfer['relationship'],
                     $transfer['from_association'],
                     $transfer['to_association'],
+                    $transfer['pedestrian_route'] ?? null,
                     $context,
                 );
                 if ($transferLeg === null) {
@@ -1384,6 +1491,42 @@ final class JourneyPlanner
         ?TransferRelationship $relationship,
         ?RoutePatternStop $fromAssociation = null,
         ?RoutePatternStop $toAssociation = null,
+        ?PedestrianRouteResult $pedestrianRoute = null,
+        ?JourneyPlanningContext $context = null,
+    ): ?JourneyLeg {
+        $cacheKey = implode(':', [
+            (int) $fromStop->getKey(),
+            (int) $toStop->getKey(),
+            $relationship?->getKey() ?? 'shared',
+            $fromAssociation?->getKey() ?? 'none',
+            $toAssociation?->getKey() ?? 'none',
+        ]);
+        if (array_key_exists($cacheKey, $this->transferLegCache)) {
+            $context?->increment('transfer_leg_cache_hits');
+
+            return $this->transferLegCache[$cacheKey];
+        }
+
+        return $this->transferLegCache[$cacheKey] = $this->buildTransferLegInternal(
+            $fromStop,
+            $toStop,
+            $distanceMeters,
+            $relationship,
+            $fromAssociation,
+            $toAssociation,
+            $pedestrianRoute,
+            $context,
+        );
+    }
+
+    private function buildTransferLegInternal(
+        Stop $fromStop,
+        Stop $toStop,
+        float $distanceMeters,
+        ?TransferRelationship $relationship,
+        ?RoutePatternStop $fromAssociation = null,
+        ?RoutePatternStop $toAssociation = null,
+        ?PedestrianRouteResult $pedestrianRoute = null,
         ?JourneyPlanningContext $context = null,
     ): ?JourneyLeg {
         $models = [$fromStop, $toStop, $relationship, $fromAssociation, $toAssociation];
@@ -1392,12 +1535,14 @@ final class JourneyPlanner
             [$context?->effectiveFactState($toStop, 'boarding') ?? Trust::effectiveFactState($toStop, 'boarding')],
             $context,
         );
-        $pedestrianRoute = $fromStop->getKey() === $toStop->getKey() ? null : $this->routeBetween(
-            $fromStop,
-            $toStop,
-            PedestrianRoutePurpose::TRANSFER_WALK,
-            (float) config('biyahe.pedestrian.maximum_transfer_walk_meters', 600),
-        );
+        if ($pedestrianRoute === null && $fromStop->getKey() !== $toStop->getKey()) {
+            $pedestrianRoute = $this->routeBetween(
+                $fromStop,
+                $toStop,
+                PedestrianRoutePurpose::TRANSFER_WALK,
+                (float) config('biyahe.pedestrian.maximum_transfer_walk_meters', 600),
+            );
+        }
         if ($pedestrianRoute?->status === PedestrianRouteStatus::DISTANCE_LIMIT) {
             return null;
         }
@@ -1528,6 +1673,34 @@ final class JourneyPlanner
         ?string $driverCue,
         ?JourneyPlanningContext $context = null,
     ): JourneyLeg {
+        $cacheKey = implode(':', [
+            (int) $pattern->getKey(),
+            (int) $boardingPatternStop->getKey(),
+            (int) $alightingPatternStop->getKey(),
+            hash('sha256', (string) $driverCue),
+        ]);
+        if (isset($this->rideLegCache[$cacheKey])) {
+            $context?->increment('ride_leg_cache_hits');
+
+            return $this->rideLegCache[$cacheKey];
+        }
+
+        return $this->rideLegCache[$cacheKey] = $this->buildRideLegInternal(
+            $pattern,
+            $boardingPatternStop,
+            $alightingPatternStop,
+            $driverCue,
+            $context,
+        );
+    }
+
+    private function buildRideLegInternal(
+        RoutePattern $pattern,
+        RoutePatternStop $boardingPatternStop,
+        RoutePatternStop $alightingPatternStop,
+        ?string $driverCue,
+        ?JourneyPlanningContext $context = null,
+    ): JourneyLeg {
         $route = $pattern->route;
         $models = [
             $pattern,
@@ -1588,6 +1761,25 @@ final class JourneyPlanner
 
     /** @param list<JourneyLeg> $legs @param list<\Illuminate\Database\Eloquent\Model|null> $models */
     private function buildJourney(
+        string $id,
+        Place $origin,
+        Place $destination,
+        array $legs,
+        array $models,
+        ?JourneyPlanningContext $context = null,
+    ): ?Journey {
+        if ($context !== null) {
+            return $context->measure(
+                'JOURNEY_BUILD_MS',
+                fn (): ?Journey => $this->buildJourneyInternal($id, $origin, $destination, $legs, $models, $context),
+            );
+        }
+
+        return $this->buildJourneyInternal($id, $origin, $destination, $legs, $models, null);
+    }
+
+    /** @param list<JourneyLeg> $legs @param list<\Illuminate\Database\Eloquent\Model|null> $models */
+    private function buildJourneyInternal(
         string $id,
         Place $origin,
         Place $destination,
@@ -2062,12 +2254,29 @@ final class JourneyPlanner
             return null;
         }
 
-        return $this->pedestrianRouter->route(new PedestrianRouteRequest(
+        $cacheKey = implode(':', [
+            $purpose->value,
+            number_format((float) $originLocation['lat'], 7, '.', ''),
+            number_format((float) $originLocation['lng'], 7, '.', ''),
+            number_format((float) $destinationLocation['lat'], 7, '.', ''),
+            number_format((float) $destinationLocation['lng'], 7, '.', ''),
+            number_format($maximumDistanceMeters, 2, '.', ''),
+        ]);
+        if (array_key_exists($cacheKey, $this->pedestrianRouteCache)) {
+            $this->activePlanningContext?->increment('planner_pedestrian_cache_hits');
+
+            return $this->pedestrianRouteCache[$cacheKey];
+        }
+
+        $result = $this->pedestrianRouter->route(new PedestrianRouteRequest(
             origin: ['lat' => (float) $originLocation['lat'], 'lng' => (float) $originLocation['lng']],
             destination: ['lat' => (float) $destinationLocation['lat'], 'lng' => (float) $destinationLocation['lng']],
             purpose: $purpose,
             maximumDistanceMeters: $maximumDistanceMeters,
         ));
+        $this->pedestrianRouteCache[$cacheKey] = $result;
+
+        return $result;
     }
 
     private function walkInstruction(

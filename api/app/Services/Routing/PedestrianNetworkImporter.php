@@ -20,7 +20,7 @@ final class PedestrianNetworkImporter
         'tertiary_link', 'secondary_link', 'primary_link',
     ];
 
-    public function import(string $path, string $sourceUrl): PedestrianNetworkImportResult
+    public function import(string $path, string $sourceUrl, bool $mergeActive = false): PedestrianNetworkImportResult
     {
         $startedAt = hrtime(true);
         $maximumBytes = max(1024, (int) config('biyahe.pedestrian.maximum_input_bytes', 20_000_000));
@@ -51,11 +51,16 @@ final class PedestrianNetworkImporter
             throw new InvalidArgumentException('Input contains no usable pedestrian network inside the configured Cebu scope.');
         }
 
+        $mergeMetadata = [];
+        if ($mergeActive) {
+            [$selectedNodes, $edges, $mergeMetadata] = $this->mergeActiveGraph($selectedNodes, $edges, $sourceMetadata);
+        }
+
         $candidateElements = count($document['elements']);
         $rejectedElements = max(0, $candidateElements - count($selectedNodes) - $acceptedWays);
         $restrictedElements = $parseMetrics['restricted_nodes'] + $restrictedWays;
         $sourceElements = $sourceMetadata['source_elements'] ?? $candidateElements;
-        $contentHash = hash('sha256', $contents);
+        $contentHash = hash('sha256', $contents.'|'.json_encode($mergeMetadata, JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES));
         $stableId = 'osm-cebu-walk-'.substr($contentHash, 0, 32);
         $sourceTimestamp = $document['osm3s']['timestamp_osm_base'] ?? null;
         $sourceTimestamp ??= $sourceMetadata['source_timestamp'] ?? null;
@@ -70,6 +75,7 @@ final class PedestrianNetworkImporter
             'imported_edges' => count($edges),
             'rejected_elements' => $rejectedElements,
             'restricted_elements' => $restrictedElements,
+            ...$mergeMetadata,
         ];
         $datasetMetadata = [
             'format' => $sourceMetadata['format'] ?? 'overpass-json',
@@ -77,6 +83,7 @@ final class PedestrianNetworkImporter
             'importer' => 'local-pedestrian-network-v2',
             'source_details' => $sourceMetadata,
             'import_metrics' => $importMetrics,
+            'merge_active_graph' => $mergeActive,
         ];
 
         return DB::transaction(function () use ($startedAt, $stableId, $sourceUrl, $sourceTimestamp, $contentHash, $bounds, $selectedNodes, $edges, $datasetMetadata, $importMetrics): PedestrianNetworkImportResult {
@@ -196,6 +203,150 @@ final class PedestrianNetworkImporter
                 round((hrtime(true) - $startedAt) / 1_000_000, 2),
             );
         });
+    }
+
+    /**
+     * Merge a bounded new OSM extract with the active parsed graph. The active
+     * graph remains the base; OSM node identity and coordinates are checked
+     * before a replacement dataset is written transactionally.
+     *
+     * @param array<int, array{lat: float, lng: float, walkable: bool, barrier: ?string, crossing: ?string}> $newNodes
+     * @param list<array<string, mixed>> $newEdges
+     * @param array<string, mixed> $sourceMetadata
+     * @return array{0: array<int, array{lat: float, lng: float, walkable: bool, barrier: ?string, crossing: ?string}>, 1: list<array<string, mixed>>, 2: array<string, mixed>}
+     */
+    private function mergeActiveGraph(array $newNodes, array $newEdges, array $sourceMetadata = []): array
+    {
+        $active = DB::table('pedestrian_network_datasets')->where('is_active', true)->first();
+        if ($active === null) {
+            throw new InvalidArgumentException('Cannot merge a pedestrian extract without an active base dataset.');
+        }
+
+        $baseNodes = [];
+        foreach (DB::table('pedestrian_network_nodes')
+            ->where('dataset_id', $active->id)
+            ->get(['osm_node_id', 'latitude', 'longitude', 'is_walkable', 'barrier', 'crossing']) as $node) {
+            $baseNodes[(int) $node->osm_node_id] = [
+                'lat' => (float) $node->latitude,
+                'lng' => (float) $node->longitude,
+                'walkable' => (bool) $node->is_walkable,
+                'barrier' => $node->barrier,
+                'crossing' => $node->crossing,
+            ];
+        }
+
+        $edgeRows = DB::table('pedestrian_network_edges as edges')
+            ->join('pedestrian_network_nodes as from_nodes', 'from_nodes.id', '=', 'edges.from_node_id')
+            ->join('pedestrian_network_nodes as to_nodes', 'to_nodes.id', '=', 'edges.to_node_id')
+            ->where('edges.dataset_id', $active->id)
+            ->get([
+                'edges.osm_way_id as way', 'edges.segment_index as segment', 'edges.bidirectional',
+                'edges.length_meters as length', 'edges.highway', 'edges.properties',
+                'from_nodes.osm_node_id as from_node', 'to_nodes.osm_node_id as to_node',
+            ]);
+        $baseEdges = [];
+        foreach ($edgeRows as $edge) {
+            $baseEdges[] = [
+                'way' => (int) $edge->way,
+                'segment' => (int) $edge->segment,
+                'from' => (int) $edge->from_node,
+                'to' => (int) $edge->to_node,
+                'bidirectional' => (bool) $edge->bidirectional,
+                'length' => (float) $edge->length,
+                'highway' => (string) $edge->highway,
+                'properties' => is_string($edge->properties) ? (json_decode($edge->properties, true) ?: []) : (array) $edge->properties,
+            ];
+        }
+
+        $activeMetadata = json_decode((string) $active->metadata, true);
+        $activeSource = is_array($activeMetadata) ? ($activeMetadata['source_details'] ?? []) : [];
+        $sameSourceSnapshot = $sourceMetadata !== []
+            && ($activeMetadata['merge_active_graph'] ?? false) === true
+            && ($activeSource['source_url'] ?? null) === ($sourceMetadata['source_url'] ?? null)
+            && ($activeSource['source_checksum_md5'] ?? null) === ($sourceMetadata['source_checksum_md5'] ?? null)
+            && ($activeSource['source_timestamp'] ?? null) === ($sourceMetadata['source_timestamp'] ?? null);
+        if ($sameSourceSnapshot) {
+            $activeMetrics = is_array($activeMetadata['import_metrics'] ?? null) ? $activeMetadata['import_metrics'] : [];
+            $idempotentKeys = [
+                'merge_base_dataset', 'merge_base_nodes', 'merge_base_edges',
+                'merge_new_nodes', 'merge_new_edges',
+                'merge_skipped_conflicting_nodes', 'merge_skipped_conflicting_edges',
+            ];
+            $idempotentMetadata = [];
+            foreach ($idempotentKeys as $key) {
+                if (! array_key_exists($key, $activeMetrics)) {
+                    $idempotentMetadata = [];
+                    break;
+                }
+                $idempotentMetadata[$key] = $activeMetrics[$key];
+            }
+            if ($idempotentMetadata !== []) {
+                return [$baseNodes, $baseEdges, $idempotentMetadata];
+            }
+        }
+
+        $baseNodeCount = count($baseNodes);
+        $conflictingNodeIds = [];
+        $acceptedNewNodeCount = 0;
+        foreach ($newNodes as $nodeId => $node) {
+            if (isset($baseNodes[$nodeId])) {
+                $distance = Geo::distanceMeters($baseNodes[$nodeId]['lat'], $baseNodes[$nodeId]['lng'], $node['lat'], $node['lng']);
+                if ($distance > 1.0) {
+                    // Keep the active graph's coordinate and omit new edges
+                    // that depend on a materially moved node. A refreshed
+                    // extract must not silently move the established graph.
+                    $conflictingNodeIds[(int) $nodeId] = true;
+                    continue;
+                }
+                // Preserve the base coordinate even for small source drift.
+                continue;
+            }
+            $baseNodes[$nodeId] = $node;
+            $acceptedNewNodeCount++;
+        }
+
+        $edgeMap = [];
+        $filteredNewEdges = array_values(array_filter($newEdges, static function (array $edge) use ($conflictingNodeIds): bool {
+            return ! isset($conflictingNodeIds[(int) $edge['from']])
+                && ! isset($conflictingNodeIds[(int) $edge['to']]);
+        }));
+        $edgeKey = static function (array $edge): string {
+            return implode(':', [
+                (int) $edge['way'],
+                (int) $edge['segment'],
+                (int) $edge['from'],
+                (int) $edge['to'],
+                ! empty($edge['bidirectional']) ? '1' : '0',
+            ]);
+        };
+        foreach ($baseEdges as $edge) {
+            if (! isset($baseNodes[(int) $edge['from']], $baseNodes[(int) $edge['to']])) {
+                continue;
+            }
+            $edgeMap[$edgeKey($edge)] = $edge;
+        }
+        $baseEdgeKeyCount = count($edgeMap);
+        foreach ($filteredNewEdges as $edge) {
+            if (! isset($baseNodes[(int) $edge['from']], $baseNodes[(int) $edge['to']])) {
+                continue;
+            }
+            $edgeMap[$edgeKey($edge)] = $edge;
+        }
+        $acceptedNewEdgeCount = max(0, count($edgeMap) - $baseEdgeKeyCount);
+
+        return [
+            $baseNodes,
+            array_values($edgeMap),
+            [
+                'merge_base_dataset' => $active->stable_id,
+                'merge_base_nodes' => $baseNodeCount,
+                'merge_base_edges' => count($baseEdges),
+                'merge_new_nodes' => $acceptedNewNodeCount,
+                'merge_new_edges' => $acceptedNewEdgeCount,
+                'merge_skipped_conflicting_nodes' => count($conflictingNodeIds),
+                'merge_skipped_conflicting_edges' => count($newEdges) - count($filteredNewEdges),
+            ],
+        ];
     }
 
     private function validateDatasetGraph(int $datasetId, int $expectedNodes, int $expectedEdges): void

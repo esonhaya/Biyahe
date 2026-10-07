@@ -31,6 +31,7 @@ final class BiyaheBatch018Profile extends Command
         ['id' => 'bulacao-ayala', 'origin' => 'bulacao', 'destination' => 'ayala-center-cebu'],
         ['id' => 'ayala-labangon', 'origin' => 'ayala-center-cebu', 'destination' => 'labangon'],
         ['id' => 'north-reclamation-pardo', 'origin' => 'north-reclamation-area', 'destination' => 'pardo'],
+        ['id' => 'jy-square-south-terminal', 'origin' => 'jy-square-mall', 'destination' => 'cebu-south-bus-terminal'],
     ];
 
     public function handle(JourneyPlanner $planner): int

@@ -9,14 +9,14 @@ use Throwable;
 
 final class ImportPedestrianNetwork extends Command
 {
-    protected $signature = 'biyahe:pedestrian:import {file : Bounded pedestrian JSON extract} {--source-url= : Source/extract URL recorded for provenance}';
+    protected $signature = 'biyahe:pedestrian:import {file : Bounded pedestrian JSON extract} {--source-url= : Source/extract URL recorded for provenance} {--merge-active : Add this bounded extract to the active graph without changing transport data}';
 
     protected $description = 'Validate and transactionally import a bounded Cebu OpenStreetMap pedestrian extract.';
 
     public function handle(PedestrianNetworkImporter $importer): int
     {
         try {
-            $result = $importer->import((string) $this->argument('file'), (string) $this->option('source-url'));
+            $result = $importer->import((string) $this->argument('file'), (string) $this->option('source-url'), (bool) $this->option('merge-active'));
         } catch (InvalidArgumentException $exception) {
             $this->error($exception->getMessage());
 

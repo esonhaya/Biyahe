@@ -17,6 +17,7 @@
 /api/storage/*.key
 /api/storage/app/private/
 /api/storage/app/batch018/
+/api/storage/app/batch019/
 /api/storage/framework/cache/data/*
 /api/storage/framework/sessions/*
 /api/storage/framework/views/*

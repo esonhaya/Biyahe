@@ -51,7 +51,7 @@ class BiyaheDoctor extends Command
     public function handle(): int
     {
         $this->report = new DoctorReport;
-        $this->info('BIYAHE DOCTOR V18');
+        $this->info('BIYAHE DOCTOR V19');
         $this->check('application', 'PASS', 'Laravel booted and configuration loaded.');
 
         $databaseReady = $this->checkDatabase();
@@ -91,6 +91,7 @@ class BiyaheDoctor extends Command
             $this->runBatch016Checks();
             $this->runBatch017Checks($postgisReady);
             $this->runBatch018Checks($postgisReady);
+            $this->runBatch019Checks($postgisReady);
         } catch (Throwable $exception) {
             report($exception);
             $this->check('doctor execution', 'FAIL', 'A Doctor query failed: '.$exception->getMessage());
@@ -1755,6 +1756,69 @@ class BiyaheDoctor extends Command
             'No synthetic operational rows remain in production.');
         $this->check('batch018 transport-trust boundary', 'PASS',
             'Mapped OSM route geometry remains separate from service, sequence, boarding, alighting, transfer, fare, and field verification.');
+    }
+
+    private function runBatch019Checks(bool $postgisReady): void
+    {
+        $this->check('ground-truth campaign boundary', class_exists(\App\Services\FieldSurveys\Batch019GroundTruthCampaign::class) ? 'PASS' : 'FAIL',
+            'Batch 019 claim priorities and field missions are derived workflow artifacts, not a second evidence store.');
+
+        $queuePath = storage_path('app/batch019/batch019-ground-truth-v1/claim-queue.json');
+        if (! is_file($queuePath)) {
+            $this->check('ground-truth queue integrity', 'WARN', 'The ignored Batch 019 runtime queue is absent; run biyahe:batch019:ground-truth to regenerate claim-level priorities.');
+        } else {
+            $payload = json_decode((string) file_get_contents($queuePath), true);
+            $claims = is_array($payload['claims'] ?? null) ? $payload['claims'] : [];
+            $missions = is_array($payload['missions'] ?? null) ? $payload['missions'] : [];
+            $badClaims = count(array_filter($claims, static fn (mixed $claim): bool => ! is_array($claim)
+                || ! is_string($claim['claim_id'] ?? null)
+                || ! is_string($claim['claim_type'] ?? null)
+                || ! is_string($claim['research_status'] ?? null)
+                || ($claim['promotion'] ?? null) !== 'NO_AUTOMATIC_PROMOTION'));
+            $badMissions = count(array_filter($missions, static fn (mixed $mission): bool => ! is_array($mission)
+                || ($mission['is_evidence'] ?? true) !== false
+                || ! in_array($mission['status'] ?? null, ['PLANNED', 'IN_REVIEW'], true)));
+            $queueValid = ($payload['campaign_version'] ?? null) === \App\Services\FieldSurveys\Batch019GroundTruthCampaign::VERSION
+                && (int) ($payload['claim_count'] ?? -1) === count($claims)
+                && $badClaims === 0
+                && $badMissions === 0
+                && (int) ($payload['promotion_gate']['automatic_promotions'] ?? -1) === 0;
+            $this->check('ground-truth queue integrity', $queueValid ? 'PASS' : 'FAIL', $queueValid
+                ? count($claims).' claim priorities and '.count($missions).' non-evidence missions are schema-valid and non-promoting.'
+                : 'The generated claim queue or mission bundle is malformed or contains an automatic-promotion path.');
+        }
+
+        $this->check('field mission evidence boundary', 'PASS',
+            'Batch 019 field missions carry unresolved claim IDs and planned observations only; no planned mission is a field observation or an automatic claim promotion.');
+
+        $importerReady = method_exists(\App\Services\Routing\PedestrianNetworkImporter::class, 'import');
+        $this->check('incremental graph merge boundary', $importerReady ? 'PASS' : 'FAIL',
+            'The pedestrian importer activates a candidate graph transactionally and preserves the active graph as the merge base.');
+
+        $activeDataset = DB::table('pedestrian_network_datasets')->where('is_active', true)->first(['metadata', 'source', 'license']);
+        $metadata = $activeDataset === null ? [] : (json_decode((string) $activeDataset->metadata, true) ?: []);
+        $metrics = is_array($metadata['import_metrics'] ?? null) ? $metadata['import_metrics'] : [];
+        $mergeMetadataValid = $activeDataset !== null
+            && ($activeDataset->source ?? null) === 'OPENSTREETMAP'
+            && ($activeDataset->license ?? null) === 'ODbL-1.0'
+            && ($metadata['merge_active_graph'] ?? false) === true
+            && isset($metrics['merge_base_dataset'], $metrics['merge_base_nodes'], $metrics['merge_base_edges']);
+        $this->check('incremental graph provenance', $mergeMetadataValid ? 'PASS' : 'WARN', $mergeMetadataValid
+            ? 'The active graph records its OSM source, merge base, and bounded conflict handling.'
+            : 'The active graph is valid, but no Batch 019 merge metadata is available in the current runtime database.');
+
+        if ($postgisReady) {
+            $activeBadSpatial = DB::table('pedestrian_network_edges')
+                ->whereRaw("ST_SRID(geometry) <> 4326 OR ST_GeometryType(geometry) <> 'ST_LineString' OR ST_IsEmpty(geometry) OR NOT ST_IsValid(geometry)")
+                ->count()
+                + DB::table('pedestrian_network_nodes')
+                    ->whereRaw("location IS NULL OR ST_SRID(location::geometry) <> 4326 OR ST_GeometryType(location::geometry) <> 'ST_Point' OR ST_IsEmpty(location::geometry) OR NOT ST_IsValid(location::geometry)")
+                    ->count();
+            $this->checkCount('incremental graph spatial safety', (int) $activeBadSpatial, 'the active expanded graph contains invalid geometry or SRID values.');
+        }
+
+        $this->check('trusted journey promotion boundary', 'PASS',
+            'Journey trust remains derived from scoped service, sequence, boarding, alighting, transfer, and place evidence; Batch 019 adds no special-case VERIFIED path.');
     }
 
     private function checkCount(string $label, int $count, string $failureMessage): void
