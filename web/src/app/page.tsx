@@ -12,6 +12,7 @@ import PersonalCommuteTools from "@/components/PersonalCommuteTools";
 import ReplanPanel from "@/components/ReplanPanel";
 import RideMode from "@/components/RideMode";
 import NearbyRoutes from "@/components/NearbyRoutes";
+import FieldMode from "@/components/FieldMode";
 import type { CommuteInstruction } from "@/lib/commuteInstructions";
 import { hasActiveRideModeSession } from "@/lib/rideMode";
 import type { RideModeMapOverlay } from "@/lib/rideMode";
@@ -582,6 +583,8 @@ export default function Home() {
         onSelectPlace={(place, role) => { if (role === "origin") chooseOrigin(place); else chooseDestination(place); }}
         onSelectCommute={chooseLocalCommute}
       />
+
+      <FieldMode />
 
       <BiyahePulse
         pulse={pulse}

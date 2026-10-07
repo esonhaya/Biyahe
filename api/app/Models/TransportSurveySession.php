@@ -42,6 +42,11 @@ class TransportSurveySession extends Model
         return $this->belongsTo(City::class);
     }
 
+    public function mission(): BelongsTo
+    {
+        return $this->belongsTo(FieldMission::class, 'field_mission_id');
+    }
+
     public function route(): BelongsTo
     {
         return $this->belongsTo(Route::class);

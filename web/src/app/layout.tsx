@@ -1,8 +1,9 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import type { ReactNode } from "react";
 import "maplibre-gl/dist/maplibre-gl.css";
 import "./globals.css";
+import PwaRegistration from "@/components/PwaRegistration";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -17,12 +18,17 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Biyahe — Philippine transport knowledge",
   description: "Explore verified transport knowledge as it is built for Philippine commuters.",
+  manifest: "/manifest.webmanifest",
+};
+
+export const viewport: Viewport = {
+  themeColor: "#153b45",
 };
 
 export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
   return (
     <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`}>
-      <body>{children}</body>
+      <body><PwaRegistration />{children}</body>
     </html>
   );
 }

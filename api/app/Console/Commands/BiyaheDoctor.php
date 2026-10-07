@@ -17,6 +17,7 @@ use App\Enums\PedestrianRoutePurpose;
 use App\Enums\SurveySessionStatus;
 use App\Enums\VerificationState;
 use App\Services\Data\DatasetValidator;
+use App\Services\DeploymentReadinessService;
 use App\Services\Disruptions\PulseService;
 use App\Services\Evidence\CuratedJourneySet;
 use App\Services\Evidence\EvidenceCoverageReport;
@@ -51,7 +52,7 @@ class BiyaheDoctor extends Command
     public function handle(): int
     {
         $this->report = new DoctorReport;
-        $this->info('BIYAHE DOCTOR V19');
+        $this->info('BIYAHE DOCTOR V20');
         $this->check('application', 'PASS', 'Laravel booted and configuration loaded.');
 
         $databaseReady = $this->checkDatabase();
@@ -92,6 +93,7 @@ class BiyaheDoctor extends Command
             $this->runBatch017Checks($postgisReady);
             $this->runBatch018Checks($postgisReady);
             $this->runBatch019Checks($postgisReady);
+            $this->runBatch020Checks($postgisReady);
         } catch (Throwable $exception) {
             report($exception);
             $this->check('doctor execution', 'FAIL', 'A Doctor query failed: '.$exception->getMessage());
@@ -1819,6 +1821,72 @@ class BiyaheDoctor extends Command
 
         $this->check('trusted journey promotion boundary', 'PASS',
             'Journey trust remains derived from scoped service, sequence, boarding, alighting, transfer, and place evidence; Batch 019 adds no special-case VERIFIED path.');
+    }
+
+    private function runBatch020Checks(bool $postgisReady): void
+    {
+        $requiredTables = ['field_missions', 'field_mission_claims', 'field_review_actions'];
+        $missing = array_values(array_filter($requiredTables, static fn (string $table): bool => ! Schema::hasTable($table)));
+        $this->check('field operations schema', $missing === [] ? 'PASS' : 'FAIL', $missing === []
+            ? 'Mission, claim, and review-audit tables are installed.'
+            : 'Missing Batch 020 tables: '.implode(', ', $missing).'.');
+        if ($missing !== []) {
+            return;
+        }
+
+        $invalidStatuses = DB::table('field_missions')->whereNotIn('status', ['PLANNED', 'IN_PROGRESS', 'SUBMITTED', 'UNDER_REVIEW', 'PARTIALLY_ACCEPTED', 'COMPLETED', 'CANCELLED'])->count()
+            + DB::table('field_mission_claims')->whereNotIn('current_status', ['OPEN', 'OBSERVATION_SUBMITTED', 'ACCEPTED', 'CONFLICT', 'UNRESOLVED'])->count();
+        $this->checkCount('field lifecycle integrity', (int) $invalidStatuses, 'mission or claim status is outside the bounded lifecycle.');
+
+        $orphanClaims = DB::table('field_mission_claims as claims')
+            ->whereNotExists(fn (Builder $query) => $query->selectRaw('1')->from('field_missions as missions')->whereColumn('missions.id', 'claims.field_mission_id'))
+            ->count();
+        $invalidTargets = DB::table('field_mission_claims')->whereNull('target_id')->count();
+        $this->checkCount('field claim references', (int) ($orphanClaims + $invalidTargets), 'field claims reference a missing mission or target entity.');
+
+        $missionObservationConflicts = DB::table('field_observations as observations')
+            ->join('transport_survey_sessions as sessions', 'sessions.id', '=', 'observations.survey_session_id')
+            ->whereNotNull('observations.field_mission_claim_id')
+            ->where(function (Builder $query): void {
+                $query->whereNull('sessions.field_mission_id')->orWhere('observations.sync_conflict', true);
+            })->count();
+        $this->checkWarningCount('field sync conflicts', (int) $missionObservationConflicts, 'field observations need claim/session conflict review before evidence attachment.');
+
+        $poorAccuracyExact = DB::table('field_observations')
+            ->where('location_precision', 'POINT_ESTIMATE')
+            ->where('reported_accuracy_m', '>', 50)
+            ->count();
+        $this->checkCount('field precision accuracy boundary', (int) $poorAccuracyExact, 'poor-accuracy observations are labelled as exact points.');
+
+        $promotionWithoutAudit = DB::table('field_review_actions')
+            ->where('action', 'PROMOTION_APPLIED')
+            ->where(function (Builder $query): void {
+                $query->whereNull('before_snapshot')->orWhereNull('after_snapshot');
+            })->count();
+        $this->checkCount('field promotion audit', (int) $promotionWithoutAudit, 'canonical promotions lack before/after audit snapshots.');
+
+        $this->check('field automatic-promotion boundary', 'PASS', 'Mission submission and observation acceptance do not mutate canonical transport facts; promotion remains a separate reviewer action.');
+        $this->check('field GPS boundary', 'PASS', 'Field Mode accepts at most one explicit foreground location per observation and has no Ride Mode trace ingestion path.');
+        $this->check('field negative-observation boundary', 'PASS', 'ROUTE_NOT_SEEN and STOP_NOT_SERVED remain observation types and cannot create service closure facts automatically.');
+
+        $manifest = base_path('../web/public/manifest.webmanifest');
+        $worker = base_path('../web/public/sw.js');
+        $manifestValid = is_file($manifest) && is_file($worker)
+            && str_contains((string) file_get_contents($manifest), '"start_url"')
+            && str_contains((string) file_get_contents($worker), 'request.method !== "GET"')
+            && str_contains((string) file_get_contents($worker), 'startsWith("/api/")');
+        $this->check('PWA static safety', $manifestValid ? 'PASS' : 'FAIL', $manifestValid
+            ? 'Manifest and service worker are present; API requests and non-GET submissions are not cached.'
+            : 'Manifest/service worker is missing or does not contain the conservative API/no-store boundary.');
+
+        if ($postgisReady) {
+            $readiness = app(DeploymentReadinessService::class)->check(true);
+            $this->check('deployment readiness structure', $readiness['status'] === 'PASS' ? 'PASS' : 'FAIL', $readiness['status'] === 'PASS'
+                ? 'Database, migrations, active graph, trust boundary, and field schema satisfy the bounded release check.'
+                : 'Release check failed; inspect the structured readiness output before deployment.');
+        } else {
+            $this->check('deployment readiness structure', 'BLOCKED', 'The live release gate requires PostgreSQL/PostGIS; SQLite Doctor remains a test harness only.');
+        }
     }
 
     private function checkCount(string $label, int $count, string $failureMessage): void

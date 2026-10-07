@@ -375,8 +375,8 @@ final class JourneyPlanner
      * With no active operational overlay, a two-transfer result can only enter
      * the configured top-N when it improves trust over the existing direct or
      * one-transfer candidates. If every active pattern is still UNVERIFIED,
-     * VERIFIED is impossible; ten already-available MIXED candidates then
-     * dominate any two-transfer MIXED candidate by the existing rank policy.
+     * ten already-available one-transfer candidates also dominate any
+     * two-transfer UNVERIFIED candidate by the existing rank policy.
      *
      * The guard is deliberately conservative: active advisories or any
      * VERIFIED pattern disable it because operational impact or trust may then
@@ -388,11 +388,11 @@ final class JourneyPlanner
         array $journeys,
     ): bool {
         $resultLimit = min(max((int) config('biyahe.routing.max_results', 10), 1), 100);
-        $mixedOrBetter = count(array_filter(
+        $rankable = count(array_filter(
             $journeys,
-            static fn (Journey $journey): bool => $journey->trustState->rank() <= JourneyTrustState::MIXED->rank(),
+            static fn (Journey $journey): bool => $journey->trustState->rank() <= JourneyTrustState::UNVERIFIED->rank(),
         ));
-        if ($mixedOrBetter < $resultLimit) {
+        if ($rankable < $resultLimit) {
             return false;
         }
 
@@ -408,11 +408,22 @@ final class JourneyPlanner
             return false;
         }
 
-        return ! DB::table('route_patterns')
+        $noVerifiedPattern = ! DB::table('route_patterns')
             ->where('is_active', true)
             ->where('is_demo', false)
             ->where('verification_state', VerificationState::VERIFIED->value)
             ->exists();
+
+        if (! $noVerifiedPattern) {
+            return false;
+        }
+
+        // Every input journey here has one transfer. With ten unverified
+        // one-transfer candidates already available, a two-transfer result
+        // cannot outrank them while no verified pattern or active overlay can
+        // improve its trust/operational rank. Preserve the full search for
+        // smaller, trusted, or disrupted result sets.
+        return true;
     }
 
     /** @return list<Journey> */

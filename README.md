@@ -59,6 +59,7 @@ distances are straight-line estimates, not pedestrian directions.
 - Batch 017 network expansion: docs/batch-017-network-expansion.md
 - Batch 018 planner scale and resumable audit: docs/batch-018-engine-scale.md
 - Batch 019 ground-truth campaign and pedestrian coverage: docs/batch-019-ground-truth.md
+- Deployment and release gate: docs/deployment.md
 - Journey planning: docs/journey-planning.md
 - Haya reuse audit: docs/haya-reuse-audit.md
 

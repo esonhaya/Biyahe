@@ -119,4 +119,11 @@ return [
         ],
         'curated_journeys_path' => database_path('data/curated-cebu-journeys-2026-10-05.json'),
     ],
+    'field' => [
+        'snapshot_schema_version' => 1,
+        'operator_token' => env('BIYAHE_FIELD_OPERATOR_TOKEN', ''),
+        'operator_user_id' => (int) env('BIYAHE_FIELD_OPERATOR_USER_ID', 0),
+        'max_outbox_batch' => 50,
+        'max_observation_age_days' => 30,
+    ],
 ];

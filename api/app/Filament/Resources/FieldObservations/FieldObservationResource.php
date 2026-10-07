@@ -35,6 +35,7 @@ class FieldObservationResource extends Resource
             ->components([
                 TextEntry::make('stable_id'),
                 TextEntry::make('surveySession.title')->label('Survey'),
+                TextEntry::make('surveySession.mission.title')->label('Mission'),
                 TextEntry::make('sequence'),
                 TextEntry::make('observation_type')->badge(),
                 TextEntry::make('review_status')->badge(),
@@ -63,6 +64,7 @@ class FieldObservationResource extends Resource
             ->columns([
                 TextColumn::make('stable_id')->searchable()->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('surveySession.title')->label('Survey')->searchable()->wrap(),
+                TextColumn::make('surveySession.mission.title')->label('Mission')->searchable()->wrap(),
                 TextColumn::make('sequence')->numeric()->sortable(),
                 TextColumn::make('observation_type')->badge()->sortable(),
                 TextColumn::make('review_status')->badge()->sortable(),

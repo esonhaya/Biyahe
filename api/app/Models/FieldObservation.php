@@ -73,6 +73,11 @@ class FieldObservation extends Model
         return $this->belongsTo(TransportSurveySession::class, 'survey_session_id');
     }
 
+    public function missionClaim(): BelongsTo
+    {
+        return $this->belongsTo(FieldMissionClaim::class, 'field_mission_claim_id');
+    }
+
     public function route(): BelongsTo
     {
         return $this->belongsTo(Route::class);

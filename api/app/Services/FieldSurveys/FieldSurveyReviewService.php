@@ -11,6 +11,7 @@ use App\Enums\SurveySessionStatus;
 use App\Models\Fare;
 use App\Models\FieldEvidenceClaim;
 use App\Models\FieldObservation;
+use App\Models\FieldReviewAction;
 use App\Models\Place;
 use App\Models\ProvenanceSource;
 use App\Models\Route;
@@ -171,6 +172,19 @@ final class FieldSurveyReviewService
             $claim->review_notes = $reviewNotes;
             $claim->save();
 
+            $missionClaim = $claim->observations()->with('missionClaim')->first()?->missionClaim;
+            FieldReviewAction::query()->create([
+                'stable_id' => 'field-review-'.substr(hash('sha256', 'claim|'.$claim->stable_id.'|ATTACHED|'.microtime(true)), 0, 32),
+                'field_mission_id' => $missionClaim?->field_mission_id,
+                'field_mission_claim_id' => $missionClaim?->getKey(),
+                'field_evidence_claim_id' => $claim->getKey(),
+                'actor_user_id' => $reviewer->getKey(),
+                'action' => 'CLAIM_ATTACHED',
+                'from_status' => FieldClaimStatus::PROPOSED->value,
+                'to_status' => FieldClaimStatus::ATTACHED->value,
+                'reason' => $reviewNotes,
+            ]);
+
             return $claim->fresh(['observations', 'supportingSources', 'provenanceSource']);
         });
     }
@@ -193,6 +207,16 @@ final class FieldSurveyReviewService
                 'review_notes' => $reason,
             ])->save();
 
+            FieldReviewAction::query()->create([
+                'stable_id' => 'field-review-'.substr(hash('sha256', 'claim|'.$claim->stable_id.'|REJECTED|'.microtime(true)), 0, 32),
+                'field_evidence_claim_id' => $claim->getKey(),
+                'actor_user_id' => $reviewer->getKey(),
+                'action' => 'CLAIM_REJECTED',
+                'from_status' => FieldClaimStatus::PROPOSED->value,
+                'to_status' => FieldClaimStatus::REJECTED->value,
+                'reason' => $reason,
+            ]);
+
             return $claim->refresh();
         });
     }
@@ -208,7 +232,7 @@ final class FieldSurveyReviewService
 
         return DB::transaction(function () use ($observation, $status, $reviewer, $notes): FieldObservation {
             $observation = FieldObservation::query()
-                ->with('surveySession:id,is_synthetic')
+                ->with('surveySession:id,is_synthetic,field_mission_id')
                 ->lockForUpdate()
                 ->findOrFail($observation->getKey());
             if ($observation->surveySession?->is_synthetic) {
@@ -224,12 +248,24 @@ final class FieldSurveyReviewService
                 throw ValidationException::withMessages(['review_status' => 'This field-observation review transition is not allowed.']);
             }
 
+            $fromStatus = (string) $observation->getRawOriginal('review_status');
             $observation->forceFill([
                 'review_status' => $status,
                 'reviewed_by_user_id' => $reviewer->getKey(),
                 'reviewed_at' => now(),
                 'review_notes' => $notes,
             ])->save();
+
+            FieldReviewAction::query()->create([
+                'stable_id' => 'field-review-'.substr(hash('sha256', 'observation|'.$observation->stable_id.'|'.$status->value.'|'.microtime(true)), 0, 32),
+                'field_mission_id' => $observation->surveySession?->field_mission_id,
+                'field_observation_id' => $observation->getKey(),
+                'actor_user_id' => $reviewer->getKey(),
+                'action' => 'OBSERVATION_REVIEWED',
+                'from_status' => $fromStatus,
+                'to_status' => $status->value,
+                'reason' => $notes,
+            ]);
 
             return $observation->refresh();
         });
@@ -259,6 +295,7 @@ final class FieldSurveyReviewService
             ])->exists()) {
                 throw ValidationException::withMessages(['status' => 'Review every submitted observation before closing the survey.']);
             }
+            $fromStatus = (string) $session->getRawOriginal('status');
             $session->forceFill([
                 'status' => $status,
             ]);
@@ -284,6 +321,15 @@ final class FieldSurveyReviewService
             }
 
             $session->save();
+
+            FieldReviewAction::query()->create([
+                'stable_id' => 'field-review-'.substr(hash('sha256', 'session|'.$session->stable_id.'|'.$status->value.'|'.microtime(true)), 0, 32),
+                'field_mission_id' => $session->field_mission_id,
+                'actor_user_id' => $reviewer->getKey(),
+                'action' => 'SESSION_REVIEWED',
+                'from_status' => $fromStatus,
+                'to_status' => $status->value,
+            ]);
 
             return $session->refresh();
         });

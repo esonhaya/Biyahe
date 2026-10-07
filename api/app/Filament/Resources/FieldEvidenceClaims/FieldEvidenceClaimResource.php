@@ -6,6 +6,7 @@ use App\Enums\FieldClaimStatus;
 use App\Filament\Resources\FieldEvidenceClaims\Pages\ManageFieldEvidenceClaims;
 use App\Models\FieldEvidenceClaim;
 use App\Services\FieldSurveys\FieldSurveyReviewService;
+use App\Services\FieldSurveys\FieldPromotionService;
 use BackedEnum;
 use Filament\Actions\Action;
 use Filament\Actions\ViewAction;
@@ -90,6 +91,24 @@ class FieldEvidenceClaimResource extends Resource
                     ->form([Textarea::make('reason')->required()->maxLength(2000)])
                     ->action(fn (FieldEvidenceClaim $record, array $data) => app(FieldSurveyReviewService::class)
                         ->rejectClaim($record, auth()->user(), $data['reason'])),
+                Action::make('promotionPreview')
+                    ->label('Promotion preview')
+                    ->visible(fn (FieldEvidenceClaim $record): bool => $record->review_status === FieldClaimStatus::ATTACHED)
+                    ->action(function (FieldEvidenceClaim $record): void {
+                        $preview = app(FieldPromotionService::class)->preview($record);
+                        \Filament\Notifications\Notification::make()
+                            ->title($preview['eligible'] ? 'Eligible for explicit promotion' : 'Promotion blocked')
+                            ->body(json_encode($preview['proposed_change'], JSON_UNESCAPED_SLASHES) ?: 'No scoped change.')
+                            ->send();
+                    }),
+                Action::make('promote')
+                    ->label('Promote scoped fact')
+                    ->color('warning')
+                    ->requiresConfirmation()
+                    ->visible(fn (FieldEvidenceClaim $record): bool => $record->review_status === FieldClaimStatus::ATTACHED)
+                    ->form([Textarea::make('reason')->required()->maxLength(2000)])
+                    ->action(fn (FieldEvidenceClaim $record, array $data) => app(FieldPromotionService::class)
+                        ->promote($record, auth()->user(), $data['reason'])),
             ])
             ->toolbarActions([]);
     }

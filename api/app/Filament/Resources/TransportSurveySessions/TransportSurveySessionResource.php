@@ -34,6 +34,7 @@ class TransportSurveySessionResource extends Resource
         return $schema
             ->components([
                 TextEntry::make('title'),
+                TextEntry::make('mission.title')->label('Field mission'),
                 TextEntry::make('status')->badge(),
                 TextEntry::make('purpose')->columnSpanFull(),
                 TextEntry::make('observer_reference')->label('Observer reference'),
@@ -77,6 +78,7 @@ class TransportSurveySessionResource extends Resource
             ->modifyQueryUsing(fn ($query) => $query->with(['route', 'routePattern']))
             ->columns([
                 TextColumn::make('title')->searchable()->wrap(),
+                TextColumn::make('mission.title')->label('Mission')->searchable()->wrap(),
                 TextColumn::make('status')->badge()->sortable(),
                 TextColumn::make('route.code')->label('Route')->placeholder('—'),
                 TextColumn::make('routePattern.direction')->label('Direction')->placeholder('—'),

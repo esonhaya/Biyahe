@@ -180,6 +180,11 @@ final class Geo
         return 2 * $earthRadius * asin(min(1, sqrt($a)));
     }
 
+    public static function assertForField(float $latitude, float $longitude): void
+    {
+        self::assertCoordinates($latitude, $longitude);
+    }
+
     private static function assertCoordinates(float $latitude, float $longitude): void
     {
         if (! is_finite($latitude) || ! is_finite($longitude) || $latitude < -90 || $latitude > 90 || $longitude < -180 || $longitude > 180) {

@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\CityController;
 use App\Http\Controllers\Api\CommuterReportController;
 use App\Http\Controllers\Api\DisruptionController;
 use App\Http\Controllers\Api\HealthController;
+use App\Http\Controllers\Api\FieldMissionController;
 use App\Http\Controllers\Api\JourneyController;
 use App\Http\Controllers\Api\PlaceController;
 use App\Http\Controllers\Api\PlaceSearchController;
@@ -16,6 +17,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function (): void {
     Route::get('health', HealthController::class);
+    Route::get('ready', \App\Http\Controllers\Api\ReadinessController::class);
     Route::get('cities', [CityController::class, 'index']);
     Route::get('cities/{city}', [CityController::class, 'show']);
 
@@ -39,4 +41,13 @@ Route::prefix('v1')->group(function (): void {
     Route::get('routes/nearby', [RouteController::class, 'nearby']);
     Route::get('routes/{route}', [RouteController::class, 'show']);
     Route::get('route-patterns/{routePattern}', [RoutePatternController::class, 'show']);
+
+    Route::prefix('field')->middleware('field.operator')->group(function (): void {
+        Route::get('missions', [FieldMissionController::class, 'index']);
+        Route::get('missions/{mission}', [FieldMissionController::class, 'show']);
+        Route::post('missions/{mission}/sessions', [FieldMissionController::class, 'start']);
+        Route::post('sessions/{session}/observations', [FieldMissionController::class, 'submit']);
+        Route::post('sessions/{session}/sync', [FieldMissionController::class, 'sync']);
+        Route::post('sessions/{session}/complete', [FieldMissionController::class, 'complete']);
+    });
 });
