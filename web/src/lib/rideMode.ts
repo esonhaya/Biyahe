@@ -336,6 +336,15 @@ export function parseRideModeSession(raw: string | null): RideModeSession | null
   }
 }
 
+export function hasActiveRideModeSession(storage: Pick<Storage, "getItem">): boolean {
+  try {
+    const session = parseRideModeSession(storage.getItem(RIDE_MODE_STORAGE_KEY));
+    return session?.status === "ACTIVE" || session?.status === "PLANNED";
+  } catch {
+    return false;
+  }
+}
+
 export function classifyLocation(sample: RideModeLocationSample | null, now = Date.now()): LocationQuality {
   if (!sample
     || !Number.isFinite(sample.lat)

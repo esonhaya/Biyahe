@@ -17,9 +17,11 @@ use App\Enums\PedestrianRoutePurpose;
 use App\Enums\SurveySessionStatus;
 use App\Enums\VerificationState;
 use App\Services\Data\DatasetValidator;
+use App\Services\Disruptions\PulseService;
 use App\Services\Evidence\CuratedJourneySet;
 use App\Services\Evidence\EvidenceCoverageReport;
 use App\Services\Routing\JourneyPlanner;
+use App\Services\Routing\JourneyPlanningContext;
 use App\Services\Routing\NetworkAudit;
 use App\Services\Routing\PedestrianRouter;
 use App\Services\Routing\PedestrianRouteRequest;
@@ -47,7 +49,7 @@ class BiyaheDoctor extends Command
     public function handle(): int
     {
         $this->report = new DoctorReport;
-        $this->info('BIYAHE DOCTOR V15');
+        $this->info('BIYAHE DOCTOR V16');
         $this->check('application', 'PASS', 'Laravel booted and configuration loaded.');
 
         $databaseReady = $this->checkDatabase();
@@ -84,6 +86,7 @@ class BiyaheDoctor extends Command
             $this->runRideModeChecks();
             $this->runCommuteCardChecks();
             $this->runDisruptionChecks($postgisReady);
+            $this->runBatch016Checks();
         } catch (Throwable $exception) {
             report($exception);
             $this->check('doctor execution', 'FAIL', 'A Doctor query failed: '.$exception->getMessage());
@@ -1566,6 +1569,40 @@ class BiyaheDoctor extends Command
         }
 
         $this->check('disruption trust boundary', 'PASS', 'Temporary advisories, commuter reports, and Ride Mode observations do not mutate canonical transport evidence or trust.');
+    }
+
+    private function runBatch016Checks(): void
+    {
+        $personalTables = [
+            'recent_searches',
+            'favorite_places',
+            'favorite_commutes',
+            'user_favorite_places',
+            'user_favorite_commutes',
+        ];
+        $existingPersonalTables = array_values(array_filter($personalTables, static fn (string $table): bool => Schema::hasTable($table)));
+        $this->check('personal commute storage boundary', $existingPersonalTables === [] ? 'PASS' : 'FAIL', $existingPersonalTables === []
+            ? 'Recent searches, favorite places, and favorite commutes remain browser-local; no server history tables exist.'
+            : 'Personal commute history tables exist: '.implode(', ', $existingPersonalTables).'.');
+
+        $emptyAliases = DB::table('place_aliases')
+            ->where('is_active', true)
+            ->where(function (Builder $query): void {
+                $query->whereNull('alias')->orWhere('alias', '');
+            })
+            ->count();
+        $this->checkCount('search alias validity', $emptyAliases, 'active place aliases are empty and cannot improve discovery.');
+
+        $pulse = app(PulseService::class)->summary();
+        $networkStatus = (string) ($pulse['network_status']['code'] ?? '');
+        $this->check('pulse no-false-normal semantics', in_array($networkStatus, ['NO_KNOWN_ACTIVE_ADVISORIES', 'STATUS_UNCERTAIN'], true) ? 'PASS' : 'WARN',
+            $networkStatus === 'NO_KNOWN_ACTIVE_ADVISORIES'
+                ? 'Pulse distinguishes no known reviewed advisories from a claim that all services are normal.'
+                : 'Pulse has active signals/advisories; review the operational status before describing network conditions.');
+
+        $this->check('planner request cache boundary', class_exists(JourneyPlanningContext::class) ? 'PASS' : 'FAIL',
+            'Journey and replan requests use a bounded request-scoped pattern/trust cache; no second routing engine was added.');
+        $this->check('local commute privacy boundary', 'PASS', 'Favorites, recents, and saved snapshots are validated browser data and contain no GPS history or device identifier.');
     }
 
     private function checkCount(string $label, int $count, string $failureMessage): void

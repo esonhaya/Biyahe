@@ -28,6 +28,9 @@ final class NetworkAudit
         $maxPairs = min(max($maxPairs, 1), 1000);
         $maxTransfers = min(max($maxTransfers ?? (int) config('biyahe.routing.default_max_transfers', 2), 0), (int) config('biyahe.routing.public_max_transfers', 2));
         $maxCanIRideChecks = min(max($maxCanIRideChecks ?? (int) config('biyahe.routing.network_audit_max_can_i_ride_checks', 24), 1), 100);
+        $planningContext = new JourneyPlanningContext(
+            (int) config('biyahe.routing.max_cached_patterns', 250),
+        );
 
         $places = Place::query()
             ->with(['aliases', 'provenanceSource'])
@@ -80,7 +83,12 @@ final class NetworkAudit
                     }
                     $metrics['pairs_examined']++;
                     $auditedPairs[] = [$origin, $destination];
-                    $result = $this->planner->plan($origin, $destination, maxTransfers: $maxTransfers);
+                    $result = $this->planner->plan(
+                        $origin,
+                        $destination,
+                        maxTransfers: $maxTransfers,
+                        context: $planningContext,
+                    );
                     if (! $result->hasJourneys()) {
                         $metrics['no_known_journey']++;
                         $metrics['coverage_gap_pairs']++;
@@ -115,6 +123,7 @@ final class NetworkAudit
             : $transferCounts[(int) floor((count($transferCounts) - 1) / 2)];
         unset($metrics['_transfer_counts']);
         $metrics['planner_errors'] = count($metrics['errors']);
+        $metrics['planning_context'] = $planningContext->metrics();
 
         return $metrics;
     }

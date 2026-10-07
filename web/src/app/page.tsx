@@ -8,10 +8,13 @@ import BiyahePulse from "@/components/BiyahePulse";
 import CommuteCard from "@/components/CommuteCard";
 import CommuterReportForm from "@/components/CommuterReportForm";
 import DisruptionNotice from "@/components/DisruptionNotice";
+import PersonalCommuteTools from "@/components/PersonalCommuteTools";
 import ReplanPanel from "@/components/ReplanPanel";
 import RideMode from "@/components/RideMode";
 import type { CommuteInstruction } from "@/lib/commuteInstructions";
+import { hasActiveRideModeSession } from "@/lib/rideMode";
 import type { RideModeMapOverlay } from "@/lib/rideMode";
+import { loadRecentCommutes, persistRecentCommutes, recordRecentCommute } from "@/lib/commuterTools";
 import {
   loadSavedJourneys,
   persistSavedJourneys,
@@ -51,7 +54,7 @@ function SearchField({ label, value, onChange, options, onPick }: SearchFieldPro
           {options.map((place) => (
             <button type="button" key={place.id} onClick={() => onPick(place)} role="option" aria-selected={false}>
               <span>{place.name}</span>
-              <small>{place.aliases?.[0]?.alias ?? place.category}</small>
+              <small>{place.city?.name ?? "Cebu coverage"} · {place.aliases?.[0]?.alias ?? place.category}</small>
             </button>
           ))}
         </div>
@@ -90,6 +93,21 @@ function trustLabel(state: string | null | undefined) {
       return "Route details not fully verified";
     default:
       return "Route details unavailable";
+  }
+}
+
+function canIRideReasonLabel(reasonCode: string): string {
+  switch (reasonCode) {
+    case "DIRECT_SERVICE_SUPPORTED": return "Why: the selected route has a compatible direction and stop order.";
+    case "OPPOSITE_DIRECTION_ONLY": return "Why: this route is known for the opposite direction between these places.";
+    case "SERVICE_NOT_SUPPORTED": return "Why: no supported stop sequence is known for this route between these places.";
+    case "BOARDING_ACCESS_UNSUPPORTED": return "Why: a supported boarding point is not mapped near the starting place.";
+    case "ALIGHTING_ACCESS_UNSUPPORTED": return "Why: a supported alighting point is not mapped near the destination.";
+    case "DIRECTION_DATA_INSUFFICIENT": return "Why: the route identity is known, but its usable direction data is incomplete.";
+    case "ACTIVE_ADVISORY": return "Why: a reviewed temporary advisory affects this route.";
+    case "COMMUNITY_SIGNAL_UNCERTAIN": return "Why: recent commuter signals mention this route, but they are not authoritative.";
+    case "ACTIVE_HARD_CLOSURE": return "Why: a reviewed temporary closure currently affects this route or access point.";
+    default: return "Why: Biyahe does not have enough verified route evidence to be more specific.";
   }
 }
 
@@ -152,6 +170,7 @@ function CanIRideResultCard({ result }: { result: CanIRideResponse["data"] }) {
         <span className={styles.trustBadge}>{trustLabel(result.trust)}</span>
       </div>
       <p>{result.message}</p>
+      <p className={styles.sectionCopy}>{canIRideReasonLabel(result.reason_code)}</p>
       {option && (
         <div className={styles.decisionDetails}>
           <p><strong>Direction:</strong> {option.pattern.direction}</p>
@@ -204,6 +223,28 @@ export default function Home() {
   const [replanResult, setReplanResult] = useState<JourneyResponse | null>(null);
   const [replanError, setReplanError] = useState<string | null>(null);
   const [loadingReplan, setLoadingReplan] = useState(false);
+  const [online, setOnline] = useState(true);
+  const [personalRefreshToken, setPersonalRefreshToken] = useState(0);
+  const [activeRideResume, setActiveRideResume] = useState(false);
+
+  useEffect(() => {
+    const updateOnline = () => setOnline(window.navigator.onLine);
+    updateOnline();
+    window.addEventListener("online", updateOnline);
+    window.addEventListener("offline", updateOnline);
+    const timer = window.setTimeout(() => {
+      try {
+        setActiveRideResume(hasActiveRideModeSession(window.localStorage));
+      } catch {
+        setActiveRideResume(false);
+      }
+    }, 0);
+    return () => {
+      window.clearTimeout(timer);
+      window.removeEventListener("online", updateOnline);
+      window.removeEventListener("offline", updateOnline);
+    };
+  }, []);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -353,16 +394,7 @@ export default function Home() {
     setReplanResult(null);
   }
 
-  async function findRoute() {
-    if (!origin || !destination) {
-      setError("Select a starting place and destination from the suggestions first.");
-      return;
-    }
-    if (origin.id === destination.id) {
-      setError("Choose a different destination place.");
-      return;
-    }
-
+  async function searchJourney(from: Place, to: Place) {
     setLoadingJourney(true);
     setError(null);
     setJourneys([]);
@@ -373,16 +405,53 @@ export default function Home() {
     setNoRouteMessage(null);
     setReplanResult(null);
     try {
-      const response = await planJourney(origin.id, destination.id);
+      const response = await planJourney(from.id, to.id);
       setJourneys(response.data);
       setSelectedJourney(response.data[0] ?? null);
       setNoRouteMessage(response.meta.no_route?.message ?? null);
       setStatus(response.meta.no_route?.message ?? `${response.data.length} supported journey${response.data.length === 1 ? "" : "s"} found.`);
+      try {
+        const recent = recordRecentCommute(loadRecentCommutes(window.localStorage), from, to);
+        persistRecentCommutes(window.localStorage, recent);
+        setPersonalRefreshToken((value) => value + 1);
+      } catch {
+        // A blocked browser store must not make a valid route unusable.
+      }
     } catch {
       setError("Journey search is unavailable right now. Check the API connection and try again.");
       setStatus("No journey search result yet.");
     } finally {
       setLoadingJourney(false);
+    }
+  }
+
+  async function findRoute() {
+    if (!origin || !destination) {
+      setError("Select a starting place and destination from the suggestions first.");
+      return;
+    }
+    if (origin.id === destination.id) {
+      setError("Choose a different destination place.");
+      return;
+    }
+    if (!online) {
+      setError("New route search needs connectivity. Open a saved journey or choose a local commute shortcut instead.");
+      return;
+    }
+    await searchJourney(origin, destination);
+  }
+
+  function chooseLocalCommute(from: Place, to: Place) {
+    setOrigin(from);
+    setDestination(to);
+    setOriginText(from.name);
+    setDestinationText(to.name);
+    setOriginOptions([]);
+    setDestinationOptions([]);
+    if (online) {
+      void searchJourney(from, to);
+    } else {
+      setStatus("Selected a local commute. Connect to refresh its route.");
     }
   }
 
@@ -491,13 +560,27 @@ export default function Home() {
         <div className={styles.searchCard}>
           <SearchField label="From" value={originText} onChange={changeOrigin} options={originOptions} onPick={chooseOrigin} />
           <SearchField label="To" value={destinationText} onChange={changeDestination} options={destinationOptions} onPick={chooseDestination} />
-          <button className={styles.primaryButton} type="button" onClick={findRoute} disabled={loadingJourney || loadingNetwork}>
-            {loadingJourney ? "Finding…" : "Find route"}
+          <button className={styles.primaryButton} type="button" onClick={findRoute} disabled={loadingJourney || loadingNetwork || !online}>
+            {loadingJourney ? "Finding…" : online ? "Find route" : "Offline"}
           </button>
           <p className={styles.status} role="status">{status}</p>
           {error && <p className={styles.error} role="alert">{error}</p>}
         </div>
+        {activeRideResume && <div className={styles.activeRideBanner} role="status">
+          <div><strong>Continue your active ride</strong><span>Ride Mode progress is saved on this device. Live location is not restored as current.</span></div>
+          <button type="button" className={styles.secondaryButton} onClick={() => document.getElementById("ride-mode-heading")?.scrollIntoView({ behavior: "smooth" })}>Open Ride Mode</button>
+        </div>}
       </section>
+
+      <PersonalCommuteTools
+        origin={origin}
+        destination={destination}
+        savedJourneyCount={savedJourneys.length}
+        online={online}
+        refreshToken={personalRefreshToken}
+        onSelectPlace={(place, role) => { if (role === "origin") chooseOrigin(place); else chooseDestination(place); }}
+        onSelectCommute={chooseLocalCommute}
+      />
 
       <BiyahePulse
         pulse={pulse}
@@ -593,6 +676,7 @@ export default function Home() {
         onRefreshAdvisories={() => { void refreshAdvisories(); }}
         onReplan={selectedJourney && selectedJourney.disruptions?.some((impact) => impact.impact_level !== "INFORMATIONAL") ? () => { void requestReplan(selectedJourney); } : undefined}
         onRestoreJourney={(journey) => {
+          setActiveRideResume(true);
           setSelectedJourney(journey);
           try {
             const restoredIsSaved = loadSavedJourneys(window.localStorage).some((saved) => saved.id === journey.id);

@@ -340,6 +340,7 @@ export type CanIRideResponse = {
     destination: JourneyPoint;
     status: "YES" | "YES_BUT_AFFECTED" | "TEMPORARILY_UNAVAILABLE" | "UNCERTAIN_DUE_TO_REPORT" | "NO" | "DIRECTION_DEPENDENT" | "UNKNOWN";
     message: string;
+    reason_code: string;
     route: { id: number; code: string; name: string; vehicle_type: { code: string; name: string } | null; verification: JourneyPoint["verification"] } | null;
     option: CanIRideOption | null;
     opposite_direction: CanIRideOption | null;

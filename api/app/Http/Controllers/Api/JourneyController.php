@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Models\Place;
 use App\Services\Routing\Journey;
 use App\Services\Routing\JourneyPlanner;
+use App\Services\Routing\JourneyPlanningContext;
 use App\Support\Geo;
 use App\Support\Trust;
 use Illuminate\Http\JsonResponse;
@@ -65,12 +66,20 @@ class JourneyController
         $maxTransfers = isset($validated['max_transfers'])
             ? (int) $validated['max_transfers']
             : (int) config('biyahe.routing.default_max_transfers', 2);
+        // A single request can inspect the same patterns, stop associations,
+        // and trust facts through direct, one-transfer, and two-transfer
+        // branches. Keep those immutable request-scoped models in one
+        // context instead of reloading them for every branch.
+        $planningContext = new JourneyPlanningContext(
+            (int) config('biyahe.routing.max_cached_patterns', 250),
+        );
         $result = $planner->plan(
             origin: $origin,
             destination: $destination,
             accessRadiusMeters: isset($validated['access_radius']) ? (float) $validated['access_radius'] : null,
             transferRadiusMeters: isset($validated['transfer_radius']) ? (float) $validated['transfer_radius'] : null,
             maxTransfers: $maxTransfers,
+            context: $planningContext,
         );
         $limit = (int) ($validated['limit'] ?? 10);
         $journeys = array_slice($result->journeys, 0, $limit);
@@ -93,6 +102,7 @@ class JourneyController
                 'replan_status' => $replan ? $this->replanStatus($result->noRouteCode, $journeys) : null,
                 'boarding_candidates' => $result->boardingCandidates,
                 'alighting_candidates' => $result->alightingCandidates,
+                'planning_cache' => $planningContext->metrics(),
                 'no_route' => $result->hasJourneys() ? null : [
                     'code' => $result->noRouteCode,
                     'message' => $result->noRouteMessage,

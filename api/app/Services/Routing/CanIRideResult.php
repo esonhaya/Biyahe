@@ -14,6 +14,7 @@ final class CanIRideResult
     public function __construct(
         public readonly string $status,
         public readonly string $message,
+        public readonly string $reasonCode = 'UNKNOWN_DATA',
         public readonly ?array $route = null,
         public readonly ?array $option = null,
         public readonly ?array $oppositeOption = null,
@@ -29,6 +30,7 @@ final class CanIRideResult
         return [
             'status' => $this->status,
             'message' => $this->message,
+            'reason_code' => $this->reasonCode,
             'route' => $this->route,
             'option' => $this->option,
             'opposite_direction' => $this->oppositeOption,
@@ -51,15 +53,19 @@ final class CanIRideResult
                 : (in_array('POSSIBLY_AFFECTED', $levels, true) ? 'POSSIBLY_AFFECTED' : 'INFORMATIONAL'));
         $status = $this->status;
         $message = $this->message;
+        $reasonCode = $this->reasonCode;
         if ($this->option !== null || $this->oppositeOption !== null) {
             if ($impact === 'SERVICE_UNAVAILABLE') {
                 $status = 'TEMPORARILY_UNAVAILABLE';
+                $reasonCode = 'ACTIVE_HARD_CLOSURE';
                 $message = 'This route or access point is temporarily affected by a reviewed operational advisory.';
             } elseif ($impact === 'POSSIBLY_AFFECTED') {
                 $status = 'UNCERTAIN_DUE_TO_REPORT';
+                $reasonCode = 'COMMUNITY_SIGNAL_UNCERTAIN';
                 $message = 'This route may be affected by a commuter report that is still operationally uncertain.';
             } elseif ($impact === 'AFFECTED' && $this->status === 'YES') {
                 $status = 'YES_BUT_AFFECTED';
+                $reasonCode = 'ACTIVE_ADVISORY';
                 $message = 'Yes, but an active operational advisory may affect this route.';
             }
         }
@@ -67,6 +73,7 @@ final class CanIRideResult
         return new self(
             status: $status,
             message: $message,
+            reasonCode: $reasonCode,
             route: $this->route,
             option: $this->option,
             oppositeOption: $this->oppositeOption,

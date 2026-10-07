@@ -46,6 +46,7 @@ final class CanIRideChecker
             return new CanIRideResult(
                 status: 'UNKNOWN',
                 message: 'Biyahe does not currently know this route in the selected coverage area.',
+                reasonCode: 'ROUTE_NOT_KNOWN',
             );
         }
 
@@ -54,6 +55,7 @@ final class CanIRideChecker
             return new CanIRideResult(
                 status: 'UNKNOWN',
                 message: 'Biyahe knows the route name but does not have enough usable direction data yet.',
+                reasonCode: 'DIRECTION_DATA_INSUFFICIENT',
                 route: $this->routeSummary($route),
                 provenance: $this->provenanceFor([$route]),
             );
@@ -67,6 +69,7 @@ final class CanIRideChecker
                 message: $boardingStops->isEmpty()
                     ? 'Biyahe does not have a supported boarding point near the current place yet.'
                     : 'Biyahe does not have a supported alighting point near the destination yet.',
+                reasonCode: $boardingStops->isEmpty() ? 'BOARDING_ACCESS_UNSUPPORTED' : 'ALIGHTING_ACCESS_UNSUPPORTED',
                 route: $this->routeSummary($route),
                 provenance: $this->provenanceFor([$route]),
             );
@@ -80,6 +83,7 @@ final class CanIRideChecker
             return new CanIRideResult(
                 status: 'YES',
                 message: 'Yes. Biyahe knows a compatible direction on this route.',
+                reasonCode: 'DIRECT_SERVICE_SUPPORTED',
                 route: $this->routeSummary($route),
                 option: $option,
                 provenance: $this->provenanceFor([$route, $pattern]),
@@ -97,6 +101,7 @@ final class CanIRideChecker
             return new CanIRideResult(
                 status: 'DIRECTION_DEPENDENT',
                 message: 'Not this direction. Biyahe knows this route in the opposite direction for these places.',
+                reasonCode: 'OPPOSITE_DIRECTION_ONLY',
                 route: $this->routeSummary($route),
                 oppositeOption: $option,
                 provenance: $this->provenanceFor([$route, $pattern]),
@@ -107,6 +112,7 @@ final class CanIRideChecker
         return new CanIRideResult(
             status: 'NO',
             message: 'Biyahe does not currently know a supported ride on this route between these places.',
+            reasonCode: 'SERVICE_NOT_SUPPORTED',
             route: $this->routeSummary($route),
             provenance: $this->provenanceFor([$route]),
         );
