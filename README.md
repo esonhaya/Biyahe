@@ -56,6 +56,7 @@ distances are straight-line estimates, not pedestrian directions.
 - Data verification: docs/data-verification.md
 - Dataset format and import: docs/data-format.md
 - Sources and licensing: docs/data-sources.md
+- Batch 017 network expansion: docs/batch-017-network-expansion.md
 - Journey planning: docs/journey-planning.md
 - Haya reuse audit: docs/haya-reuse-audit.md
 

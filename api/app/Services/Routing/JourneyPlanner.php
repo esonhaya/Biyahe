@@ -26,6 +26,8 @@ use Illuminate\Support\Facades\DB;
 
 final class JourneyPlanner
 {
+    private int $nextRoutingStateToken = 0;
+
     public function __construct(
         private readonly NearbyStopFinder $nearbyStopFinder,
         private readonly JourneyRanker $journeyRanker,
@@ -718,6 +720,9 @@ final class JourneyPlanner
             'ride_stop_count' => $rideStopCount,
             'used_route_ids' => $routeIds,
             'used_pattern_ids' => $patternIds,
+            // Internal frontier identity; avoids deep comparison of nested
+            // Eloquent models when checking whether a capped state survived.
+            'frontier_token' => ++$this->nextRoutingStateToken,
         ];
         $state['trust_state'] = $this->trustState(
             $this->routingStateModels($state),
@@ -934,7 +939,11 @@ final class JourneyPlanner
         $frontier[$key][] = $state;
         $frontier[$key] = array_slice($frontier[$key], 0, (int) config('biyahe.routing.max_frontier_states_per_key', 8));
 
-        return in_array($state, $frontier[$key], true);
+        $token = $state['frontier_token'];
+
+        return collect($frontier[$key])->contains(
+            static fn (array $candidate): bool => ($candidate['frontier_token'] ?? null) === $token,
+        );
     }
 
     /** @param array<string, mixed> $left @param array<string, mixed> $right */

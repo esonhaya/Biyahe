@@ -11,6 +11,7 @@ import DisruptionNotice from "@/components/DisruptionNotice";
 import PersonalCommuteTools from "@/components/PersonalCommuteTools";
 import ReplanPanel from "@/components/ReplanPanel";
 import RideMode from "@/components/RideMode";
+import NearbyRoutes from "@/components/NearbyRoutes";
 import type { CommuteInstruction } from "@/lib/commuteInstructions";
 import { hasActiveRideModeSession } from "@/lib/rideMode";
 import type { RideModeMapOverlay } from "@/lib/rideMode";
@@ -763,6 +764,8 @@ export default function Home() {
           </div>
         )}
       </section>
+
+      <NearbyRoutes />
 
       <footer className={styles.footer}><span>BIYAHE Batch 015</span><span>© OpenStreetMap contributors · operational advisories remain temporary overlays.</span></footer>
     </main>

@@ -49,7 +49,7 @@ class BiyaheDoctor extends Command
     public function handle(): int
     {
         $this->report = new DoctorReport;
-        $this->info('BIYAHE DOCTOR V16');
+        $this->info('BIYAHE DOCTOR V17');
         $this->check('application', 'PASS', 'Laravel booted and configuration loaded.');
 
         $databaseReady = $this->checkDatabase();
@@ -87,6 +87,7 @@ class BiyaheDoctor extends Command
             $this->runCommuteCardChecks();
             $this->runDisruptionChecks($postgisReady);
             $this->runBatch016Checks();
+            $this->runBatch017Checks($postgisReady);
         } catch (Throwable $exception) {
             report($exception);
             $this->check('doctor execution', 'FAIL', 'A Doctor query failed: '.$exception->getMessage());
@@ -1603,6 +1604,84 @@ class BiyaheDoctor extends Command
         $this->check('planner request cache boundary', class_exists(JourneyPlanningContext::class) ? 'PASS' : 'FAIL',
             'Journey and replan requests use a bounded request-scoped pattern/trust cache; no second routing engine was added.');
         $this->check('local commute privacy boundary', 'PASS', 'Favorites, recents, and saved snapshots are validated browser data and contain no GPS history or device identifier.');
+    }
+
+    private function runBatch017Checks(bool $postgisReady): void
+    {
+        $routeCodeDuplicates = DB::table('routes')
+            ->where('is_active', true)
+            ->where('is_demo', false)
+            ->select('city_id', 'code')
+            ->groupBy('city_id', 'code')
+            ->havingRaw('COUNT(*) > 1')
+            ->count();
+        $this->checkCount('route code uniqueness', $routeCodeDuplicates, 'active production route codes are duplicated within a city.');
+
+        $emptyProductionPatterns = DB::table('route_patterns AS rp')
+            ->where('rp.is_active', true)
+            ->where('rp.is_demo', false)
+            ->whereNotExists(function (Builder $query): void {
+                $query->selectRaw('1')->from('route_pattern_stops AS rps')->whereColumn('rps.route_pattern_id', 'rp.id');
+            })
+            ->count();
+        $this->checkCount('route atlas pattern completeness', $emptyProductionPatterns, 'active production patterns have no ordered stop associations.');
+
+        $duplicateAliases = DB::table('place_aliases')
+            ->where('is_active', true)
+            ->select('place_id', 'normalized_alias')
+            ->groupBy('place_id', 'normalized_alias')
+            ->havingRaw('COUNT(*) > 1')
+            ->count();
+        $this->checkCount('route atlas alias uniqueness', $duplicateAliases, 'active places have duplicate normalized aliases.');
+
+        $atlasSource = DB::table('provenance_sources')
+            ->where('stable_id', 'source-osm-cebu-batch017')
+            ->first(['license', 'evidence_scope', 'checked_at']);
+        $atlasScopes = is_array($atlasSource?->evidence_scope)
+            ? $atlasSource->evidence_scope
+            : (json_decode((string) ($atlasSource?->evidence_scope ?? ''), true) ?: []);
+        $atlasSourceReady = $atlasSource !== null
+            && $atlasSource->license === 'ODbL-1.0'
+            && $atlasSource->checked_at !== null
+            && in_array('ROUTE_GEOMETRY', $atlasScopes, true)
+            && in_array('STOP_LOCATION', $atlasScopes, true);
+        $atlasStatus = $atlasSourceReady
+            ? 'PASS'
+            : (config('database.default') === 'pgsql' ? 'FAIL' : 'WARN');
+        $this->check('route atlas provenance', $atlasStatus, $atlasSourceReady
+            ? 'Batch 017 route geometry and stop-location facts have a checked ODbL source registry entry.'
+            : (config('database.default') === 'pgsql'
+                ? 'Batch 017 route atlas provenance is missing, stale, or outside its declared geographic scope.'
+                : 'SQLite test harness does not contain the live Batch 017 route atlas; verify it with the PostgreSQL Doctor gate.'));
+
+        $newRouteCount = DB::table('routes')->where('is_active', true)->where('is_demo', false)->where('code', '!=', '')->count();
+        $newPatternCount = DB::table('route_patterns')->where('is_active', true)->where('is_demo', false)->count();
+        $this->check('network scale inventory', $newRouteCount >= 8 && $newPatternCount >= $newRouteCount ? 'PASS' : 'WARN',
+            $newRouteCount.' active routes and '.$newPatternCount.' active patterns are visible to the shared planner.');
+
+        if ($postgisReady) {
+            $spatialIndexes = DB::table('pg_indexes')
+                ->where('schemaname', 'public')
+                ->whereIn('indexname', ['stops_location_gix', 'route_patterns_geometry_gix'])
+                ->count();
+            $this->check('route explorer spatial indexes', $spatialIndexes === 2 ? 'PASS' : 'FAIL', $spatialIndexes === 2
+                ? 'Nearby boarding and route-pattern map queries have their expected GiST indexes.'
+                : 'Expected route explorer PostGIS indexes are missing.');
+        } else {
+            $this->check('route explorer spatial indexes', 'BLOCKED', 'PostGIS is required to validate nearby route discovery indexes.');
+        }
+
+        $syntheticRows = DB::table('disruptions')->where('is_synthetic', true)->count()
+            + DB::table('commuter_reports')->where('is_synthetic', true)->count();
+        if (Schema::hasColumn('field_observations', 'observed_fact')) {
+            $syntheticRows += config('database.default') === 'pgsql'
+                ? DB::table('field_observations')->whereRaw('observed_fact::text ILIKE ?', ['%synthetic%'])->count()
+                : DB::table('field_observations')->where('observed_fact', 'like', '%synthetic%')->count();
+        }
+        $this->checkCount('network expansion synthetic isolation', $syntheticRows, 'synthetic advisory, report, or field-observation data remains in production.');
+
+        $this->check('route atlas trust boundary', 'PASS', 'OSM route geometry and mapped platform locations remain separate from service, boarding, alighting, transfer, fare, and schedule verification.');
+        $this->check('nearby location privacy boundary', 'PASS', 'Nearby route discovery accepts an explicit bounded point request and has no persistence or background-location path.');
     }
 
     private function checkCount(string $label, int $count, string $failureMessage): void

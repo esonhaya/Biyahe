@@ -98,6 +98,28 @@ export type Route = {
   provenance?: Provenance;
 };
 
+export type NearbyRoute = {
+  id: number;
+  code: string;
+  name: string;
+  vehicle_type: { code: string; name: string };
+  verification: { state: VerificationState; trusted: boolean };
+  nearest_distance_meters: number;
+  boarding_candidates: {
+    pattern: { id: number; name: string; direction: string };
+    stop: {
+      id: number;
+      name: string;
+      code: string | null;
+      boarding_precision: JourneyPoint["boarding_precision"];
+      boarding_verification_state: VerificationState;
+    };
+    distance_meters: number;
+  }[];
+  active_advisories: { stable_id: string; headline: string; severity: string }[];
+  nearby_note: string;
+};
+
 export type JourneyLegType = "WALK_ACCESS" | "RIDE" | "TRANSFER_WALK" | "WALK_EGRESS";
 
 export type JourneyTrustState = "VERIFIED" | "MIXED" | "UNVERIFIED";
@@ -397,6 +419,18 @@ export async function listStops(signal?: AbortSignal): Promise<Stop[]> {
 export async function listRoutes(signal?: AbortSignal): Promise<Route[]> {
   const page = await getJson<ApiPage<Route>>("/routes?per_page=50", signal);
   return page.data;
+}
+
+export async function listNearbyRoutes(
+  latitude: number,
+  longitude: number,
+  filters: { radius?: number; limit?: number } = {},
+  signal?: AbortSignal,
+): Promise<{ data: NearbyRoute[]; meta: { radius_meters: number; count: number; location_is_ephemeral: boolean; vehicle_presence: string } }> {
+  const params = new URLSearchParams({ lat: String(latitude), lng: String(longitude) });
+  if (filters.radius) params.set("radius", String(filters.radius));
+  if (filters.limit) params.set("limit", String(filters.limit));
+  return getJson(`/routes/nearby?${params.toString()}`, signal);
 }
 
 export async function listDisruptions(filters: { route_id?: number; stop_id?: number; place_id?: number } = {}, signal?: AbortSignal): Promise<DisruptionSummary[]> {

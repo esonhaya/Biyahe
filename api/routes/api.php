@@ -36,6 +36,7 @@ Route::prefix('v1')->group(function (): void {
     Route::get('stops/{stop}', [StopController::class, 'show']);
 
     Route::get('routes', [RouteController::class, 'index']);
+    Route::get('routes/nearby', [RouteController::class, 'nearby']);
     Route::get('routes/{route}', [RouteController::class, 'show']);
     Route::get('route-patterns/{routePattern}', [RoutePatternController::class, 'show']);
 });

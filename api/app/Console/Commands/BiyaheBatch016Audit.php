@@ -7,7 +7,7 @@ use Illuminate\Console\Command;
 
 final class BiyaheBatch016Audit extends Command
 {
-    protected $signature = 'biyahe:batch016:audit {--pairs=12 : Number of explicit release-matrix pairs} {--json : Emit machine-readable JSON}';
+    protected $signature = 'biyahe:batch016:audit {--pairs=12 : Number of explicit release-matrix pairs (up to the Batch 017 bounded matrix)} {--json : Emit machine-readable JSON}';
 
     protected $description = 'Run the bounded Cebu network inventory, corridor, journey-quality, and bottleneck audit.';
 

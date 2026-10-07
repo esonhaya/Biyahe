@@ -114,6 +114,10 @@
 .patternList button { display: flex; min-width: 120px; flex-direction: column; gap: 3px; border: 1px solid #d4dcd9; border-radius: 9px; padding: 8px 10px; text-align: left; color: #153b45; background: #fbfcfa; cursor: pointer; font: inherit; font-size: .78rem; }
 .patternList button:hover, .patternActive { border-color: #e07a5f !important; background: #fff5f1 !important; }
 .emptyState { margin: 18px 0; color: #6d858b; }.footer { display: flex; justify-content: space-between; gap: 16px; width: min(1120px, calc(100% - 32px)); margin: 60px auto 0; border-top: 1px solid #d8ddd7; padding: 18px 0 28px; color: #799096; font-size: .74rem; }
+.nearbySection { width: min(880px, calc(100% - 32px)); margin: 0 auto; padding: 42px 0 0; }
+.nearbyGrid { display: grid; gap: 10px; margin-top: 16px; }
+.nearbyCard { display: grid; grid-template-columns: auto 1fr; gap: 12px; border: 1px solid #dfded7; border-radius: 14px; padding: 14px; background: #fff; }
+.nearbyCard h3 { margin: 0; font-size: 1rem; }.nearbyCard p { margin: 5px 0 0; color: #5d777e; font-size: .8rem; line-height: 1.45; }.nearbyCard small { display: block; margin-top: 7px; color: #799096; font-size: .72rem; line-height: 1.4; }
 .rideModeSection { width: min(880px, calc(100% - 32px)); margin: 0 auto; padding: 42px 0 0; }
 .rideStartCard, .rideModeCard { border: 1px solid #d8ddd7; border-radius: 18px; padding: 18px; background: #fff; box-shadow: 0 10px 28px rgba(21, 59, 69, .05); }
 .rideActionCard { border: 2px solid #176b87; border-radius: 16px; padding: 18px; background: #f8fcfb; }
