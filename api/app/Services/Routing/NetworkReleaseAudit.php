@@ -85,6 +85,12 @@ final class NetworkReleaseAudit
 
     public function __construct(private readonly JourneyPlanner $planner) {}
 
+    /** @return list<array{origin: string, destination: string}> */
+    public static function matrix(): array
+    {
+        return self::MATRIX;
+    }
+
     /** @return array<string, mixed> */
     public function audit(?int $maxPairs = null): array
     {

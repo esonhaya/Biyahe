@@ -6,6 +6,8 @@ return [
         'max_transfer_radius_meters' => 600,
         'default_candidate_limit' => 12,
         'max_pattern_candidates' => 50,
+        'max_cached_patterns' => 250,
+        'transit_network_index' => true,
         'max_generated_journeys' => 300,
         'max_results' => 10,
         'default_max_transfers' => 2,
@@ -19,6 +21,9 @@ return [
         'network_audit_max_can_i_ride_checks' => 24,
         'doctor_network_audit_max_pairs' => 1,
         'doctor_network_audit_max_can_i_ride_checks' => 1,
+        'batch018_audit_namespace' => 'batch018-network-v1',
+        'batch018_audit_max_pairs' => 47,
+        'batch018_profile_cases' => 8,
     ],
     'pedestrian' => [
         'provider' => env('BIYAHE_PEDESTRIAN_PROVIDER', 'local_osm_graph'),

@@ -14,6 +14,12 @@ final class JourneyPlanningContext
     /** @var array<int, RoutePattern> */
     private array $patterns = [];
 
+    /** @var array<int, Collection<int, RoutePattern>> */
+    private array $networkPatterns = [];
+
+    /** @var array<int, array<int, array{boarding: bool, alighting: bool, pattern_id: int}>> */
+    private array $networkStopIndex = [];
+
     /** @var array<int, Collection<int, TransferRelationship>> */
     private array $transferRelationships = [];
 
@@ -37,7 +43,150 @@ final class JourneyPlanningContext
 
     private int $trustCacheHits = 0;
 
-    public function __construct(private readonly int $maxCachedPatterns = 250) {}
+    /** @var array<string, float> */
+    private array $timings = [];
+
+    /** @var array<string, int|float> */
+    private array $counters = [];
+
+    public function __construct(
+        private readonly int $maxCachedPatterns = 250,
+        private readonly bool $profiling = false,
+    ) {}
+
+    public function profilingEnabled(): bool
+    {
+        return $this->profiling;
+    }
+
+    /**
+     * Measure an optional developer-only stage without changing the planner's
+     * normal response shape.
+     */
+    public function measure(string $stage, Closure $callback): mixed
+    {
+        if (! $this->profiling) {
+            return $callback();
+        }
+
+        $startedAt = hrtime(true);
+        try {
+            return $callback();
+        } finally {
+            $this->timings[$stage] = ($this->timings[$stage] ?? 0.0)
+                + ((hrtime(true) - $startedAt) / 1_000_000);
+        }
+    }
+
+    public function increment(string $counter, int $amount = 1): void
+    {
+        if (! $this->profiling) {
+            return;
+        }
+
+        $this->counters[$counter] = ($this->counters[$counter] ?? 0) + $amount;
+    }
+
+    public function setCounter(string $counter, int|float $value): void
+    {
+        if ($this->profiling) {
+            $this->counters[$counter] = $value;
+        }
+    }
+
+    /**
+     * Load the canonical active network once for a planner request. The
+     * index is derived from the same RoutePattern models used by the planner;
+     * it is not a second transport-data source.
+     *
+     * @param  Closure(): iterable<RoutePattern>  $loader
+     * @return Collection<int, RoutePattern>|null
+     */
+    public function matchingPatterns(
+        int $cityId,
+        array $boardingStopIds,
+        array $alightingStopIds,
+        bool $requireBoarding,
+        Closure $loader,
+        int $limit,
+    ): ?Collection {
+        if (! array_key_exists($cityId, $this->networkPatterns)) {
+            $loaded = collect($loader())->keyBy(fn (RoutePattern $pattern): int => (int) $pattern->getKey());
+            if ($loaded->count() > $this->maxCachedPatterns) {
+                // The caller can fall back to the bounded SQL query when the
+                // configured in-request index ceiling is exceeded.
+                return null;
+            }
+
+            $this->networkPatterns[$cityId] = $loaded;
+            $this->patternLoadBatches++;
+            $this->patternModelsLoaded += $loaded->count();
+            foreach ($loaded as $pattern) {
+                foreach ($pattern->patternStops as $association) {
+                    $stopId = (int) $association->stop_id;
+                    $this->networkStopIndex[$cityId][$stopId][] = [
+                        'boarding' => (bool) $association->boarding_allowed,
+                        'alighting' => (bool) $association->alighting_allowed,
+                        'pattern_id' => (int) $pattern->getKey(),
+                    ];
+                }
+            }
+            $this->increment('network_index_patterns', $loaded->count());
+            $this->increment('network_index_stops', count($this->networkStopIndex[$cityId] ?? []));
+        }
+
+        $patterns = $this->networkPatterns[$cityId] ?? collect();
+        if ($patterns->isEmpty()) {
+            return collect();
+        }
+
+        $boardingIds = array_fill_keys(array_map('intval', $boardingStopIds), true);
+        $alightingIds = array_fill_keys(array_map('intval', $alightingStopIds), true);
+        $candidateIds = null;
+        foreach ($this->networkStopIndex[$cityId] ?? [] as $stopId => $entries) {
+            $matchesBoarding = isset($boardingIds[$stopId])
+                && collect($entries)->contains(static fn (array $entry): bool => $entry['boarding']);
+            $matchesAlighting = isset($alightingIds[$stopId])
+                && collect($entries)->contains(static fn (array $entry): bool => $entry['alighting']);
+            if (($requireBoarding && $matchesBoarding) || $matchesAlighting) {
+                foreach ($entries as $entry) {
+                    if (($requireBoarding && isset($boardingIds[$stopId]) && $entry['boarding'])
+                        || (isset($alightingIds[$stopId]) && $entry['alighting'])) {
+                        $candidateIds[$entry['pattern_id']] = true;
+                    }
+                }
+            }
+        }
+
+        $filtered = $patterns->filter(function (RoutePattern $pattern) use ($boardingIds, $alightingIds, $requireBoarding): bool {
+            $hasBoarding = ! $requireBoarding;
+            $hasAlighting = $alightingIds === [];
+            foreach ($pattern->patternStops as $association) {
+                $stopId = (int) $association->stop_id;
+                $hasBoarding = $hasBoarding || (isset($boardingIds[$stopId]) && (bool) $association->boarding_allowed);
+                $hasAlighting = $hasAlighting || (isset($alightingIds[$stopId]) && (bool) $association->alighting_allowed);
+                if ($hasBoarding && $hasAlighting) {
+                    return true;
+                }
+            }
+
+            return $hasBoarding && $hasAlighting;
+        });
+
+        if ($candidateIds !== null) {
+            $filtered = $filtered->filter(fn (RoutePattern $pattern): bool => isset($candidateIds[(int) $pattern->getKey()]));
+        }
+
+        $this->increment('network_index_hits');
+
+        return $filtered
+            ->sort(function (RoutePattern $left, RoutePattern $right): int {
+                return ((int) $left->route_id <=> (int) $right->route_id)
+                    ?: ((int) $left->getKey() <=> (int) $right->getKey());
+            })
+            ->take($limit)
+            ->values();
+    }
 
     /**
      * @param  list<int>  $patternIds
@@ -154,7 +303,7 @@ final class JourneyPlanningContext
     /** @return array{pattern_load_batches: int, pattern_models_loaded: int, cached_patterns: int, transfer_snapshots_loaded: int, trust_cache_entries: int, trust_cache_hits: int} */
     public function metrics(): array
     {
-        return [
+        $metrics = [
             'pattern_load_batches' => $this->patternLoadBatches,
             'pattern_models_loaded' => $this->patternModelsLoaded,
             'cached_patterns' => count($this->patterns),
@@ -163,5 +312,14 @@ final class JourneyPlanningContext
                 + count($this->effectiveFactStates) + count($this->effectiveFactSetStates),
             'trust_cache_hits' => $this->trustCacheHits,
         ];
+
+        if ($this->profiling) {
+            $metrics['profile'] = [
+                'timings_ms' => array_map(static fn (float $value): float => round($value, 2), $this->timings),
+                'counters' => $this->counters,
+            ];
+        }
+
+        return $metrics;
     }
 }

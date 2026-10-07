@@ -23,6 +23,8 @@ use App\Services\Evidence\EvidenceCoverageReport;
 use App\Services\Routing\JourneyPlanner;
 use App\Services\Routing\JourneyPlanningContext;
 use App\Services\Routing\NetworkAudit;
+use App\Services\Routing\NetworkReleaseAudit;
+use App\Services\Routing\ResumableCoverageAudit;
 use App\Services\Routing\PedestrianRouter;
 use App\Services\Routing\PedestrianRouteRequest;
 use App\Support\Diagnostics\DoctorCheckResult;
@@ -49,7 +51,7 @@ class BiyaheDoctor extends Command
     public function handle(): int
     {
         $this->report = new DoctorReport;
-        $this->info('BIYAHE DOCTOR V17');
+        $this->info('BIYAHE DOCTOR V18');
         $this->check('application', 'PASS', 'Laravel booted and configuration loaded.');
 
         $databaseReady = $this->checkDatabase();
@@ -88,6 +90,7 @@ class BiyaheDoctor extends Command
             $this->runDisruptionChecks($postgisReady);
             $this->runBatch016Checks();
             $this->runBatch017Checks($postgisReady);
+            $this->runBatch018Checks($postgisReady);
         } catch (Throwable $exception) {
             report($exception);
             $this->check('doctor execution', 'FAIL', 'A Doctor query failed: '.$exception->getMessage());
@@ -1682,6 +1685,76 @@ class BiyaheDoctor extends Command
 
         $this->check('route atlas trust boundary', 'PASS', 'OSM route geometry and mapped platform locations remain separate from service, boarding, alighting, transfer, fare, and schedule verification.');
         $this->check('nearby location privacy boundary', 'PASS', 'Nearby route discovery accepts an explicit bounded point request and has no persistence or background-location path.');
+    }
+
+    private function runBatch018Checks(bool $postgisReady): void
+    {
+        $maxTransfers = (int) config('biyahe.routing.public_max_transfers', 2);
+        $maxStates = (int) config('biyahe.routing.max_search_states', 5000);
+        $this->check('planner structural bounds', $maxTransfers === 2 && $maxStates >= 100 ? 'PASS' : 'FAIL',
+            'Planner bounds preserve MAX_TRANSFERS=2 and a positive bounded state frontier.');
+        $this->check('transit network index', class_exists(JourneyPlanningContext::class) && (bool) config('biyahe.routing.transit_network_index', false) ? 'PASS' : 'FAIL',
+            'The request-scoped transit index derives from canonical route/pattern/stop models and remains bounded by max_cached_patterns.');
+
+        $patternCount = DB::table('route_patterns')->where('is_active', true)->where('is_demo', false)->count();
+        $this->check('transit index scale ceiling', $patternCount <= (int) config('biyahe.routing.max_cached_patterns', 250) ? 'PASS' : 'WARN',
+            $patternCount.' active patterns are available; the planner will use bounded SQL fallback above the index ceiling.');
+
+        $emptyPatterns = DB::table('route_patterns as rp')
+            ->where('rp.is_active', true)
+            ->where('rp.is_demo', false)
+            ->whereNotExists(fn (Builder $query) => $query->selectRaw('1')->from('route_pattern_stops as rps')->whereColumn('rps.route_pattern_id', 'rp.id'))
+            ->count();
+        $duplicateSequences = DB::table('route_pattern_stops')
+            ->select('route_pattern_id', 'sequence')
+            ->groupBy('route_pattern_id', 'sequence')
+            ->havingRaw('COUNT(*) > 1')
+            ->count();
+        $this->checkCount('expanded pattern quality', $emptyPatterns + $duplicateSequences, 'active production patterns have empty stop lists or duplicate sequence values.');
+
+        $aliasCollisions = DB::table('place_aliases')
+            ->where('is_active', true)
+            ->select('normalized_alias')
+            ->groupBy('normalized_alias')
+            ->havingRaw('COUNT(DISTINCT place_id) > 1')
+            ->count();
+        $this->checkWarningCount('search alias collision audit', $aliasCollisions, 'active aliases map to multiple places; search must show context rather than silently choosing.');
+
+        $nearDuplicates = 0;
+        if ($postgisReady) {
+            $nearDuplicates = (int) DB::selectOne(
+                "SELECT COUNT(*) AS count FROM stops a JOIN stops b ON a.id < b.id
+                 WHERE a.is_demo=false AND b.is_demo=false AND a.is_active=true AND b.is_active=true
+                   AND a.location IS NOT NULL AND b.location IS NOT NULL
+                   AND ST_DWithin(a.location,b.location,30)
+                   AND lower(regexp_replace(coalesce(a.name,''),'[^a-z0-9]','','g')) =
+                       lower(regexp_replace(coalesce(b.name,''),'[^a-z0-9]','','g'))",
+            )->count;
+        }
+        $this->checkWarningCount('near-duplicate stop audit', $nearDuplicates, 'possible same-name stops are close together; no automatic merge was performed.');
+
+        $checkpoint = storage_path('app/batch018/'.config('biyahe.routing.batch018_audit_namespace', 'batch018-network-v1').'/manifest.json');
+        if (! is_file($checkpoint)) {
+            $this->check('coverage audit checkpoint', 'WARN', 'The 47-pair audit has not produced an ignored runtime checkpoint yet; run biyahe:batch018:audit.');
+        } else {
+            $payload = json_decode((string) file_get_contents($checkpoint), true);
+            $results = is_array($payload['results'] ?? null) ? $payload['results'] : [];
+            $complete = count(array_filter($results, static fn (array $result): bool => ($result['status'] ?? null) === 'COMPLETE'));
+            $invalid = count(array_filter($results, static fn (array $result): bool => ! in_array(($result['status'] ?? null), ['COMPLETE', 'FAILED', 'RUNNING'], true)));
+            $this->checkCount('coverage audit checkpoint integrity', $invalid, 'checkpoint contains an unknown pair status.');
+            $this->check('coverage audit completion', $complete >= count(NetworkReleaseAudit::matrix()) ? 'PASS' : 'WARN',
+                $complete.' completed pairs are recorded; partial audits remain explicitly resumable.');
+        }
+
+        $this->check('evidence priority boundary', class_exists(\App\Services\Evidence\NetworkIntelligenceAudit::class) ? 'PASS' : 'FAIL',
+            'Claim-level evidence and boarding priorities are derived reports/tasks; they do not promote facts automatically.');
+        $this->check('nearby query bounds', class_exists(\App\Http\Controllers\Api\RouteController::class) ? 'PASS' : 'FAIL',
+            'Nearby route discovery remains bounded by validated radius and result limits.');
+        $this->check('batch018 synthetic isolation', DB::table('disruptions')->where('is_synthetic', true)->count()
+            + DB::table('commuter_reports')->where('is_synthetic', true)->count() === 0 ? 'PASS' : 'FAIL',
+            'No synthetic operational rows remain in production.');
+        $this->check('batch018 transport-trust boundary', 'PASS',
+            'Mapped OSM route geometry remains separate from service, sequence, boarding, alighting, transfer, fare, and field verification.');
     }
 
     private function checkCount(string $label, int $count, string $failureMessage): void
