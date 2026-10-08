@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { generateCommuteInstructions, instructionForRideMode } from "../src/lib/commuteInstructions.ts";
 import {
   applyRideModeAction,
   classifyLocation,
@@ -126,7 +127,26 @@ function transition(session, action, now) {
 }
 
 function runJourney(transfers) {
-  let session = createRideModeSession(syntheticJourney(transfers), 1_000);
+  const journey = syntheticJourney(transfers);
+  const detail = generateCommuteInstructions(journey);
+  assert.equal(detail.journeyId, journey.id);
+  assert.equal(detail.summary.transfers, transfers);
+  journey.legs.forEach((leg, index) => {
+    if (leg.type !== "RIDE") return;
+    const board = instructionForRideMode(detail, index, leg.type, "WAITING_TO_BOARD");
+    const ride = instructionForRideMode(detail, index, leg.type, "RIDING");
+    const alight = instructionForRideMode(detail, index, leg.type, "ARRIVED");
+    assert.equal(board?.type, journey.legs[index - 1]?.type === "TRANSFER_WALK" ? "TRANSFER_BOARD" : "BOARD");
+    assert.equal(board?.precision, "BOARDING_AREA");
+    assert.equal(ride?.type, "RIDE");
+    assert.deepEqual(ride?.geometry, leg.geometry, "map focus must use the selected journey's ride geometry");
+    assert.deepEqual(ride?.focusLocation, leg.boarding_stop.location);
+    assert.equal(alight?.type, "ALIGHT");
+    assert.deepEqual(alight?.focusLocation, leg.alighting_stop.location);
+    assert.match(alight?.uncertainty ?? "", /exact drop-off point or side is not verified/);
+  });
+
+  let session = createRideModeSession(journey, 1_000);
   session = transition(session, "ACTIVATE", 1_001);
   for (let index = 0; index < session.journey.legs.length; index += 1) {
     const leg = session.journey.legs[session.currentLegIndex];
@@ -189,3 +209,4 @@ console.log("RIDE_MODE_HARNESS=PASS");
 console.log("DIRECT=PASS ONE_TRANSFER=PASS TWO_TRANSFER=PASS");
 console.log("QUALITY=GOOD/USABLE_ACCEPTED POOR/STALE_REJECTED OFF_ROUTE_CONSERVATIVE");
 console.log("HYSTERESIS=PASS PERSISTENCE_NO_RAW_GPS=PASS SYNTHETIC_EVIDENCE_PROMOTION=0");
+console.log("RESULT_DETAIL_MAP_RIDE_MODE_HANDOFF=PASS boarding_uncertainty=preserved alighting_uncertainty=preserved");

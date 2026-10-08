@@ -18,6 +18,9 @@
     "test:pulse-replan": "node --experimental-strip-types scripts/pulse-replan-harness.mjs",
     "test:field-mode": "node --experimental-strip-types scripts/field-mode-harness.mjs",
     "test:request-gate": "node --experimental-strip-types scripts/request-gate-harness.mjs",
+    "test:place-search": "node --experimental-strip-types scripts/place-search-harness.mjs",
+    "test:nearby": "node --experimental-strip-types scripts/nearby-harness.mjs",
+    "test:search-keyboard": "node --experimental-strip-types scripts/search-keyboard-harness.mjs",
     "test:ux": "node scripts/ux-contract-harness.mjs"
   },
   "dependencies": {

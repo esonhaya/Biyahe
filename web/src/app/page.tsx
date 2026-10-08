@@ -17,6 +17,8 @@ import type { CommuteInstruction } from "@/lib/commuteInstructions";
 import { hasActiveRideModeSession } from "@/lib/rideMode";
 import type { RideModeMapOverlay } from "@/lib/rideMode";
 import { RequestGate, type RequestTicket } from "@/lib/requestGate";
+import { LatestPlaceSearch } from "@/lib/latestPlaceSearch";
+import { moveSuggestionSelection, selectedSuggestionIndex } from "@/lib/searchKeyboard";
 import { loadRecentCommutes, persistRecentCommutes, recordRecentCommute } from "@/lib/commuterTools";
 import {
   loadSavedJourneys,
@@ -56,15 +58,13 @@ function SearchField({ id, label, value, selectedPlace, onChange, options, onPic
   const selectionContextId = `${id}-selected-context`;
   const hasQuery = value.trim().length > 1 && selectedPlace === null;
   const hasSuggestions = hasQuery && options.length > 0 && !loading && !searchError;
-  const selectedIndex = options.length > 0 ? Math.min(activeIndex, options.length - 1) : 0;
+  const selectedIndex = selectedSuggestionIndex(activeIndex, options.length);
 
   function handleKeyDown(event: React.KeyboardEvent<HTMLInputElement>) {
-    if (event.key === "ArrowDown" && options.length > 0) {
+    const nextIndex = moveSuggestionSelection(selectedIndex, options.length, event.key);
+    if (nextIndex !== null) {
       event.preventDefault();
-      setActiveIndex((selectedIndex + 1) % options.length);
-    } else if (event.key === "ArrowUp" && options.length > 0) {
-      event.preventDefault();
-      setActiveIndex((selectedIndex - 1 + options.length) % options.length);
+      setActiveIndex(nextIndex);
     } else if (event.key === "Enter") {
       event.preventDefault();
       if (options[selectedIndex]) onPick(options[selectedIndex]);
@@ -352,8 +352,8 @@ export default function Home() {
   const [journeyFilter, setJourneyFilter] = useState<"ALL" | "DIRECT" | "ONE_TRANSFER" | "TWO_TRANSFER">("ALL");
   const [routeQuery, setRouteQuery] = useState("");
   const [journeyRequestActive, setJourneyRequestActive] = useState(false);
-  const originRequestRef = useRef(0);
-  const destinationRequestRef = useRef(0);
+  const originPlaceSearchRef = useRef(new LatestPlaceSearch());
+  const destinationPlaceSearchRef = useRef(new LatestPlaceSearch());
   const journeyRequestGateRef = useRef(new RequestGate());
   const activeJourneyRequestRef = useRef<RequestTicket | null>(null);
   const patternRequestGateRef = useRef(new RequestGate());
@@ -530,50 +530,38 @@ export default function Home() {
 
   useEffect(() => {
     const query = originText.trim();
-    if (query.length < 2 || origin?.name === originText) return;
-    const controller = new AbortController();
-    const requestId = ++originRequestRef.current;
+    const search = originPlaceSearchRef.current;
+    if (query.length < 2 || origin?.name === originText) {
+      search.cancel();
+      return;
+    }
     const timer = window.setTimeout(() => {
-      searchPlaces(query, controller.signal)
-        .then((results) => {
-          if (requestId === originRequestRef.current) {
-            setOriginOptions(results);
-            setOriginSearchError(false);
-          }
-        })
-        .catch(() => {
-          if (!controller.signal.aborted && requestId === originRequestRef.current) {
-            setOriginOptions([]);
-            setOriginSearchError(true);
-          }
-        })
-        .finally(() => { if (requestId === originRequestRef.current) setOriginSearching(false); });
+      void search.search(query, searchPlaces).then((outcome) => {
+        if (outcome.status === "stale") return;
+        setOriginOptions(outcome.results);
+        setOriginSearchError(outcome.status === "error");
+        setOriginSearching(false);
+      });
     }, 250);
-    return () => { window.clearTimeout(timer); controller.abort(); };
+    return () => { window.clearTimeout(timer); search.cancel(); };
   }, [originText, origin, originSearchRetryToken]);
 
   useEffect(() => {
     const query = destinationText.trim();
-    if (query.length < 2 || destination?.name === destinationText) return;
-    const controller = new AbortController();
-    const requestId = ++destinationRequestRef.current;
+    const search = destinationPlaceSearchRef.current;
+    if (query.length < 2 || destination?.name === destinationText) {
+      search.cancel();
+      return;
+    }
     const timer = window.setTimeout(() => {
-      searchPlaces(query, controller.signal)
-        .then((results) => {
-          if (requestId === destinationRequestRef.current) {
-            setDestinationOptions(results);
-            setDestinationSearchError(false);
-          }
-        })
-        .catch(() => {
-          if (!controller.signal.aborted && requestId === destinationRequestRef.current) {
-            setDestinationOptions([]);
-            setDestinationSearchError(true);
-          }
-        })
-        .finally(() => { if (requestId === destinationRequestRef.current) setDestinationSearching(false); });
+      void search.search(query, searchPlaces).then((outcome) => {
+        if (outcome.status === "stale") return;
+        setDestinationOptions(outcome.results);
+        setDestinationSearchError(outcome.status === "error");
+        setDestinationSearching(false);
+      });
     }, 250);
-    return () => { window.clearTimeout(timer); controller.abort(); };
+    return () => { window.clearTimeout(timer); search.cancel(); };
   }, [destinationText, destination, destinationSearchRetryToken]);
 
   function retryOriginSearch() {
@@ -593,6 +581,7 @@ export default function Home() {
   }
 
   function changeOrigin(value: string) {
+    originPlaceSearchRef.current.cancel();
     cancelJourneySearch();
     cancelPatternRequest();
     cancelCanIRideCheck();
@@ -613,6 +602,7 @@ export default function Home() {
   }
 
   function changeDestination(value: string) {
+    destinationPlaceSearchRef.current.cancel();
     cancelJourneySearch();
     cancelPatternRequest();
     cancelCanIRideCheck();
@@ -633,6 +623,7 @@ export default function Home() {
   }
 
   function chooseOrigin(place: Place) {
+    originPlaceSearchRef.current.cancel();
     cancelJourneySearch();
     cancelPatternRequest();
     cancelCanIRideCheck();
@@ -653,6 +644,7 @@ export default function Home() {
   }
 
   function chooseDestination(place: Place) {
+    destinationPlaceSearchRef.current.cancel();
     cancelJourneySearch();
     cancelPatternRequest();
     cancelCanIRideCheck();

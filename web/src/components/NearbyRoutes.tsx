@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { listNearbyRoutes, type NearbyRoute } from "@/lib/api";
+import { nearbyOutcomeMessage, requestNearbyCandidates } from "@/lib/nearbyLookup";
 import styles from "@/app/page.module.css";
 
 function boardingLabel(precision: NearbyRoute["boarding_candidates"][number]["stop"]["boarding_precision"]): string {
@@ -24,40 +25,31 @@ export default function NearbyRoutes() {
   const [routes, setRoutes] = useState<NearbyRoute[]>([]);
   const [status, setStatus] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const requestRef = useRef<AbortController | null>(null);
+
+  useEffect(() => () => requestRef.current?.abort(), []);
 
   function findNearby() {
+    requestRef.current?.abort();
+    const controller = new AbortController();
+    requestRef.current = controller;
     setRoutes([]);
-    if (!navigator.geolocation) {
-      setStatus("This browser does not provide foreground location. Use route search instead.");
-      return;
-    }
     setLoading(true);
     setStatus("Requesting one foreground location…");
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        setStatus("Loading mapped boarding candidates for this location…");
-        void listNearbyRoutes(position.coords.latitude, position.coords.longitude, { radius: 1000, limit: 12 })
-          .then((response) => {
-            setRoutes(response.data);
-            setStatus(response.data.length === 0
-              ? "No mapped boarding candidates were found within 1 km. This does not mean no service exists."
-              : `${response.data.length} route${response.data.length === 1 ? "" : "s"} near mapped boarding candidates.`);
-          })
-          .catch(() => {
-            setRoutes([]);
-            setStatus("Nearby routes could not be loaded. No location was saved.");
-          })
-          .finally(() => setLoading(false));
-      },
-      (error) => {
-        setLoading(false);
-        setRoutes([]);
-        setStatus(error.code === error.PERMISSION_DENIED
-          ? "Location permission was denied. Search a place instead; no location was saved."
-          : "Your current location is unavailable. Search a place instead; no location was saved.");
-      },
-      { enableHighAccuracy: false, maximumAge: 60_000, timeout: 10_000 },
-    );
+    void requestNearbyCandidates(
+      navigator.geolocation ?? null,
+      (latitude, longitude, signal) => listNearbyRoutes(latitude, longitude, { radius: 1000, limit: 12 }, signal),
+      controller.signal,
+    ).then((outcome) => {
+      if (controller.signal.aborted) return;
+      setRoutes(outcome.routes);
+      setStatus(nearbyOutcomeMessage(outcome));
+    }).finally(() => {
+      if (requestRef.current === controller) {
+        requestRef.current = null;
+        if (!controller.signal.aborted) setLoading(false);
+      }
+    });
   }
 
   return (
