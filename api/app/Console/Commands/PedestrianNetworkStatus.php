@@ -93,7 +93,9 @@ final class PedestrianNetworkStatus extends Command
             && is_string($sourceDetails['source_file'] ?? null) && $sourceDetails['source_file'] !== ''
             && is_int($sourceDetails['source_elements'] ?? null)
             && is_string($sourceDetails['osmium_version'] ?? null) && preg_match('/^\d+\.\d+(\.\d+)?$/', $sourceDetails['osmium_version']) === 1
-            && ($sourceDetails['extract_strategy'] ?? null) === 'complete_ways'
+            && in_array(($sourceDetails['extract_strategy'] ?? null), ['complete_ways', 'streaming_sqlite_ref_complete'], true)
+            && (($sourceDetails['extract_strategy'] ?? null) !== 'streaming_sqlite_ref_complete'
+                || (is_string($sourceDetails['source_checksum_sha256'] ?? null) && preg_match('/^[a-f0-9]{64}$/i', $sourceDetails['source_checksum_sha256']) === 1))
             && is_array($sourceBounds) && $sourceBounds === config('biyahe.pedestrian.coverage');
         $countMismatch = (int) $dataset->node_count !== $nodes || (int) $dataset->edge_count !== $edges;
         $invalidProvenance = $dataset->source !== 'OPENSTREETMAP'

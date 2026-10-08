@@ -110,6 +110,49 @@ its exact input. It would create a new graph identity. No bounded extraction
 or graph import from it has completed; the regional filter was stopped when
 available memory fell below the safety floor.
 
+### Disk-backed streaming preparation
+
+For low-memory preparation, `biyahe:pedestrian:prepare-osm-stream` accepts
+OSM XML on stdin, indexes node coordinates in a temporary SQLite database
+with a 16 MiB SQLite page cache, and keeps only in-scope node IDs in PHP
+memory. It emits ways only when they contain an in-scope adjacent node pair,
+while retaining every reference in each emitted way. Output publication is
+atomic, capped by the existing 20 MB / 100,000 node / 25,000 way limits, and
+the source PBF's MD5 and SHA-256 are computed and checked before use. Temporary
+SQLite and JSON files are created beside the requested output, removed after a
+clean run, and never used as activated graph data. An interrupted process can
+leave hidden scratch files; inspect them and confirm no preparation process is
+running before removing them.
+
+First validate a small Carbon-area output. `--bounds` marks it `test_only`, and
+the graph importer rejects it, so it cannot be activated accidentally:
+
+```sh
+cd api
+SOURCE="$PWD/.runtime/recovery-osm-verified-20261007/central_visayas.osm.pbf"
+OUTPUT="$PWD/.runtime/b024-carbon-test.json"
+set -o pipefail
+LD_LIBRARY_PATH="$PREFIX/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}" \
+  osmium cat --no-progress -f osm -o - "$SOURCE" |
+php -d memory_limit=256M artisan biyahe:pedestrian:prepare-osm-stream - \
+  --output="$OUTPUT" --source-path="$SOURCE" \
+  --source-url=https://download.openstreetmap.fr/extracts/asia/philippines/central_visayas.osm.pbf \
+  --source-md5=6531fa7af52b5565f13bfa68acff7a37 \
+  --source-sha256=787cac20ecc586b754b1a464643a040566d486457c6a37bc0b11ce683bc66d4d \
+  --source-timestamp=2026-10-07T01:00:21Z --osmium-version=1.19.1 \
+  --bounds=10.2900,123.8979,10.2940,123.9019
+```
+
+This command still reads the regional PBF once; it avoids Osmium's extract
+ID tables and spills the source node index to disk. Do not use `--buffer-data`
+or the prior `tags-filter` setup. Batch 024 has tested the selector and graph
+import semantics on a synthetic fixture, but has not run this pipeline over
+the PBF, measured its peak RSS, or imported a real graph. The downstream JSON
+importer still has bounded in-memory arrays; a full import requires healthy
+PostgreSQL, a restored staging database, and a separate resource gate. Remove
+stale hidden scratch files only after confirming no stream preparation is
+running.
+
 Prerequisites: `curl`, `md5sum`, Osmium Tool, PHP/Laravel dependencies, and an
 application database configured for PostgreSQL with PostGIS. The recovered
 Batch 010 uses the OpenStreetMap France source at

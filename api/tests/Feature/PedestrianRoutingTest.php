@@ -328,6 +328,120 @@ final class PedestrianRoutingTest extends TestCase
         }
     }
 
+    public function test_disk_backed_osm_stream_keeps_complete_way_references_and_only_selects_scoped_segments(): void
+    {
+        $input = tempnam(sys_get_temp_dir(), 'synthetic-osm-stream-');
+        $sourcePath = tempnam(sys_get_temp_dir(), 'synthetic-pbf-source-');
+        $output = tempnam(sys_get_temp_dir(), 'synthetic-osm-stream-json-');
+        if ($input === false || $sourcePath === false || $output === false) {
+            $this->fail('Could not create temporary synthetic OSM stream files.');
+        }
+        @unlink($output);
+        $xml = '<?xml version="1.0" encoding="UTF-8"?><osm version="0.6" timestamp="2026-10-07T01:00:21Z">'
+            .'<node id="1" lat="10.3000" lon="123.8700"/>'
+            .'<node id="2" lat="10.3001" lon="123.8700"/>'
+            .'<node id="3" lat="10.4000" lon="123.8700"/>'
+            .'<node id="4" lat="10.4010" lon="123.8700"/>'
+            .'<way id="100"><nd ref="3"/><nd ref="1"/><nd ref="2"/><tag k="highway" v="footway"/></way>'
+            .'<way id="200"><nd ref="3"/><nd ref="4"/><tag k="highway" v="footway"/></way></osm>';
+        $sourceUrl = 'https://synthetic.invalid/'.basename($sourcePath);
+        file_put_contents($input, $xml);
+        file_put_contents($sourcePath, $xml);
+
+        try {
+            $exitCode = Artisan::call('biyahe:pedestrian:prepare-osm-stream', [
+                'input' => $input,
+                '--output' => $output,
+                '--source-path' => $sourcePath,
+                '--source-url' => $sourceUrl,
+                '--source-md5' => md5($xml),
+                '--source-sha256' => hash('sha256', $xml),
+                '--osmium-version' => '1.19.1',
+            ]);
+            $this->assertSame(0, $exitCode, Artisan::output());
+
+            $prepared = json_decode((string) file_get_contents($output), true, 32, JSON_THROW_ON_ERROR);
+            $this->assertSame('streaming_sqlite_ref_complete', $prepared['biyahe_source']['extract_strategy']);
+            $this->assertSame(hash('sha256', $xml), $prepared['biyahe_source']['source_checksum_sha256']);
+            $this->assertSame([1, 2, 3], array_column(array_values(array_filter($prepared['elements'], static fn (array $element): bool => $element['type'] === 'node')), 'id'));
+            $this->assertSame([100], array_column(array_values(array_filter($prepared['elements'], static fn (array $element): bool => $element['type'] === 'way')), 'id'));
+            $this->assertSame([3, 1, 2], $prepared['elements'][3]['nodes']);
+
+            $import = app(PedestrianNetworkImporter::class)->import($output, $sourceUrl);
+            $this->assertSame(2, $import->nodes);
+            $this->assertSame(1, $import->edges);
+            $stored = json_decode((string) DB::table('pedestrian_network_datasets')->value('metadata'), true, 32, JSON_THROW_ON_ERROR);
+            $this->assertSame(hash('sha256', $xml), $stored['source_details']['source_checksum_sha256']);
+            $this->assertSame(0, DB::table('field_observations')->count());
+            $this->assertSame(0, Artisan::call('biyahe:pedestrian:status', ['--json' => true]));
+            $status = json_decode(Artisan::output(), true, 32, JSON_THROW_ON_ERROR);
+            $this->assertSame('PASS', $status['validation']);
+
+            $testOutput = tempnam(sys_get_temp_dir(), 'synthetic-osm-test-bounds-');
+            if ($testOutput === false) {
+                $this->fail('Could not create a temporary test-bounds output path.');
+            }
+            @unlink($testOutput);
+            try {
+                $testExitCode = Artisan::call('biyahe:pedestrian:prepare-osm-stream', [
+                    'input' => $input,
+                    '--output' => $testOutput,
+                    '--source-path' => $sourcePath,
+                    '--source-url' => $sourceUrl,
+                    '--source-md5' => md5($xml),
+                    '--source-sha256' => hash('sha256', $xml),
+                    '--osmium-version' => '1.19.1',
+                    '--bounds' => '10.299,123.869,10.301,123.871',
+                ]);
+                $this->assertSame(0, $testExitCode, Artisan::output());
+                $testExtract = json_decode((string) file_get_contents($testOutput), true, 32, JSON_THROW_ON_ERROR);
+                $this->assertTrue($testExtract['biyahe_source']['test_only']);
+                try {
+                    app(PedestrianNetworkImporter::class)->import($testOutput, $sourceUrl);
+                    $this->fail('Expected test-only bounded output to be rejected before graph activation.');
+                } catch (InvalidArgumentException $exception) {
+                    $this->assertStringContainsString('test-only', $exception->getMessage());
+                }
+                $this->assertSame(1, DB::table('pedestrian_network_datasets')->count());
+            } finally {
+                @unlink($testOutput);
+            }
+        } finally {
+            @unlink($input);
+            @unlink($sourcePath);
+            @unlink($output);
+        }
+    }
+
+    public function test_incomplete_osm_stream_does_not_publish_or_leave_partial_import_json(): void
+    {
+        $input = tempnam(sys_get_temp_dir(), 'synthetic-interrupted-pbf-');
+        $output = tempnam(sys_get_temp_dir(), 'synthetic-interrupted-json-');
+        if ($input === false || $output === false) {
+            $this->fail('Could not create temporary interrupted-stream files.');
+        }
+        @unlink($output);
+        file_put_contents($input, '<osm version="0.6" timestamp="2026-10-07T01:00:21Z"><node id="1" lat="10.3" lon="123.87"/>');
+        $sourceUrl = 'https://synthetic.invalid/'.basename($input);
+
+        try {
+            $exitCode = Artisan::call('biyahe:pedestrian:prepare-osm-stream', [
+                'input' => $input,
+                '--output' => $output,
+                '--source-path' => $input,
+                '--source-url' => $sourceUrl,
+                '--osmium-version' => '1.19.1',
+            ]);
+            $this->assertSame(1, $exitCode);
+            $this->assertFalse(file_exists($output));
+            $this->assertSame(0, DB::table('pedestrian_network_datasets')->count());
+            $this->assertSame(0, DB::table('field_observations')->count());
+        } finally {
+            @unlink($input);
+            @unlink($output);
+        }
+    }
+
     public function test_import_rejects_source_metadata_for_a_different_url_without_writing_graph_rows(): void
     {
         $input = tempnam(sys_get_temp_dir(), 'synthetic-osm-mismatch-xml-');

@@ -264,6 +264,7 @@ final class PedestrianNetworkImporter
             && ($activeMetadata['merge_active_graph'] ?? false) === true
             && ($activeSource['source_url'] ?? null) === ($sourceMetadata['source_url'] ?? null)
             && ($activeSource['source_checksum_md5'] ?? null) === ($sourceMetadata['source_checksum_md5'] ?? null)
+            && ($activeSource['source_checksum_sha256'] ?? null) === ($sourceMetadata['source_checksum_sha256'] ?? null)
             && ($activeSource['source_timestamp'] ?? null) === ($sourceMetadata['source_timestamp'] ?? null);
         if ($sameSourceSnapshot) {
             $activeMetrics = is_array($activeMetadata['import_metrics'] ?? null) ? $activeMetadata['import_metrics'] : [];
@@ -708,27 +709,36 @@ final class PedestrianNetworkImporter
         if (! is_array($metadata)) {
             throw new InvalidArgumentException('Biyahe OSM source metadata must be an object.');
         }
+        if (($metadata['test_only'] ?? false) === true) {
+            throw new InvalidArgumentException('A test-only pedestrian extract cannot be imported or activated.');
+        }
 
         $format = $metadata['format'] ?? null;
         $metadataUrl = $metadata['source_url'] ?? null;
         $sourceFile = $metadata['source_file'] ?? null;
         $checksum = $metadata['source_checksum_md5'] ?? null;
+        $sha256 = $metadata['source_checksum_sha256'] ?? null;
         $sourceTimestamp = $metadata['source_timestamp'] ?? null;
         $sourceElements = $metadata['source_elements'] ?? null;
         $osmiumVersion = $metadata['osmium_version'] ?? null;
         $extractBounds = $metadata['extract_bounds'] ?? null;
         $configuredBounds = config('biyahe.pedestrian.coverage');
 
+        $extractStrategy = $metadata['extract_strategy'] ?? null;
         if ($format !== 'osmium-osm-xml-v1' || ($metadata['source'] ?? null) !== 'OPENSTREETMAP'
             || ! is_string($metadataUrl) || $metadataUrl !== $sourceUrl || ! $this->validSourceUrl($metadataUrl)
             || ! is_string($sourceFile) || $sourceFile === '' || strlen($sourceFile) > 255
-            || ! is_string($metadata['extract_strategy'] ?? null) || $metadata['extract_strategy'] !== 'complete_ways'
+            || ! in_array($extractStrategy, ['complete_ways', 'streaming_sqlite_ref_complete'], true)
             || ($metadata['license'] ?? null) !== self::LICENSE || ($metadata['attribution'] ?? null) !== self::ATTRIBUTION
             || ! is_array($extractBounds) || $extractBounds !== $configuredBounds) {
             throw new InvalidArgumentException('Biyahe OSM metadata is incomplete or inconsistent with the import source.');
         }
         if (! is_string($checksum) || ! preg_match('/^[a-f0-9]{32}$/i', $checksum)) {
             throw new InvalidArgumentException('Biyahe OSM source MD5 metadata is malformed.');
+        }
+        if (($sha256 !== null && (! is_string($sha256) || ! preg_match('/^[a-f0-9]{64}$/i', $sha256)))
+            || ($extractStrategy === 'streaming_sqlite_ref_complete' && ! is_string($sha256))) {
+            throw new InvalidArgumentException('Biyahe OSM source SHA-256 metadata is malformed.');
         }
         if (! is_string($sourceTimestamp) || trim($sourceTimestamp) === '') {
             throw new InvalidArgumentException('Biyahe OSM source timestamp metadata is malformed.');
@@ -746,10 +756,11 @@ final class PedestrianNetworkImporter
             'source_url' => $metadataUrl,
             'source_file' => basename($sourceFile),
             'source_checksum_md5' => $checksum === null ? null : strtolower($checksum),
+            'source_checksum_sha256' => $sha256 === null ? null : strtolower($sha256),
             'source_timestamp' => $this->validTimestamp($sourceTimestamp),
             'source_elements' => $sourceElements,
             'osmium_version' => $osmiumVersion,
-            'extract_strategy' => 'complete_ways',
+            'extract_strategy' => $extractStrategy,
             'extract_bounds' => $extractBounds,
             'license' => self::LICENSE,
             'attribution' => self::ATTRIBUTION,
