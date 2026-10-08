@@ -1,4 +1,4 @@
-const CACHE_NAME = "biyahe-shell-v1";
+const CACHE_NAME = "biyahe-shell-v2";
 const SHELL = ["/", "/manifest.webmanifest", "/file.svg"];
 
 self.addEventListener("install", (event) => {
@@ -11,7 +11,8 @@ self.addEventListener("activate", (event) => {
 
 self.addEventListener("fetch", (event) => {
   const request = event.request;
-  if (request.method !== "GET" || new URL(request.url).origin !== self.location.origin || new URL(request.url).pathname.startsWith("/api/")) return;
+  const url = new URL(request.url);
+  if (request.method !== "GET" || url.origin !== self.location.origin || url.pathname.startsWith("/api/")) return;
   if (request.mode === "navigate") {
     event.respondWith(fetch(request).then((response) => {
       const copy = response.clone();
@@ -20,6 +21,8 @@ self.addEventListener("fetch", (event) => {
     }).catch(() => caches.match("/")));
     return;
   }
+  const staticAsset = ["script", "style", "font", "image"].includes(request.destination);
+  if (!staticAsset) return;
   event.respondWith(caches.match(request).then((cached) => cached ?? fetch(request).then((response) => {
     if (response.ok) {
       const copy = response.clone();

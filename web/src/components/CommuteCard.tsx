@@ -42,9 +42,9 @@ function typeLabel(type: CommuteInstructionType): string {
 
 function trustLabel(state: Journey["trust"]["state"]): string {
   switch (state) {
-    case "VERIFIED": return "Route details supported";
-    case "MIXED": return "Some details need checking";
-    case "UNVERIFIED": return "Details not fully verified";
+    case "VERIFIED": return "Confirmed details";
+    case "MIXED": return "Mapped, some details need checking";
+    case "UNVERIFIED": return "Mapped, details not fully checked";
   }
 }
 
@@ -90,6 +90,8 @@ export default function CommuteCard({
   const [shareStatus, setShareStatus] = useState<string | null>(null);
   const compact = variant === "compact";
   const savedDate = savedAt ? new Date(savedAt) : null;
+  const rideInstructions = model.instructions.filter((instruction) => instruction.type === "RIDE");
+  const routeCodes = Array.from(new Set(rideInstructions.map((instruction) => instruction.routeCode).filter((code): code is string => Boolean(code))));
 
   async function share() {
     const advisory = journey.disruptions?.find((impact) => impact.impact_level !== "INFORMATIONAL")?.warning;
@@ -119,7 +121,7 @@ export default function CommuteCard({
   }
 
   return (
-    <article className={`${styles.commuteCard} ${compact ? styles.commuteCardCompact : ""}`}>
+    <article className={`${styles.commuteCard} ${compact ? styles.commuteCardCompact : ""}`} aria-label={`${model.originName} to ${model.destinationName} journey`}>
       <div className={styles.journeyCardHeader}>
         <div>
           <p className={styles.cardKicker}>{recommended ? "RECOMMENDED" : variant === "saved" ? "SAVED SNAPSHOT" : "COMMUTE CARD"}</p>
@@ -134,6 +136,9 @@ export default function CommuteCard({
         <span>{walkingLabel(model.summary.walkingDistanceMeters)}</span>
         <span>{model.summary.fare}</span>
       </div>
+      {routeCodes.length > 0 && <div className={styles.routePills} aria-label="Routes used"><strong>Ride:</strong>{routeCodes.map((code) => <span key={code}>{code}</span>)}</div>}
+      {journey.ranking.reasons.length > 0 && <p className={styles.rankingReasons}><strong>Why this option:</strong> {journey.ranking.reasons.slice(0, 2).join(" · ")}</p>}
+      {model.summary.walkingDistanceHasFallback && <p className={styles.warning}>Walking includes an estimate; Biyahe is not claiming a mapped street path for every walking leg.</p>}
       {offlineSnapshot && (
         <p className={styles.snapshotNote}>
           Offline saved snapshot{savedDate && Number.isFinite(savedDate.getTime()) ? ` · saved ${savedDate.toLocaleDateString()}` : ""}. It may be out of date.
@@ -184,7 +189,7 @@ export default function CommuteCard({
       <p className={styles.commuteTrustNote}>{model.summary.trust}</p>
 
       <div className={styles.commuteActions}>
-        {onSelect && <button type="button" onClick={onSelect} className={styles.secondaryButton}>Show on map</button>}
+        {onSelect && <button type="button" onClick={onSelect} className={styles.secondaryButton}>{compact ? "Open this journey" : "Show on map"}</button>}
         {onOpen && <button type="button" onClick={onOpen} className={styles.primaryButton}>Open saved journey</button>}
         {onSave && !isSaved && <button type="button" onClick={onSave} className={styles.secondaryButton}>Save journey</button>}
         {onRefresh && <button type="button" onClick={onRefresh} className={styles.secondaryButton}>Refresh journey online</button>}

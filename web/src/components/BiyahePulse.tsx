@@ -25,7 +25,7 @@ export default function BiyahePulse({ pulse, loading = false, selectedJourney = 
   const status = pulse?.network_status;
 
   return (
-    <section className={styles.pulseSection} aria-labelledby="pulse-heading">
+    <section className={styles.pulseSection} id="pulse" aria-labelledby="pulse-heading">
       <div className={styles.sectionHeading}>
         <div><p className={styles.eyebrow}>Operational awareness</p><h2 id="pulse-heading">Biyahe Pulse</h2></div>
         <button type="button" className={styles.secondaryButton} onClick={onRefresh} disabled={loading}>{loading ? "Refreshing…" : "Refresh"}</button>

@@ -161,3 +161,50 @@
 .formGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
 .checkboxLabel { display: flex !important; grid-template-columns: auto 1fr; align-items: center; gap: 8px !important; font-weight: 400 !important; letter-spacing: normal !important; }.checkboxLabel input { width: auto; }
 @media (max-width: 700px) { .hero { padding-top: 28px; }.searchCard { grid-template-columns: 1fr; }.primaryButton { width: 100%; }.suggestions { top: 72px; }.map-frame { min-height: 360px; }.routeGrid { grid-template-columns: 1fr; }.infoCard { align-items: start; flex-direction: column; }.footer { flex-direction: column; }.journeyCard { padding: 14px; }.journeyFooter { align-items: start; flex-direction: column; }.secondaryButton { width: 100%; }.resultsSection { padding-top: 28px; }.decisionForm { grid-template-columns: 1fr; }.decisionForm select { width: 100%; }.decisionForm .primaryButton { margin-top: 2px; }.formGrid { grid-template-columns: 1fr; }.personalGrid, .quickGrid { grid-template-columns: 1fr; }.activeRideBanner { align-items: stretch; flex-direction: column; }.activeRideBanner .secondaryButton { width: 100%; } }
+
+/* Batch 021 product layer: compact navigation, accessible search, and calm mobile hierarchy. */
+.skipLink { position: fixed; z-index: 20; top: 8px; left: 8px; transform: translateY(-160%); border-radius: 8px; padding: 10px 12px; color: #fff; background: #153b45; font-weight: 800; text-decoration: none; }
+.skipLink:focus { transform: translateY(0); }
+.topBar { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; }
+.topBarActions { display: grid; justify-items: end; gap: 10px; }
+.connectionPill { border: 1px solid #d8ddd7; border-radius: 999px; padding: 6px 9px; color: #5d777e; background: #fff; font-size: .68rem; font-weight: 800; letter-spacing: .04em; }
+.connectionOnline { border-color: #8dc7ad; color: #176b68; background: #f3fbf6; }
+.connectionOffline { border-color: #e6b9ac; color: #8b5a31; background: #fff8e9; }
+.quickNav { display: flex; max-width: 100%; gap: 5px; overflow-x: auto; scrollbar-width: thin; }
+.quickNav a { border-radius: 8px; padding: 7px 8px; color: #176b87; background: #fff; font-size: .73rem; font-weight: 800; text-decoration: none; white-space: nowrap; }
+.quickNav a:hover { color: #fff; background: #176b87; }
+.heroCopy { max-width: 700px; }
+.heroSubcopy { max-width: 600px; margin: -10px 0 24px; color: #5d777e; font-size: 1rem; line-height: 1.55; }
+.searchCard { grid-template-columns: minmax(0, 1fr) auto; align-items: end; }
+.searchInputsRow { display: grid; grid-column: 1; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: end; gap: 8px; min-width: 0; }
+.swapButton { align-self: end; width: 42px; min-height: 44px; border: 1px solid #d4dcd9; border-radius: 10px; color: #176b87; background: #fbfcfa; cursor: pointer; font-size: 1.15rem; font-weight: 800; }
+.swapButton:hover:not(:disabled) { border-color: #176b87; background: #eef5f3; }
+.swapButton:disabled { cursor: not-allowed; opacity: .45; }
+.searchInputWrap { position: relative; }
+.clearSearch { position: absolute; top: 50%; right: 7px; width: 28px; height: 28px; transform: translateY(-50%); border: 0; border-radius: 50%; color: #5d777e; background: transparent; cursor: pointer; font-size: 1.1rem; line-height: 1; }
+.clearSearch:hover { background: #eaf1ef; }
+.searchInputWrap input { padding-right: 42px; }
+.suggestionStatus { margin: 0; padding: 11px 12px; color: #6d858b; font-size: .78rem; line-height: 1.4; }
+.suggestionActive { background: #eef5f3 !important; }
+.onboarding { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr) auto; align-items: center; gap: 18px; margin-top: 14px; border: 1px solid #d8ddd7; border-radius: 16px; padding: 14px 16px; background: #fbfcfa; }
+.onboarding h2 { margin: 4px 0 0; font-size: 1.05rem; }.onboarding p:not(.cardKicker) { margin: 5px 0 0; color: #5d777e; font-size: .8rem; line-height: 1.45; }
+.onboarding ol { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 0; padding: 0; list-style: none; counter-reset: onboarding; }
+.onboarding li { display: grid; gap: 3px; border-left: 2px solid #e07a5f; padding-left: 9px; color: #5d777e; font-size: .75rem; line-height: 1.35; }.onboarding li strong { color: #153b45; }
+.compareBar { display: flex; align-items: center; flex-wrap: wrap; gap: 7px; margin-top: 16px; color: #5d777e; font-size: .78rem; }.compareBar span { margin-right: 3px; font-weight: 700; }.compareBar button { min-height: 38px; }
+.compareActive { min-height: 38px; border: 1px solid #176b87; border-radius: 9px; padding: 8px 10px; color: #fff; background: #176b87; cursor: pointer; font-size: .78rem; font-weight: 800; }
+.mapTextAlternative { margin: 12px 0; border-left: 3px solid #176b87; padding: 10px 12px; color: #4f6d74; background: #eef5f3; font-size: .8rem; line-height: 1.5; }
+.routeSearch { display: grid; max-width: 420px; gap: 6px; margin-top: 14px; color: #658087; font-size: .75rem; font-weight: 800; letter-spacing: .04em; }.routeSearch input { width: 100%; border: 1px solid #d4dcd9; border-radius: 9px; padding: 11px 12px; color: #153b45; background: #fbfcfa; font: inherit; font-weight: 400; }
+.routeSearch input:focus, .smallInput:focus, .decisionForm select:focus, .reportForm input:focus, .reportForm textarea:focus { outline: 3px solid rgba(23, 107, 135, .18); border-color: #176b87; }
+.mapPanel :global(.mapboxgl-ctrl-group), .mapPanel :global(.maplibregl-ctrl-group) { border-radius: 9px; box-shadow: 0 3px 12px rgba(21, 59, 69, .14); }
+.secondaryButton, .primaryButton, .textButton, .iconButton, .quickButton, .patternList button, .instructionButton { min-height: 44px; }
+.textButton { padding: 8px 0; }
+.routeCard p strong, .nearbyCard p strong { color: #153b45; }
+.routeTrust { color: #176b87; font-weight: 700; }
+.screenReaderOnly { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; }
+@media (max-width: 860px) { .onboarding { grid-template-columns: 1fr; }.onboarding ol { grid-template-columns: repeat(3, minmax(0, 1fr)); }.topBar { align-items: flex-start; } }
+@media (max-width: 700px) {
+  .topBar { display: grid; gap: 14px; }.topBarActions { justify-items: stretch; }.quickNav { width: calc(100vw - 32px); }.connectionPill { justify-self: start; }
+  .heroSubcopy { margin-top: -4px; }.searchCard { grid-template-columns: 1fr; }.searchInputsRow { grid-column: 1; grid-template-columns: 1fr; }.swapButton { justify-self: start; transform: rotate(90deg); }.searchCard .primaryButton { grid-column: 1; }
+  .onboarding ol { grid-template-columns: 1fr; }.onboarding li { min-height: 36px; }.compareBar { align-items: stretch; }.compareBar span { width: 100%; }.compareBar button { flex: 1 1 110px; }
+  .mapTextAlternative { font-size: .76rem; }.routeSearch { max-width: none; }
+}

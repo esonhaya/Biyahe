@@ -432,7 +432,7 @@ export default function RideMode({ selectedJourney, offlineSnapshot = false, all
 
   if (!session && !selectedJourney) {
     return (
-      <section className={styles.rideModeSection} aria-labelledby="ride-mode-heading">
+      <section className={styles.rideModeSection} id="ride-mode" aria-labelledby="ride-mode-heading">
         <div className={styles.sectionHeading}><div><p className={styles.eyebrow}>Foreground trip guidance</p><h2 id="ride-mode-heading">Ride Mode</h2></div></div>
         <p className={styles.sectionCopy}>Select a journey above to start a local, manual trip guide. Foreground location is optional and is never saved as a movement trail.</p>
       </section>
@@ -440,7 +440,7 @@ export default function RideMode({ selectedJourney, offlineSnapshot = false, all
   }
 
   return (
-    <section className={styles.rideModeSection} aria-labelledby="ride-mode-heading">
+    <section className={styles.rideModeSection} id="ride-mode" aria-labelledby="ride-mode-heading">
       <div className={styles.sectionHeading}>
         <div><p className={styles.eyebrow}>Foreground trip guidance</p><h2 id="ride-mode-heading">Ride Mode</h2></div>
         {session && <span className={styles.fixtureBadge}>{statusLabel(session.status)}</span>}
@@ -462,7 +462,7 @@ export default function RideMode({ selectedJourney, offlineSnapshot = false, all
           )}
           <div className={styles.rideActionCard}>
             <p className={styles.cardKicker}>CURRENT ACTION</p>
-            <h3>{currentText}</h3>
+            <h3 aria-live="polite">{currentText}</h3>
             {session.journey.disruptions?.map((impact: JourneyDisruptionImpact) => <DisruptionNotice key={impact.advisory.stable_id} impact={impact} staleSnapshot={offlineSnapshot} />)}
             {!offlineSnapshot && currentAdvisories.map((advisory) => <DisruptionNotice key={advisory.stable_id} advisory={advisory} />)}
             {!offlineSnapshot && onReplan && session.journey.disruptions?.some((impact) => impact.impact_level !== "INFORMATIONAL") && <button type="button" className={styles.secondaryButton} onClick={onReplan}>Find another way</button>}

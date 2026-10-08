@@ -2,12 +2,15 @@
   "name": "Biyahe Cebu commuter guidance",
   "short_name": "Biyahe",
   "description": "Practical Cebu journey instructions with honest uncertainty.",
+  "id": "/",
   "lang": "en-PH",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "background_color": "#f5f5ef",
   "theme_color": "#153b45",
+  "orientation": "portrait-primary",
+  "prefer_related_applications": false,
   "icons": [
     { "src": "/file.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
   ]

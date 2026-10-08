@@ -143,6 +143,7 @@ export default function MapView({ places, stops, journey, selectedPattern, disru
   const instructionFocusRef = useRef<string | null>(null);
   const disruptionLookupRef = useRef(new Map<number, DisruptionSummary>());
   const [mapReady, setMapReady] = useState(false);
+  const [mapError, setMapError] = useState(false);
 
   useEffect(() => {
     if (!containerRef.current || mapRef.current) {
@@ -157,6 +158,7 @@ export default function MapView({ places, stops, journey, selectedPattern, disru
     });
     map.addControl(new maplibregl.NavigationControl({ showCompass: false }), "top-right");
     mapRef.current = map;
+    map.on("error", () => setMapError(true));
 
     map.on("load", () => {
       map.addSource("places", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
@@ -178,12 +180,14 @@ export default function MapView({ places, stops, journey, selectedPattern, disru
         id: "stop-points",
         type: "circle",
         source: "stops",
+        minzoom: 12.5,
         paint: { "circle-color": "#176b87", "circle-radius": 4, "circle-stroke-color": "#fff", "circle-stroke-width": 1.5 },
       });
       map.addLayer({
         id: "stop-labels",
         type: "symbol",
         source: "stops",
+        minzoom: 14.5,
         layout: { "text-field": ["get", "name"], "text-size": 11, "text-offset": [0, 1.2], "text-anchor": "top" },
         paint: { "text-color": "#102a43", "text-halo-color": "#fff", "text-halo-width": 1 },
       });
@@ -403,7 +407,7 @@ export default function MapView({ places, stops, journey, selectedPattern, disru
 
     const bounds = journey ? journeyBounds(journey) : selectedPattern ? patternBounds(selectedPattern) : null;
     if (bounds) {
-      map.fitBounds(bounds, { padding: 48, maxZoom: 14, duration: 0 });
+      map.fitBounds(bounds, { padding: { top: 48, right: 32, bottom: 150, left: 32 }, maxZoom: 14, duration: 0 });
     }
   }, [disruptions, journey, mapReady, places, selectedPattern, stops]);
 
@@ -467,7 +471,7 @@ export default function MapView({ places, stops, journey, selectedPattern, disru
     if (positions.length === 0) return;
     const bounds = new maplibregl.LngLatBounds();
     positions.forEach((position) => bounds.extend(position));
-    map.fitBounds(bounds, { padding: 64, maxZoom: 15, duration: 300 });
+    map.fitBounds(bounds, { padding: { top: 48, right: 32, bottom: 150, left: 32 }, maxZoom: 15, duration: 300 });
   }, [instructionFocus, mapReady]);
 
   useEffect(() => {
@@ -487,5 +491,10 @@ export default function MapView({ places, stops, journey, selectedPattern, disru
     }
   }, [mapReady, rideMode]);
 
-  return <div className="map-frame" ref={containerRef} aria-label="Biyahe journey review map" />;
+  return (
+    <div className="map-shell">
+      <div className="map-frame" ref={containerRef} role="img" aria-label="Biyahe journey review map" />
+      {mapError && <p className="map-error" role="status">Map tiles are unavailable. Use the journey text and stop details below; no route fact is lost.</p>}
+    </div>
+  );
 }

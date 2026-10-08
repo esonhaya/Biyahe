@@ -182,7 +182,7 @@ export default function FieldMode() {
   }
 
   return (
-    <section className={styles.section} aria-labelledby="field-mode-heading">
+    <section className={styles.section} id="field-mode" aria-labelledby="field-mode-heading">
       <div className={styles.panel}>
         <div className={styles.heading}>
           <div><p className={styles.eyebrow}>Trusted collection only</p><h2 id="field-mode-heading">Field Verification Mode</h2></div>

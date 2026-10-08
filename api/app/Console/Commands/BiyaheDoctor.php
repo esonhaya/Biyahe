@@ -52,7 +52,7 @@ class BiyaheDoctor extends Command
     public function handle(): int
     {
         $this->report = new DoctorReport;
-        $this->info('BIYAHE DOCTOR V20');
+        $this->info('BIYAHE DOCTOR V21');
         $this->check('application', 'PASS', 'Laravel booted and configuration loaded.');
 
         $databaseReady = $this->checkDatabase();
@@ -94,6 +94,7 @@ class BiyaheDoctor extends Command
             $this->runBatch018Checks($postgisReady);
             $this->runBatch019Checks($postgisReady);
             $this->runBatch020Checks($postgisReady);
+            $this->runBatch021Checks($postgisReady);
         } catch (Throwable $exception) {
             report($exception);
             $this->check('doctor execution', 'FAIL', 'A Doctor query failed: '.$exception->getMessage());
@@ -1886,6 +1887,41 @@ class BiyaheDoctor extends Command
                 : 'Release check failed; inspect the structured readiness output before deployment.');
         } else {
             $this->check('deployment readiness structure', 'BLOCKED', 'The live release gate requires PostgreSQL/PostGIS; SQLite Doctor remains a test harness only.');
+        }
+    }
+
+    private function runBatch021Checks(bool $postgisReady): void
+    {
+        $page = base_path('../web/src/app/page.tsx');
+        $styles = base_path('../web/src/app/globals.css');
+        $manifest = base_path('../web/public/manifest.webmanifest');
+        $worker = base_path('../web/public/sw.js');
+        $uxContract = is_file($page) && is_file($styles)
+            && str_contains((string) file_get_contents($page), 'role="combobox"')
+            && str_contains((string) file_get_contents($page), 'aria-autocomplete="list"')
+            && str_contains((string) file_get_contents($styles), 'prefers-reduced-motion');
+        $this->check('Batch 021 UX contract', $uxContract ? 'PASS' : 'FAIL', $uxContract
+            ? 'Destination-first search, keyboard semantics, and reduced-motion support are present in the maintained frontend source.'
+            : 'The maintained frontend is missing a required Batch 021 accessibility/product contract.');
+
+        $pwaContract = is_file($manifest) && is_file($worker)
+            && str_contains((string) file_get_contents($manifest), '"start_url"')
+            && str_contains((string) file_get_contents($worker), 'biyahe-shell-v2')
+            && str_contains((string) file_get_contents($worker), 'startsWith("/api/")');
+        $this->check('Batch 021 PWA cache boundary', $pwaContract ? 'PASS' : 'FAIL', $pwaContract
+            ? 'Versioned shell caching excludes API responses and non-GET submissions.'
+            : 'PWA manifest or conservative service-worker cache boundary is incomplete.');
+
+        $this->check('Batch 021 browser availability', 'WARN', 'Browser automation and physical-device validation are environment-dependent; static UX contract checks are the deterministic gate.');
+
+        if ($postgisReady && Schema::hasTable('routes') && Schema::hasTable('route_patterns')) {
+            $routeCount = DB::table('routes')->where('is_demo', false)->where('is_active', true)->count();
+            $patternCount = DB::table('route_patterns')->where('is_demo', false)->where('is_active', true)->count();
+            $this->check('Batch 021 canonical network presence', $routeCount > 0 && $patternCount > 0 ? 'PASS' : 'FAIL', $routeCount > 0 && $patternCount > 0
+                ? $routeCount.' active production route(s) and '.$patternCount.' pattern(s) remain available.'
+                : 'No active production route/pattern records are available.');
+        } else {
+            $this->check('Batch 021 canonical network presence', 'BLOCKED', 'Live PostGIS is required for the production network-preservation check.');
         }
     }
 

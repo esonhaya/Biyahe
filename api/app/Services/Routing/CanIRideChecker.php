@@ -455,7 +455,7 @@ final class CanIRideChecker
         $verified = Trust::effectiveFactState($stop, 'boarding') === VerificationState::VERIFIED->value;
         $prefix = match ($precision) {
             'EXACT_BOARDING_POINT' => $verified ? 'Walk to the verified boarding point at '.$location.'.' : 'Walk toward '.$location.'. The exact boarding point is not yet verified.',
-            'BOARDING_AREA' => 'Walk to the '.$location.' boarding area. The exact bay or curbside position is not yet verified.',
+            'BOARDING_AREA' => 'Walk to the mapped boarding area near '.$location.'. The exact bay or curbside position is not yet verified.',
             'APPROXIMATE_LOCATION' => 'Walk toward the approximate boarding area near '.$location.'.',
             default => 'The boarding location is not yet precisely verified. This reaches the mapped service area, not a confirmed curbside boarding point near '.$location.'.',
         };

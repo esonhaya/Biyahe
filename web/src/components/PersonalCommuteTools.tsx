@@ -140,7 +140,7 @@ export default function PersonalCommuteTools({
   }
 
   return (
-    <section className={styles.personalSection} aria-labelledby="personal-heading">
+    <section className={styles.personalSection} id="saved" aria-labelledby="personal-heading">
       <div className={styles.sectionHeading}>
         <div><p className={styles.eyebrow}>On this device</p><h2 id="personal-heading">Your places &amp; commutes</h2></div>
         <span className={styles.fixtureBadge}>{savedJourneyCount} saved</span>

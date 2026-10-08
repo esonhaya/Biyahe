@@ -16,7 +16,21 @@ use Tests\TestCase;
 
 class PostgisTransportTest extends TestCase
 {
-    use RefreshDatabase;
+    use RefreshDatabase {
+        refreshDatabase as protected refreshPostgisTestDatabase;
+    }
+
+    protected function refreshDatabase(): void
+    {
+        $database = (string) config('database.connections.'.config('database.default').'.database');
+        if (config('database.default') === 'pgsql' && preg_match('/(^|[_-])test([_-]|$)/i', $database) !== 1) {
+            $this->markTestSkipped('PostGIS RefreshDatabase tests require a separately named database containing "test"; refusing to reset a production database.');
+
+            return;
+        }
+
+        $this->refreshPostgisTestDatabase();
+    }
 
     public function test_real_postgis_schema_and_spatial_api_behavior(): void
     {

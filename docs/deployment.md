@@ -45,6 +45,12 @@ npm run lint
 npm run build
 ```
 
+The destructive PostGIS feature suite uses Laravel `RefreshDatabase`, so it
+must point at a separately named database such as `biyahe_batch021_test` (the
+test guard refuses a database without a `test` marker). Never aim that suite at
+the production `biyahe` database; use the read-only Doctor and release check
+against production instead.
+
 The web shell contains a conservative PWA service worker. It caches the app
 shell and bounded static assets, never caches `/api/` responses, and never
 intercepts non-GET submissions. Field observations remain in the explicit

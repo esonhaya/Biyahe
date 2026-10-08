@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { CanIRideResponse, DisruptionSummary, Journey, JourneyResponse, PedestrianAccessLeg, Place, PulseResponse, Route, RoutePattern, Stop } from "@/lib/api";
 import { canIRide, getPulse, getRoutePattern, listPlaces, listRoutes, listStops, planJourney, replanJourney, searchPlaces } from "@/lib/api";
 import BiyahePulse from "@/components/BiyahePulse";
@@ -26,35 +26,79 @@ import {
 } from "@/lib/savedJourneys";
 import styles from "./page.module.css";
 
+const ONBOARDING_KEY = "biyahe.onboarding.dismissed.v1";
+
 const MapView = dynamic(() => import("@/components/MapView"), {
   ssr: false,
   loading: () => <div className="map-frame map-loading">Loading map…</div>,
 });
 
 type SearchFieldProps = {
+  id: string;
   label: string;
   value: string;
   onChange: (value: string) => void;
   options: Place[];
   onPick: (place: Place) => void;
+  onClear: () => void;
+  onSubmit: () => void;
+  loading?: boolean;
 };
 
-function SearchField({ label, value, onChange, options, onPick }: SearchFieldProps) {
+function SearchField({ id, label, value, onChange, options, onPick, onClear, onSubmit, loading = false }: SearchFieldProps) {
+  const [activeIndex, setActiveIndex] = useState(0);
+  const menuId = `${id}-suggestions`;
+  const hasQuery = value.trim().length > 1;
+
+  function handleKeyDown(event: React.KeyboardEvent<HTMLInputElement>) {
+    if (event.key === "ArrowDown" && options.length > 0) {
+      event.preventDefault();
+      setActiveIndex((index) => (index + 1) % options.length);
+    } else if (event.key === "ArrowUp" && options.length > 0) {
+      event.preventDefault();
+      setActiveIndex((index) => (index - 1 + options.length) % options.length);
+    } else if (event.key === "Enter") {
+      event.preventDefault();
+      if (options[activeIndex]) onPick(options[activeIndex]);
+      else onSubmit();
+    } else if (event.key === "Escape") {
+      onClear();
+    }
+  }
+
   return (
     <div className={styles.searchField}>
-      <label htmlFor={label.toLowerCase()}>{label}</label>
-      <input
-        id={label.toLowerCase()}
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        placeholder="Search a place or local name"
-        autoComplete="off"
-        aria-autocomplete="list"
-      />
-      {value.length > 1 && options.length > 0 && (
-        <div className={styles.suggestions} role="listbox">
-          {options.map((place) => (
-            <button type="button" key={place.id} onClick={() => onPick(place)} role="option" aria-selected={false}>
+      <label htmlFor={id}>{label}</label>
+      <div className={styles.searchInputWrap}>
+        <input
+          id={id}
+          value={value}
+          onChange={(event) => { onChange(event.target.value); setActiveIndex(0); }}
+          onKeyDown={handleKeyDown}
+          placeholder={label === "To" ? "Where are you going?" : "Starting place (optional)"}
+          autoComplete="off"
+          role="combobox"
+          aria-autocomplete="list"
+          aria-expanded={hasQuery}
+          aria-controls={hasQuery ? menuId : undefined}
+          aria-activedescendant={hasQuery && options[activeIndex] ? `${id}-option-${options[activeIndex].id}` : undefined}
+        />
+        {value && <button type="button" className={styles.clearSearch} onClick={onClear} aria-label={`Clear ${label.toLowerCase()}`}>×</button>}
+      </div>
+      {hasQuery && (
+        <div className={styles.suggestions} id={menuId} role="listbox" aria-label={`${label} suggestions`}>
+          {loading && <p className={styles.suggestionStatus}>Searching mapped places…</p>}
+          {!loading && options.length === 0 && <p className={styles.suggestionStatus}>No mapped place matched that name. Try a landmark or alias.</p>}
+          {!loading && options.map((place, index) => (
+            <button
+              type="button"
+              key={place.id}
+              id={`${id}-option-${place.id}`}
+              onClick={() => onPick(place)}
+              role="option"
+              aria-selected={index === activeIndex}
+              className={index === activeIndex ? styles.suggestionActive : undefined}
+            >
               <span>{place.name}</span>
               <small>{place.city?.name ?? "Cebu coverage"} · {place.aliases?.[0]?.alias ?? place.category}</small>
             </button>
@@ -62,6 +106,45 @@ function SearchField({ label, value, onChange, options, onPick }: SearchFieldPro
         </div>
       )}
     </div>
+  );
+}
+
+function publicTrustLabel(state: string | null | undefined): string {
+  switch (state) {
+    case "VERIFIED": return "Confirmed details";
+    case "MIXED": return "Mapped, some details need checking";
+    case "UNVERIFIED": return "Mapped, details not fully checked";
+    default: return "Mapped route details";
+  }
+}
+
+function ProductOnboarding({ onDismiss }: { onDismiss: () => void }) {
+  return (
+    <aside className={styles.onboarding} aria-labelledby="onboarding-heading">
+      <div>
+        <p className={styles.cardKicker}>FIRST TIME HERE?</p>
+        <h2 id="onboarding-heading">A simple way to start</h2>
+        <p>Search a destination, compare mapped rides, then save or start a manual Ride Mode guide.</p>
+      </div>
+      <ol>
+        <li><strong>Search</strong><span>Choose a place or local landmark.</span></li>
+        <li><strong>Check</strong><span>Read boarding and trust notes before you go.</span></li>
+        <li><strong>Ride</strong><span>Confirm boarding yourself; location is optional and foreground-only.</span></li>
+      </ol>
+      <button type="button" className={styles.textButton} onClick={onDismiss}>Got it — hide this</button>
+    </aside>
+  );
+}
+
+function QuickNav() {
+  return (
+    <nav className={styles.quickNav} aria-label="Biyahe sections">
+      <a href="#planning">Plan</a>
+      <a href="#saved">Saved</a>
+      <a href="#pulse">Pulse</a>
+      <a href="#ride-mode">Ride Mode</a>
+      <a href="#explore">Explore</a>
+    </nav>
   );
 }
 
@@ -200,6 +283,8 @@ export default function Home() {
   const [destinationText, setDestinationText] = useState("");
   const [originOptions, setOriginOptions] = useState<Place[]>([]);
   const [destinationOptions, setDestinationOptions] = useState<Place[]>([]);
+  const [originSearching, setOriginSearching] = useState(false);
+  const [destinationSearching, setDestinationSearching] = useState(false);
   const [journeys, setJourneys] = useState<Journey[]>([]);
   const [selectedJourney, setSelectedJourney] = useState<Journey | null>(null);
   const [selectedPattern, setSelectedPattern] = useState<RoutePattern | null>(null);
@@ -228,6 +313,11 @@ export default function Home() {
   const [online, setOnline] = useState(true);
   const [personalRefreshToken, setPersonalRefreshToken] = useState(0);
   const [activeRideResume, setActiveRideResume] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [journeyFilter, setJourneyFilter] = useState<"ALL" | "DIRECT" | "ONE_TRANSFER" | "TWO_TRANSFER">("ALL");
+  const [routeQuery, setRouteQuery] = useState("");
+  const originRequestRef = useRef(0);
+  const destinationRequestRef = useRef(0);
 
   useEffect(() => {
     const updateOnline = () => setOnline(window.navigator.onLine);
@@ -246,6 +336,17 @@ export default function Home() {
       window.removeEventListener("online", updateOnline);
       window.removeEventListener("offline", updateOnline);
     };
+  }, []);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      try {
+        setShowOnboarding(window.localStorage.getItem(ONBOARDING_KEY) !== "1");
+      } catch {
+        setShowOnboarding(true);
+      }
+    }, 0);
+    return () => window.clearTimeout(timer);
   }, []);
 
   useEffect(() => {
@@ -323,27 +424,38 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    if (originText.length < 2 || origin?.name === originText) {
-      return;
-    }
+    const query = originText.trim();
+    if (query.length < 2 || origin?.name === originText) return;
     const controller = new AbortController();
-    searchPlaces(originText, controller.signal).then(setOriginOptions).catch(() => setOriginOptions([]));
-    return () => controller.abort();
+    const requestId = ++originRequestRef.current;
+    const timer = window.setTimeout(() => {
+      searchPlaces(query, controller.signal)
+        .then((results) => { if (requestId === originRequestRef.current) setOriginOptions(results); })
+        .catch(() => { if (requestId === originRequestRef.current) setOriginOptions([]); })
+        .finally(() => { if (requestId === originRequestRef.current) setOriginSearching(false); });
+    }, 250);
+    return () => { window.clearTimeout(timer); controller.abort(); };
   }, [originText, origin]);
 
   useEffect(() => {
-    if (destinationText.length < 2 || destination?.name === destinationText) {
-      return;
-    }
+    const query = destinationText.trim();
+    if (query.length < 2 || destination?.name === destinationText) return;
     const controller = new AbortController();
-    searchPlaces(destinationText, controller.signal).then(setDestinationOptions).catch(() => setDestinationOptions([]));
-    return () => controller.abort();
+    const requestId = ++destinationRequestRef.current;
+    const timer = window.setTimeout(() => {
+      searchPlaces(query, controller.signal)
+        .then((results) => { if (requestId === destinationRequestRef.current) setDestinationOptions(results); })
+        .catch(() => { if (requestId === destinationRequestRef.current) setDestinationOptions([]); })
+        .finally(() => { if (requestId === destinationRequestRef.current) setDestinationSearching(false); });
+    }, 250);
+    return () => { window.clearTimeout(timer); controller.abort(); };
   }, [destinationText, destination]);
 
   function changeOrigin(value: string) {
     setOrigin(null);
     setOriginText(value);
     setOriginOptions([]);
+    setOriginSearching(value.trim().length >= 2);
     setJourneys([]);
     setSelectedJourney(null);
     setSelectedPattern(null);
@@ -352,12 +464,14 @@ export default function Home() {
     setNoRouteMessage(null);
     setCanRideResult(null);
     setReplanResult(null);
+    setError(null);
   }
 
   function changeDestination(value: string) {
     setDestination(null);
     setDestinationText(value);
     setDestinationOptions([]);
+    setDestinationSearching(value.trim().length >= 2);
     setJourneys([]);
     setSelectedJourney(null);
     setSelectedPattern(null);
@@ -366,12 +480,14 @@ export default function Home() {
     setNoRouteMessage(null);
     setCanRideResult(null);
     setReplanResult(null);
+    setError(null);
   }
 
   function chooseOrigin(place: Place) {
     setOrigin(place);
     setOriginText(place.name);
     setOriginOptions([]);
+    setOriginSearching(false);
     setJourneys([]);
     setSelectedJourney(null);
     setSelectedPattern(null);
@@ -380,12 +496,14 @@ export default function Home() {
     setNoRouteMessage(null);
     setCanRideResult(null);
     setReplanResult(null);
+    setError(null);
   }
 
   function chooseDestination(place: Place) {
     setDestination(place);
     setDestinationText(place.name);
     setDestinationOptions([]);
+    setDestinationSearching(false);
     setJourneys([]);
     setSelectedJourney(null);
     setSelectedPattern(null);
@@ -394,6 +512,38 @@ export default function Home() {
     setNoRouteMessage(null);
     setCanRideResult(null);
     setReplanResult(null);
+    setError(null);
+  }
+
+  function clearOrigin() {
+    changeOrigin("");
+  }
+
+  function clearDestination() {
+    changeDestination("");
+  }
+
+  function swapPlaces() {
+    const nextOrigin = destination;
+    const nextDestination = origin;
+    setOrigin(nextOrigin);
+    setDestination(nextDestination);
+    setOriginText(nextOrigin?.name ?? "");
+    setDestinationText(nextDestination?.name ?? "");
+    setOriginOptions([]);
+    setDestinationOptions([]);
+    setOriginSearching(false);
+    setDestinationSearching(false);
+    setJourneys([]);
+    setSelectedJourney(null);
+    setSelectedPattern(null);
+    setInstructionFocus(null);
+    setOfflineSavedJourneyId(null);
+    setNoRouteMessage(null);
+    setCanRideResult(null);
+    setReplanResult(null);
+    setError(null);
+    setStatus("Places swapped. Find a route when you are ready.");
   }
 
   async function searchJourney(from: Place, to: Place) {
@@ -548,26 +698,61 @@ export default function Home() {
     }
   }
 
+  function dismissOnboarding() {
+    setShowOnboarding(false);
+    try {
+      window.localStorage.setItem(ONBOARDING_KEY, "1");
+    } catch {
+      // A blocked browser store must not block route planning.
+    }
+  }
+
+  const visibleJourneys = journeys.filter((journey) => {
+    if (journeyFilter === "ALL") return true;
+    const transfers = journey.legs.filter((leg) => leg.type === "TRANSFER_WALK").length;
+    return journeyFilter === "DIRECT" ? transfers === 0 : journeyFilter === "ONE_TRANSFER" ? transfers === 1 : transfers === 2;
+  });
+  const visibleRoutes = routes.filter((route) => {
+    const query = routeQuery.trim().toLowerCase();
+    return !query || route.code.toLowerCase().includes(query) || route.name.toLowerCase().includes(query);
+  });
+
   return (
     <main className={styles.page}>
+      <a className={styles.skipLink} href="#planning">Skip to journey planning</a>
       <section className={styles.hero}>
-        <div className={styles.brandRow}>
-          <div className={styles.brandMark}>B</div>
-          <div>
-            <p className={styles.eyebrow}>Cebu commuter guidance</p>
-            <h1>BIYAHE</h1>
+        <header className={styles.topBar}>
+          <div className={styles.brandRow}>
+            <div className={styles.brandMark}>B</div>
+            <div>
+              <p className={styles.eyebrow}>Cebu commuter guidance</p>
+              <h1>BIYAHE</h1>
+            </div>
           </div>
+          <div className={styles.topBarActions}>
+            <span className={`${styles.connectionPill} ${online ? styles.connectionOnline : styles.connectionOffline}`} role="status">
+              {online ? "ONLINE · current search" : "OFFLINE · local tools only"}
+            </span>
+            <QuickNav />
+          </div>
+        </header>
+        <div className={styles.heroCopy}>
+          <p className={styles.intro}>Where are you going?</p>
+          <p className={styles.heroSubcopy}>Plan around mapped Cebu routes, clear boarding guidance, and honest uncertainty.</p>
         </div>
-        <p className={styles.intro}>Make the next ride feel less uncertain.</p>
-        <div className={styles.searchCard}>
-          <SearchField label="From" value={originText} onChange={changeOrigin} options={originOptions} onPick={chooseOrigin} />
-          <SearchField label="To" value={destinationText} onChange={changeDestination} options={destinationOptions} onPick={chooseDestination} />
-          <button className={styles.primaryButton} type="button" onClick={findRoute} disabled={loadingJourney || loadingNetwork || !online}>
+        <form className={styles.searchCard} id="planning" onSubmit={(event) => { event.preventDefault(); void findRoute(); }}>
+          <div className={styles.searchInputsRow}>
+            <SearchField id="destination-search" label="To" value={destinationText} onChange={changeDestination} options={destinationOptions} onPick={chooseDestination} onClear={clearDestination} onSubmit={() => { void findRoute(); }} loading={destinationSearching} />
+            <button type="button" className={styles.swapButton} onClick={swapPlaces} disabled={!origin && !destination} aria-label="Swap origin and destination">⇄</button>
+            <SearchField id="origin-search" label="From" value={originText} onChange={changeOrigin} options={originOptions} onPick={chooseOrigin} onClear={clearOrigin} onSubmit={() => { void findRoute(); }} loading={originSearching} />
+          </div>
+          <button className={styles.primaryButton} type="submit" disabled={loadingJourney || loadingNetwork || !online}>
             {loadingJourney ? "Finding…" : online ? "Find route" : "Offline"}
           </button>
           <p className={styles.status} role="status">{status}</p>
           {error && <p className={styles.error} role="alert">{error}</p>}
-        </div>
+        </form>
+        {showOnboarding && <ProductOnboarding onDismiss={dismissOnboarding} />}
         {activeRideResume && <div className={styles.activeRideBanner} role="status">
           <div><strong>Continue your active ride</strong><span>Ride Mode progress is saved on this device. Live location is not restored as current.</span></div>
           <button type="button" className={styles.secondaryButton} onClick={() => document.getElementById("ride-mode-heading")?.scrollIntoView({ behavior: "smooth" })}>Open Ride Mode</button>
@@ -584,27 +769,28 @@ export default function Home() {
         onSelectCommute={chooseLocalCommute}
       />
 
-      <FieldMode />
-
-      <BiyahePulse
-        pulse={pulse}
-        loading={loadingPulse}
-        selectedJourney={selectedJourney}
-        onRefresh={() => { void refreshAdvisories(); }}
-        onFilter={setPulseFilter}
-        onAdvisorySelect={setSelectedDisruption}
-      />
-
-      <section className={styles.resultsSection} aria-labelledby="results-heading">
+      <section className={styles.resultsSection} id="journeys" aria-labelledby="results-heading">
         <div className={styles.sectionHeading}>
           <div><p className={styles.eyebrow}>What to do next</p><h2 id="results-heading">Journey results</h2></div>
-          {selectedJourney && <span className={styles.fixtureBadge}>{trustLabel(selectedJourney.trust.state)}</span>}
+          {selectedJourney && <span className={styles.fixtureBadge}>{publicTrustLabel(selectedJourney.trust.state)}</span>}
         </div>
+        {journeys.length > 1 && (
+          <div className={styles.compareBar} role="group" aria-label="Filter journey options">
+            <span>Compare by rides</span>
+            {(["ALL", "DIRECT", "ONE_TRANSFER", "TWO_TRANSFER"] as const).map((filter) => (
+              <button key={filter} type="button" className={journeyFilter === filter ? styles.compareActive : styles.secondaryButton} onClick={() => setJourneyFilter(filter)}>
+                {filter === "ALL" ? "All" : filter === "DIRECT" ? "Direct" : filter === "ONE_TRANSFER" ? "1 transfer" : "2 transfers"}
+              </button>
+            ))}
+          </div>
+        )}
         {journeys.length === 0 ? (
           <p className={styles.emptyState}>{loadingJourney ? "Looking for direct, one- or two-transfer rides…" : noRouteMessage ?? "Your supported journeys will appear here."}</p>
+        ) : visibleJourneys.length === 0 ? (
+          <p className={styles.emptyState}>No journey matches this comparison filter. Show all options to review the other mapped choices.</p>
         ) : (
           <div className={styles.journeyGrid}>
-            {journeys.map((journey, index) => <JourneyCard
+            {visibleJourneys.map((journey, index) => <JourneyCard
               key={journey.id}
               journey={journey}
               recommended={index === 0}
@@ -616,7 +802,7 @@ export default function Home() {
       </section>
 
       {selectedJourney && (
-        <section className={styles.detailSection} aria-labelledby="instructions-heading">
+        <section className={styles.detailSection} id="journey-detail" aria-labelledby="instructions-heading">
           <div className={styles.sectionHeading}>
             <div><p className={styles.eyebrow}>One shared instruction layer</p><h2 id="instructions-heading">Your commute card</h2></div>
             {offlineSavedJourneyId === selectedJourney.id && <span className={styles.fixtureBadge}>OFFLINE SNAPSHOT</span>}
@@ -644,6 +830,15 @@ export default function Home() {
           )}
         </section>
       )}
+
+      <BiyahePulse
+        pulse={pulse}
+        loading={loadingPulse}
+        selectedJourney={selectedJourney}
+        onRefresh={() => { void refreshAdvisories(); }}
+        onFilter={setPulseFilter}
+        onAdvisorySelect={setSelectedDisruption}
+      />
 
       {savedJourneys.length > 0 && (
         <section className={styles.savedSection} aria-labelledby="saved-heading">
@@ -692,6 +887,8 @@ export default function Home() {
         onMapStateChange={setRideMapState}
       />
 
+      <FieldMode />
+
       <section className={styles.decisionSection} aria-labelledby="can-ride-heading">
         <div className={styles.sectionHeading}>
           <div><p className={styles.eyebrow}>Standing at a stop?</p><h2 id="can-ride-heading">Can I ride this?</h2></div>
@@ -719,11 +916,12 @@ export default function Home() {
         <CommuterReportForm routes={routes} stops={stops} places={places} />
       </section>
 
-      <section className={styles.exploration} aria-labelledby="map-heading">
+      <section className={styles.exploration} id="map" aria-labelledby="map-heading">
         <div className={styles.sectionHeading}>
           <div><p className={styles.eyebrow}>Journey map</p><h2 id="map-heading">See the boarding points</h2></div>
         </div>
         <p className={styles.sectionCopy}>Transit and computed pedestrian paths are shown separately. If a walking path is unavailable, Biyahe labels straight-line estimates and does not draw a street route.</p>
+        <div className={styles.mapTextAlternative} role="note"><strong>Map reading guide:</strong> the text instructions below are the accessible alternative. A pin marked as a boarding area is not an exact waiting point unless the data says so.</div>
         <div className={styles.mapPanel}>
           <MapView places={places} stops={stops} journey={selectedJourney} selectedPattern={selectedPattern} disruptions={activeAdvisories} onDisruptionSelect={setSelectedDisruption} onStopSelect={setSelectedStop} rideMode={rideMapState} instructionFocus={instructionFocus} />
           <div className={styles.mapLegend}><span><i className={styles.placeDot} /> places</span><span><i className={styles.stopDot} /> stops</span><span><i className={styles.routeDot} /> transit route</span><span><i className={styles.walkingDot} /> walking path</span><span><i className={styles.transferDot} /> transfer</span></div>
@@ -739,7 +937,7 @@ export default function Home() {
         )}
         {selectedPattern?.stops && (
           <div className={styles.infoCard}>
-            <div><p className={styles.cardKicker}>ORDERED PATTERN STOPS</p><h3>{selectedPattern.name}</h3><p>{selectedPattern.direction} · {selectedPattern.verification.state}</p></div>
+              <div><p className={styles.cardKicker}>ORDERED PATTERN STOPS</p><h3>{selectedPattern.name}</h3><p>{selectedPattern.direction} · {publicTrustLabel(selectedPattern.verification.state)}</p></div>
             <ol>
               {selectedPattern.stops.map((patternStop) => <li key={patternStop.sequence}>{patternStop.sequence}. {patternStop.stop.name} · {patternStop.boarding_allowed ? "board" : "no board"} / {patternStop.alighting_allowed ? "alight" : "no alight"}</li>)}
             </ol>
@@ -747,18 +945,20 @@ export default function Home() {
         )}
       </section>
 
-      <section className={styles.routeSection} aria-labelledby="routes-heading">
+      <section className={styles.routeSection} id="explore" aria-labelledby="routes-heading">
         <div className={styles.sectionHeading}><div><p className={styles.eyebrow}>Transport network</p><h2 id="routes-heading">Review route patterns</h2></div></div>
-        {loadingNetwork ? <p className={styles.emptyState}>Loading route patterns…</p> : routes.length === 0 ? <p className={styles.emptyState}>No route patterns are available from the API.</p> : (
+        <p className={styles.sectionCopy}>Browse the mapped network when you want to explore. A mapped route is not a guarantee of current service or an exact boarding bay.</p>
+        <label className={styles.routeSearch} htmlFor="route-search">Find a route<input id="route-search" value={routeQuery} onChange={(event) => setRouteQuery(event.target.value)} placeholder="Code or route name" /></label>
+        {loadingNetwork ? <p className={styles.emptyState}>Loading route patterns…</p> : routes.length === 0 ? <p className={styles.emptyState}>No route patterns are available from the API.</p> : visibleRoutes.length === 0 ? <p className={styles.emptyState}>No mapped route matches that search.</p> : (
           <div className={styles.routeGrid}>
-            {routes.map((route) => (
+            {visibleRoutes.map((route) => (
             <article className={styles.routeCard} key={route.id}>
                 <div className={styles.routeCode}>{route.code}</div>
-                <div><h3>{route.name}</h3><p>{route.vehicle_type?.name ?? "Transport service"} · {route.patterns?.length ?? 0} pattern(s) · {route.verification.state}</p><p>{activeAdvisories.some((advisory) => advisory.affected_entities.routes.some((affected) => affected.id === route.id)) ? "Active reviewed advisory" : "No known active reviewed advisory"}</p></div>
+                <div><h3>{route.name}</h3><p>{route.vehicle_type?.name ?? "Transport service"} · {route.patterns?.length ?? 0} direction(s) · {publicTrustLabel(route.verification.state)}</p><p>{activeAdvisories.some((advisory) => advisory.affected_entities.routes.some((affected) => affected.id === route.id)) ? "Active reviewed advisory" : "No known active reviewed advisory"}</p></div>
                 <div className={styles.patternList}>
                   {route.patterns?.map((pattern) => (
                     <button type="button" key={pattern.id} className={selectedPattern?.id === pattern.id ? styles.patternActive : ""} onClick={() => showPattern(pattern)}>
-                      <span>{pattern.name}</span><small>{pattern.direction} · {pattern.verification.state}</small>
+                      <span>{pattern.name}</span><small>{pattern.direction} · {publicTrustLabel(pattern.verification.state)}</small>
                     </button>
                   ))}
                 </div>
@@ -770,7 +970,7 @@ export default function Home() {
 
       <NearbyRoutes />
 
-      <footer className={styles.footer}><span>BIYAHE Batch 015</span><span>© OpenStreetMap contributors · operational advisories remain temporary overlays.</span></footer>
+      <footer className={styles.footer}><span>BIYAHE Batch 021</span><span>© OpenStreetMap contributors · operational advisories remain temporary overlays.</span></footer>
     </main>
   );
 }

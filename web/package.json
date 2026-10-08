@@ -16,7 +16,8 @@
     "test:personal-commute": "node --experimental-strip-types scripts/personal-commute-harness.mjs",
     "test:disruptions": "node --experimental-strip-types scripts/disruption-harness.mjs",
     "test:pulse-replan": "node --experimental-strip-types scripts/pulse-replan-harness.mjs",
-    "test:field-mode": "node --experimental-strip-types scripts/field-mode-harness.mjs"
+    "test:field-mode": "node --experimental-strip-types scripts/field-mode-harness.mjs",
+    "test:ux": "node scripts/ux-contract-harness.mjs"
   },
   "dependencies": {
     "maplibre-gl": "^6.12.0",
