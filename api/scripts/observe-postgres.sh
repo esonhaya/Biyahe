@@ -106,8 +106,10 @@ process_tree_rss_kb() {
             pid[++count] = $1
             parent[$1] = $2
             rss[$1] = $3
+            if ($1 == root) present = 1
         }
         END {
+            if (!present) exit 1
             found[root] = 1
             for (pass = 0; pass <= count; pass++) {
                 changed = 0

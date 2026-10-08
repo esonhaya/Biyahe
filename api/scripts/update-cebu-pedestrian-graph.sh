@@ -80,15 +80,21 @@ if [[ ! "$source_size" =~ ^[0-9]+$ ]] || ((source_size < 1)); then
 fi
 printf 'HTTP Last-Modified=%s; OSM snapshot time will come from the PBF stream header.\n' "${source_http_last_modified:-unavailable}"
 
-min_mem_kb="${BIYAHE_OSM_MIN_MEMAVAILABLE_KB:-870400}"
-min_swap_kb="${BIYAHE_OSM_MIN_SWAPFREE_KB:-262144}"
+min_mem_kb="${BIYAHE_OSM_MIN_MEMAVAILABLE_KB:-655360}"
+min_swap_kb="${BIYAHE_OSM_MIN_SWAPFREE_KB:-0}"
 min_disk_kb="${BIYAHE_OSM_MIN_DISKFREE_KB:-1048576}"
-for threshold in "$min_mem_kb" "$min_swap_kb" "$min_disk_kb"; do
+max_process_tree_rss_kb="${BIYAHE_OSM_MAX_PROCESS_TREE_RSS_KB:-196608}"
+stream_min_mem_kb="${BIYAHE_OSM_STREAM_MIN_MEMAVAILABLE_KB:-393216}"
+for threshold in "$min_mem_kb" "$min_swap_kb" "$min_disk_kb" "$max_process_tree_rss_kb" "$stream_min_mem_kb"; do
     if [[ ! "$threshold" =~ ^[0-9]+$ ]]; then
         printf 'OSM resource thresholds must be nonnegative KiB integers.\n' >&2
         exit 1
     fi
 done
+if ((min_mem_kb < 524288 || min_disk_kb < 524288 || max_process_tree_rss_kb < 65536 || stream_min_mem_kb < 327680)); then
+    printf 'OSM budgets are below hard safety floors.\n' >&2
+    exit 1
+fi
 disk_free_kb="$(df -Pk "$data_dir" | awk 'NR == 2 { print $4; exit }')"
 required_download_kb=$((min_disk_kb + (source_size + 1023) / 1024))
 if [[ ! "$disk_free_kb" =~ ^[0-9]+$ ]] || ((disk_free_kb < required_download_kb)); then
@@ -132,24 +138,34 @@ free_swap_kb="$(awk '$1 == "SwapFree:" { print $2; exit }' /proc/meminfo)"
 disk_free_kb="$(df -Pk "$data_dir" | awk 'NR == 2 { print $4; exit }')"
 printf 'OSM stream preflight: MemAvailable=%s KiB SwapFree=%s KiB DiskFree=%s KiB\n' \
     "${available_mem_kb:-unknown}" "${free_swap_kb:-unknown}" "${disk_free_kb:-unknown}"
-if [[ ! "$available_mem_kb" =~ ^[0-9]+$ || ! "$free_swap_kb" =~ ^[0-9]+$ || ! "$disk_free_kb" =~ ^[0-9]+$ ]] \
-    || ((available_mem_kb < min_mem_kb || free_swap_kb < min_swap_kb || disk_free_kb < min_disk_kb)); then
+if [[ ! "$available_mem_kb" =~ ^[0-9]+$ || ! "$disk_free_kb" =~ ^[0-9]+$ ]] \
+    || ((available_mem_kb < min_mem_kb || disk_free_kb < min_disk_kb)) \
+    || { ((min_swap_kb > 0)) && { [[ ! "$free_swap_kb" =~ ^[0-9]+$ ]] || ((free_swap_kb < min_swap_kb)); }; }; then
     printf 'OSM stream blocked by configured resource gate; no migration or database import was run.\n' >&2
     exit 1
 fi
 
 osmium_version="$(run_osmium version | sed -n '1p' | sed -E 's/.* ([0-9]+\.[0-9]+\.[0-9]+).*/\1/')"
 prepared_json="$data_dir/cebu-pedestrian-${snapshot}.json"
-
 cd "$api_dir"
-run_osmium cat --no-progress --output-format='osm' --output=- "$pbf_path" \
-    | artisan biyahe:pedestrian:prepare-osm-stream - \
-        --output="$prepared_json" \
-        --source-path="$pbf_path" \
-        --source-url="$source_url" \
-        --source-md5="$source_md5" \
-        --source-sha256="$source_sha256" \
-        --osmium-version="$osmium_version"
+producer_pid_file="$data_dir/.osm-producer-${snapshot}-$$.pid"
+stream_log="$data_dir/osm-stream-${snapshot}-$$.log"
+BIYAHE_RESOURCE_MIN_MEMAVAILABLE_KB="$stream_min_mem_kb" \
+BIYAHE_RESOURCE_MIN_DISKFREE_KB="$min_disk_kb" \
+BIYAHE_RESOURCE_MAX_PROCESS_TREE_RSS_KB="$max_process_tree_rss_kb" \
+BIYAHE_RESOURCE_CANCEL_GRACE_SECONDS="${BIYAHE_OSM_CANCEL_GRACE_SECONDS:-30}" \
+BIYAHE_RESOURCE_MAX_DURATION_SECONDS="${BIYAHE_OSM_STREAM_MAX_DURATION_SECONDS:-900}" \
+BIYAHE_OSM_PHP_MEMORY_LIMIT="${BIYAHE_OSM_PHP_MEMORY_LIMIT:-192M}" \
+DB_CONNECTION="$db_connection" DB_URL='' DB_HOST="$db_host" DB_PORT="$db_port" \
+DB_DATABASE="$db_database" DB_USERNAME="$db_username" DB_PASSWORD="$db_password" \
+    "$api_dir/scripts/run-bounded-process.sh" \
+        --operation osm-pedestrian-stream \
+        --disk-path "$data_dir" \
+        --cancel-pid-file "$producer_pid_file" \
+        --cancel-match 'osmium cat' \
+        --log "$stream_log" \
+        -- bash "$api_dir/scripts/prepare-pedestrian-osm-stream.sh" \
+            "$pbf_path" "$prepared_json" "$source_url" "$source_md5" "$source_sha256" "$osmium_version" "$producer_pid_file"
 
 artisan migrate --force
 artisan biyahe:pedestrian:import "$prepared_json" --source-url="$source_url"
