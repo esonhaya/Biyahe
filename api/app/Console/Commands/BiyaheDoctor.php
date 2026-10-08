@@ -16,16 +16,19 @@ use App\Enums\JourneyLegType;
 use App\Enums\PedestrianRoutePurpose;
 use App\Enums\SurveySessionStatus;
 use App\Enums\VerificationState;
+use App\Http\Controllers\Api\RouteController;
 use App\Services\Data\DatasetValidator;
 use App\Services\DeploymentReadinessService;
 use App\Services\Disruptions\PulseService;
 use App\Services\Evidence\CuratedJourneySet;
 use App\Services\Evidence\EvidenceCoverageReport;
+use App\Services\Evidence\NetworkIntelligenceAudit;
+use App\Services\FieldSurveys\Batch019GroundTruthCampaign;
 use App\Services\Routing\JourneyPlanner;
 use App\Services\Routing\JourneyPlanningContext;
 use App\Services\Routing\NetworkAudit;
 use App\Services\Routing\NetworkReleaseAudit;
-use App\Services\Routing\ResumableCoverageAudit;
+use App\Services\Routing\PedestrianNetworkImporter;
 use App\Services\Routing\PedestrianRouter;
 use App\Services\Routing\PedestrianRouteRequest;
 use App\Support\Diagnostics\DoctorCheckResult;
@@ -52,7 +55,7 @@ class BiyaheDoctor extends Command
     public function handle(): int
     {
         $this->report = new DoctorReport;
-        $this->info('BIYAHE DOCTOR V21');
+        $this->info('BIYAHE DOCTOR V23');
         $this->check('application', 'PASS', 'Laravel booted and configuration loaded.');
 
         $databaseReady = $this->checkDatabase();
@@ -95,6 +98,7 @@ class BiyaheDoctor extends Command
             $this->runBatch019Checks($postgisReady);
             $this->runBatch020Checks($postgisReady);
             $this->runBatch021Checks($postgisReady);
+            $this->runBatch022Checks();
         } catch (Throwable $exception) {
             report($exception);
             $this->check('doctor execution', 'FAIL', 'A Doctor query failed: '.$exception->getMessage());
@@ -1750,9 +1754,9 @@ class BiyaheDoctor extends Command
                 $complete.' completed pairs are recorded; partial audits remain explicitly resumable.');
         }
 
-        $this->check('evidence priority boundary', class_exists(\App\Services\Evidence\NetworkIntelligenceAudit::class) ? 'PASS' : 'FAIL',
+        $this->check('evidence priority boundary', class_exists(NetworkIntelligenceAudit::class) ? 'PASS' : 'FAIL',
             'Claim-level evidence and boarding priorities are derived reports/tasks; they do not promote facts automatically.');
-        $this->check('nearby query bounds', class_exists(\App\Http\Controllers\Api\RouteController::class) ? 'PASS' : 'FAIL',
+        $this->check('nearby query bounds', class_exists(RouteController::class) ? 'PASS' : 'FAIL',
             'Nearby route discovery remains bounded by validated radius and result limits.');
         $this->check('batch018 synthetic isolation', DB::table('disruptions')->where('is_synthetic', true)->count()
             + DB::table('commuter_reports')->where('is_synthetic', true)->count() === 0 ? 'PASS' : 'FAIL',
@@ -1763,7 +1767,7 @@ class BiyaheDoctor extends Command
 
     private function runBatch019Checks(bool $postgisReady): void
     {
-        $this->check('ground-truth campaign boundary', class_exists(\App\Services\FieldSurveys\Batch019GroundTruthCampaign::class) ? 'PASS' : 'FAIL',
+        $this->check('ground-truth campaign boundary', class_exists(Batch019GroundTruthCampaign::class) ? 'PASS' : 'FAIL',
             'Batch 019 claim priorities and field missions are derived workflow artifacts, not a second evidence store.');
 
         $queuePath = storage_path('app/batch019/batch019-ground-truth-v1/claim-queue.json');
@@ -1781,7 +1785,7 @@ class BiyaheDoctor extends Command
             $badMissions = count(array_filter($missions, static fn (mixed $mission): bool => ! is_array($mission)
                 || ($mission['is_evidence'] ?? true) !== false
                 || ! in_array($mission['status'] ?? null, ['PLANNED', 'IN_REVIEW'], true)));
-            $queueValid = ($payload['campaign_version'] ?? null) === \App\Services\FieldSurveys\Batch019GroundTruthCampaign::VERSION
+            $queueValid = ($payload['campaign_version'] ?? null) === Batch019GroundTruthCampaign::VERSION
                 && (int) ($payload['claim_count'] ?? -1) === count($claims)
                 && $badClaims === 0
                 && $badMissions === 0
@@ -1794,7 +1798,7 @@ class BiyaheDoctor extends Command
         $this->check('field mission evidence boundary', 'PASS',
             'Batch 019 field missions carry unresolved claim IDs and planned observations only; no planned mission is a field observation or an automatic claim promotion.');
 
-        $importerReady = method_exists(\App\Services\Routing\PedestrianNetworkImporter::class, 'import');
+        $importerReady = method_exists(PedestrianNetworkImporter::class, 'import');
         $this->check('incremental graph merge boundary', $importerReady ? 'PASS' : 'FAIL',
             'The pedestrian importer activates a candidate graph transactionally and preserves the active graph as the merge base.');
 
@@ -1923,6 +1927,21 @@ class BiyaheDoctor extends Command
         } else {
             $this->check('Batch 021 canonical network presence', 'BLOCKED', 'Live PostGIS is required for the production network-preservation check.');
         }
+    }
+
+    private function runBatch022Checks(): void
+    {
+        $updater = base_path('scripts/update-cebu-pedestrian-graph.sh');
+        $script = is_file($updater) ? (string) file_get_contents($updater) : '';
+        $safeTargetGuard = str_contains($script, 'db_database="${BIYAHE_DB_DATABASE:-}"')
+            && str_contains($script, "protected_database_pattern='prod|production'")
+            && str_contains($script, '$db_identity" =~ $protected_database_pattern')
+            && str_contains($script, 'staging_database_pattern=')
+            && str_contains($script, 'DB_URL=');
+
+        $this->check('Batch 022 importer database boundary', $safeTargetGuard ? 'PASS' : 'FAIL', $safeTargetGuard
+            ? 'The graph updater requires an explicit staging/test target, rejects production names, and clears inherited database URLs.'
+            : 'The graph updater is missing one or more protected-database target checks.');
     }
 
     private function checkCount(string $label, int $count, string $failureMessage): void

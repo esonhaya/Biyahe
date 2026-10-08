@@ -23,6 +23,8 @@ class BiyaheDoctorTest extends TestCase
         $this->seed();
 
         $artisan = $this->artisan('biyahe:doctor')
+            ->expectsOutputToContain('BIYAHE DOCTOR V23')
+            ->expectsOutputToContain('Batch 022 importer database boundary')
             ->expectsOutputToContain('postgis');
 
         if (config('database.default') === 'pgsql') {

@@ -93,6 +93,23 @@ excludes unsupported road types and ambiguous/restricted pedestrian access.
 See the [Osmium Tool manual](https://osmcode.org/osmium-tool/manual.html)
 for extraction and filtering semantics.
 
+The MD5 and `Last-Modified` values above describe the historical Batch 010
+source snapshot; that exact PBF is not present in the current local recovery
+cache. Batch 023 found a different, locally cached source snapshot at
+`api/.runtime/recovery-osm-verified-20261007/central_visayas.osm.pbf`:
+28,757,299 bytes, MD5
+`6531fa7af52b5565f13bfa68acff7a37`, SHA-256
+`787cac20ecc586b754b1a464643a040566d486457c6a37bc0b11ce683bc66d4d`.
+Its URL is the same Central Visayas OSM France endpoint; its PBF replication
+timestamp is `2026-10-07T01:00:21Z` (sequence `7318108`), with latest object
+timestamp `2026-10-07T00:02:08Z`. Its regional bounds are
+`120.5055069,6.221537,126.678755,14.6246966`; the Cebu extraction bounds below
+are `123.860,10.282,123.935,10.381`. The extract is ODbL-1.0, © OpenStreetMap
+contributors. This is a newer source snapshot, not the historical graph or
+its exact input. It would create a new graph identity. No bounded extraction
+or graph import from it has completed; the regional filter was stopped when
+available memory fell below the safety floor.
+
 Prerequisites: `curl`, `md5sum`, Osmium Tool, PHP/Laravel dependencies, and an
 application database configured for PostgreSQL with PostGIS. The recovered
 Batch 010 uses the OpenStreetMap France source at
@@ -106,11 +123,18 @@ and checksum used for the installed dataset.
 cd api
 BIYAHE_DB_CONNECTION=pgsql \
 BIYAHE_DB_HOST=127.0.0.1 BIYAHE_DB_PORT=5432 \
-BIYAHE_DB_DATABASE=biyahe BIYAHE_DB_USERNAME="$(id -un)" \
+BIYAHE_DB_DATABASE=biyahe_batch023_staging BIYAHE_DB_USERNAME="$(id -un)" \
 BIYAHE_PHP_MEMORY_LIMIT=512M \
-BIYAHE_PEDESTRIAN_DATA_DIR="$PWD/.runtime/b010-central-visayas-20261005" \
-  bash scripts/update-cebu-pedestrian-graph.sh 20261005
+BIYAHE_PEDESTRIAN_DATA_DIR="$PWD/.runtime/b023-central-visayas-staging" \
+  bash scripts/update-cebu-pedestrian-graph.sh 20261007
 ```
+
+The updater runs migrations and activates the imported graph, so run it only
+against a disposable staging database restored from a verified current-state
+backup. It requires an explicit `BIYAHE_DB_DATABASE` containing a test,
+staging, or batch marker, clears any inherited `DB_URL`, and refuses the
+production-named `biyahe` database and production-named targets. Review and
+back up the live database separately before any scoped production activation.
 
 The script downloads/resumes the configured Central Visayas PBF, verifies its
 MD5, filters the regional graph and clips the bounded graph with Osmium,

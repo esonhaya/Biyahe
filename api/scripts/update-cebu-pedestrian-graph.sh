@@ -9,21 +9,38 @@ fi
 
 api_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 data_dir="${BIYAHE_PEDESTRIAN_DATA_DIR:-${XDG_CACHE_HOME:-$HOME/.cache}/biyahe/pedestrian}"
-mkdir -p "$data_dir"
 
 db_connection="${BIYAHE_DB_CONNECTION:-${DB_CONNECTION:-pgsql}}"
 db_host="${BIYAHE_DB_HOST:-${DB_HOST:-127.0.0.1}}"
 db_port="${BIYAHE_DB_PORT:-${DB_PORT:-5432}}"
-db_database="${BIYAHE_DB_DATABASE:-${DB_DATABASE:-biyahe}}"
+db_database="${BIYAHE_DB_DATABASE:-}"
 db_username="${BIYAHE_DB_USERNAME:-${DB_USERNAME:-$(id -un)}}"
 db_password="${BIYAHE_DB_PASSWORD:-${DB_PASSWORD:-}}"
 if [[ "$db_connection" != "pgsql" ]]; then
     printf 'The pedestrian graph requires PostgreSQL/PostGIS; refusing DB_CONNECTION=%s.\n' "$db_connection" >&2
     exit 1
 fi
+if [[ -z "$db_database" ]]; then
+    printf 'Set BIYAHE_DB_DATABASE explicitly to a disposable test or staging database; refusing implicit database selection.\n' >&2
+    exit 1
+fi
+db_identity="${db_database,,}"
+protected_database_pattern='prod|production'
+staging_database_pattern='(^|[^a-z0-9])(test|testing|stage|staging|batch[0-9]+)([^a-z0-9]|$)'
+if [[ "$db_identity" == "biyahe" || "$db_identity" =~ $protected_database_pattern ]]; then
+    printf 'Refusing protected database target %s; this updater runs migrations and activates a graph, so use a disposable staging database.\n' "$db_database" >&2
+    exit 1
+fi
+if [[ ! "$db_identity" =~ $staging_database_pattern ]]; then
+    printf 'Refusing database target %s; its name must identify a disposable test or staging database.\n' "$db_database" >&2
+    exit 1
+fi
+
+mkdir -p "$data_dir"
 
 artisan() {
     DB_CONNECTION="$db_connection" \
+    DB_URL= \
     DB_HOST="$db_host" \
     DB_PORT="$db_port" \
     DB_DATABASE="$db_database" \

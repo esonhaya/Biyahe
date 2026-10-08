@@ -26,6 +26,7 @@ export default function NearbyRoutes() {
   const [loading, setLoading] = useState(false);
 
   function findNearby() {
+    setRoutes([]);
     if (!navigator.geolocation) {
       setStatus("This browser does not provide foreground location. Use route search instead.");
       return;
@@ -34,6 +35,7 @@ export default function NearbyRoutes() {
     setStatus("Requesting one foreground location…");
     navigator.geolocation.getCurrentPosition(
       (position) => {
+        setStatus("Loading mapped boarding candidates for this location…");
         void listNearbyRoutes(position.coords.latitude, position.coords.longitude, { radius: 1000, limit: 12 })
           .then((response) => {
             setRoutes(response.data);
@@ -41,7 +43,10 @@ export default function NearbyRoutes() {
               ? "No mapped boarding candidates were found within 1 km. This does not mean no service exists."
               : `${response.data.length} route${response.data.length === 1 ? "" : "s"} near mapped boarding candidates.`);
           })
-          .catch(() => setStatus("Nearby routes could not be loaded. No location was saved."))
+          .catch(() => {
+            setRoutes([]);
+            setStatus("Nearby routes could not be loaded. No location was saved.");
+          })
           .finally(() => setLoading(false));
       },
       (error) => {

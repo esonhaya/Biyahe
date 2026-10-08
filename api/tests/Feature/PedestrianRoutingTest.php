@@ -158,6 +158,7 @@ final class PedestrianRoutingTest extends TestCase
             $second = $importer->import($path, 'https://synthetic.invalid/cebu-test-extract.json');
             $this->assertTrue($second->alreadyImported);
             $this->assertSame($first->stableId, $second->stableId);
+            $this->assertSame(1, DB::table('pedestrian_network_datasets')->count());
             $this->assertSame(1, DB::table('pedestrian_network_datasets')->where('is_active', true)->count());
 
             $document = json_decode((string) file_get_contents($path), true, 512, JSON_THROW_ON_ERROR);
@@ -175,6 +176,31 @@ final class PedestrianRoutingTest extends TestCase
         } finally {
             @unlink($path);
         }
+    }
+
+    public function test_import_rejects_invalid_wgs84_geometry_without_writing_graph_rows(): void
+    {
+        $path = $this->writeSyntheticExtract();
+        $document = json_decode((string) file_get_contents($path), true, 512, JSON_THROW_ON_ERROR);
+        foreach ($document['elements'] as &$element) {
+            if (($element['type'] ?? null) === 'node' && ($element['id'] ?? null) === 1) {
+                $element['lat'] = 91;
+                break;
+            }
+        }
+        unset($element);
+        file_put_contents($path, json_encode($document, JSON_THROW_ON_ERROR));
+
+        try {
+            app(PedestrianNetworkImporter::class)->import($path, 'https://synthetic.invalid/invalid-geometry.json');
+            $this->fail('Expected import validation to reject coordinates outside WGS84 bounds.');
+        } catch (InvalidArgumentException $exception) {
+            $this->assertStringContainsString('valid WGS84 coordinates', $exception->getMessage());
+        }
+
+        $this->assertSame(0, DB::table('pedestrian_network_datasets')->count());
+        $this->assertSame(0, DB::table('pedestrian_network_nodes')->count());
+        $this->assertSame(0, DB::table('pedestrian_network_edges')->count());
     }
 
     public function test_graph_validation_failure_keeps_the_previous_dataset_active(): void
@@ -296,6 +322,48 @@ final class PedestrianRoutingTest extends TestCase
             ]);
             $this->assertSame(1, $exitCode);
             $this->assertSame('preserve-existing-output', file_get_contents($output));
+        } finally {
+            @unlink($input);
+            @unlink($output);
+        }
+    }
+
+    public function test_import_rejects_source_metadata_for_a_different_url_without_writing_graph_rows(): void
+    {
+        $input = tempnam(sys_get_temp_dir(), 'synthetic-osm-mismatch-xml-');
+        $output = tempnam(sys_get_temp_dir(), 'synthetic-osm-mismatch-json-');
+        if ($input === false || $output === false) {
+            $this->fail('Could not create temporary synthetic OSM provenance fixtures.');
+        }
+        $sourceUrl = 'https://synthetic.invalid/source-a.osm.pbf';
+        $xml = '<?xml version="1.0" encoding="UTF-8"?><osm version="0.6" timestamp="2026-10-05T14:00:02Z">'
+            .'<node id="1" lat="10.3" lon="123.87"/><node id="2" lat="10.3001" lon="123.87"/>'
+            .'<way id="100"><nd ref="1"/><nd ref="2"/><tag k="highway" v="footway"/></way></osm>';
+        file_put_contents($input, $xml);
+
+        try {
+            $exitCode = Artisan::call('biyahe:pedestrian:prepare-osm-xml', [
+                'file' => $input,
+                '--output' => $output,
+                '--source-url' => $sourceUrl,
+                '--source-file' => 'source-a.osm.pbf',
+                '--source-md5' => '0123456789abcdef0123456789abcdef',
+                '--source-elements' => '3',
+                '--osmium-version' => '1.16.0',
+            ]);
+
+            $this->assertSame(0, $exitCode, Artisan::output());
+
+            try {
+                app(PedestrianNetworkImporter::class)->import($output, 'https://synthetic.invalid/source-b.osm.pbf');
+                $this->fail('Expected import validation to reject a source URL mismatch.');
+            } catch (InvalidArgumentException $exception) {
+                $this->assertStringContainsString('incomplete or inconsistent', $exception->getMessage());
+            }
+
+            $this->assertSame(0, DB::table('pedestrian_network_datasets')->count());
+            $this->assertSame(0, DB::table('pedestrian_network_nodes')->count());
+            $this->assertSame(0, DB::table('pedestrian_network_edges')->count());
         } finally {
             @unlink($input);
             @unlink($output);

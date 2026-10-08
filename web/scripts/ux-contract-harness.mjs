@@ -4,6 +4,7 @@ const files = {
   page: await readFile(new URL("../src/app/page.tsx", import.meta.url), "utf8"),
   card: await readFile(new URL("../src/components/CommuteCard.tsx", import.meta.url), "utf8"),
   map: await readFile(new URL("../src/components/MapView.tsx", import.meta.url), "utf8"),
+  nearby: await readFile(new URL("../src/components/NearbyRoutes.tsx", import.meta.url), "utf8"),
   pageStyles: await readFile(new URL("../src/app/page.module.css", import.meta.url), "utf8"),
   globals: await readFile(new URL("../src/app/globals.css", import.meta.url), "utf8"),
   api: await readFile(new URL("../src/lib/api.ts", import.meta.url), "utf8"),
@@ -31,6 +32,10 @@ const checks = [
   ["API excluded from service worker cache", files.sw.includes("pathname.startsWith(\"/api/\")")],
   ["API fetches bypass the browser response cache", files.api.includes('cache: "no-store"')],
   ["offline-first personal data wording", files.page.includes("local commute shortcut") && files.page.toLowerCase().includes("offline")],
+  ["route explorer distinguishes load failure from an empty network", files.page.includes("networkLoadError") && files.page.includes("Mapped route data could not be loaded") && files.page.includes("No mapped route patterns are currently available.")],
+  ["route explorer offers an online retry", files.page.includes("onClick={retryNetworkLoad}") && files.page.includes("disabled={!online || loadingNetwork}")],
+  ["nearby refresh clears stale candidates before location lookup", files.nearby.indexOf("setRoutes([]);") >= 0 && files.nearby.indexOf("setRoutes([]);") < files.nearby.indexOf("getCurrentPosition")],
+  ["nearby reports candidate loading and clears failures", files.nearby.includes("Loading mapped boarding candidates for this location…") && files.nearby.includes("Nearby routes could not be loaded")],
 ];
 
 const failures = checks.filter(([, passed]) => !passed).map(([name]) => name);

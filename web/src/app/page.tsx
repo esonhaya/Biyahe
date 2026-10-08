@@ -312,6 +312,8 @@ export default function Home() {
   const [noRouteMessage, setNoRouteMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loadingNetwork, setLoadingNetwork] = useState(true);
+  const [networkLoadError, setNetworkLoadError] = useState(false);
+  const [networkReloadToken, setNetworkReloadToken] = useState(0);
   const [loadingJourney, setLoadingJourney] = useState(false);
   const [rideRouteCode, setRideRouteCode] = useState("");
   const [canRideResult, setCanRideResult] = useState<CanIRideResponse["data"] | null>(null);
@@ -377,11 +379,24 @@ export default function Home() {
         setRoutes(loadedRoutes);
         setStatus("Choose two places to find a supported journey.");
       })
-      .catch(() => setError("The transport API is unavailable. Try again when the API is running."))
-      .finally(() => setLoadingNetwork(false));
+      .catch(() => {
+        if (controller.signal.aborted) return;
+        setNetworkLoadError(true);
+        setError("The mapped transport data could not be loaded. Check the connection and try again.");
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setLoadingNetwork(false);
+      });
 
     return () => controller.abort();
-  }, []);
+  }, [networkReloadToken]);
+
+  function retryNetworkLoad() {
+    setError(null);
+    setNetworkLoadError(false);
+    setLoadingNetwork(true);
+    setNetworkReloadToken((token) => token + 1);
+  }
 
   useEffect(() => {
     const controller = new AbortController();
@@ -996,7 +1011,12 @@ export default function Home() {
         <div className={styles.sectionHeading}><div><p className={styles.eyebrow}>Transport network</p><h2 id="routes-heading">Review route patterns</h2></div></div>
         <p className={styles.sectionCopy}>Browse the mapped network when you want to explore. A mapped route is not a guarantee of current service or an exact boarding bay.</p>
         <label className={styles.routeSearch} htmlFor="route-search">Find a route<input id="route-search" value={routeQuery} onChange={(event) => setRouteQuery(event.target.value)} placeholder="Code or route name" /></label>
-        {loadingNetwork ? <p className={styles.emptyState}>Loading route patterns…</p> : routes.length === 0 ? <p className={styles.emptyState}>No route patterns are available from the API.</p> : visibleRoutes.length === 0 ? <p className={styles.emptyState}>No mapped route matches that search.</p> : (
+        {loadingNetwork ? <p className={styles.emptyState} role="status">Loading route patterns…</p> : networkLoadError ? (
+          <div className={styles.emptyState} role="alert">
+            <p>Mapped route data could not be loaded. Retry when you are online.</p>
+            <button type="button" className={styles.secondaryButton} onClick={retryNetworkLoad} disabled={!online || loadingNetwork}>Try again</button>
+          </div>
+        ) : routes.length === 0 ? <p className={styles.emptyState}>No mapped route patterns are currently available.</p> : visibleRoutes.length === 0 ? <p className={styles.emptyState}>No mapped route matches that search.</p> : (
           <div className={styles.routeGrid}>
             {visibleRoutes.map((route) => (
             <article className={styles.routeCard} key={route.id}>

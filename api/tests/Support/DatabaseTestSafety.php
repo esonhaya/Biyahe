@@ -47,6 +47,10 @@ final class DatabaseTestSafety
             }
         }
 
+        if (is_string($database) && str_contains(strtolower($database), 'prod')) {
+            throw new LogicException('Refusing database test setup: production-named databases are protected.');
+        }
+
         if ($driver === 'sqlite' && in_array($database, [':memory:', 'file::memory:'], true)) {
             return;
         }
