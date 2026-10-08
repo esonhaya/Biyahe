@@ -8,7 +8,7 @@ use Throwable;
 
 final class PrepareOfflinePedestrianGraph extends Command
 {
-    protected $signature = 'biyahe:pedestrian:stage-offline {input : Complete OSM XML path or - for a producer stream} {--output= : New SQLite graph artifact path} {--source-path= : Verified local source PBF} {--source-url= : Source extract URL} {--source-sha256= : Expected local PBF SHA-256} {--source-timestamp= : OSM snapshot timestamp when supplied} {--osmium-version= : Version of the PBF-to-XML producer} {--resume : Resume a matching .building SQLite checkpoint} {--stop-after-source : Keep a source checkpoint without publishing the graph} {--await-producer-exit : Require an explicit clean producer-exit confirmation before graph generation} {--producer-exit-confirmed : Confirm the producer exited successfully for a pending source checkpoint} {--resolve-required-nodes : Consume an Osmium node-ID resolution stream} {--export-required-node-ids= : Write producer-verified candidate node IDs for Osmium getid}';
+    protected $signature = 'biyahe:pedestrian:stage-offline {input : Complete OSM XML path or - for a producer stream} {--output= : New SQLite graph artifact path} {--source-path= : Verified local source PBF} {--source-url= : Source extract URL} {--source-sha256= : Expected local PBF SHA-256} {--source-timestamp= : OSM snapshot timestamp when supplied} {--osmium-version= : Version of the PBF-to-XML producer} {--resume : Resume a matching .building SQLite checkpoint} {--stop-after-source : Keep a source checkpoint without publishing the graph} {--await-producer-exit : Require an explicit clean producer-exit confirmation before graph generation} {--producer-exit-confirmed : Confirm the producer exited successfully for a pending source checkpoint} {--resolve-required-nodes : Consume a source node-resolution stream} {--resolve-full-source : Resolve IDs by streaming the full source and querying the SQLite ID index} {--export-required-node-ids= : Write producer-verified candidate node IDs for diagnostics or bounded getid runs} {--inspect-checkpoint : Verify and report a matching .building checkpoint without consuming input}';
 
     protected $description = 'Create a bounded, resumable SQLite pedestrian graph artifact without PostgreSQL.';
 
@@ -33,6 +33,8 @@ final class PrepareOfflinePedestrianGraph extends Command
                 (bool) $this->option('producer-exit-confirmed'),
                 (bool) $this->option('resolve-required-nodes'),
                 $this->option('export-required-node-ids') ?: null,
+                (bool) $this->option('resolve-full-source'),
+                (bool) $this->option('inspect-checkpoint'),
             );
         } catch (Throwable $exception) {
             $this->error($exception->getMessage());

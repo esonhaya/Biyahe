@@ -4,8 +4,8 @@ namespace Tests\Feature;
 
 use App\Enums\PedestrianRoutePurpose;
 use App\Enums\PedestrianRouteStatus;
-use App\Services\Routing\OfflinePedestrianGraphStager;
 use App\Services\Routing\LocalPedestrianGraphRouter;
+use App\Services\Routing\OfflinePedestrianGraphStager;
 use App\Services\Routing\PedestrianNetworkImporter;
 use App\Services\Routing\PedestrianRouteRequest;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -28,6 +28,9 @@ final class OfflinePedestrianGraphImportTest extends TestCase
             $this->assertSame(0, DB::table('pedestrian_network_datasets')->where('is_active', true)->count());
             $this->assertSame(1, DB::table('pedestrian_network_datasets')->count());
             $this->assertSame(0, DB::table('field_observations')->count());
+            $datasetMetadata = json_decode((string) DB::table('pedestrian_network_datasets')->value('metadata'), true, 32, JSON_THROW_ON_ERROR);
+            $this->assertSame('offline_scope_first_sqlite_v3', $datasetMetadata['source_details']['extract_strategy']);
+            $this->assertSame(hash_file('sha256', $files['source']), $datasetMetadata['source_details']['source_checksum_sha256']);
             $route = app(LocalPedestrianGraphRouter::class)->route(new PedestrianRouteRequest(
                 ['lat' => 10.3, 'lng' => 123.87],
                 ['lat' => 10.3001, 'lng' => 123.87],
@@ -79,6 +82,31 @@ final class OfflinePedestrianGraphImportTest extends TestCase
             $this->assertStringContainsString('production-named databases are protected', $exception->getMessage());
         }
         $this->assertSame(0, DB::table('pedestrian_network_datasets')->count());
+    }
+
+    public function test_incomplete_offline_checkpoint_is_rejected_before_database_staging(): void
+    {
+        $files = $this->graphFixture();
+        $incomplete = $files['directory'].'/incomplete.sqlite.building';
+        copy($files['output'], $incomplete);
+        $sqlite = new \PDO('sqlite:'.$incomplete, null, null, [\PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION]);
+        $sqlite->exec("UPDATE metadata SET value='\"SOURCE_COMPLETE\"' WHERE key='state'");
+        $sqlite->exec("UPDATE metadata SET value='false' WHERE key='input_complete'");
+        $sqlite->exec("UPDATE metadata SET value='false' WHERE key='references_complete'");
+
+        try {
+            try {
+                app(PedestrianNetworkImporter::class)->importOfflineSqlite($incomplete, $files['source'], DB::connection()->getDatabaseName());
+                $this->fail('An incomplete .building graph must be rejected by the offline importer.');
+            } catch (\RuntimeException $exception) {
+                $this->assertStringContainsString('incomplete or uses an unsupported format', $exception->getMessage());
+            }
+            $this->assertSame(0, DB::table('pedestrian_network_datasets')->count());
+            $this->assertSame(0, DB::table('pedestrian_network_nodes')->count());
+            $this->assertSame(0, DB::table('pedestrian_network_edges')->count());
+        } finally {
+            $this->cleanup($files);
+        }
     }
 
     private function graphFixture(): array

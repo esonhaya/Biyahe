@@ -88,6 +88,7 @@ BASH);
 
             $this->assertSame(6, $process->getExitCode(), $process->getOutput().$process->getErrorOutput());
             $this->assertStringContainsString('process_tree_rss_84000_over_65536', $process->getOutput());
+            $this->assertStringContainsString('resource_process_tree=', $process->getOutput());
             $this->assertStringContainsString('producer_stop=SIGTERM', $process->getOutput());
             $this->assertStringContainsString('operation=stopped_for_resource_budget', $process->getOutput());
             $this->assertFileExists($partial);

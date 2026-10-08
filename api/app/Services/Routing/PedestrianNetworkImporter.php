@@ -257,6 +257,7 @@ final class PedestrianNetworkImporter
             $existing = DB::table('pedestrian_network_datasets')->where('content_hash', $contentHash)->first();
             if ($existing !== null) {
                 $this->validateDatasetGraph((int) $existing->id, $nodesExpected, $edgesExpected);
+
                 return new PedestrianNetworkImportResult(
                     (string) $existing->stable_id, $nodesExpected, $edgesExpected, true,
                     $sourceElements, (int) ($metadata['candidate_ways'] ?? 0),
@@ -388,9 +389,9 @@ final class PedestrianNetworkImporter
      * graph remains the base; OSM node identity and coordinates are checked
      * before a replacement dataset is written transactionally.
      *
-     * @param array<int, array{lat: float, lng: float, walkable: bool, barrier: ?string, crossing: ?string}> $newNodes
-     * @param list<array<string, mixed>> $newEdges
-     * @param array<string, mixed> $sourceMetadata
+     * @param  array<int, array{lat: float, lng: float, walkable: bool, barrier: ?string, crossing: ?string}>  $newNodes
+     * @param  list<array<string, mixed>>  $newEdges
+     * @param  array<string, mixed>  $sourceMetadata
      * @return array{0: array<int, array{lat: float, lng: float, walkable: bool, barrier: ?string, crossing: ?string}>, 1: list<array<string, mixed>>, 2: array<string, mixed>}
      */
     private function mergeActiveGraph(array $newNodes, array $newEdges, array $sourceMetadata = []): array
@@ -475,8 +476,10 @@ final class PedestrianNetworkImporter
                     // that depend on a materially moved node. A refreshed
                     // extract must not silently move the established graph.
                     $conflictingNodeIds[(int) $nodeId] = true;
+
                     continue;
                 }
+
                 // Preserve the base coordinate even for small source drift.
                 continue;
             }
@@ -801,7 +804,7 @@ final class PedestrianNetworkImporter
         if ($format !== 'osmium-osm-xml-v1' || ($metadata['source'] ?? null) !== 'OPENSTREETMAP'
             || ! is_string($metadataUrl) || $metadataUrl !== $sourceUrl || ! $this->validSourceUrl($metadataUrl)
             || ! is_string($sourceFile) || $sourceFile === '' || strlen($sourceFile) > 255
-            || ! in_array($extractStrategy, ['complete_ways', 'streaming_sqlite_ref_complete'], true)
+            || ! in_array($extractStrategy, ['complete_ways', 'streaming_sqlite_ref_complete', 'offline_scope_first_sqlite_v3'], true)
             || ($metadata['license'] ?? null) !== self::LICENSE || ($metadata['attribution'] ?? null) !== self::ATTRIBUTION
             || ! is_array($extractBounds) || $extractBounds !== $configuredBounds) {
             throw new InvalidArgumentException('Biyahe OSM metadata is incomplete or inconsistent with the import source.');
@@ -810,7 +813,7 @@ final class PedestrianNetworkImporter
             throw new InvalidArgumentException('Biyahe OSM source MD5 metadata is malformed.');
         }
         if (($sha256 !== null && (! is_string($sha256) || ! preg_match('/^[a-f0-9]{64}$/i', $sha256)))
-            || ($extractStrategy === 'streaming_sqlite_ref_complete' && ! is_string($sha256))) {
+            || (in_array($extractStrategy, ['streaming_sqlite_ref_complete', 'offline_scope_first_sqlite_v3'], true) && ! is_string($sha256))) {
             throw new InvalidArgumentException('Biyahe OSM source SHA-256 metadata is malformed.');
         }
         if (! is_string($sourceTimestamp) || trim($sourceTimestamp) === '') {

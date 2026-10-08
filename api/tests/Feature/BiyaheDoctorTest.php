@@ -75,6 +75,7 @@ class BiyaheDoctorTest extends TestCase
         $source = $directory.'/central_visayas.osm.pbf';
         $xml = $directory.'/source.osm';
         $graph = $directory.'/graph.sqlite';
+        $checkpointOutput = $directory.'/checkpoint.sqlite';
         file_put_contents($source, 'synthetic source fixture');
         file_put_contents($xml, '<?xml version="1.0"?><osm version="0.6" timestamp="2026-10-07T01:00:21Z">'
             .'<node id="1" lat="10.3000" lon="123.8700"/><node id="2" lat="10.3001" lon="123.8700"/>'
@@ -87,14 +88,23 @@ class BiyaheDoctorTest extends TestCase
                 'timestamp' => '2026-10-07T01:00:21Z',
                 'osmium_version' => '1.19.1',
             ]);
+            app(OfflinePedestrianGraphStager::class)->build($xml, $checkpointOutput, $source, [
+                'url' => 'https://synthetic.invalid/central_visayas.osm.pbf',
+                'sha256' => hash_file('sha256', $source),
+                'timestamp' => '2026-10-07T01:00:21Z',
+                'osmium_version' => '1.19.1',
+            ], false, true);
             $exitCode = Artisan::call('biyahe:doctor', [
                 '--static' => true,
                 '--offline-graph' => $graph,
+                '--offline-checkpoint' => $checkpointOutput.'.building',
                 '--source-path' => $source,
             ]);
             $output = Artisan::output();
             $this->assertSame(2, $exitCode, $output);
             $this->assertMatchesRegularExpression('/offline graph artifact\s+PASS/', $output);
+            $this->assertMatchesRegularExpression('/offline phase checkpoints\s+PASS/', $output);
+            $this->assertMatchesRegularExpression('/offline source checksum\s+PASS/', $output);
             $this->assertStringContainsString('source fingerprint and SQLite integrity verified', $output);
             $this->assertStringContainsString('GRAPH_VALIDATED; ROUTING_READY.', $output);
         } finally {
@@ -138,6 +148,8 @@ class BiyaheDoctorTest extends TestCase
 
             $this->assertSame(2, $exitCode, $output);
             $this->assertMatchesRegularExpression('/offline source checkpoint\s+WARN/', $output);
+            $this->assertMatchesRegularExpression('/offline phase checkpoints\s+WARN/', $output);
+            $this->assertMatchesRegularExpression('/offline source checksum\s+BLOCKED/', $output);
             $this->assertStringContainsString('SOURCE_INCOMPLETE', $output);
             $this->assertMatchesRegularExpression('/offline graph checkpoint\s+WARN/', $output);
             $this->assertStringContainsString('GRAPH_INCOMPLETE', $output);

@@ -28,8 +28,9 @@ use App\Services\Routing\JourneyPlanner;
 use App\Services\Routing\JourneyPlanningContext;
 use App\Services\Routing\NetworkAudit;
 use App\Services\Routing\NetworkReleaseAudit;
-use App\Services\Routing\PedestrianNetworkImporter;
+use App\Services\Routing\OfflinePedestrianGraphCheckpoint;
 use App\Services\Routing\OfflinePedestrianGraphValidator;
+use App\Services\Routing\PedestrianNetworkImporter;
 use App\Services\Routing\PedestrianRouter;
 use App\Services\Routing\PedestrianRouteRequest;
 use App\Support\Diagnostics\DoctorCheckResult;
@@ -1424,8 +1425,8 @@ class BiyaheDoctor extends Command
                 && is_int($sourceDetails['source_elements'] ?? null)
                 && is_string($sourceDetails['osmium_version'] ?? null)
                 && preg_match('/^\d+\.\d+(\.\d+)?$/', $sourceDetails['osmium_version']) === 1
-                && in_array(($sourceDetails['extract_strategy'] ?? null), ['complete_ways', 'streaming_sqlite_ref_complete'], true)
-                && (($sourceDetails['extract_strategy'] ?? null) !== 'streaming_sqlite_ref_complete'
+                && in_array(($sourceDetails['extract_strategy'] ?? null), ['complete_ways', 'streaming_sqlite_ref_complete', 'offline_scope_first_sqlite_v3'], true)
+                && (! in_array(($sourceDetails['extract_strategy'] ?? null), ['streaming_sqlite_ref_complete', 'offline_scope_first_sqlite_v3'], true)
                     || (is_string($sourceDetails['source_checksum_sha256'] ?? null) && preg_match('/^[a-f0-9]{64}$/i', $sourceDetails['source_checksum_sha256']) === 1))
                 && is_array($sourceBounds)
                 && $sourceBounds === $configuredBounds
@@ -2217,30 +2218,90 @@ class BiyaheDoctor extends Command
             $path = str_replace(' ', '%20', realpath($checkpointPath) ?: $checkpointPath);
             $sqlite = new PDO('sqlite:file:'.$path.'?mode=ro', null, null, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
             $sqlite->exec('PRAGMA query_only=ON');
+            $integrity = (string) $sqlite->query('PRAGMA integrity_check')->fetchColumn();
+            if ($integrity !== 'ok') {
+                throw new \RuntimeException('SQLite integrity_check failed: '.$integrity);
+            }
             $metadata = [];
             foreach ($sqlite->query('SELECT key, value FROM metadata') as $row) {
                 $metadata[(string) $row['key']] = json_decode((string) $row['value'], true, 32, JSON_THROW_ON_ERROR);
             }
-            $schemaReady = ($metadata['format'] ?? null) === 'biyahe-pedestrian-sqlite-v2'
+            $legacySchema = ($metadata['format'] ?? null) === 'biyahe-pedestrian-sqlite-v2'
                 && (int) ($metadata['schema_version'] ?? 0) === 2;
-            if (! $schemaReady) {
-                $this->check('offline source checkpoint', 'FAIL', 'Checkpoint format or schema version is unsupported.');
-                $this->check('offline graph checkpoint', 'FAIL', 'GRAPH_INCOMPLETE: checkpoint format cannot be trusted.');
+            $schemaReady = ($metadata['format'] ?? null) === OfflinePedestrianGraphCheckpoint::FORMAT
+                && (int) ($metadata['schema_version'] ?? 0) === OfflinePedestrianGraphCheckpoint::SCHEMA_VERSION;
+            if (! $schemaReady && ! $legacySchema) {
+                $this->check('offline phase checkpoints', 'FAIL', 'Checkpoint format or schema version is unsupported.');
+                $this->check('offline source checkpoint', 'FAIL', 'SOURCE_INCOMPLETE: checkpoint schema cannot be trusted.');
+                $this->check('offline graph checkpoint', 'FAIL', 'GRAPH_INCOMPLETE: checkpoint schema cannot be trusted.');
 
                 return;
             }
 
             $sourceComplete = ($metadata['way_index_complete'] ?? false) === true
                 && ($metadata['source_pass_producer_exit'] ?? null) === 'PASS';
-            $this->check('offline source checkpoint', $sourceComplete ? 'PASS' : 'WARN', $sourceComplete
-                ? 'SOURCE_COMPLETE: the full way/relation pass and clean producer exit are checkpointed.'
-                : 'SOURCE_INCOMPLETE: a complete way/relation pass and clean producer exit are not both recorded.');
-
-            $graphComplete = ($metadata['input_complete'] ?? false) === true
+            $referencesComplete = ($metadata['input_complete'] ?? false) === true
                 && ($metadata['references_complete'] ?? false) === true
-                && ($metadata['state'] ?? null) === 'COMPLETE';
-            $this->check('offline graph checkpoint', 'WARN', $graphComplete
-                ? 'GRAPH_INCOMPLETE: graph rows are in a .building checkpoint and have not passed published-artifact validation.'
+                && ($metadata['resolution_xml_complete'] ?? false) === true
+                && ($metadata['resolution_producer_exit'] ?? null) === 'PASS';
+            $graphComplete = $referencesComplete && ($metadata['state'] ?? null) === 'COMPLETE';
+            $phaseCheckpointsValid = false;
+
+            if ($legacySchema) {
+                $this->check('offline phase checkpoints', 'WARN', 'A legacy v2 checkpoint has no durable phase fingerprints; a verified resume will migrate it.');
+            } else {
+                $phaseCheckpointsValid = $sourceComplete;
+                $checkpointService = new OfflinePedestrianGraphCheckpoint;
+                $identity = [
+                    'sha256' => (string) ($metadata['source_identity_sha256'] ?? ''),
+                    'timestamp' => $metadata['source_identity_timestamp'] ?? null,
+                ];
+                try {
+                    if ($sourceComplete) {
+                        $checkpointService->verify($sqlite, $identity, 'way_index');
+                    }
+                    if ($referencesComplete) {
+                        $checkpointService->verify($sqlite, $identity, 'reference_resolution');
+                    }
+                    if ($graphComplete) {
+                        $checkpointService->verify($sqlite, $identity, 'graph_build');
+                    }
+                    if ($phaseCheckpointsValid) {
+                        $this->check('offline phase checkpoints', 'PASS', 'Completed phases match their source identity, schema, record counts, and output fingerprints.');
+                    } else {
+                        $this->check('offline phase checkpoints', 'WARN', 'No producer-verified way-index checkpoint is available yet.');
+                    }
+                } catch (Throwable $exception) {
+                    $phaseCheckpointsValid = false;
+                    $this->check('offline phase checkpoints', 'FAIL', 'Checkpoint counts or fingerprints are invalid: '.$exception->getMessage());
+                }
+            }
+
+            $sourcePath = trim((string) $this->option('source-path'));
+            if ($sourcePath === '') {
+                $this->check('offline source checksum', 'BLOCKED', 'A local PBF path was not supplied, so the checkpoint source hash cannot be rechecked.');
+            } elseif (! is_file($sourcePath) || ! is_readable($sourcePath)) {
+                $this->check('offline source checksum', 'FAIL', 'The supplied local PBF is missing or unreadable.');
+            } else {
+                $sourceSha256 = hash_file('sha256', $sourcePath);
+                $sourceMd5 = hash_file('md5', $sourcePath);
+                $checksumValid = is_string($sourceSha256) && is_string($sourceMd5)
+                    && hash_equals(strtolower((string) ($metadata['source_sha256'] ?? '')), strtolower($sourceSha256))
+                    && hash_equals(strtolower((string) ($metadata['source_md5'] ?? '')), strtolower($sourceMd5))
+                    && basename($sourcePath) === ($metadata['source_file'] ?? null);
+                $this->check('offline source checksum', $checksumValid ? 'PASS' : 'FAIL', $checksumValid
+                    ? 'The local PBF SHA-256, MD5, and filename match the SQLite checkpoint.'
+                    : 'The local PBF checksum or filename does not match the SQLite checkpoint.');
+            }
+
+            $sourceStatus = $sourceComplete ? ($schemaReady && $phaseCheckpointsValid ? 'PASS' : 'FAIL') : 'WARN';
+            $this->check('offline source checkpoint', $sourceStatus, $sourceStatus === 'PASS'
+                ? 'SOURCE_COMPLETE: the full way/relation pass and clean producer exit have a verified phase fingerprint.'
+                : 'SOURCE_INCOMPLETE: a complete way/relation pass, clean producer exit, and valid phase fingerprint are not all recorded.');
+
+            $graphStatus = $graphComplete ? ($schemaReady && $phaseCheckpointsValid ? 'WARN' : 'FAIL') : 'WARN';
+            $this->check('offline graph checkpoint', $graphStatus, $graphComplete && $graphStatus === 'WARN'
+                ? 'GRAPH_INCOMPLETE: graph rows and fingerprints are complete in a .building file but have not passed published-artifact validation.'
                 : 'GRAPH_INCOMPLETE: referenced nodes and complete graph validation are not checkpointed.');
         } catch (Throwable $exception) {
             $this->check('offline source checkpoint', 'FAIL', 'Checkpoint metadata could not be read safely: '.$exception->getMessage());

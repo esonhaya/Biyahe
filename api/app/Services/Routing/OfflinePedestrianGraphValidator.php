@@ -24,8 +24,8 @@ final class OfflinePedestrianGraphValidator
             throw new RuntimeException('Offline SQLite integrity check failed: '.$integrity);
         }
         $metadata = $this->metadata($sqlite);
-        if (($metadata['format'] ?? null) !== 'biyahe-pedestrian-sqlite-v2'
-            || (int) ($metadata['schema_version'] ?? 0) !== 2
+        if (($metadata['format'] ?? null) !== OfflinePedestrianGraphCheckpoint::FORMAT
+            || (int) ($metadata['schema_version'] ?? 0) !== OfflinePedestrianGraphCheckpoint::SCHEMA_VERSION
             || ($metadata['state'] ?? null) !== 'COMPLETE'
             || ($metadata['input_complete'] ?? false) !== true
             || ($metadata['way_index_complete'] ?? false) !== true
@@ -65,6 +65,16 @@ final class OfflinePedestrianGraphValidator
             || ($metadata['attribution'] ?? null) !== '© OpenStreetMap contributors') {
             throw new RuntimeException('Offline graph provenance metadata is incomplete or inconsistent.');
         }
+
+        (new OfflinePedestrianGraphCheckpoint)->verifyCompleteArtifact($sqlite, [
+            'url' => $sourceUrl,
+            'file' => basename($sourcePath),
+            'sha256' => $storedHash,
+            'md5' => strtolower($actualMd5),
+            'timestamp' => (new DateTimeImmutable((string) $timestamp))->format(DATE_ATOM),
+            'osmium_version' => (string) $metadata['source_osmium_version'],
+            'bounds' => $metadata['source_bounds'],
+        ]);
 
         $nodes = (int) $sqlite->query('SELECT COUNT(*) FROM graph_nodes')->fetchColumn();
         $edges = (int) $sqlite->query('SELECT COUNT(*) FROM graph_edges')->fetchColumn();

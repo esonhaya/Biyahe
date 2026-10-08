@@ -42,7 +42,7 @@ final class PedestrianOsmPolicy
             || in_array($highway, ['motorway', 'motorway_link', 'trunk', 'trunk_link', 'construction', 'proposed', 'raceway'], true)
             || ! in_array($highway, self::WALKABLE_HIGHWAYS, true)
             || self::privateServiceWay($tags)
-            || isset($tags['foot:conditional']) || isset($tags['access:conditional'])) {
+            || self::hasUnsupportedConditionalAccess($tags)) {
             return false;
         }
         if (isset($tags['oneway:foot']) && ! in_array($tags['oneway:foot'], ['yes', 'no', '1', '0', 'true', 'false', '-1', 'reverse'], true)) {
@@ -103,8 +103,7 @@ final class PedestrianOsmPolicy
 
     public static function explicitlyRestrictedWay(array $tags): bool
     {
-        return isset($tags['foot:conditional'])
-            || isset($tags['access:conditional'])
+        return self::hasUnsupportedConditionalAccess($tags)
             || ! self::supportedAccessValue($tags['foot'] ?? null)
             || (! isset($tags['foot']) && ! self::supportedAccessValue($tags['access'] ?? null))
             || self::privateServiceWay($tags)
@@ -135,5 +134,21 @@ final class PedestrianOsmPolicy
         return ($tags['highway'] ?? null) === 'service'
             && in_array($tags['service'] ?? null, $restrictedServiceTypes, true)
             && ! $explicitFootAccess;
+    }
+
+    private static function hasUnsupportedConditionalAccess(array $tags): bool
+    {
+        foreach ([
+            'foot:conditional', 'access:conditional',
+            'foot:forward:conditional', 'foot:backward:conditional',
+            'access:forward:conditional', 'access:backward:conditional',
+            'oneway:foot:conditional',
+        ] as $key) {
+            if (isset($tags[$key])) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

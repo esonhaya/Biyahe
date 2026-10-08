@@ -81,6 +81,9 @@ meminfo_value_kb() { awk -v key="$1:" '$1 == key { print $2; exit }' "$meminfo_p
 diskfree_kb() { df -Pk "$disk_path" | awk 'NR == 2 { print $4; exit }'; }
 file_size_bytes() {
     local path="$1" bytes
+    if [[ ! -f "$path" && "$path" == *.building && -f "${path%.building}" ]]; then
+        path="${path%.building}"
+    fi
     [[ -f "$path" ]] || { printf '0\n'; return; }
     bytes="$(stat -c '%s' "$path" 2>/dev/null || true)"
     [[ "$bytes" =~ ^[0-9]+$ ]] && printf '%s\n' "$bytes" || printf 'unknown\n'
@@ -123,6 +126,34 @@ process_tree_rss_kb() {
             total = 0
             for (i = 1; i <= count; i++) if (found[pid[i]]) total += rss[pid[i]]
             print total
+        }
+    '
+}
+process_tree_members() {
+    local root_pid="$1"
+    ps -e -o pid=,ppid=,rss= | awk -v root="$root_pid" '
+        NF >= 3 && $1 ~ /^[0-9]+$/ && $2 ~ /^[0-9]+$/ && $3 ~ /^[0-9]+$/ {
+            pid[++count] = $1
+            parent[$1] = $2
+            rss[$1] = $3
+            if ($1 == root) present = 1
+        }
+        END {
+            if (!present) exit 1
+            found[root] = 1
+            for (pass = 0; pass <= count; pass++) {
+                changed = 0
+                for (i = 1; i <= count; i++) {
+                    if (found[parent[pid[i]]] && !found[pid[i]]) {
+                        found[pid[i]] = 1
+                        changed = 1
+                    }
+                }
+                if (!changed) break
+            }
+            for (i = 1; i <= count; i++) {
+                if (found[pid[i]]) printf "%s:%sKiB ", pid[i], rss[pid[i]]
+            }
         }
     '
 }
@@ -258,8 +289,14 @@ while process_running "$runner_pid"; do
     record "sample_elapsed_seconds=$elapsed process_tree_rss_kb=$rss_now peak_rss_kb=$peak_rss_kb memavailable_kb=$mem_now min_memavailable_kb=$min_observed_mem_kb cached_kb=$cached_now sreclaimable_kb=$reclaimable_now swapfree_kb=$swap_now diskfree_kb=$disk_now min_diskfree_kb=$min_observed_disk_kb sqlite_bytes=$watch_db_bytes sqlite_journal_bytes=$watch_journal_bytes sqlite_wal_bytes=$watch_wal_bytes sqlite_growth_bytes=$watched_growth producer_consumer_progress=$progress_now"
 
     breach_reason=
-    if [[ "$rss_now" == unknown || ! "$mem_now" =~ ^[0-9]+$ || ! "$disk_now" =~ ^[0-9]+$ ]]; then
+    if [[ ! "$mem_now" =~ ^[0-9]+$ || ! "$disk_now" =~ ^[0-9]+$ ]]; then
         breach_reason='resource_metric_unavailable'
+    elif [[ "$rss_now" == unknown ]]; then
+        if process_running "$runner_pid"; then
+            breach_reason='process_tree_rss_unavailable'
+        else
+            break
+        fi
     elif ((rss_now > max_rss_kb)); then
         breach_reason="process_tree_rss_"$rss_now"_over_"$max_rss_kb
     elif ((mem_now < min_mem_kb)); then
@@ -269,6 +306,8 @@ while process_running "$runner_pid"; do
     fi
     if [[ -n "$breach_reason" ]]; then
         breach_count=$((breach_count + 1))
+        members="$(process_tree_members "$runner_pid" 2>/dev/null || true)"
+        [[ -z "$members" ]] || record "resource_process_tree=$members"
         record "resource_breach_sample=$breach_count required_samples=$breach_samples reason=$breach_reason"
     else
         breach_count=0
