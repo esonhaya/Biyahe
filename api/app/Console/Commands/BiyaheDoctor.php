@@ -39,6 +39,7 @@ use Illuminate\Console\Command;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Symfony\Component\Process\Process;
 use Throwable;
 
 class BiyaheDoctor extends Command
@@ -56,8 +57,9 @@ class BiyaheDoctor extends Command
     public function handle(): int
     {
         $this->report = new DoctorReport;
-        $this->info($this->option('static') ? 'BIYAHE DOCTOR V28 STATIC' : 'BIYAHE DOCTOR V28');
+        $this->info($this->option('static') ? 'BIYAHE DOCTOR V29 STATIC' : 'BIYAHE DOCTOR V29');
         $this->check('application', 'PASS', 'Laravel booted and configuration loaded.');
+        $this->runOsmiumRuntimeCheck();
 
         if ($this->option('static')) {
             $this->check('database', 'BLOCKED', 'Static mode does not contact the configured database.');
@@ -134,6 +136,56 @@ class BiyaheDoctor extends Command
             $this->isBlocked = true;
 
             return false;
+        }
+    }
+
+    private function runOsmiumRuntimeCheck(): void
+    {
+        $binary = null;
+        foreach (explode(PATH_SEPARATOR, (string) (getenv('PATH') ?: '')) as $directory) {
+            $candidate = rtrim($directory, DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR.'osmium';
+            if (is_file($candidate) && is_executable($candidate)) {
+                $binary = $candidate;
+                break;
+            }
+        }
+
+        if ($binary === null) {
+            $this->check('Osmium executable readiness', 'BLOCKED', 'No Osmium executable is available on PATH.');
+            $this->check('real-source PBF reader proof', 'BLOCKED', 'A real PBF read cannot run without Osmium.');
+
+            return;
+        }
+
+        $prefix = trim((string) (getenv('PREFIX') ?: ''));
+        $environment = $prefix !== '' && is_dir($prefix.DIRECTORY_SEPARATOR.'lib')
+            ? ['LD_LIBRARY_PATH' => $prefix.DIRECTORY_SEPARATOR.'lib']
+            : null;
+
+        try {
+            $process = new Process([$binary, '--version'], base_path(), $environment, null, 5);
+            $process->run();
+            if (! $process->isSuccessful()) {
+                $diagnostic = trim($process->getErrorOutput() ?: $process->getOutput());
+                $this->check('Osmium executable readiness', 'FAIL', 'Osmium could not start successfully: '.substr($diagnostic, 0, 240));
+                $this->check('real-source PBF reader proof', 'BLOCKED', 'The Osmium runtime is not ready for a source read.');
+
+                return;
+            }
+
+            $output = $process->getOutput();
+            if (preg_match('/^osmium version ([0-9]+\.[0-9]+(?:\.[0-9]+)?)/m', $output, $matches) !== 1) {
+                $this->check('Osmium executable readiness', 'FAIL', 'Osmium exited successfully without a recognizable version.');
+                $this->check('real-source PBF reader proof', 'BLOCKED', 'The Osmium version response was invalid.');
+
+                return;
+            }
+
+            $this->check('Osmium executable readiness', 'PASS', 'Osmium '.$matches[1].' starts with the configured runtime path.');
+            $this->check('real-source PBF reader proof', 'WARN', 'Version output verifies executable linkage only; it does not prove that a PBF was parsed.');
+        } catch (Throwable $exception) {
+            $this->check('Osmium executable readiness', 'FAIL', 'Osmium readiness check failed: '.substr($exception->getMessage(), 0, 240));
+            $this->check('real-source PBF reader proof', 'BLOCKED', 'The Osmium runtime check did not complete.');
         }
     }
 
@@ -1211,6 +1263,7 @@ class BiyaheDoctor extends Command
             'maximum_input_bytes' => [1024, 100000000],
             'maximum_source_xml_bytes' => [1024, 1000000000],
             'maximum_input_nodes' => [1, 200000],
+            'maximum_offline_scope_nodes' => [1, 500000],
             'maximum_input_ways' => [1, 100000],
             'maximum_input_edges' => [1, 500000],
             'search_margin_meters' => [1, 20000],

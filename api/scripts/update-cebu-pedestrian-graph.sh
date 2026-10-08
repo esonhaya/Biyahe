@@ -8,6 +8,7 @@ if [[ ! "$snapshot" =~ ^[0-9]{8}$ ]]; then
 fi
 
 api_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+source "$api_dir/scripts/osmium-runtime.sh"
 data_dir="${BIYAHE_PEDESTRIAN_DATA_DIR:-${XDG_CACHE_HOME:-$HOME/.cache}/biyahe/pedestrian}"
 
 db_connection="${BIYAHE_DB_CONNECTION:-${DB_CONNECTION:-pgsql}}"
@@ -48,14 +49,6 @@ artisan() {
     DB_USERNAME="$db_username" \
     DB_PASSWORD="$db_password" \
     php -d memory_limit="${BIYAHE_PHP_MEMORY_LIMIT:-512M}" artisan "$@"
-}
-
-run_osmium() {
-    if [[ -n "${PREFIX:-}" && -d "$PREFIX/lib" ]]; then
-        LD_LIBRARY_PATH="$PREFIX/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}" command osmium "$@"
-    else
-        command osmium "$@"
-    fi
 }
 
 source_url="${BIYAHE_OSM_SOURCE_URL:-https://download.openstreetmap.fr/extracts/asia/philippines/central_visayas.osm.pbf}"

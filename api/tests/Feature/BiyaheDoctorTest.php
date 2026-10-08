@@ -24,7 +24,7 @@ class BiyaheDoctorTest extends TestCase
         $this->seed();
 
         $artisan = $this->artisan('biyahe:doctor')
-            ->expectsOutputToContain('BIYAHE DOCTOR V28')
+            ->expectsOutputToContain('BIYAHE DOCTOR V29')
             ->expectsOutputToContain('Batch 022 importer database boundary')
             ->expectsOutputToContain('postgis');
 
@@ -47,7 +47,7 @@ class BiyaheDoctorTest extends TestCase
         $output = Artisan::output();
 
         $this->assertSame(2, $exitCode, $output);
-        $this->assertStringContainsString('BIYAHE DOCTOR V28 STATIC', $output);
+        $this->assertStringContainsString('BIYAHE DOCTOR V29 STATIC', $output);
         $this->assertMatchesRegularExpression('/database\s+BLOCKED/', $output);
         $this->assertMatchesRegularExpression('/postgis\s+BLOCKED/', $output);
         $this->assertStringContainsString('frontend contract health', $output);
@@ -61,6 +61,8 @@ class BiyaheDoctorTest extends TestCase
         $this->assertStringContainsString('frontend integration behavior', $output);
         $this->assertStringContainsString('field planning integrity', $output);
         $this->assertStringContainsString('offline pedestrian graph tooling', $output);
+        $this->assertStringContainsString('Osmium executable readiness', $output);
+        $this->assertStringContainsString('real-source PBF reader proof', $output);
         $this->assertMatchesRegularExpression('/offline graph artifact\s+WARN/', $output);
         $this->assertStringContainsString('summary: PASS=', $output);
         $this->assertStringContainsString('BLOCKED=', $output);

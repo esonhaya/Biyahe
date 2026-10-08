@@ -40,6 +40,7 @@ return [
         'maximum_input_bytes' => 20_000_000,
         'maximum_source_xml_bytes' => 100_000_000,
         'maximum_input_nodes' => 100000,
+        'maximum_offline_scope_nodes' => (int) env('BIYAHE_OSM_OFFLINE_MAX_SCOPE_NODES', 200000),
         'maximum_input_ways' => 25000,
         'maximum_input_edges' => 100000,
         'coverage' => [

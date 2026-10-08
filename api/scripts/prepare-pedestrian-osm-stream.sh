@@ -19,6 +19,7 @@ if (($# == 8)); then
     bounds="$8"
 fi
 api_dir="$(cd "$(dirname "$0")/.." && pwd)"
+source "$(dirname "$0")/osmium-runtime.sh"
 output_dir="$(dirname "$output_path")"
 fifo_path="$output_dir/.biyahe-osm-xml-$$.fifo"
 consumer_log="$output_dir/.biyahe-osm-consumer-$$.log"
@@ -95,16 +96,7 @@ if ! kill -0 "$consumer_pid" 2>/dev/null; then
     exit "$consumer_status"
 fi
 
-prefix_dir="$(printenv PREFIX 2>/dev/null || true)"
-ld_path="$(printenv LD_LIBRARY_PATH 2>/dev/null || true)"
-if [[ -n "$prefix_dir" && -d "$prefix_dir/lib" ]]; then
-    if [[ -n "$ld_path" ]]; then
-        export LD_LIBRARY_PATH="$prefix_dir/lib:$ld_path"
-    else
-        export LD_LIBRARY_PATH="$prefix_dir/lib"
-    fi
-fi
-osmium cat --no-progress --output-format=osm --output=- "$source_path" >"$fifo_path" 2>"$producer_log" &
+run_osmium cat --no-progress --output-format=osm --output=- "$source_path" >"$fifo_path" 2>"$producer_log" &
 producer_pid=$!
 printf '%s\n' "$producer_pid" > "$cancel_pid_file"
 

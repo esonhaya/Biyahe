@@ -15,6 +15,7 @@ source_timestamp="$5"
 osmium_version="$6"
 cancel_pid_file="$7"
 api_dir="$(cd "$(dirname "$0")/.." && pwd)"
+source "$(dirname "$0")/osmium-runtime.sh"
 output_dir="$(dirname "$output_path")"
 fifo_path="$output_dir/.biyahe-offline-osm-$$.fifo"
 consumer_log="$output_dir/.biyahe-offline-consumer-$$.log"
@@ -36,7 +37,7 @@ command -v php >/dev/null && command -v osmium >/dev/null && command -v sha256su
     exit 2
 }
 version_output=""
-if ! version_output="$(osmium --version 2>&1)"; then
+if ! version_output="$(run_osmium --version 2>&1)"; then
     printf 'Osmium cannot run in this Termux environment: %s\n' "$version_output" >&2
     exit 4
 fi
@@ -79,12 +80,7 @@ if ! kill -0 "$consumer_pid" 2>/dev/null; then
     exit "$consumer_status"
 fi
 
-prefix_dir="$(printenv PREFIX 2>/dev/null || true)"
-ld_path="$(printenv LD_LIBRARY_PATH 2>/dev/null || true)"
-if [[ -n "$prefix_dir" && -d "$prefix_dir/lib" ]]; then
-    export LD_LIBRARY_PATH="$prefix_dir/lib${ld_path:+:$ld_path}"
-fi
-osmium cat --no-progress --output-format=osm --output=- "$source_path" >"$fifo_path" 2>"$producer_log" &
+run_osmium cat --no-progress --output-format=osm --output=- "$source_path" >"$fifo_path" 2>"$producer_log" &
 producer_pid=$!
 printf '%s\n' "$producer_pid" > "$cancel_pid_file"
 

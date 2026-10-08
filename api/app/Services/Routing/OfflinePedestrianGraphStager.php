@@ -280,7 +280,7 @@ final class OfflinePedestrianGraphStager
                         throw new InvalidArgumentException('OSM source exceeds the supported node count.');
                     }
                     $scopeNodes += $inside ? 1 : 0;
-                    if ($scopeNodes > max(1, (int) config('biyahe.pedestrian.maximum_input_nodes', 100_000))) {
+                    if ($scopeNodes > max(1, min(500_000, (int) config('biyahe.pedestrian.maximum_offline_scope_nodes', 200_000)))) {
                         throw new InvalidArgumentException('OSM source exceeds the configured in-scope node limit.');
                     }
                 } elseif ($reader->name === 'way') {

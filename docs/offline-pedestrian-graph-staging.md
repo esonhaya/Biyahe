@@ -14,7 +14,7 @@ The stream reader counts OSM relations and flags restriction relations that affe
 
 The output path must be new. In-progress work stays at `<output>.building`, which validators never accept as a completed artifact. Source ingestion commits bounded progress into SQLite. After a fully parsed source, graph generation can resume without rereading XML. An interrupted source pass is cleared and replayed from the verified input stream; a partial graph pass is rebuilt from the source tables. The final path appears only after SQLite integrity, provenance, endpoints, geometry, access directions, component count and content fingerprint pass.
 
-The SQLite page cache is capped at 8 MiB, transactions are bounded by source elements and generated edge batches, and the source stream holds one OSM element/way at a time. A single way can contain at most 100,000 references. Use `scripts/run-bounded-process.sh` to observe the complete producer/parser process tree RSS, available memory and disk. The builder does not infer safety from swap alone.
+The SQLite page cache is capped at 8 MiB, transactions are bounded by source elements and generated edge batches, and the source stream holds one OSM element/way at a time. A single way can contain at most 100,000 references. The offline path has a separate configurable in-scope source-node cap (`BIYAHE_OSM_OFFLINE_MAX_SCOPE_NODES`, default 200,000, hard maximum 500,000); this does not raise the legacy JSON import limit. Use `scripts/run-bounded-process.sh` to observe the complete producer/parser process tree RSS, available memory and disk. The builder does not infer safety from swap alone.
 
 ## Commands
 
@@ -40,6 +40,6 @@ After a source phase completes, `--resume --producer-exit-confirmed` can finish 
 
 `biyahe:pedestrian:import-offline` accepts only a structurally and routing-ready artifact. It requires an explicit exact PostgreSQL staging/test database identity (or the isolated SQLite in-memory test database), creates the dataset inactive inside one rollback-safe transaction, inserts bounded row batches, and never changes active-graph state. Graph activation remains a separate operation requiring a healthy database, verified backup, staged validation and rollback plan.
 
-## Current device limitation
+## Termux runtime selection
 
-The verified Central Visayas PBF is present, but the installed `osmium` executable currently fails at dynamic linking (`_ZNSt6__ndk113__hash_memoryEPKvm` is unresolved), and no alternative PBF reader is installed. No real-PBF stream or graph is claimed from synthetic XML fixtures. Once the Osmium runtime is repaired by a supported package update, the bounded producer stream above is the next safe source proof; measure it with the resource runner before attempting any larger graph.
+On Termux, source `scripts/osmium-runtime.sh` and invoke `run_osmium` for version checks and PBF reads. It points Osmium at the package-managed `$PREFIX/lib` runtime and drops an inherited `LD_LIBRARY_PATH` from another app. The Codex CLI Termux environment can prepend its own `libc++_shared.so`, which lacks symbols required by the packaged Osmium binary. Do not copy or replace shared libraries; verify the package runtime with `run_osmium --version` and then prove actual PBF parsing under `scripts/run-bounded-process.sh`.
