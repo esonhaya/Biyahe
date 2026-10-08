@@ -43,11 +43,12 @@ type SearchFieldProps = {
   onPick: (place: Place) => void;
   onClear: () => void;
   onSubmit: () => void;
+  onRetrySearch: () => void;
   loading?: boolean;
   searchError?: boolean;
 };
 
-function SearchField({ id, label, value, selectedPlace, onChange, options, onPick, onClear, onSubmit, loading = false, searchError = false }: SearchFieldProps) {
+function SearchField({ id, label, value, selectedPlace, onChange, options, onPick, onClear, onSubmit, onRetrySearch, loading = false, searchError = false }: SearchFieldProps) {
   const [activeIndex, setActiveIndex] = useState(0);
   const menuId = `${id}-suggestions`;
   const selectionContextId = `${id}-selected-context`;
@@ -98,7 +99,10 @@ function SearchField({ id, label, value, selectedPlace, onChange, options, onPic
       {hasQuery && (
         <div className={styles.suggestions}>
           {loading && <p className={styles.suggestionStatus} role="status" aria-live="polite">Searching mapped places…</p>}
-          {!loading && searchError && <p className={styles.suggestionStatus} role="status" aria-live="polite">Place matches could not be loaded. Check the connection and try again.</p>}
+          {!loading && searchError && <div className={styles.suggestionFailure} role="status" aria-live="polite">
+            <p className={styles.suggestionStatus}>Place matches could not be loaded. Check the connection and try again.</p>
+            <button type="button" className={styles.suggestionRetry} onClick={onRetrySearch}>Retry place search</button>
+          </div>}
           {!loading && !searchError && options.length === 0 && <p className={styles.suggestionStatus} role="status" aria-live="polite">No mapped place matched that name. Try a landmark or alias.</p>}
           {hasSuggestions && <div id={menuId} role="listbox" aria-label={`${label} suggestions`}>
             {options.map((place, index) => {
@@ -304,6 +308,8 @@ export default function Home() {
   const [destinationSearching, setDestinationSearching] = useState(false);
   const [originSearchError, setOriginSearchError] = useState(false);
   const [destinationSearchError, setDestinationSearchError] = useState(false);
+  const [originSearchRetryToken, setOriginSearchRetryToken] = useState(0);
+  const [destinationSearchRetryToken, setDestinationSearchRetryToken] = useState(0);
   const [journeys, setJourneys] = useState<Journey[]>([]);
   const [selectedJourney, setSelectedJourney] = useState<Journey | null>(null);
   const [selectedPattern, setSelectedPattern] = useState<RoutePattern | null>(null);
@@ -479,7 +485,7 @@ export default function Home() {
         .finally(() => { if (requestId === originRequestRef.current) setOriginSearching(false); });
     }, 250);
     return () => { window.clearTimeout(timer); controller.abort(); };
-  }, [originText, origin]);
+  }, [originText, origin, originSearchRetryToken]);
 
   useEffect(() => {
     const query = destinationText.trim();
@@ -503,7 +509,23 @@ export default function Home() {
         .finally(() => { if (requestId === destinationRequestRef.current) setDestinationSearching(false); });
     }, 250);
     return () => { window.clearTimeout(timer); controller.abort(); };
-  }, [destinationText, destination]);
+  }, [destinationText, destination, destinationSearchRetryToken]);
+
+  function retryOriginSearch() {
+    if (originText.trim().length < 2) return;
+    setOriginOptions([]);
+    setOriginSearchError(false);
+    setOriginSearching(true);
+    setOriginSearchRetryToken((token) => token + 1);
+  }
+
+  function retryDestinationSearch() {
+    if (destinationText.trim().length < 2) return;
+    setDestinationOptions([]);
+    setDestinationSearchError(false);
+    setDestinationSearching(true);
+    setDestinationSearchRetryToken((token) => token + 1);
+  }
 
   function changeOrigin(value: string) {
     setOrigin(null);
@@ -804,9 +826,9 @@ export default function Home() {
         </div>
         <form className={styles.searchCard} id="planning" onSubmit={(event) => { event.preventDefault(); void findRoute(); }}>
           <div className={styles.searchInputsRow}>
-            <SearchField id="destination-search" label="To" value={destinationText} selectedPlace={destination} onChange={changeDestination} options={destinationOptions} onPick={chooseDestination} onClear={clearDestination} onSubmit={() => { void findRoute(); }} loading={destinationSearching} searchError={destinationSearchError} />
+            <SearchField id="destination-search" label="To" value={destinationText} selectedPlace={destination} onChange={changeDestination} options={destinationOptions} onPick={chooseDestination} onClear={clearDestination} onSubmit={() => { void findRoute(); }} onRetrySearch={retryDestinationSearch} loading={destinationSearching} searchError={destinationSearchError} />
             <button type="button" className={styles.swapButton} onClick={swapPlaces} disabled={!origin && !destination} aria-label="Swap origin and destination">⇄</button>
-            <SearchField id="origin-search" label="From" value={originText} selectedPlace={origin} onChange={changeOrigin} options={originOptions} onPick={chooseOrigin} onClear={clearOrigin} onSubmit={() => { void findRoute(); }} loading={originSearching} searchError={originSearchError} />
+            <SearchField id="origin-search" label="From" value={originText} selectedPlace={origin} onChange={changeOrigin} options={originOptions} onPick={chooseOrigin} onClear={clearOrigin} onSubmit={() => { void findRoute(); }} onRetrySearch={retryOriginSearch} loading={originSearching} searchError={originSearchError} />
           </div>
           <button className={styles.primaryButton} type="submit" disabled={loadingJourney || loadingNetwork || !online}>
             {loadingJourney ? "Finding…" : online ? "Find route" : "Offline"}

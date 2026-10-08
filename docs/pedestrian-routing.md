@@ -144,8 +144,13 @@ php -d memory_limit=256M artisan biyahe:pedestrian:prepare-osm-stream - \
 ```
 
 This command still reads the regional PBF once; it avoids Osmium's extract
-ID tables and spills the source node index to disk. Do not use `--buffer-data`
-or the prior `tags-filter` setup. Batch 024 has tested the selector and graph
+ID tables and spills the source node index to disk. Do not use `--buffer-data`,
+`tags-filter`, or `extract --strategy=complete_ways` for this recovery. The
+staging updater uses this same `osmium cat` stream, checks disk before download
+and memory/swap/disk before parsing, and prepares the source before it runs
+migrations. Its source timestamp is read from the PBF's OSM XML header;
+HTTP `Last-Modified` is logged separately and is not substituted for the OSM
+snapshot time. Batch 024 has tested the selector and graph
 import semantics on a synthetic fixture, but has not run this pipeline over
 the PBF, measured its peak RSS, or imported a real graph. The downstream JSON
 importer still has bounded in-memory arrays; a full import requires healthy

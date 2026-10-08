@@ -82,6 +82,28 @@ DB_USERNAME, and DB_PASSWORD for Laravel. Stop the isolated server with:
 
     pg_ctl -D api/.runtime/postgres stop
 
+For a bounded Termux observation, run `bash api/scripts/observe-postgres.sh`.
+It observes an already-running server and never restarts or stops it. To allow
+one normal startup when the server is down, pass `--start`; the script checks
+available memory, free swap, disk space, and the PID file first. Defaults are
+850 MiB available RAM, 256 MiB free swap, and 1 GiB free disk; the minimums can
+be set with `BIYAHE_PG_MIN_MEMAVAILABLE_KB`,
+`BIYAHE_PG_MIN_SWAPFREE_KB`, and `BIYAHE_PG_MIN_DISKFREE_KB`. Each run writes a
+private timestamped observation log under `api/.runtime` with readiness,
+process, memory, swap, disk, and only newly appended PostgreSQL log lines.
+The default observation is five minutes at 15-second intervals; both can be
+bounded with `--duration-seconds` and `--interval-seconds`. A PID file for a
+live or uncertain process blocks startup. If its PID is absent, the observer
+leaves the file for PostgreSQL to handle during ordinary startup. The observer
+never edits cluster files. If the server exits, the log classifies only
+evidence appended during that observation; missing evidence remains unknown.
+The observer does not kill, restart, or automatically shut down PostgreSQL.
+
+Android may pause Termux when it is backgrounded. If that is disrupting a
+deliberate local database session, review Android's app battery settings for
+Termux and adjust them manually if appropriate. The repository does not change
+device settings.
+
 If the package mirror does not contain PostGIS, do not compile a large stack
 just to force a local PASS. Keep Doctor's BLOCKED result truthful and use CI
 or a conventional Linux host for the real integration suite.

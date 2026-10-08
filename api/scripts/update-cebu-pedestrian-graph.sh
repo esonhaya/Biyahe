@@ -37,10 +37,11 @@ if [[ ! "$db_identity" =~ $staging_database_pattern ]]; then
 fi
 
 mkdir -p "$data_dir"
+data_dir="$(cd "$data_dir" && pwd)"
 
 artisan() {
     DB_CONNECTION="$db_connection" \
-    DB_URL= \
+    DB_URL='' \
     DB_HOST="$db_host" \
     DB_PORT="$db_port" \
     DB_DATABASE="$db_database" \
@@ -62,15 +63,36 @@ source_file="${BIYAHE_OSM_SOURCE_FILE:-central_visayas.osm.pbf}"
 pbf_path="$data_dir/$source_file"
 checksum_path="$data_dir/${source_file}.md5"
 checksum_url="${BIYAHE_OSM_CHECKSUM_URL:-${source_url}.md5}"
-bounds='123.860,10.282,123.935,10.381'
+source_url_filename="$(basename "${source_url%%\?*}")"
+if [[ "$source_url_filename" != "$source_file" ]]; then
+    printf 'Source URL filename %s does not match configured local filename %s.\n' "$source_url_filename" "$source_file" >&2
+    exit 1
+fi
 
 source_headers="$(curl --fail --location --silent --show-error --head "$source_url")"
-source_timestamp="$(printf '%s\n' "$source_headers" \
+source_http_last_modified="$(printf '%s\n' "$source_headers" \
     | awk 'tolower($1) == "last-modified:" { sub(/^[^:]*:[[:space:]]*/, ""); gsub(/\r/, ""); value = $0 } END { print value }')"
 source_size="$(printf '%s\n' "$source_headers" \
     | awk 'tolower($1) == "content-length:" { gsub(/\r/, ""); value = $2 } END { print value }')"
-if [[ -z "$source_timestamp" || ! "$source_size" =~ ^[0-9]+$ ]]; then
-    printf 'The source server did not provide a usable snapshot timestamp and file size.\n' >&2
+if [[ ! "$source_size" =~ ^[0-9]+$ ]] || ((source_size < 1)); then
+    printf 'The source server did not provide a usable nonzero file size.\n' >&2
+    exit 1
+fi
+printf 'HTTP Last-Modified=%s; OSM snapshot time will come from the PBF stream header.\n' "${source_http_last_modified:-unavailable}"
+
+min_mem_kb="${BIYAHE_OSM_MIN_MEMAVAILABLE_KB:-870400}"
+min_swap_kb="${BIYAHE_OSM_MIN_SWAPFREE_KB:-262144}"
+min_disk_kb="${BIYAHE_OSM_MIN_DISKFREE_KB:-1048576}"
+for threshold in "$min_mem_kb" "$min_swap_kb" "$min_disk_kb"; do
+    if [[ ! "$threshold" =~ ^[0-9]+$ ]]; then
+        printf 'OSM resource thresholds must be nonnegative KiB integers.\n' >&2
+        exit 1
+    fi
+done
+disk_free_kb="$(df -Pk "$data_dir" | awk 'NR == 2 { print $4; exit }')"
+required_download_kb=$((min_disk_kb + (source_size + 1023) / 1024))
+if [[ ! "$disk_free_kb" =~ ^[0-9]+$ ]] || ((disk_free_kb < required_download_kb)); then
+    printf 'Insufficient disk for source download and reserve: free=%s KiB required=%s KiB.\n' "${disk_free_kb:-unknown}" "$required_download_kb" >&2
     exit 1
 fi
 
@@ -99,32 +121,37 @@ if [[ ! "$source_md5" =~ ^[[:xdigit:]]{32}$ ]]; then
     exit 1
 fi
 printf '%s  %s\n' "$source_md5" "$pbf_path" | md5sum --check --status -
+source_sha256="$(sha256sum "$pbf_path" | awk '{ print $1 }')"
+if [[ ! "$source_sha256" =~ ^[[:xdigit:]]{64}$ ]]; then
+    printf 'Could not calculate a source SHA-256.\n' >&2
+    exit 1
+fi
 
-run_osmium tags-filter --overwrite "$pbf_path" \
-    --output="$data_dir/central-visayas-${snapshot}-walk-source.osm.pbf" \
-    'w/highway=*' 'n/barrier=*' 'n/highway=crossing'
-run_osmium extract --overwrite --bbox="$bounds" --strategy=complete_ways \
-    --output="$data_dir/cebu-${snapshot}-walk.pbf" "$data_dir/central-visayas-${snapshot}-walk-source.osm.pbf"
-run_osmium fileinfo --extended --json "$data_dir/cebu-${snapshot}-walk.pbf" \
-    > "$data_dir/cebu-${snapshot}-walk-fileinfo.json"
-source_elements="$(php -r '$info = json_decode(stream_get_contents(STDIN), true, 512, JSON_THROW_ON_ERROR); echo array_sum($info["data"]["count"] ?? []);' \
-    < "$data_dir/cebu-${snapshot}-walk-fileinfo.json")"
-run_osmium cat --overwrite --output-format='osm,add_metadata=false' \
-    --output="$data_dir/cebu-${snapshot}-walk.osm" \
-    "$data_dir/cebu-${snapshot}-walk.pbf"
+available_mem_kb="$(awk '$1 == "MemAvailable:" { print $2; exit }' /proc/meminfo)"
+free_swap_kb="$(awk '$1 == "SwapFree:" { print $2; exit }' /proc/meminfo)"
+disk_free_kb="$(df -Pk "$data_dir" | awk 'NR == 2 { print $4; exit }')"
+printf 'OSM stream preflight: MemAvailable=%s KiB SwapFree=%s KiB DiskFree=%s KiB\n' \
+    "${available_mem_kb:-unknown}" "${free_swap_kb:-unknown}" "${disk_free_kb:-unknown}"
+if [[ ! "$available_mem_kb" =~ ^[0-9]+$ || ! "$free_swap_kb" =~ ^[0-9]+$ || ! "$disk_free_kb" =~ ^[0-9]+$ ]] \
+    || ((available_mem_kb < min_mem_kb || free_swap_kb < min_swap_kb || disk_free_kb < min_disk_kb)); then
+    printf 'OSM stream blocked by configured resource gate; no migration or database import was run.\n' >&2
+    exit 1
+fi
+
 osmium_version="$(run_osmium version | sed -n '1p' | sed -E 's/.* ([0-9]+\.[0-9]+\.[0-9]+).*/\1/')"
 prepared_json="$data_dir/cebu-pedestrian-${snapshot}.json"
 
 cd "$api_dir"
+run_osmium cat --no-progress --output-format='osm' --output=- "$pbf_path" \
+    | artisan biyahe:pedestrian:prepare-osm-stream - \
+        --output="$prepared_json" \
+        --source-path="$pbf_path" \
+        --source-url="$source_url" \
+        --source-md5="$source_md5" \
+        --source-sha256="$source_sha256" \
+        --osmium-version="$osmium_version"
+
 artisan migrate --force
-artisan biyahe:pedestrian:prepare-osm-xml "$data_dir/cebu-${snapshot}-walk.osm" \
-    --output="$prepared_json" \
-    --source-url="$source_url" \
-    --source-file="$source_file" \
-    --source-md5="$source_md5" \
-    --source-timestamp="$source_timestamp" \
-    --source-elements="$source_elements" \
-    --osmium-version="$osmium_version"
 artisan biyahe:pedestrian:import "$prepared_json" --source-url="$source_url"
 artisan biyahe:pedestrian:status
 artisan biyahe:doctor

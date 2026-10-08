@@ -19,6 +19,7 @@ const checks = [
   ["selected place context closes suggestions", files.page.includes("selectedPlace === null") && files.page.includes("aria-describedby={selectedPlace ? selectionContextId : undefined}")],
   ["place choices show disambiguating details", files.page.includes("place.description?.trim()") && files.page.includes("place.category.toLowerCase()")],
   ["place search failure has distinct feedback", files.page.includes("Place matches could not be loaded") && files.page.includes("setDestinationSearchError(true)")],
+  ["place search failure can retry the same query", files.page.includes("Retry place search") && files.page.includes("onRetrySearch") && files.page.includes("destinationSearchRetryToken") && files.page.includes("originSearchRetryToken")],
   ["suggestions stay bounded on small screens", files.pageStyles.includes("max-height: min(55vh, 360px)") && files.pageStyles.includes("overscroll-behavior: contain")],
   ["map overlays clear the device safe area", files.pageStyles.includes("bottom: max(12px, env(safe-area-inset-bottom))") && files.globals.includes("bottom: max(12px, env(safe-area-inset-bottom))")],
   ["debounced stale-safe search", files.page.includes("setTimeout") && files.page.includes("originRequestRef") && files.page.includes("destinationRequestRef")],

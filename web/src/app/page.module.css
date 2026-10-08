@@ -16,6 +16,9 @@
 .suggestions button:hover { background: #eef5f3; }
 .suggestions small, .patternList small { color: #6d858b; font-size: .72rem; }
 .suggestionDescription { display: -webkit-box; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+.suggestionFailure { padding-bottom: 8px; }
+.suggestions .suggestionRetry { align-items: flex-start; width: auto; margin: 0 12px; border: 1px solid #b8d2d3; border-radius: 8px; padding: 7px 10px; color: #14566d; background: #eef5f3; font-size: .76rem; font-weight: 700; }
+.suggestions .suggestionRetry:hover { background: #e2efeb; }
 .searchSelection { display: -webkit-box; overflow: hidden; margin: 7px 2px 0; color: #536e74; font-size: .75rem; line-height: 1.4; overflow-wrap: anywhere; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
 .primaryButton { align-self: end; border: 0; border-radius: 10px; padding: 14px 22px; color: #fff; background: #176b87; font: inherit; font-weight: 800; cursor: pointer; }
 .primaryButton:hover { background: #10556d; }
