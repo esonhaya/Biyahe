@@ -337,9 +337,11 @@ export default function Home() {
   const [selectedDisruption, setSelectedDisruption] = useState<DisruptionSummary | null>(null);
   const [pulse, setPulse] = useState<PulseResponse["data"] | null>(null);
   const [pulseFilter, setPulseFilter] = useState<"ALL" | "ROUTES" | "STOPS" | "AREAS" | "MAJOR">("ALL");
-  const [loadingPulse, setLoadingPulse] = useState(false);
+  const [loadingPulse, setLoadingPulse] = useState(true);
   const [pulseError, setPulseError] = useState<string | null>(null);
   const [pulseReloadToken, setPulseReloadToken] = useState(0);
+  const [loadingPattern, setLoadingPattern] = useState(false);
+  const [patternLoadError, setPatternLoadError] = useState(false);
   const [replanResult, setReplanResult] = useState<JourneyResponse | null>(null);
   const [replanError, setReplanError] = useState<string | null>(null);
   const [loadingReplan, setLoadingReplan] = useState(false);
@@ -349,6 +351,7 @@ export default function Home() {
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [journeyFilter, setJourneyFilter] = useState<"ALL" | "DIRECT" | "ONE_TRANSFER" | "TWO_TRANSFER">("ALL");
   const [routeQuery, setRouteQuery] = useState("");
+  const [journeyRequestActive, setJourneyRequestActive] = useState(false);
   const originRequestRef = useRef(0);
   const destinationRequestRef = useRef(0);
   const journeyRequestGateRef = useRef(new RequestGate());
@@ -422,10 +425,6 @@ export default function Home() {
 
   useEffect(() => {
     const controller = new AbortController();
-    setLoadingPulse(true);
-    setPulseError(null);
-    setPulse(null);
-    setActiveAdvisories([]);
     getPulse({ filter: pulseFilter }, controller.signal).then((loaded) => {
       if (controller.signal.aborted) return;
       setPulse(loaded);
@@ -441,14 +440,29 @@ export default function Home() {
     return () => controller.abort();
   }, [pulseFilter, pulseReloadToken]);
 
+  function preparePulseRequest() {
+    setLoadingPulse(true);
+    setPulseError(null);
+    setPulse(null);
+    setActiveAdvisories([]);
+  }
+
   function refreshAdvisories() {
+    preparePulseRequest();
     setPulseReloadToken((token) => token + 1);
+  }
+
+  function filterAdvisories(filter: "ALL" | "ROUTES" | "STOPS" | "AREAS" | "MAJOR") {
+    if (filter === pulseFilter) return;
+    preparePulseRequest();
+    setPulseFilter(filter);
   }
 
   function cancelJourneySearch() {
     if (!activeJourneyRequestRef.current) return;
     journeyRequestGateRef.current.cancel();
     activeJourneyRequestRef.current = null;
+    setJourneyRequestActive(false);
     setLoadingJourney(false);
     setStatus("Journey search cancelled. Your places remain selected.");
   }
@@ -456,6 +470,12 @@ export default function Home() {
   function cancelCanIRideCheck() {
     canRideRequestGateRef.current.cancel();
     setLoadingCanRide(false);
+  }
+
+  function cancelPatternRequest() {
+    patternRequestGateRef.current.cancel();
+    setLoadingPattern(false);
+    setPatternLoadError(false);
   }
 
   function scrollToMap() {
@@ -574,7 +594,7 @@ export default function Home() {
 
   function changeOrigin(value: string) {
     cancelJourneySearch();
-    patternRequestGateRef.current.cancel();
+    cancelPatternRequest();
     cancelCanIRideCheck();
     setOrigin(null);
     setOriginText(value);
@@ -594,7 +614,7 @@ export default function Home() {
 
   function changeDestination(value: string) {
     cancelJourneySearch();
-    patternRequestGateRef.current.cancel();
+    cancelPatternRequest();
     cancelCanIRideCheck();
     setDestination(null);
     setDestinationText(value);
@@ -614,7 +634,7 @@ export default function Home() {
 
   function chooseOrigin(place: Place) {
     cancelJourneySearch();
-    patternRequestGateRef.current.cancel();
+    cancelPatternRequest();
     cancelCanIRideCheck();
     setOrigin(place);
     setOriginText(place.name);
@@ -634,7 +654,7 @@ export default function Home() {
 
   function chooseDestination(place: Place) {
     cancelJourneySearch();
-    patternRequestGateRef.current.cancel();
+    cancelPatternRequest();
     cancelCanIRideCheck();
     setDestination(place);
     setDestinationText(place.name);
@@ -662,7 +682,7 @@ export default function Home() {
 
   function swapPlaces() {
     cancelJourneySearch();
-    patternRequestGateRef.current.cancel();
+    cancelPatternRequest();
     cancelCanIRideCheck();
     const nextOrigin = destination;
     const nextDestination = origin;
@@ -691,6 +711,7 @@ export default function Home() {
   async function searchJourney(from: Place, to: Place) {
     const request = journeyRequestGateRef.current.begin();
     activeJourneyRequestRef.current = request;
+    setJourneyRequestActive(true);
     setLoadingJourney(true);
     setError(null);
     setJourneys([]);
@@ -724,6 +745,7 @@ export default function Home() {
       if (journeyRequestGateRef.current.isCurrent(request)) {
         activeJourneyRequestRef.current = null;
         journeyRequestGateRef.current.finish(request);
+        setJourneyRequestActive(false);
         setLoadingJourney(false);
       }
     }
@@ -764,13 +786,17 @@ export default function Home() {
 
   async function showPattern(pattern: RoutePattern) {
     cancelJourneySearch();
+    cancelPatternRequest();
     const request = patternRequestGateRef.current.begin();
+    setLoadingPattern(true);
     setSelectedJourney(null);
     setSelectedPattern(pattern);
     setInstructionFocus(null);
     setOfflineSavedJourneyId(null);
+    setPatternLoadError(false);
     if (pattern.stops) {
       patternRequestGateRef.current.finish(request);
+      setLoadingPattern(false);
       scrollToMap();
       return;
     }
@@ -779,12 +805,15 @@ export default function Home() {
       const loaded = await getRoutePattern(pattern.id, request.signal);
       if (!patternRequestGateRef.current.isCurrent(request)) return;
       setSelectedPattern(loaded);
-      patternRequestGateRef.current.finish(request);
       scrollToMap();
     } catch {
       if (patternRequestGateRef.current.isCurrent(request)) {
+        setPatternLoadError(true);
+      }
+    } finally {
+      if (patternRequestGateRef.current.isCurrent(request)) {
         patternRequestGateRef.current.finish(request);
-        setError("This route pattern could not be loaded from the API.");
+        setLoadingPattern(false);
       }
     }
   }
@@ -820,7 +849,7 @@ export default function Home() {
   }
 
   function selectJourney(journey: Journey, offlineSnapshot = false) {
-    patternRequestGateRef.current.cancel();
+    cancelPatternRequest();
     setSelectedPattern(null);
     setSelectedJourney(journey);
     setOfflineSavedJourneyId(offlineSnapshot ? journey.id : null);
@@ -861,6 +890,7 @@ export default function Home() {
   async function refreshSavedJourney(saved: SavedJourney) {
     const request = journeyRequestGateRef.current.begin();
     activeJourneyRequestRef.current = request;
+    setJourneyRequestActive(true);
     setLoadingJourney(true);
     setError(null);
     try {
@@ -883,6 +913,7 @@ export default function Home() {
       if (journeyRequestGateRef.current.isCurrent(request)) {
         activeJourneyRequestRef.current = null;
         journeyRequestGateRef.current.finish(request);
+        setJourneyRequestActive(false);
         setLoadingJourney(false);
       }
     }
@@ -940,7 +971,7 @@ export default function Home() {
             <button className={styles.primaryButton} type="submit" disabled={loadingJourney || loadingNetwork || !online}>
               {loadingJourney ? "Finding…" : online ? "Find route" : "Offline"}
             </button>
-            {activeJourneyRequestRef.current && <button type="button" className={styles.secondaryButton} onClick={cancelJourneySearch}>Cancel request</button>}
+            {journeyRequestActive && <button type="button" className={styles.secondaryButton} onClick={cancelJourneySearch}>Cancel request</button>}
           </div>
           <p className={styles.status} role="status">{status}</p>
           {error && <p className={styles.error} role="alert">{error}</p>}
@@ -1030,7 +1061,7 @@ export default function Home() {
         error={pulseError}
         selectedJourney={selectedJourney}
         onRefresh={() => { void refreshAdvisories(); }}
-        onFilter={setPulseFilter}
+        onFilter={filterAdvisories}
         onAdvisorySelect={setSelectedDisruption}
       />
 
@@ -1137,6 +1168,11 @@ export default function Home() {
             </ol>
           </div>
         )}
+        {loadingPattern && selectedPattern && <p className={styles.emptyState} role="status" aria-live="polite">Loading {selectedPattern.direction} stop details…</p>}
+        {patternLoadError && selectedPattern && <div className={styles.emptyState} role="alert">
+          <p>Could not load the stops for {selectedPattern.name} · {selectedPattern.direction}. The mapped route remains selected.</p>
+          <button type="button" className={styles.secondaryButton} onClick={() => { void showPattern(selectedPattern); }}>Retry this direction</button>
+        </div>}
       </section>
 
       <section className={styles.routeSection} id="explore" aria-labelledby="routes-heading">

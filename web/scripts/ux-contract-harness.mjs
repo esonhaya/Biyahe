@@ -42,7 +42,7 @@ const checks = [
   ["nearby refresh clears stale candidates before location lookup", files.nearby.indexOf("setRoutes([]);") >= 0 && files.nearby.indexOf("setRoutes([]);") < files.nearby.indexOf("getCurrentPosition")],
   ["nearby reports candidate loading and clears failures", files.nearby.includes("Loading mapped boarding candidates for this location…") && files.nearby.includes("Nearby routes could not be loaded")],
   ["journey requests cancel and reject superseded results", files.page.includes("Cancel request") && files.page.includes("planJourney(from.id, to.id, request.signal)") && files.page.includes("isCurrent(request)")],
-  ["changing selected places cancels pending journey work", files.page.includes("function cancelJourneySearch()") && files.page.includes("cancelJourneySearch();\n    patternRequestGateRef.current.cancel()")],
+  ["changing selected places cancels pending journey and pattern work", files.page.includes("function cancelJourneySearch()") && files.page.includes("cancelJourneySearch();\n    cancelPatternRequest()")],
   ["Can I Ride and pattern detail reject late responses", files.page.includes("canIRide(rideRouteCode, origin.id, destination.id, request.signal)") && files.page.includes("getRoutePattern(pattern.id, request.signal)")],
   ["search selection stays in range after options shrink", files.page.includes("Math.min(activeIndex, options.length - 1)") && files.page.includes("options[selectedIndex]")],
   ["clearing a search returns keyboard focus to its field", files.page.includes("onClear(); inputRef.current?.focus()")],
@@ -55,6 +55,7 @@ const checks = [
   ["Route Explorer offers a one-tap filter reset", files.page.includes("No mapped route matches that search.") && files.page.includes("Clear route search") && files.page.includes('setRouteQuery("")')],
   ["Field Mode labels stale mission snapshots beside claim review", files.field.includes("staleMissionSnapshot &&") && files.field.includes("Claim status may have changed; verify before recording an observation.")],
   ["Field Mode cannot submit a mission with local drafts still pending", files.field.includes("const synced = await syncOutbox()") && files.field.includes("if (!synced)") && files.field.includes("Mission not submitted: local observations")],
+  ["Route Explorer shows pattern-load failure beside its retry action", files.page.includes("Could not load the stops for {selectedPattern.name}") && files.page.includes("Retry this direction") && files.page.includes("setPatternLoadError(true)")],
 ];
 
 const failures = checks.filter(([, passed]) => !passed).map(([name]) => name);
