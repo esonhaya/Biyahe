@@ -28,7 +28,7 @@ directly affects those users. Testability notes the smallest useful check.
 | 15 | Route Explorer | Pattern-load errors use the page-wide alert, so the failed direction and retry action are not adjacent to the selected pattern. | M | S | Pattern API | Focus and context | Component fixture | Done |
 | 16 | Nearby | A location lookup has no explicit cancel action while the browser permission prompt or network request is pending. | M | M | Browser geolocation | Mobile foreground flow | Mock geolocation | Follow-up |
 | 17 | Offline | Saved journey age is available, but there is no compact age band to help sort old snapshots before opening one. | M | S | Local saved timestamp | Small screen scanning | Saved-journey fixture | Done |
-| 18 | Ride Mode | A resumed local guide needs a visible age/current-service reminder; progress persistence alone does not refresh route or advisory truth. | M | S | Local session timestamp | Mobile trip use | Ride Mode fixture | Follow-up |
+| 18 | Ride Mode | A resumed local guide needs a visible age/current-service reminder; progress persistence alone does not refresh route or advisory truth. | M | S | Local session timestamp | Mobile trip use | Ride Mode fixture | Done |
 | 19 | Route Explorer | A no-match route filter has no one-tap clear action. | L | S | None | Touch and keyboard | UX contract | Done |
 | 20 | Field Mode | The offline mission view should keep the cache timestamp adjacent to claims after a failed refresh, not only above the overall mission list. | M | S | Local mission cache | Field screen readability | Field Mode harness | Done |
 | 21 | Field Mode | A duplicate outbox sync needs per-draft visible status so an operator can distinguish queued, accepted, and review-pending work. | H | M | Sync response | Field mobile use | Idempotency fixture | Done |
@@ -55,6 +55,8 @@ directly affects those users. Testability notes the smallest useful check.
   snapshot timestamp/staleness warning beside the claim list.
 - Added a relative saved-snapshot age label while retaining the explicit
   warning that route and service details may have changed.
+- Added Ride Mode local-progress age and a reminder that saved guidance does
+  not establish current service status.
 - Shows each queued/rejected/received Field Mode draft with its claim prompt
   and receipt/review state, and blocks mission submission while that session
   has pending drafts. Evidence remains review-only and is never auto-promoted.

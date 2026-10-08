@@ -59,6 +59,7 @@ const checks = [
   ["Field Mode shows per-draft receipt, rejection, and claim context", files.field.includes("Observation sync status") && files.field.includes("Server rejection:") && files.field.includes("pending human review") && files.field.includes("claimPromptFor")],
   ["Route Explorer shows pattern-load failure beside its retry action", files.page.includes("Could not load the stops for {selectedPattern.name}") && files.page.includes("Retry this direction") && files.page.includes("setPatternLoadError(true)")],
   ["saved offline snapshots show a deterministic age band", files.card.includes("savedSnapshotAgeLabel(savedAt)") && files.savedJourneyLibrary.includes("export function savedSnapshotAgeLabel")],
+  ["Ride Mode labels local progress age and service uncertainty", files.ride.includes("Local Ride Mode progress last updated") && files.ride.includes("does not confirm current service")],
 ];
 
 const failures = checks.filter(([, passed]) => !passed).map(([name]) => name);

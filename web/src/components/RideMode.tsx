@@ -5,6 +5,7 @@ import type { DisruptionSummary, Journey, JourneyDisruptionImpact, JourneyLeg, R
 import { getRoutePattern } from "@/lib/api";
 import DisruptionNotice from "@/components/DisruptionNotice";
 import { matchesEntity } from "@/lib/disruptions";
+import { savedSnapshotAgeLabel } from "@/lib/savedJourneys";
 import {
   generateCommuteInstructions,
   instructionForRideMode,
@@ -454,6 +455,7 @@ export default function RideMode({ selectedJourney, offlineSnapshot = false, all
       )}
       {session && (
         <div className={styles.rideModeCard}>
+          <p className={styles.snapshotNote}>Local Ride Mode progress last updated {savedSnapshotAgeLabel(new Date(session.updatedAt).toISOString())}. This guide does not confirm current service; check advisories when connected.</p>
           {journeyChanged && session.status === "ACTIVE" && (
             <div className={styles.rideNotice} role="alert">
               <strong>A different journey is selected.</strong>
