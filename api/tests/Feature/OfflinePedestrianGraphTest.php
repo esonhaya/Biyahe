@@ -48,7 +48,7 @@ final class OfflinePedestrianGraphTest extends TestCase
         }
     }
 
-    public function test_offline_scope_cap_is_separate_from_the_legacy_input_node_cap(): void
+    public function test_offline_scope_and_pedestrian_selection_are_separate_from_legacy_input_cap(): void
     {
         $files = $this->fixtureFiles();
         file_put_contents($files['xml'], $this->xml([
@@ -56,6 +56,7 @@ final class OfflinePedestrianGraphTest extends TestCase
             '<node id="2" lat="10.3001" lon="123.8700"/>',
             '<node id="3" lat="10.3002" lon="123.8700"/>',
             '<way id="100"><nd ref="1"/><nd ref="2"/><tag k="highway" v="footway"/></way>',
+            '<way id="200"><nd ref="1"/><nd ref="3"/><tag k="highway" v="motorway"/></way>',
         ]));
         config([
             'biyahe.pedestrian.maximum_input_nodes' => 2,
@@ -67,6 +68,8 @@ final class OfflinePedestrianGraphTest extends TestCase
             $this->assertSame('PASS', $result['status']);
             $this->assertSame(2, $result['nodes']);
             $this->assertSame(1, $result['edges']);
+            $sqlite = new PDO('sqlite:'.$files['output']);
+            $this->assertSame(1, (int) $sqlite->query('SELECT COUNT(*) FROM source_ways')->fetchColumn());
 
             $limitedOutput = $files['directory'].'/graph-limited.sqlite';
             config(['biyahe.pedestrian.maximum_offline_scope_nodes' => 2]);

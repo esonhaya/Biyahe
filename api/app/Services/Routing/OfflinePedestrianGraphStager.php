@@ -295,6 +295,10 @@ final class OfflinePedestrianGraphStager
                     if ($wayCount > 10_000_000) {
                         throw new InvalidArgumentException('OSM source exceeds the supported way count.');
                     }
+                    $wayTags = PedestrianOsmPolicy::tags($way['tags']);
+                    if (! PedestrianOsmPolicy::walkableWay($wayTags)) {
+                        continue;
+                    }
                     $known = $this->lookupInsideNodes($sqlite, $way['refs']);
                     $candidate = false;
                     for ($index = 0, $last = count($way['refs']) - 1; $index < $last; $index++) {
@@ -310,7 +314,7 @@ final class OfflinePedestrianGraphStager
                         if (count($known) !== count(array_unique($way['refs']))) {
                             throw new InvalidArgumentException('A candidate way references a node missing from the source stream.');
                         }
-                        $wayInsert->execute([$way['id'], json_encode($way['tags'], JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES)]);
+                        $wayInsert->execute([$way['id'], json_encode($wayTags, JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES)]);
                         foreach ($way['refs'] as $index => $nodeId) {
                             $refInsert->execute([$way['id'], $index, $nodeId]);
                             $requiredInsert->execute([$nodeId]);
