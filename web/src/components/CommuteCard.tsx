@@ -9,6 +9,7 @@ import {
   type CommuteInstruction,
   type CommuteInstructionType,
 } from "@/lib/commuteInstructions";
+import { savedSnapshotAgeLabel } from "@/lib/savedJourneys";
 import styles from "@/app/page.module.css";
 
 type CommuteCardProps = {
@@ -89,7 +90,7 @@ export default function CommuteCard({
   const model = useMemo(() => generateCommuteInstructions(journey), [journey]);
   const [shareStatus, setShareStatus] = useState<string | null>(null);
   const compact = variant === "compact";
-  const savedDate = savedAt ? new Date(savedAt) : null;
+  const savedAge = savedAt ? savedSnapshotAgeLabel(savedAt) : null;
   const rideInstructions = model.instructions.filter((instruction) => instruction.type === "RIDE");
   const routeCodes = Array.from(new Set(rideInstructions.map((instruction) => instruction.routeCode).filter((code): code is string => Boolean(code))));
 
@@ -141,7 +142,7 @@ export default function CommuteCard({
       {model.summary.walkingDistanceHasFallback && <p className={styles.warning}>Walking includes an estimate; Biyahe is not claiming a mapped street path for every walking leg.</p>}
       {offlineSnapshot && (
         <p className={styles.snapshotNote}>
-          Offline saved snapshot{savedDate && Number.isFinite(savedDate.getTime()) ? ` · saved ${savedDate.toLocaleDateString()}` : ""}. It may be out of date.
+          Offline saved snapshot{savedAge ? ` · ${savedAge}` : ""}. Route and service details may have changed.
         </p>
       )}
       {(journey.disruptions ?? []).filter((impact) => impact.affected_leg_index === null || impact.affected_leg_index === undefined).map((impact) => (

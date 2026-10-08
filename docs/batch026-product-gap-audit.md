@@ -27,7 +27,7 @@ directly affects those users. Testability notes the smallest useful check.
 | 14 | Map | MapLibre tile/style failure is reported with a text alternative, but a transient failure has no retry control. | M | M | Tile/style service | Map alternative | Map component fixture | Follow-up |
 | 15 | Route Explorer | Pattern-load errors use the page-wide alert, so the failed direction and retry action are not adjacent to the selected pattern. | M | S | Pattern API | Focus and context | Component fixture | Done |
 | 16 | Nearby | A location lookup has no explicit cancel action while the browser permission prompt or network request is pending. | M | M | Browser geolocation | Mobile foreground flow | Mock geolocation | Follow-up |
-| 17 | Offline | Saved journey age is available, but there is no compact age band to help sort old snapshots before opening one. | M | S | Local saved timestamp | Small screen scanning | Saved-journey fixture | Follow-up |
+| 17 | Offline | Saved journey age is available, but there is no compact age band to help sort old snapshots before opening one. | M | S | Local saved timestamp | Small screen scanning | Saved-journey fixture | Done |
 | 18 | Ride Mode | A resumed local guide needs a visible age/current-service reminder; progress persistence alone does not refresh route or advisory truth. | M | S | Local session timestamp | Mobile trip use | Ride Mode fixture | Follow-up |
 | 19 | Route Explorer | A no-match route filter has no one-tap clear action. | L | S | None | Touch and keyboard | UX contract | Done |
 | 20 | Field Mode | The offline mission view should keep the cache timestamp adjacent to claims after a failed refresh, not only above the overall mission list. | M | S | Local mission cache | Field screen readability | Field Mode harness | Done |
@@ -53,6 +53,8 @@ directly affects those users. Testability notes the smallest useful check.
 - Added an inline Ride Mode end confirmation before clearing local progress.
 - Added a one-tap Route Explorer search reset and placed the offline mission
   snapshot timestamp/staleness warning beside the claim list.
+- Added a relative saved-snapshot age label while retaining the explicit
+  warning that route and service details may have changed.
 - Prevented mission submission while that session still has locally queued or
   rejected observation drafts. This preserves review boundaries; it does not
   provide per-draft status or promote evidence.

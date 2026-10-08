@@ -7,6 +7,7 @@ import {
 import {
   isJourneySnapshot,
   parseSavedJourneys,
+  savedSnapshotAgeLabel,
   serializeSavedJourneys,
   upsertSavedJourney,
 } from "../src/lib/savedJourneys.ts";
@@ -158,6 +159,10 @@ assert.equal(models[0].instructions.filter((instruction) => instruction.type ===
 assert.equal(models[0].instructions.find((instruction) => instruction.type === "TRANSFER_BOARD"), undefined);
 
 const saved = upsertSavedJourney([], syntheticJourney(2), "2026-10-07T00:00:00.000Z");
+assert.equal(savedSnapshotAgeLabel("2026-10-08T09:30:00.000Z", Date.parse("2026-10-08T10:00:00.000Z")), "saved less than an hour ago");
+assert.equal(savedSnapshotAgeLabel("2026-10-08T00:00:00.000Z", Date.parse("2026-10-08T10:00:00.000Z")), "saved less than a day ago");
+assert.equal(savedSnapshotAgeLabel("2026-10-06T00:00:00.000Z", Date.parse("2026-10-08T10:00:00.000Z")), "saved 2 days ago");
+assert.equal(savedSnapshotAgeLabel("invalid", Date.parse("2026-10-08T10:00:00.000Z")), "saved date unavailable");
 const serialized = serializeSavedJourneys(saved);
 const restored = parseSavedJourneys(serialized);
 assert.equal(restored.length, 1);

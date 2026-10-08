@@ -3,6 +3,7 @@ import { readFile } from "node:fs/promises";
 const files = {
   page: await readFile(new URL("../src/app/page.tsx", import.meta.url), "utf8"),
   card: await readFile(new URL("../src/components/CommuteCard.tsx", import.meta.url), "utf8"),
+  savedJourneyLibrary: await readFile(new URL("../src/lib/savedJourneys.ts", import.meta.url), "utf8"),
   map: await readFile(new URL("../src/components/MapView.tsx", import.meta.url), "utf8"),
   nearby: await readFile(new URL("../src/components/NearbyRoutes.tsx", import.meta.url), "utf8"),
   pulse: await readFile(new URL("../src/components/BiyahePulse.tsx", import.meta.url), "utf8"),
@@ -56,6 +57,7 @@ const checks = [
   ["Field Mode labels stale mission snapshots beside claim review", files.field.includes("staleMissionSnapshot &&") && files.field.includes("Claim status may have changed; verify before recording an observation.")],
   ["Field Mode cannot submit a mission with local drafts still pending", files.field.includes("const synced = await syncOutbox()") && files.field.includes("if (!synced)") && files.field.includes("Mission not submitted: local observations")],
   ["Route Explorer shows pattern-load failure beside its retry action", files.page.includes("Could not load the stops for {selectedPattern.name}") && files.page.includes("Retry this direction") && files.page.includes("setPatternLoadError(true)")],
+  ["saved offline snapshots show a deterministic age band", files.card.includes("savedSnapshotAgeLabel(savedAt)") && files.savedJourneyLibrary.includes("export function savedSnapshotAgeLabel")],
 ];
 
 const failures = checks.filter(([, passed]) => !passed).map(([name]) => name);

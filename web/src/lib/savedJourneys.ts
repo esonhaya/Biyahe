@@ -95,6 +95,16 @@ function isSavedJourney(value: unknown): value is SavedJourney {
     && isJourneySnapshot(value.journey);
 }
 
+export function savedSnapshotAgeLabel(savedAt: string, now = Date.now()): string {
+  const timestamp = Date.parse(savedAt);
+  if (!Number.isFinite(timestamp)) return "saved date unavailable";
+  const ageMs = Math.max(0, now - timestamp);
+  if (ageMs < 60 * 60 * 1000) return "saved less than an hour ago";
+  if (ageMs < 24 * 60 * 60 * 1000) return "saved less than a day ago";
+  const ageDays = Math.floor(ageMs / (24 * 60 * 60 * 1000));
+  return `saved ${ageDays} day${ageDays === 1 ? "" : "s"} ago`;
+}
+
 function snapshotSize(value: SavedJourney): number {
   return JSON.stringify(value).length;
 }
