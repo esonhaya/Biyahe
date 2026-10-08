@@ -156,6 +156,9 @@ for (const transfers of [0, 1, 2]) {
 
 const direct = createRideModeSession(syntheticJourney(0), 10_000);
 const active = transition(direct, "ACTIVATE", 10_001);
+const cancelled = applyRideModeAction(active, "CANCEL", 10_002);
+assert.equal(cancelled.error, null);
+assert.equal(cancelled.session.status, "CANCELLED");
 const rideIndex = active.journey.legs.findIndex((leg) => leg.type === "RIDE");
 const atRide = { ...active, currentLegIndex: rideIndex, currentLegState: "RIDING" };
 const ridingLeg = atRide.journey.legs[rideIndex];

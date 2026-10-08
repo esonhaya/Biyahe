@@ -68,6 +68,7 @@ export default function NearbyRoutes() {
       <p className={styles.sectionCopy}>Use one current location to find nearby mapped boarding candidates. Biyahe does not save this location, track you, or claim that a vehicle is present.</p>
       <button type="button" className={styles.secondaryButton} onClick={findNearby} disabled={loading}>{loading ? "Checking nearby routes…" : "Find routes near me"}</button>
       {status && <p className={styles.status} role="status">{status}</p>}
+      {status && /denied|unavailable|does not provide|could not be loaded/i.test(status) && <a className={styles.textButton} href="#planning">Search a place instead</a>}
       {routes.length > 0 && <div className={styles.nearbyGrid}>
         {routes.map((route) => {
           const candidate = route.boarding_candidates[0];

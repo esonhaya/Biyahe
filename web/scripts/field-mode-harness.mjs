@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import {
   FIELD_MODE_SCHEMA_VERSION,
+  hasPendingFieldDrafts,
   loadFieldOutbox,
   queueFieldObservation,
   removeFieldOutbox,
@@ -21,6 +22,9 @@ const draft = { stable_id: "field-client-1", session_id: 4, claim_id: "b020-clai
 queueFieldObservation(storage, draft);
 queueFieldObservation(storage, draft);
 assert.equal(loadFieldOutbox(storage).length, 1);
+assert.equal(hasPendingFieldDrafts(loadFieldOutbox(storage), 4), true);
+assert.equal(hasPendingFieldDrafts(loadFieldOutbox(storage), 5), false);
 removeFieldOutbox(storage, [draft.stable_id]);
 assert.equal(loadFieldOutbox(storage).length, 0);
+assert.equal(hasPendingFieldDrafts(loadFieldOutbox(storage), 4), false);
 console.log("FIELD_MODE_HARNESS=PASS");

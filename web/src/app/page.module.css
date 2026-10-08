@@ -182,6 +182,9 @@
 .heroSubcopy { max-width: 600px; margin: -10px 0 24px; color: #5d777e; font-size: 1rem; line-height: 1.55; }
 .searchCard { grid-template-columns: minmax(0, 1fr) auto; align-items: end; }
 .searchInputsRow { display: grid; grid-column: 1; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: end; gap: 8px; min-width: 0; }
+.searchFormActions { grid-column: 2; display: grid; align-content: end; gap: 8px; }
+.placeShortcuts { display: flex; flex: 0 0 auto; gap: 4px; }
+.placeShortcuts .secondaryButton { width: auto; padding: 8px; }
 .swapButton { align-self: end; width: 42px; min-height: 44px; border: 1px solid #d4dcd9; border-radius: 10px; color: #176b87; background: #fbfcfa; cursor: pointer; font-size: 1.15rem; font-weight: 800; }
 .swapButton:hover:not(:disabled) { border-color: #176b87; background: #eef5f3; }
 .swapButton:disabled { cursor: not-allowed; opacity: .45; }
@@ -209,7 +212,7 @@
 @media (max-width: 860px) { .onboarding { grid-template-columns: 1fr; }.onboarding ol { grid-template-columns: repeat(3, minmax(0, 1fr)); }.topBar { align-items: flex-start; } }
 @media (max-width: 700px) {
   .topBar { display: grid; gap: 14px; }.topBarActions { justify-items: stretch; }.quickNav { width: calc(100vw - 32px); }.connectionPill { justify-self: start; }
-  .heroSubcopy { margin-top: -4px; }.searchCard { grid-template-columns: 1fr; }.searchInputsRow { grid-column: 1; grid-template-columns: 1fr; }.swapButton { justify-self: start; transform: rotate(90deg); }.searchCard .primaryButton { grid-column: 1; }
+  .heroSubcopy { margin-top: -4px; }.searchCard { grid-template-columns: 1fr; }.searchInputsRow { grid-column: 1; grid-template-columns: 1fr; }.searchFormActions { grid-column: 1; }.swapButton { justify-self: start; transform: rotate(90deg); }.searchCard .primaryButton { grid-column: 1; }
   .onboarding ol { grid-template-columns: 1fr; }.onboarding li { min-height: 36px; }.compareBar { align-items: stretch; }.compareBar span { width: 100%; }.compareBar button { flex: 1 1 110px; }
   .mapTextAlternative { font-size: .76rem; }.routeSearch { max-width: none; }
 }

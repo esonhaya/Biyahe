@@ -137,6 +137,7 @@ export default function RideMode({ selectedJourney, offlineSnapshot = false, all
   const [recenterToken, setRecenterToken] = useState(0);
   const [patternMessage, setPatternMessage] = useState<string | null>(null);
   const [lastQuality, setLastQuality] = useState<LocationQuality>("UNAVAILABLE");
+  const [confirmEnd, setConfirmEnd] = useState(false);
   const sessionRef = useRef<RideModeSession | null>(null);
   const watchIdRef = useRef<number | null>(null);
   const previousPhaseRef = useRef<RideModeGuidancePhase | null>(null);
@@ -507,7 +508,14 @@ export default function RideMode({ selectedJourney, offlineSnapshot = false, all
               {session.status === "ACTIVE" && currentLeg?.type === "RIDE" && session.currentLegState === "WAITING_TO_BOARD" && <button type="button" className={styles.primaryButton} onClick={() => dispatch("BOARDED")}>I boarded</button>}
               {session.status === "ACTIVE" && currentLeg?.type === "RIDE" && session.currentLegState === "RIDING" && <button type="button" className={styles.primaryButton} onClick={() => dispatch("GOT_OFF")}>I got off</button>}
               {session.status === "ACTIVE" && currentLeg?.type === "WALK_EGRESS" && session.currentLegState === "WALKING" && <button type="button" className={styles.primaryButton} onClick={() => dispatch("ARRIVED")}>I&apos;ve arrived</button>}
-              {session.status === "ACTIVE" && <button type="button" className={styles.secondaryButton} onClick={() => dispatch("CANCEL")}>End Ride Mode</button>}
+              {session.status === "ACTIVE" && !confirmEnd && <button type="button" className={styles.secondaryButton} onClick={() => setConfirmEnd(true)}>End Ride Mode</button>}
+              {session.status === "ACTIVE" && confirmEnd && <div className={styles.rideNotice} role="group" aria-label="Confirm ending Ride Mode">
+                <strong>End this guide and clear its saved progress from this device?</strong>
+                <div className={styles.rideActions}>
+                  <button type="button" className={styles.secondaryButton} onClick={() => { setConfirmEnd(false); dispatch("CANCEL"); }}>End and clear progress</button>
+                  <button type="button" className={styles.secondaryButton} onClick={() => setConfirmEnd(false)}>Keep Ride Mode open</button>
+                </div>
+              </div>}
             </div>
             {actionError && <p className={styles.error} role="alert">{actionError}</p>}
           </div>

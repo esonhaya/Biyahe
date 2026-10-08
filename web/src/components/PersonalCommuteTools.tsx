@@ -153,7 +153,10 @@ export default function PersonalCommuteTools({
           {favoritePlaces.length > 0 && <div className={styles.personalGroup}>
             <h3>Favorite places</h3>
             {favoritePlaces.map((item) => <div className={styles.personalRow} key={item.id}>
-              <button type="button" className={styles.quickButton} onClick={() => onSelectPlace(restorePlace(item.place), "origin")}><strong>{item.label}</strong><span>{placeLabel(item.place)}</span></button>
+              <button type="button" className={styles.quickButton} onClick={() => onSelectPlace(restorePlace(item.place), "origin")} aria-label={`Use ${item.label} as starting place`}><strong>{item.label}</strong><span>{placeLabel(item.place)}</span></button>
+              <div className={styles.placeShortcuts}>
+                <button type="button" className={styles.secondaryButton} onClick={() => onSelectPlace(restorePlace(item.place), "destination")} aria-label={`Set ${item.label} as To`}>To</button>
+              </div>
               <button type="button" className={styles.iconButton} onClick={() => removePlace(item)} aria-label={`Remove ${item.label}`}>Remove</button>
             </div>)}
           </div>}

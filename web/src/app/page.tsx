@@ -16,6 +16,7 @@ import FieldMode from "@/components/FieldMode";
 import type { CommuteInstruction } from "@/lib/commuteInstructions";
 import { hasActiveRideModeSession } from "@/lib/rideMode";
 import type { RideModeMapOverlay } from "@/lib/rideMode";
+import { RequestGate, type RequestTicket } from "@/lib/requestGate";
 import { loadRecentCommutes, persistRecentCommutes, recordRecentCommute } from "@/lib/commuterTools";
 import {
   loadSavedJourneys,
@@ -50,21 +51,23 @@ type SearchFieldProps = {
 
 function SearchField({ id, label, value, selectedPlace, onChange, options, onPick, onClear, onSubmit, onRetrySearch, loading = false, searchError = false }: SearchFieldProps) {
   const [activeIndex, setActiveIndex] = useState(0);
+  const inputRef = useRef<HTMLInputElement | null>(null);
   const menuId = `${id}-suggestions`;
   const selectionContextId = `${id}-selected-context`;
   const hasQuery = value.trim().length > 1 && selectedPlace === null;
   const hasSuggestions = hasQuery && options.length > 0 && !loading && !searchError;
+  const selectedIndex = options.length > 0 ? Math.min(activeIndex, options.length - 1) : 0;
 
   function handleKeyDown(event: React.KeyboardEvent<HTMLInputElement>) {
     if (event.key === "ArrowDown" && options.length > 0) {
       event.preventDefault();
-      setActiveIndex((index) => (index + 1) % options.length);
+      setActiveIndex((selectedIndex + 1) % options.length);
     } else if (event.key === "ArrowUp" && options.length > 0) {
       event.preventDefault();
-      setActiveIndex((index) => (index - 1 + options.length) % options.length);
+      setActiveIndex((selectedIndex - 1 + options.length) % options.length);
     } else if (event.key === "Enter") {
       event.preventDefault();
-      if (options[activeIndex]) onPick(options[activeIndex]);
+      if (options[selectedIndex]) onPick(options[selectedIndex]);
       else onSubmit();
     } else if (event.key === "Escape") {
       onClear();
@@ -76,6 +79,7 @@ function SearchField({ id, label, value, selectedPlace, onChange, options, onPic
       <label htmlFor={id}>{label}</label>
       <div className={styles.searchInputWrap}>
         <input
+          ref={inputRef}
           id={id}
           value={value}
           onChange={(event) => { onChange(event.target.value); setActiveIndex(0); }}
@@ -87,10 +91,10 @@ function SearchField({ id, label, value, selectedPlace, onChange, options, onPic
           aria-busy={loading}
           aria-expanded={hasQuery}
           aria-controls={hasSuggestions ? menuId : undefined}
-          aria-activedescendant={hasSuggestions && options[activeIndex] ? `${id}-option-${options[activeIndex].id}` : undefined}
+          aria-activedescendant={hasSuggestions && options[selectedIndex] ? `${id}-option-${options[selectedIndex].id}` : undefined}
           aria-describedby={selectedPlace ? selectionContextId : undefined}
         />
-        {value && <button type="button" className={styles.clearSearch} onClick={onClear} aria-label={`Clear ${label.toLowerCase()}`}>×</button>}
+        {value && <button type="button" className={styles.clearSearch} onClick={() => { onClear(); inputRef.current?.focus(); }} aria-label={`Clear ${label.toLowerCase()}`}>×</button>}
       </div>
       {selectedPlace && <p id={selectionContextId} className={styles.searchSelection}>
         Selected: {selectedPlace.city?.name ?? "Cebu coverage"} · {selectedPlace.category.toLowerCase().replace(/_/g, " ")}
@@ -114,8 +118,8 @@ function SearchField({ id, label, value, selectedPlace, onChange, options, onPic
                 id={`${id}-option-${place.id}`}
                 onClick={() => onPick(place)}
                 role="option"
-                aria-selected={index === activeIndex}
-                className={index === activeIndex ? styles.suggestionActive : undefined}
+                aria-selected={index === selectedIndex}
+                className={index === selectedIndex ? styles.suggestionActive : undefined}
               >
                 <span>{place.name}</span>
                 <small>{place.city?.name ?? "Cebu coverage"} · {place.category.toLowerCase().replace(/_/g, " ")}</small>
@@ -334,6 +338,8 @@ export default function Home() {
   const [pulse, setPulse] = useState<PulseResponse["data"] | null>(null);
   const [pulseFilter, setPulseFilter] = useState<"ALL" | "ROUTES" | "STOPS" | "AREAS" | "MAJOR">("ALL");
   const [loadingPulse, setLoadingPulse] = useState(false);
+  const [pulseError, setPulseError] = useState<string | null>(null);
+  const [pulseReloadToken, setPulseReloadToken] = useState(0);
   const [replanResult, setReplanResult] = useState<JourneyResponse | null>(null);
   const [replanError, setReplanError] = useState<string | null>(null);
   const [loadingReplan, setLoadingReplan] = useState(false);
@@ -345,6 +351,16 @@ export default function Home() {
   const [routeQuery, setRouteQuery] = useState("");
   const originRequestRef = useRef(0);
   const destinationRequestRef = useRef(0);
+  const journeyRequestGateRef = useRef(new RequestGate());
+  const activeJourneyRequestRef = useRef<RequestTicket | null>(null);
+  const patternRequestGateRef = useRef(new RequestGate());
+  const canRideRequestGateRef = useRef(new RequestGate());
+
+  useEffect(() => () => {
+    journeyRequestGateRef.current.cancel();
+    patternRequestGateRef.current.cancel();
+    canRideRequestGateRef.current.cancel();
+  }, []);
 
   useEffect(() => {
     const updateOnline = () => setOnline(window.navigator.onLine);
@@ -406,24 +422,53 @@ export default function Home() {
 
   useEffect(() => {
     const controller = new AbortController();
-    getPulse({ filter: pulseFilter }, controller.signal).then((loaded) => {
-      setPulse(loaded);
-      setActiveAdvisories(loaded.items);
-    }).catch(() => { setPulse(null); setActiveAdvisories([]); });
-    return () => controller.abort();
-  }, [pulseFilter]);
-
-  async function refreshAdvisories() {
     setLoadingPulse(true);
-    try {
-      const loaded = await getPulse({ filter: pulseFilter });
+    setPulseError(null);
+    setPulse(null);
+    setActiveAdvisories([]);
+    getPulse({ filter: pulseFilter }, controller.signal).then((loaded) => {
+      if (controller.signal.aborted) return;
       setPulse(loaded);
       setActiveAdvisories(loaded.items);
-    } catch {
-      setError("Current advisories could not be refreshed. Existing journey guidance remains available.");
-    } finally {
-      setLoadingPulse(false);
-    }
+    }).catch(() => {
+      if (controller.signal.aborted) return;
+      setPulse(null);
+      setActiveAdvisories([]);
+      setPulseError("Pulse could not be loaded. Current advisory status is unknown; try again when connected.");
+    }).finally(() => {
+      if (!controller.signal.aborted) setLoadingPulse(false);
+    });
+    return () => controller.abort();
+  }, [pulseFilter, pulseReloadToken]);
+
+  function refreshAdvisories() {
+    setPulseReloadToken((token) => token + 1);
+  }
+
+  function cancelJourneySearch() {
+    if (!activeJourneyRequestRef.current) return;
+    journeyRequestGateRef.current.cancel();
+    activeJourneyRequestRef.current = null;
+    setLoadingJourney(false);
+    setStatus("Journey search cancelled. Your places remain selected.");
+  }
+
+  function cancelCanIRideCheck() {
+    canRideRequestGateRef.current.cancel();
+    setLoadingCanRide(false);
+  }
+
+  function scrollToMap() {
+    if (typeof window === "undefined" || typeof document === "undefined") return;
+    const reduceMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
+    document.getElementById("map")?.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "start" });
+  }
+
+  function focusInstructionOnMap(journey: Journey, instruction: CommuteInstruction, offlineSnapshot = false) {
+    selectJourney(journey, offlineSnapshot);
+    setInstructionFocus(instruction);
+    if (offlineSnapshot) setStatus("Opened an offline journey snapshot. It may be out of date.");
+    scrollToMap();
   }
 
   async function requestReplan(journey: Journey | null = selectedJourney) {
@@ -528,6 +573,9 @@ export default function Home() {
   }
 
   function changeOrigin(value: string) {
+    cancelJourneySearch();
+    patternRequestGateRef.current.cancel();
+    cancelCanIRideCheck();
     setOrigin(null);
     setOriginText(value);
     setOriginOptions([]);
@@ -545,6 +593,9 @@ export default function Home() {
   }
 
   function changeDestination(value: string) {
+    cancelJourneySearch();
+    patternRequestGateRef.current.cancel();
+    cancelCanIRideCheck();
     setDestination(null);
     setDestinationText(value);
     setDestinationOptions([]);
@@ -562,6 +613,9 @@ export default function Home() {
   }
 
   function chooseOrigin(place: Place) {
+    cancelJourneySearch();
+    patternRequestGateRef.current.cancel();
+    cancelCanIRideCheck();
     setOrigin(place);
     setOriginText(place.name);
     setOriginOptions([]);
@@ -579,6 +633,9 @@ export default function Home() {
   }
 
   function chooseDestination(place: Place) {
+    cancelJourneySearch();
+    patternRequestGateRef.current.cancel();
+    cancelCanIRideCheck();
     setDestination(place);
     setDestinationText(place.name);
     setDestinationOptions([]);
@@ -604,6 +661,9 @@ export default function Home() {
   }
 
   function swapPlaces() {
+    cancelJourneySearch();
+    patternRequestGateRef.current.cancel();
+    cancelCanIRideCheck();
     const nextOrigin = destination;
     const nextDestination = origin;
     setOrigin(nextOrigin);
@@ -629,6 +689,8 @@ export default function Home() {
   }
 
   async function searchJourney(from: Place, to: Place) {
+    const request = journeyRequestGateRef.current.begin();
+    activeJourneyRequestRef.current = request;
     setLoadingJourney(true);
     setError(null);
     setJourneys([]);
@@ -638,8 +700,10 @@ export default function Home() {
     setOfflineSavedJourneyId(null);
     setNoRouteMessage(null);
     setReplanResult(null);
+    setJourneyFilter("ALL");
     try {
-      const response = await planJourney(from.id, to.id);
+      const response = await planJourney(from.id, to.id, request.signal);
+      if (!journeyRequestGateRef.current.isCurrent(request)) return;
       setJourneys(response.data);
       setSelectedJourney(response.data[0] ?? null);
       setNoRouteMessage(response.meta.no_route?.message ?? null);
@@ -652,10 +716,16 @@ export default function Home() {
         // A blocked browser store must not make a valid route unusable.
       }
     } catch {
-      setError("Journey search is unavailable right now. Check the API connection and try again.");
-      setStatus("No journey search result yet.");
+      if (journeyRequestGateRef.current.isCurrent(request)) {
+        setError("Journey search is unavailable right now. Check the API connection and try again.");
+        setStatus("No journey search result yet.");
+      }
     } finally {
-      setLoadingJourney(false);
+      if (journeyRequestGateRef.current.isCurrent(request)) {
+        activeJourneyRequestRef.current = null;
+        journeyRequestGateRef.current.finish(request);
+        setLoadingJourney(false);
+      }
     }
   }
 
@@ -676,6 +746,7 @@ export default function Home() {
   }
 
   function chooseLocalCommute(from: Place, to: Place) {
+    cancelJourneySearch();
     setOrigin(from);
     setDestination(to);
     setOriginText(from.name);
@@ -692,18 +763,29 @@ export default function Home() {
   }
 
   async function showPattern(pattern: RoutePattern) {
+    cancelJourneySearch();
+    const request = patternRequestGateRef.current.begin();
     setSelectedJourney(null);
     setSelectedPattern(pattern);
     setInstructionFocus(null);
     setOfflineSavedJourneyId(null);
     if (pattern.stops) {
+      patternRequestGateRef.current.finish(request);
+      scrollToMap();
       return;
     }
 
     try {
-      setSelectedPattern(await getRoutePattern(pattern.id));
+      const loaded = await getRoutePattern(pattern.id, request.signal);
+      if (!patternRequestGateRef.current.isCurrent(request)) return;
+      setSelectedPattern(loaded);
+      patternRequestGateRef.current.finish(request);
+      scrollToMap();
     } catch {
-      setError("This route pattern could not be loaded from the API.");
+      if (patternRequestGateRef.current.isCurrent(request)) {
+        patternRequestGateRef.current.finish(request);
+        setError("This route pattern could not be loaded from the API.");
+      }
     }
   }
 
@@ -719,18 +801,26 @@ export default function Home() {
 
     setLoadingCanRide(true);
     setError(null);
+    const request = canRideRequestGateRef.current.begin();
     try {
-      const response = await canIRide(rideRouteCode, origin.id, destination.id);
+      const response = await canIRide(rideRouteCode, origin.id, destination.id, request.signal);
+      if (!canRideRequestGateRef.current.isCurrent(request)) return;
       setCanRideResult(response.data);
     } catch {
-      setError("The Can I Ride check is unavailable right now. Check the API connection and try again.");
-      setCanRideResult(null);
+      if (canRideRequestGateRef.current.isCurrent(request)) {
+        setError("The Can I Ride check is unavailable right now. Check the API connection and try again.");
+        setCanRideResult(null);
+      }
     } finally {
-      setLoadingCanRide(false);
+      if (canRideRequestGateRef.current.isCurrent(request)) {
+        canRideRequestGateRef.current.finish(request);
+        setLoadingCanRide(false);
+      }
     }
   }
 
   function selectJourney(journey: Journey, offlineSnapshot = false) {
+    patternRequestGateRef.current.cancel();
     setSelectedPattern(null);
     setSelectedJourney(journey);
     setOfflineSavedJourneyId(offlineSnapshot ? journey.id : null);
@@ -763,22 +853,38 @@ export default function Home() {
   }
 
   function openSavedJourney(saved: SavedJourney) {
+    cancelJourneySearch();
     selectJourney(saved.journey, true);
     setStatus("Opened an offline journey snapshot. It may be out of date.");
   }
 
   async function refreshSavedJourney(saved: SavedJourney) {
+    const request = journeyRequestGateRef.current.begin();
+    activeJourneyRequestRef.current = request;
     setLoadingJourney(true);
     setError(null);
     try {
-      const response = await planJourney(saved.journey.origin.id, saved.journey.destination.id);
+      const response = await planJourney(saved.journey.origin.id, saved.journey.destination.id, request.signal);
+      if (!journeyRequestGateRef.current.isCurrent(request)) return;
       setJourneys(response.data);
-      setStatus(response.meta.no_route?.message ?? `${response.data.length} current journey${response.data.length === 1 ? "" : "s"} found.`);
-      if (response.data[0]) selectJourney(response.data[0]);
+      if (response.data[0]) {
+        setStatus(`${response.data.length} current journey${response.data.length === 1 ? "" : "s"} found.`);
+        selectJourney(response.data[0]);
+      } else {
+        setNoRouteMessage(response.meta.no_route?.message ?? "No supported current journey was returned.");
+        setStatus("No current route was found. Your saved snapshot remains available below.");
+        selectJourney(saved.journey, true);
+      }
     } catch {
-      setError("A current journey could not be loaded. The saved snapshot remains available.");
+      if (journeyRequestGateRef.current.isCurrent(request)) {
+        setError("A current journey could not be loaded. The saved snapshot remains available.");
+      }
     } finally {
-      setLoadingJourney(false);
+      if (journeyRequestGateRef.current.isCurrent(request)) {
+        activeJourneyRequestRef.current = null;
+        journeyRequestGateRef.current.finish(request);
+        setLoadingJourney(false);
+      }
     }
   }
 
@@ -830,9 +936,12 @@ export default function Home() {
             <button type="button" className={styles.swapButton} onClick={swapPlaces} disabled={!origin && !destination} aria-label="Swap origin and destination">⇄</button>
             <SearchField id="origin-search" label="From" value={originText} selectedPlace={origin} onChange={changeOrigin} options={originOptions} onPick={chooseOrigin} onClear={clearOrigin} onSubmit={() => { void findRoute(); }} onRetrySearch={retryOriginSearch} loading={originSearching} searchError={originSearchError} />
           </div>
-          <button className={styles.primaryButton} type="submit" disabled={loadingJourney || loadingNetwork || !online}>
-            {loadingJourney ? "Finding…" : online ? "Find route" : "Offline"}
-          </button>
+          <div className={styles.searchFormActions}>
+            <button className={styles.primaryButton} type="submit" disabled={loadingJourney || loadingNetwork || !online}>
+              {loadingJourney ? "Finding…" : online ? "Find route" : "Offline"}
+            </button>
+            {activeJourneyRequestRef.current && <button type="button" className={styles.secondaryButton} onClick={cancelJourneySearch}>Cancel request</button>}
+          </div>
           <p className={styles.status} role="status">{status}</p>
           {error && <p className={styles.error} role="alert">{error}</p>}
         </form>
@@ -869,9 +978,9 @@ export default function Home() {
           </div>
         )}
         {journeys.length === 0 ? (
-          <p className={styles.emptyState}>{loadingJourney ? "Looking for direct, one- or two-transfer rides…" : noRouteMessage ?? "Your supported journeys will appear here."}</p>
+          <p className={styles.emptyState} role={loadingJourney ? "status" : undefined} aria-live={loadingJourney ? "polite" : undefined}>{loadingJourney ? "Looking for direct, one- or two-transfer rides…" : noRouteMessage ?? "Your supported journeys will appear here."}</p>
         ) : visibleJourneys.length === 0 ? (
-          <p className={styles.emptyState}>No journey matches this comparison filter. Show all options to review the other mapped choices.</p>
+          <p className={styles.emptyState}>No journey matches this comparison filter. <button type="button" className={styles.textButton} onClick={() => setJourneyFilter("ALL")}>Show all journeys</button></p>
         ) : (
           <div className={styles.journeyGrid}>
             {visibleJourneys.map((journey, index) => <JourneyCard
@@ -879,7 +988,7 @@ export default function Home() {
               journey={journey}
               recommended={index === 0}
               onSelect={() => selectJourney(journey)}
-              onInstructionFocus={(instruction) => { selectJourney(journey); setInstructionFocus(instruction); }}
+              onInstructionFocus={(instruction) => focusInstructionOnMap(journey, instruction)}
             />)}
           </div>
         )}
@@ -897,7 +1006,7 @@ export default function Home() {
             variant="detail"
             offlineSnapshot={offlineSavedJourneyId === selectedJourney.id}
             isSaved={savedJourneys.some((saved) => saved.id === selectedJourney.id)}
-            onInstructionFocus={setInstructionFocus}
+            onInstructionFocus={(instruction) => focusInstructionOnMap(selectedJourney, instruction, offlineSavedJourneyId === selectedJourney.id)}
             onSave={saveCurrentJourney}
             onReplan={selectedJourney.disruptions?.some((impact) => impact.impact_level !== "INFORMATIONAL") ? () => { void requestReplan(selectedJourney); } : undefined}
           />
@@ -918,6 +1027,7 @@ export default function Home() {
       <BiyahePulse
         pulse={pulse}
         loading={loadingPulse}
+        error={pulseError}
         selectedJourney={selectedJourney}
         onRefresh={() => { void refreshAdvisories(); }}
         onFilter={setPulseFilter}
@@ -940,7 +1050,7 @@ export default function Home() {
                 offlineSnapshot
                 savedAt={saved.savedAt}
                 isSaved
-                onInstructionFocus={(instruction) => { openSavedJourney(saved); setInstructionFocus(instruction); }}
+                onInstructionFocus={(instruction) => focusInstructionOnMap(saved.journey, instruction, true)}
                 onOpen={() => openSavedJourney(saved)}
                 onRefresh={() => { void refreshSavedJourney(saved); }}
                 onRemove={() => deleteSavedJourney(saved.id)}
@@ -981,7 +1091,7 @@ export default function Home() {
           <p className={styles.sectionCopy}>Choose the route code you can see. Biyahe checks its known direction and stop sequence between your selected From and To places.</p>
           <div className={styles.decisionForm}>
             <label htmlFor="ride-route">Jeep / route</label>
-            <select id="ride-route" value={rideRouteCode} onChange={(event) => { setRideRouteCode(event.target.value); setCanRideResult(null); }}>
+            <select id="ride-route" value={rideRouteCode} onChange={(event) => { cancelCanIRideCheck(); setRideRouteCode(event.target.value); setCanRideResult(null); }}>
               <option value="">Choose a route</option>
               {routes.map((route) => <option key={route.id} value={route.code}>{route.code} · {route.name}</option>)}
             </select>
@@ -1038,7 +1148,7 @@ export default function Home() {
             <p>Mapped route data could not be loaded. Retry when you are online.</p>
             <button type="button" className={styles.secondaryButton} onClick={retryNetworkLoad} disabled={!online || loadingNetwork}>Try again</button>
           </div>
-        ) : routes.length === 0 ? <p className={styles.emptyState}>No mapped route patterns are currently available.</p> : visibleRoutes.length === 0 ? <p className={styles.emptyState}>No mapped route matches that search.</p> : (
+        ) : routes.length === 0 ? <p className={styles.emptyState}>No mapped route patterns are currently available.</p> : visibleRoutes.length === 0 ? <p className={styles.emptyState}>No mapped route matches that search. <button type="button" className={styles.textButton} onClick={() => setRouteQuery("")}>Clear route search</button></p> : (
           <div className={styles.routeGrid}>
             {visibleRoutes.map((route) => (
             <article className={styles.routeCard} key={route.id}>

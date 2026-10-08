@@ -10,6 +10,7 @@ type PulseFilter = "ALL" | "ROUTES" | "STOPS" | "AREAS" | "MAJOR";
 type BiyahePulseProps = {
   pulse: PulseData | null;
   loading?: boolean;
+  error?: string | null;
   selectedJourney?: Journey | null;
   onRefresh: () => void;
   onFilter: (filter: PulseFilter) => void;
@@ -20,7 +21,7 @@ function journeyImpactCount(journey: Journey | null | undefined): number {
   return (journey?.disruptions ?? []).filter((impact) => impact.impact_level !== "INFORMATIONAL").length;
 }
 
-export default function BiyahePulse({ pulse, loading = false, selectedJourney = null, onRefresh, onFilter, onAdvisorySelect }: BiyahePulseProps) {
+export default function BiyahePulse({ pulse, loading = false, error = null, selectedJourney = null, onRefresh, onFilter, onAdvisorySelect }: BiyahePulseProps) {
   const journeyImpacts = journeyImpactCount(selectedJourney);
   const status = pulse?.network_status;
 
@@ -31,6 +32,8 @@ export default function BiyahePulse({ pulse, loading = false, selectedJourney = 
         <button type="button" className={styles.secondaryButton} onClick={onRefresh} disabled={loading}>{loading ? "Refreshing…" : "Refresh"}</button>
       </div>
       <p className={styles.sectionCopy}>A concise view of reviewed temporary advisories and clearly labelled commuter signals. No known advisory is not a guarantee that every service is operating normally.</p>
+      {loading && !pulse && <p className={styles.emptyState} role="status" aria-live="polite">Loading reviewed advisories…</p>}
+      {error && <div className={styles.emptyState} role="alert"><p>{error}</p><button type="button" className={styles.secondaryButton} onClick={onRefresh} disabled={loading}>Try again</button></div>}
       {status && (
         <div className={styles.pulseStatus} role="status">
           <strong>{status.label}</strong>

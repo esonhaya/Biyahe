@@ -151,6 +151,10 @@ export function loadFieldOutbox(storage: StorageLike): FieldObservationDraft[] {
   }
 }
 
+export function hasPendingFieldDrafts(items: FieldObservationDraft[], sessionId: number): boolean {
+  return items.some((item) => item.session_id === sessionId);
+}
+
 export function saveFieldOutbox(storage: StorageLike, items: FieldObservationDraft[]): void {
   const bounded = items.filter(isObservation).slice(0, MAX_FIELD_OUTBOX);
   const serialized = JSON.stringify({ version: FIELD_MODE_SCHEMA_VERSION, items: bounded } satisfies FieldOutboxEnvelope);
