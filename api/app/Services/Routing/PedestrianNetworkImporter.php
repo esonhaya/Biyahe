@@ -14,12 +14,6 @@ final class PedestrianNetworkImporter
 
     private const LICENSE = 'ODbL-1.0';
 
-    private const WALKABLE_HIGHWAYS = [
-        'footway', 'path', 'pedestrian', 'steps', 'living_street', 'residential',
-        'unclassified', 'service', 'track', 'tertiary', 'secondary', 'primary',
-        'tertiary_link', 'secondary_link', 'primary_link',
-    ];
-
     public function import(string $path, string $sourceUrl, bool $mergeActive = false): PedestrianNetworkImportResult
     {
         $startedAt = hrtime(true);
@@ -203,6 +197,190 @@ final class PedestrianNetworkImporter
                 round((hrtime(true) - $startedAt) / 1_000_000, 2),
             );
         });
+    }
+
+    /**
+     * Import a validated offline artifact as an inactive staging dataset.
+     * The transaction is deliberately atomic: a failed batch cannot leave a
+     * dataset that Doctor or the router could mistake for a complete graph.
+     */
+    public function importOfflineSqlite(string $path, string $sourcePath, string $stagingDatabase): PedestrianNetworkImportResult
+    {
+        $startedAt = hrtime(true);
+        $this->assertOfflineStagingDatabase($stagingDatabase);
+        $validation = (new OfflinePedestrianGraphValidator)->validate($path, $sourcePath);
+        if (! $validation['routing_ready']) {
+            throw new InvalidArgumentException('Offline graph has unsupported pedestrian restriction relations and is not importable.');
+        }
+
+        $sqlite = new \PDO('sqlite:'.$path, null, null, [\PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION]);
+        $metadata = [];
+        foreach ($sqlite->query('SELECT key, value FROM metadata') as $row) {
+            $metadata[(string) $row['key']] = json_decode((string) $row['value'], true, 32, JSON_THROW_ON_ERROR);
+        }
+        $sourceUrl = (string) ($metadata['source_url'] ?? '');
+        if (! $this->validSourceUrl($sourceUrl)) {
+            throw new InvalidArgumentException('Offline graph does not contain a valid source URL.');
+        }
+        $nodesExpected = (int) $validation['nodes'];
+        $edgesExpected = (int) $validation['edges'];
+        $sourceElements = (int) ($metadata['source_nodes'] ?? 0) + (int) ($metadata['source_ways'] ?? 0) + (int) ($metadata['relations'] ?? 0);
+        $contentHash = hash('sha256', (string) $validation['source_sha256'].'|'.(string) ($metadata['graph_content_sha256'] ?? ''));
+        $stableId = 'osm-cebu-walk-'.substr($contentHash, 0, 32);
+        $sourceTimestamp = $this->validTimestamp((string) ($metadata['source_timestamp'] ?? ''));
+        $bounds = $sqlite->query('SELECT MIN(latitude) AS min_latitude, MIN(longitude) AS min_longitude, MAX(latitude) AS max_latitude, MAX(longitude) AS max_longitude FROM graph_nodes')->fetch(\PDO::FETCH_ASSOC);
+        if (! is_array($bounds) || $bounds['min_latitude'] === null) {
+            throw new InvalidArgumentException('Offline graph contains no spatially bounded nodes.');
+        }
+        $datasetMetadata = [
+            'format' => 'osmium-osm-xml-v1',
+            'source_details' => [
+                'source' => 'OPENSTREETMAP', 'source_url' => $sourceUrl,
+                'source_file' => $metadata['source_file'], 'source_checksum_sha256' => $validation['source_sha256'],
+                'source_checksum_md5' => $metadata['source_md5'], 'source_timestamp' => $sourceTimestamp,
+                'source_elements' => $sourceElements,
+                'osmium_version' => $metadata['source_osmium_version'], 'extract_strategy' => $metadata['extract_strategy'],
+                'extract_bounds' => $metadata['source_bounds'], 'license' => 'ODbL-1.0',
+                'attribution' => '© OpenStreetMap contributors',
+            ],
+            'import_metrics' => [
+                'source_elements' => $sourceElements, 'candidate_elements' => (int) ($metadata['candidate_ways'] ?? 0) + (int) ($metadata['scope_nodes'] ?? 0),
+                'imported_nodes' => $nodesExpected, 'imported_edges' => $edgesExpected,
+                'restricted_ways' => (int) ($metadata['restricted_ways'] ?? 0),
+                'connected_components' => (int) $validation['components'],
+            ],
+            'offline_staging' => true,
+            'activation' => 'NOT_ACTIVATED',
+        ];
+
+        return DB::transaction(function () use ($sqlite, $startedAt, $stableId, $sourceUrl, $sourceTimestamp, $contentHash, $bounds, $datasetMetadata, $nodesExpected, $edgesExpected, $sourceElements, $metadata): PedestrianNetworkImportResult {
+            $existing = DB::table('pedestrian_network_datasets')->where('content_hash', $contentHash)->first();
+            if ($existing !== null) {
+                $this->validateDatasetGraph((int) $existing->id, $nodesExpected, $edgesExpected);
+                return new PedestrianNetworkImportResult(
+                    (string) $existing->stable_id, $nodesExpected, $edgesExpected, true,
+                    $sourceElements, (int) ($metadata['candidate_ways'] ?? 0),
+                    max(0, $sourceElements - $nodesExpected - (int) ($metadata['accepted_ways'] ?? 0)),
+                    (int) ($metadata['restricted_ways'] ?? 0), round((hrtime(true) - $startedAt) / 1_000_000, 2),
+                );
+            }
+
+            $datasetId = DB::table('pedestrian_network_datasets')->insertGetId([
+                'stable_id' => $stableId, 'source' => 'OPENSTREETMAP', 'source_url' => $sourceUrl,
+                'license' => 'ODbL-1.0', 'attribution' => '© OpenStreetMap contributors',
+                'source_timestamp' => $sourceTimestamp, 'imported_at' => now(),
+                'min_latitude' => $bounds['min_latitude'], 'min_longitude' => $bounds['min_longitude'],
+                'max_latitude' => $bounds['max_latitude'], 'max_longitude' => $bounds['max_longitude'],
+                'node_count' => $nodesExpected, 'edge_count' => $edgesExpected, 'content_hash' => $contentHash,
+                'metadata' => json_encode($datasetMetadata, JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES),
+                'is_active' => false, 'graph_retained' => true, 'created_at' => now(), 'updated_at' => now(),
+            ]);
+
+            $nodeBatch = [];
+            foreach ($sqlite->query('SELECT osm_node_id, latitude, longitude, walkable, barrier FROM graph_nodes ORDER BY osm_node_id') as $node) {
+                $location = DB::connection()->getDriverName() === 'pgsql'
+                    ? DB::raw(sprintf('ST_SetSRID(ST_MakePoint(%.7F,%.7F),4326)::geography', (float) $node['longitude'], (float) $node['latitude']))
+                    : json_encode(['type' => 'Point', 'coordinates' => [(float) $node['longitude'], (float) $node['latitude']]], JSON_THROW_ON_ERROR);
+                $nodeBatch[] = [
+                    'dataset_id' => $datasetId, 'osm_node_id' => (int) $node['osm_node_id'],
+                    'latitude' => (float) $node['latitude'], 'longitude' => (float) $node['longitude'],
+                    'is_walkable' => (bool) $node['walkable'], 'barrier' => $node['barrier'], 'location' => $location,
+                ];
+                if (count($nodeBatch) >= 100) {
+                    DB::table('pedestrian_network_nodes')->insert($nodeBatch);
+                    $nodeBatch = [];
+                }
+            }
+            if ($nodeBatch !== []) {
+                DB::table('pedestrian_network_nodes')->insert($nodeBatch);
+            }
+
+            $edgeBatch = [];
+            foreach ($sqlite->query('SELECT osm_way_id, segment_index, from_node_id, to_node_id, bidirectional, length_meters, highway, properties, geometry_wkt FROM graph_edges ORDER BY osm_way_id, segment_index') as $edge) {
+                $edgeBatch[] = $edge;
+                if (count($edgeBatch) >= 40) {
+                    $this->insertOfflineEdgeBatch($datasetId, $stableId, $edgeBatch);
+                    $edgeBatch = [];
+                }
+            }
+            if ($edgeBatch !== []) {
+                $this->insertOfflineEdgeBatch($datasetId, $stableId, $edgeBatch);
+            }
+            $this->validateDatasetGraph($datasetId, $nodesExpected, $edgesExpected);
+
+            return new PedestrianNetworkImportResult(
+                $stableId, $nodesExpected, $edgesExpected, false, $sourceElements,
+                (int) ($metadata['candidate_ways'] ?? 0),
+                max(0, $sourceElements - $nodesExpected - (int) ($metadata['accepted_ways'] ?? 0)),
+                (int) ($metadata['restricted_ways'] ?? 0), round((hrtime(true) - $startedAt) / 1_000_000, 2),
+            );
+        });
+    }
+
+    private function assertOfflineStagingDatabase(string $stagingDatabase): void
+    {
+        $connection = DB::connection();
+        $database = (string) $connection->getDatabaseName();
+        if ($stagingDatabase === ''
+            || preg_match('/(?:^|[_\\/.-])(?:prod|production)(?:$|[_\\/.-])/i', $stagingDatabase) === 1
+            || preg_match('/(?:^|[_\\/.-])(?:prod|production)(?:$|[_\\/.-])/i', $database) === 1
+            || ! hash_equals($database, $stagingDatabase)) {
+            throw new InvalidArgumentException('Offline graph import requires an explicit exact staging database identity; production-named databases are protected.');
+        }
+        if (app()->runningUnitTests() && $connection->getDriverName() === 'sqlite' && in_array($database, [':memory:', 'file::memory:'], true)) {
+            return;
+        }
+        if ($connection->getDriverName() !== 'pgsql'
+            || preg_match('/(?:^|[_\\/.-])(?:staging|test|testing|sandbox|scratch)(?:$|[_\\/.-])/i', $database) !== 1) {
+            throw new InvalidArgumentException('Offline graph import target must be an isolated PostgreSQL staging/test database.');
+        }
+    }
+
+    private function insertOfflineEdgeBatch(int $datasetId, string $stableId, array $edges): void
+    {
+        $osmNodeIds = [];
+        foreach ($edges as $edge) {
+            $osmNodeIds[] = (int) $edge['from_node_id'];
+            $osmNodeIds[] = (int) $edge['to_node_id'];
+        }
+        $nodeRows = DB::table('pedestrian_network_nodes')->where('dataset_id', $datasetId)
+            ->whereIn('osm_node_id', array_values(array_unique($osmNodeIds)))
+            ->get(['id', 'osm_node_id', 'latitude', 'longitude']);
+        $nodeIds = [];
+        $coordinates = [];
+        foreach ($nodeRows as $node) {
+            $osmId = (int) $node->osm_node_id;
+            $nodeIds[$osmId] = $node->id;
+            $coordinates[$osmId] = ['latitude' => (float) $node->latitude, 'longitude' => (float) $node->longitude];
+        }
+        $rows = [];
+        foreach ($edges as $edge) {
+            $fromId = (int) $edge['from_node_id'];
+            $toId = (int) $edge['to_node_id'];
+            if (! isset($nodeIds[$fromId], $nodeIds[$toId])) {
+                throw new RuntimeException('Offline graph import batch lost an endpoint node.');
+            }
+            $from = $coordinates[$fromId] ?? null;
+            $to = $coordinates[$toId] ?? null;
+            if ($from === null || $to === null) {
+                throw new RuntimeException('Offline graph import could not resolve a node coordinate.');
+            }
+            $geometry = DB::connection()->getDriverName() === 'pgsql'
+                ? DB::raw(sprintf('ST_GeomFromText(\'LINESTRING(%.7F %.7F,%.7F %.7F)\',4326)', $from['longitude'], $from['latitude'], $to['longitude'], $to['latitude']))
+                : json_encode(['type' => 'LineString', 'coordinates' => [[$from['longitude'], $from['latitude']], [$to['longitude'], $to['latitude']]]], JSON_THROW_ON_ERROR);
+            $rows[] = [
+                'stable_id' => $stableId.'-'.$edge['osm_way_id'].'-'.$edge['segment_index'],
+                'dataset_id' => $datasetId, 'osm_way_id' => (int) $edge['osm_way_id'],
+                'segment_index' => (int) $edge['segment_index'], 'from_node_id' => $nodeIds[$fromId], 'to_node_id' => $nodeIds[$toId],
+                'bidirectional' => (bool) $edge['bidirectional'], 'length_meters' => round((float) $edge['length_meters'], 2),
+                'highway' => (string) $edge['highway'], 'properties' => (string) $edge['properties'],
+                'min_latitude' => min($from['latitude'], $to['latitude']),
+                'min_longitude' => min($from['longitude'], $to['longitude']),
+                'max_latitude' => max($from['latitude'], $to['latitude']),
+                'max_longitude' => max($from['longitude'], $to['longitude']), 'geometry' => $geometry,
+            ];
+        }
+        DB::table('pedestrian_network_edges')->insert($rows);
     }
 
     /**
@@ -565,138 +743,33 @@ final class PedestrianNetworkImporter
 
     private function explicitlyRestrictedWay(array $tags): bool
     {
-        $restricted = ['no', 'private', 'destination', 'customers', 'permit', 'agricultural', 'forestry', 'delivery', 'use_sidepath', 'discouraged'];
-
-        return isset($tags['foot:conditional'])
-            || isset($tags['access:conditional'])
-            || ! $this->supportedAccessValue($tags['foot'] ?? null)
-            || (! isset($tags['foot']) && ! $this->supportedAccessValue($tags['access'] ?? null))
-            || $this->privateServiceWay($tags)
-            || in_array($tags['foot'] ?? null, $restricted, true)
-            || (! isset($tags['foot']) && in_array($tags['access'] ?? null, $restricted, true))
-            || in_array($tags['foot:forward'] ?? null, $restricted, true)
-            || in_array($tags['foot:backward'] ?? null, $restricted, true);
+        return PedestrianOsmPolicy::explicitlyRestrictedWay($tags);
     }
 
     private function walkableWay(array $tags): bool
     {
-        $highway = $tags['highway'] ?? null;
-        if (! is_string($highway) || ($tags['area'] ?? null) === 'yes'
-            || in_array($highway, ['motorway', 'motorway_link', 'trunk', 'trunk_link', 'construction', 'proposed', 'raceway'], true)) {
-            return false;
-        }
-        if (! in_array($highway, self::WALKABLE_HIGHWAYS, true)) {
-            return false;
-        }
-        if ($this->privateServiceWay($tags)) {
-            return false;
-        }
-        if (isset($tags['foot:conditional']) || isset($tags['access:conditional'])) {
-            return false;
-        }
-        if (isset($tags['oneway:foot']) && ! in_array($tags['oneway:foot'], ['yes', 'no', '1', '0', 'true', 'false', '-1', 'reverse'], true)) {
-            return false;
-        }
-        foreach (['foot:forward', 'foot:backward'] as $direction) {
-            if (isset($tags[$direction]) && ! $this->supportedAccessValue($tags[$direction])) {
-                return false;
-            }
-        }
-        $restricted = ['no', 'private', 'destination', 'customers', 'permit', 'agricultural', 'forestry', 'delivery', 'use_sidepath', 'discouraged'];
-        if (! $this->supportedAccessValue($tags['foot'] ?? null) || in_array($tags['foot'] ?? null, $restricted, true)) {
-            return false;
-        }
-        if (! isset($tags['foot']) && (! $this->supportedAccessValue($tags['access'] ?? null) || in_array($tags['access'] ?? null, $restricted, true))) {
-            return false;
-        }
-
-        return true;
+        return PedestrianOsmPolicy::walkableWay($tags);
     }
 
     /** @return array{bool, bool} */
     private function directions(array $tags): array
     {
-        $forward = true;
-        $backward = true;
-        if (in_array($tags['oneway:foot'] ?? null, ['yes', '1', 'true'], true)) {
-            $backward = false;
-        } elseif (in_array($tags['oneway:foot'] ?? null, ['-1', 'reverse'], true)) {
-            $forward = false;
-        }
-        $restricted = ['no', 'private', 'destination', 'customers', 'permit', 'agricultural', 'forestry', 'delivery', 'use_sidepath', 'discouraged'];
-        if (in_array($tags['foot:forward'] ?? null, $restricted, true)) {
-            $forward = false;
-        }
-        if (in_array($tags['foot:backward'] ?? null, $restricted, true)) {
-            $backward = false;
-        }
-
-        return [$forward, $backward];
+        return PedestrianOsmPolicy::directions($tags);
     }
 
     private function blockedNode(array $tags): bool
     {
-        $restricted = ['no', 'private', 'destination', 'customers', 'permit', 'agricultural', 'forestry', 'delivery', 'use_sidepath', 'discouraged'];
-        if (isset($tags['foot:conditional']) || isset($tags['access:conditional'])) {
-            return true;
-        }
-        if (! $this->supportedAccessValue($tags['foot'] ?? null)
-            || (! isset($tags['foot']) && ! $this->supportedAccessValue($tags['access'] ?? null))) {
-            return true;
-        }
-        if (in_array($tags['foot'] ?? null, $restricted, true)) {
-            return true;
-        }
-        if (! isset($tags['foot']) && in_array($tags['access'] ?? null, $restricted, true)) {
-            return true;
-        }
-
-        $barrier = $tags['barrier'] ?? null;
-        if ($barrier === null) {
-            return false;
-        }
-
-        return ! in_array($barrier, [
-            'gate', 'lift_gate', 'swing_gate', 'sliding_gate', 'entrance', 'bollard',
-            'cycle_barrier', 'stile', 'kissing_gate', 'turnstile',
-        ], true);
-    }
-
-    private function supportedAccessValue(?string $value): bool
-    {
-        return $value === null || in_array($value, ['yes', 'permissive', 'designated', 'official', 'no', 'private', 'destination', 'customers', 'permit', 'agricultural', 'forestry', 'delivery', 'use_sidepath', 'discouraged'], true);
-    }
-
-    private function privateServiceWay(array $tags): bool
-    {
-        $restrictedServiceTypes = ['driveway', 'private', 'drive-through', 'emergency_access'];
-        $explicitFootAccess = in_array($tags['foot'] ?? null, ['yes', 'permissive', 'designated', 'official'], true);
-
-        return ($tags['highway'] ?? null) === 'service'
-            && in_array($tags['service'] ?? null, $restrictedServiceTypes, true)
-            && ! $explicitFootAccess;
+        return PedestrianOsmPolicy::blockedNode($tags);
     }
 
     private function insideScope(array $node, array $scope): bool
     {
-        return $node['lat'] >= (float) $scope['min_latitude'] && $node['lat'] <= (float) $scope['max_latitude']
-            && $node['lng'] >= (float) $scope['min_longitude'] && $node['lng'] <= (float) $scope['max_longitude'];
+        return PedestrianOsmPolicy::insideScope($node['lat'], $node['lng'], $scope);
     }
 
     private function tags(mixed $tags): array
     {
-        if (! is_array($tags)) {
-            throw new InvalidArgumentException('OSM tags must be an object.');
-        }
-        $normalized = [];
-        foreach ($tags as $key => $value) {
-            if (! is_string($key) || ! is_string($value)) {
-                throw new InvalidArgumentException('OSM tag names and values must be strings.');
-            }
-            $normalized[$key] = strtolower(trim($value));
-        }
-
-        return $normalized;
+        return PedestrianOsmPolicy::tags($tags);
     }
 
     /** @return array<string, mixed> */

@@ -29,6 +29,7 @@ use App\Services\Routing\JourneyPlanningContext;
 use App\Services\Routing\NetworkAudit;
 use App\Services\Routing\NetworkReleaseAudit;
 use App\Services\Routing\PedestrianNetworkImporter;
+use App\Services\Routing\OfflinePedestrianGraphValidator;
 use App\Services\Routing\PedestrianRouter;
 use App\Services\Routing\PedestrianRouteRequest;
 use App\Support\Diagnostics\DoctorCheckResult;
@@ -42,7 +43,7 @@ use Throwable;
 
 class BiyaheDoctor extends Command
 {
-    protected $signature = 'biyahe:doctor {--static : Run source-only checks even when the live database is unavailable}';
+    protected $signature = 'biyahe:doctor {--static : Run source-only checks even when the live database is unavailable} {--offline-graph= : Optional completed offline SQLite graph artifact to validate} {--source-path= : Verified local OSM PBF backing the offline graph}';
 
     protected $description = 'Check Biyahe application, PostGIS, transport network, evidence, imports, and fares.';
 
@@ -55,17 +56,19 @@ class BiyaheDoctor extends Command
     public function handle(): int
     {
         $this->report = new DoctorReport;
-        $this->info($this->option('static') ? 'BIYAHE DOCTOR V27 STATIC' : 'BIYAHE DOCTOR V27');
+        $this->info($this->option('static') ? 'BIYAHE DOCTOR V28 STATIC' : 'BIYAHE DOCTOR V28');
         $this->check('application', 'PASS', 'Laravel booted and configuration loaded.');
 
         if ($this->option('static')) {
             $this->check('database', 'BLOCKED', 'Static mode does not contact the configured database.');
             $this->check('postgis', 'BLOCKED', 'Static mode does not contact PostgreSQL or PostGIS.');
             $this->runStaticChecks();
+            $this->runOfflineGraphCheck();
 
             return $this->exitCode();
         }
 
+        $this->runOfflineGraphCheck();
         $databaseReady = $this->checkDatabase();
         $postgisReady = $this->checkPostgis($databaseReady);
 
@@ -2051,6 +2054,23 @@ class BiyaheDoctor extends Command
             ? 'Source checksums, bounded XML/SQLite processing, missing-reference rejection, atomic publication, and interruption fixtures are present.'
             : 'The streaming importer or its bounded failure fixtures are incomplete.');
 
+        $offlineStagerPath = app_path('Services/Routing/OfflinePedestrianGraphStager.php');
+        $offlineValidatorPath = app_path('Services/Routing/OfflinePedestrianGraphValidator.php');
+        $offlineTestsPath = base_path('tests/Feature/OfflinePedestrianGraphTest.php');
+        $offlineStager = is_file($offlineStagerPath) ? (string) file_get_contents($offlineStagerPath) : '';
+        $offlineValidator = is_file($offlineValidatorPath) ? (string) file_get_contents($offlineValidatorPath) : '';
+        $offlineTests = is_file($offlineTestsPath) ? (string) file_get_contents($offlineTestsPath) : '';
+        $offlineContract = str_contains($offlineStager, 'PRAGMA cache_size=-8192')
+            && str_contains($offlineStager, "'state' => 'COMPLETE'")
+            && str_contains($offlineStager, 'publishNoClobber')
+            && str_contains($offlineValidator, 'componentCount')
+            && str_contains($offlineValidator, 'source fingerprint')
+            && str_contains($offlineTests, 'source_complete_checkpoint_resumes_without_rereading_xml')
+            && str_contains($offlineTests, 'truncated_or_missing_reference_streams');
+        $this->check('offline pedestrian graph tooling', $offlineContract ? 'PASS' : 'FAIL', $offlineContract
+            ? 'A PostgreSQL-free SQLite graph stager, provenance/topology validator, atomic publication, and restart fixtures are present.'
+            : 'Offline graph staging or its source-integrity and restart coverage is incomplete.');
+
         $resourceRunnerPath = base_path('scripts/run-bounded-process.sh');
         $resourceRunner = is_file($resourceRunnerPath) ? (string) file_get_contents($resourceRunnerPath) : '';
         $resourceTestsPath = base_path('tests/Unit/BoundedProcessGuardTest.php');
@@ -2071,6 +2091,30 @@ class BiyaheDoctor extends Command
         $this->check('field planning integrity', 'BLOCKED', 'Static mode cannot validate current mission-to-claim mappings or review state.');
         $this->check('live release readiness', 'BLOCKED', 'A live database, active graph, and release check are required for release readiness.');
         $this->check('device accessibility validation', 'WARN', 'Source contracts do not replace browser, screen-reader, or physical-device validation.');
+    }
+
+    private function runOfflineGraphCheck(): void
+    {
+        $graphPath = trim((string) $this->option('offline-graph'));
+        $sourcePath = trim((string) $this->option('source-path'));
+        if ($graphPath === '' && $sourcePath === '') {
+            $this->check('offline graph artifact', 'WARN', 'No offline SQLite artifact was supplied; PostgreSQL is not required to prepare or validate one.');
+
+            return;
+        }
+        if ($graphPath === '' || $sourcePath === '') {
+            $this->check('offline graph artifact', 'BLOCKED', 'Both --offline-graph and --source-path are required to verify an artifact fingerprint.');
+
+            return;
+        }
+        try {
+            $result = app(OfflinePedestrianGraphValidator::class)->validate($graphPath, $sourcePath);
+            $this->check('offline graph artifact', (string) $result['status'], $result['routing_ready']
+                ? $result['nodes'].' nodes, '.$result['edges'].' edges, '.$result['components'].' weak components; source fingerprint and SQLite integrity verified.'
+                : $result['nodes'].' nodes and '.$result['edges'].' edges are structurally valid, but '.$result['relation_restrictions'].' pedestrian restriction relation(s) are unsupported.');
+        } catch (Throwable $exception) {
+            $this->check('offline graph artifact', 'FAIL', 'Offline graph validation failed: '.$exception->getMessage());
+        }
     }
 
     private function runBackupManifestCheck(): void

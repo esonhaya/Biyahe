@@ -9,6 +9,7 @@ use App\Models\RoutePatternStop;
 use App\Models\TransportSurveySession;
 use App\Models\User;
 use App\Services\FieldSurveys\FieldSurveyReviewService;
+use App\Services\Routing\OfflinePedestrianGraphStager;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
@@ -23,7 +24,7 @@ class BiyaheDoctorTest extends TestCase
         $this->seed();
 
         $artisan = $this->artisan('biyahe:doctor')
-            ->expectsOutputToContain('BIYAHE DOCTOR V27')
+            ->expectsOutputToContain('BIYAHE DOCTOR V28')
             ->expectsOutputToContain('Batch 022 importer database boundary')
             ->expectsOutputToContain('postgis');
 
@@ -46,7 +47,7 @@ class BiyaheDoctorTest extends TestCase
         $output = Artisan::output();
 
         $this->assertSame(2, $exitCode, $output);
-        $this->assertStringContainsString('BIYAHE DOCTOR V27 STATIC', $output);
+        $this->assertStringContainsString('BIYAHE DOCTOR V28 STATIC', $output);
         $this->assertMatchesRegularExpression('/database\s+BLOCKED/', $output);
         $this->assertMatchesRegularExpression('/postgis\s+BLOCKED/', $output);
         $this->assertStringContainsString('frontend contract health', $output);
@@ -59,8 +60,46 @@ class BiyaheDoctorTest extends TestCase
         $this->assertStringContainsString('resource-aware importer guard', $output);
         $this->assertStringContainsString('frontend integration behavior', $output);
         $this->assertStringContainsString('field planning integrity', $output);
+        $this->assertStringContainsString('offline pedestrian graph tooling', $output);
+        $this->assertMatchesRegularExpression('/offline graph artifact\s+WARN/', $output);
         $this->assertStringContainsString('summary: PASS=', $output);
         $this->assertStringContainsString('BLOCKED=', $output);
+    }
+
+    public function test_static_doctor_validates_a_completed_offline_graph_without_database_access(): void
+    {
+        $directory = sys_get_temp_dir().'/biyahe-doctor-offline-'.bin2hex(random_bytes(6));
+        mkdir($directory, 0700, true);
+        $source = $directory.'/central_visayas.osm.pbf';
+        $xml = $directory.'/source.osm';
+        $graph = $directory.'/graph.sqlite';
+        file_put_contents($source, 'synthetic source fixture');
+        file_put_contents($xml, '<?xml version="1.0"?><osm version="0.6" timestamp="2026-10-07T01:00:21Z">'
+            .'<node id="1" lat="10.3000" lon="123.8700"/><node id="2" lat="10.3001" lon="123.8700"/>'
+            .'<way id="100"><nd ref="1"/><nd ref="2"/><tag k="highway" v="footway"/></way></osm>');
+
+        try {
+            app(OfflinePedestrianGraphStager::class)->build($xml, $graph, $source, [
+                'url' => 'https://synthetic.invalid/central_visayas.osm.pbf',
+                'sha256' => hash_file('sha256', $source),
+                'timestamp' => '2026-10-07T01:00:21Z',
+                'osmium_version' => '1.19.1',
+            ]);
+            $exitCode = Artisan::call('biyahe:doctor', [
+                '--static' => true,
+                '--offline-graph' => $graph,
+                '--source-path' => $source,
+            ]);
+            $output = Artisan::output();
+            $this->assertSame(2, $exitCode, $output);
+            $this->assertMatchesRegularExpression('/offline graph artifact\s+PASS/', $output);
+            $this->assertStringContainsString('source fingerprint and SQLite integrity verified', $output);
+        } finally {
+            foreach (glob($directory.'/*') ?: [] as $path) {
+                @unlink($path);
+            }
+            @rmdir($directory);
+        }
     }
 
     public function test_live_doctor_distinguishes_missing_and_invalid_graphs(): void
