@@ -10,4 +10,4 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .map-frame { min-height: 430px; width: 100%; }
 .map-loading { display: grid; place-items: center; color: #5d777e; }
 .map-shell { position: relative; }
-.map-error { position: absolute; z-index: 2; right: 12px; bottom: 12px; max-width: min(360px, calc(100% - 24px)); margin: 0; border: 1px solid #e6b9ac; border-radius: 9px; padding: 9px 11px; color: #7d4238; background: rgba(255, 248, 244, .95); font-size: .76rem; line-height: 1.4; }
+.map-error { position: absolute; z-index: 2; right: 12px; bottom: max(12px, env(safe-area-inset-bottom)); max-width: min(360px, calc(100% - 24px)); margin: 0; border: 1px solid #e6b9ac; border-radius: 9px; padding: 9px 11px; color: #7d4238; background: rgba(255, 248, 244, .95); font-size: .76rem; line-height: 1.4; }

@@ -11,10 +11,12 @@
 .searchField label { display: block; margin: 0 0 6px; color: #658087; font-size: .75rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; }
 .searchField input { width: 100%; border: 1px solid #d4dcd9; border-radius: 10px; padding: 13px 12px; color: #153b45; background: #fbfcfa; font: inherit; outline: none; }
 .searchField input:focus { border-color: #176b87; box-shadow: 0 0 0 3px rgba(23, 107, 135, .12); }
-.suggestions { position: absolute; z-index: 3; top: 72px; right: 0; left: 0; overflow: hidden; border: 1px solid #d4dcd9; border-radius: 10px; background: #fff; box-shadow: 0 12px 30px rgba(21, 59, 69, .14); }
+.suggestions { position: absolute; z-index: 3; top: 72px; right: 0; left: 0; max-height: min(55vh, 360px); overflow: auto; overscroll-behavior: contain; border: 1px solid #d4dcd9; border-radius: 10px; background: #fff; box-shadow: 0 12px 30px rgba(21, 59, 69, .14); }
 .suggestions button { display: flex; width: 100%; flex-direction: column; gap: 3px; border: 0; padding: 10px 12px; text-align: left; color: #153b45; background: #fff; cursor: pointer; font: inherit; }
 .suggestions button:hover { background: #eef5f3; }
 .suggestions small, .patternList small { color: #6d858b; font-size: .72rem; }
+.suggestionDescription { display: -webkit-box; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+.searchSelection { display: -webkit-box; overflow: hidden; margin: 7px 2px 0; color: #536e74; font-size: .75rem; line-height: 1.4; overflow-wrap: anywhere; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
 .primaryButton { align-self: end; border: 0; border-radius: 10px; padding: 14px 22px; color: #fff; background: #176b87; font: inherit; font-weight: 800; cursor: pointer; }
 .primaryButton:hover { background: #10556d; }
 .primaryButton:disabled { cursor: wait; opacity: .65; }
@@ -98,7 +100,7 @@
 .mapPanel { position: relative; overflow: hidden; border: 1px solid #d8ddd7; border-radius: 20px; background: #dce8e4; }
 .map-frame { min-height: 430px; width: 100%; }
 .map-loading { display: grid; place-items: center; color: #5d777e; }
-.mapLegend { position: absolute; right: 12px; bottom: 12px; display: flex; flex-wrap: wrap; gap: 9px; border-radius: 10px; padding: 8px 10px; color: #153b45; background: rgba(255, 255, 255, .9); font-size: .72rem; }
+.mapLegend { position: absolute; right: 12px; bottom: max(12px, env(safe-area-inset-bottom)); display: flex; flex-wrap: wrap; gap: 9px; border-radius: 10px; padding: 8px 10px; color: #153b45; background: rgba(255, 255, 255, .9); font-size: .72rem; }
 .mapLegend span { display: flex; align-items: center; gap: 5px; }
 .mapLegend i { display: inline-block; width: 8px; height: 8px; border-radius: 50%; }
 .placeDot { background: #e07a5f; }.stopDot { background: #176b87; }.routeDot { background: #e07a5f; width: 18px !important; height: 3px !important; border-radius: 0 !important; }.walkingDot { background: #087f8c; width: 18px !important; height: 3px !important; border-radius: 0 !important; }.transferDot { background: #7b61a8; }

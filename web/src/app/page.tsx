@@ -37,18 +37,22 @@ type SearchFieldProps = {
   id: string;
   label: string;
   value: string;
+  selectedPlace: Place | null;
   onChange: (value: string) => void;
   options: Place[];
   onPick: (place: Place) => void;
   onClear: () => void;
   onSubmit: () => void;
   loading?: boolean;
+  searchError?: boolean;
 };
 
-function SearchField({ id, label, value, onChange, options, onPick, onClear, onSubmit, loading = false }: SearchFieldProps) {
+function SearchField({ id, label, value, selectedPlace, onChange, options, onPick, onClear, onSubmit, loading = false, searchError = false }: SearchFieldProps) {
   const [activeIndex, setActiveIndex] = useState(0);
   const menuId = `${id}-suggestions`;
-  const hasQuery = value.trim().length > 1;
+  const selectionContextId = `${id}-selected-context`;
+  const hasQuery = value.trim().length > 1 && selectedPlace === null;
+  const hasSuggestions = hasQuery && options.length > 0 && !loading && !searchError;
 
   function handleKeyDown(event: React.KeyboardEvent<HTMLInputElement>) {
     if (event.key === "ArrowDown" && options.length > 0) {
@@ -79,30 +83,43 @@ function SearchField({ id, label, value, onChange, options, onPick, onClear, onS
           autoComplete="off"
           role="combobox"
           aria-autocomplete="list"
+          aria-busy={loading}
           aria-expanded={hasQuery}
-          aria-controls={hasQuery ? menuId : undefined}
-          aria-activedescendant={hasQuery && options[activeIndex] ? `${id}-option-${options[activeIndex].id}` : undefined}
+          aria-controls={hasSuggestions ? menuId : undefined}
+          aria-activedescendant={hasSuggestions && options[activeIndex] ? `${id}-option-${options[activeIndex].id}` : undefined}
+          aria-describedby={selectedPlace ? selectionContextId : undefined}
         />
         {value && <button type="button" className={styles.clearSearch} onClick={onClear} aria-label={`Clear ${label.toLowerCase()}`}>×</button>}
       </div>
+      {selectedPlace && <p id={selectionContextId} className={styles.searchSelection}>
+        Selected: {selectedPlace.city?.name ?? "Cebu coverage"} · {selectedPlace.category.toLowerCase().replace(/_/g, " ")}
+        {selectedPlace.description?.trim() ? ` · ${selectedPlace.description.trim()}` : ""}
+      </p>}
       {hasQuery && (
-        <div className={styles.suggestions} id={menuId} role="listbox" aria-label={`${label} suggestions`}>
-          {loading && <p className={styles.suggestionStatus}>Searching mapped places…</p>}
-          {!loading && options.length === 0 && <p className={styles.suggestionStatus}>No mapped place matched that name. Try a landmark or alias.</p>}
-          {!loading && options.map((place, index) => (
-            <button
-              type="button"
-              key={place.id}
-              id={`${id}-option-${place.id}`}
-              onClick={() => onPick(place)}
-              role="option"
-              aria-selected={index === activeIndex}
-              className={index === activeIndex ? styles.suggestionActive : undefined}
-            >
-              <span>{place.name}</span>
-              <small>{place.city?.name ?? "Cebu coverage"} · {place.aliases?.[0]?.alias ?? place.category}</small>
-            </button>
-          ))}
+        <div className={styles.suggestions}>
+          {loading && <p className={styles.suggestionStatus} role="status" aria-live="polite">Searching mapped places…</p>}
+          {!loading && searchError && <p className={styles.suggestionStatus} role="status" aria-live="polite">Place matches could not be loaded. Check the connection and try again.</p>}
+          {!loading && !searchError && options.length === 0 && <p className={styles.suggestionStatus} role="status" aria-live="polite">No mapped place matched that name. Try a landmark or alias.</p>}
+          {hasSuggestions && <div id={menuId} role="listbox" aria-label={`${label} suggestions`}>
+            {options.map((place, index) => {
+              const alternateName = place.aliases?.find((item) => item.is_active && item.alias.toLowerCase() !== place.name.toLowerCase())?.alias;
+
+              return <button
+                type="button"
+                key={place.id}
+                id={`${id}-option-${place.id}`}
+                onClick={() => onPick(place)}
+                role="option"
+                aria-selected={index === activeIndex}
+                className={index === activeIndex ? styles.suggestionActive : undefined}
+              >
+                <span>{place.name}</span>
+                <small>{place.city?.name ?? "Cebu coverage"} · {place.category.toLowerCase().replace(/_/g, " ")}</small>
+                {place.description?.trim() && <small className={styles.suggestionDescription}>{place.description.trim()}</small>}
+                {alternateName && <small>Also known as {alternateName}</small>}
+              </button>;
+            })}
+          </div>}
         </div>
       )}
     </div>
@@ -285,6 +302,8 @@ export default function Home() {
   const [destinationOptions, setDestinationOptions] = useState<Place[]>([]);
   const [originSearching, setOriginSearching] = useState(false);
   const [destinationSearching, setDestinationSearching] = useState(false);
+  const [originSearchError, setOriginSearchError] = useState(false);
+  const [destinationSearchError, setDestinationSearchError] = useState(false);
   const [journeys, setJourneys] = useState<Journey[]>([]);
   const [selectedJourney, setSelectedJourney] = useState<Journey | null>(null);
   const [selectedPattern, setSelectedPattern] = useState<RoutePattern | null>(null);
@@ -430,8 +449,18 @@ export default function Home() {
     const requestId = ++originRequestRef.current;
     const timer = window.setTimeout(() => {
       searchPlaces(query, controller.signal)
-        .then((results) => { if (requestId === originRequestRef.current) setOriginOptions(results); })
-        .catch(() => { if (requestId === originRequestRef.current) setOriginOptions([]); })
+        .then((results) => {
+          if (requestId === originRequestRef.current) {
+            setOriginOptions(results);
+            setOriginSearchError(false);
+          }
+        })
+        .catch(() => {
+          if (!controller.signal.aborted && requestId === originRequestRef.current) {
+            setOriginOptions([]);
+            setOriginSearchError(true);
+          }
+        })
         .finally(() => { if (requestId === originRequestRef.current) setOriginSearching(false); });
     }, 250);
     return () => { window.clearTimeout(timer); controller.abort(); };
@@ -444,8 +473,18 @@ export default function Home() {
     const requestId = ++destinationRequestRef.current;
     const timer = window.setTimeout(() => {
       searchPlaces(query, controller.signal)
-        .then((results) => { if (requestId === destinationRequestRef.current) setDestinationOptions(results); })
-        .catch(() => { if (requestId === destinationRequestRef.current) setDestinationOptions([]); })
+        .then((results) => {
+          if (requestId === destinationRequestRef.current) {
+            setDestinationOptions(results);
+            setDestinationSearchError(false);
+          }
+        })
+        .catch(() => {
+          if (!controller.signal.aborted && requestId === destinationRequestRef.current) {
+            setDestinationOptions([]);
+            setDestinationSearchError(true);
+          }
+        })
         .finally(() => { if (requestId === destinationRequestRef.current) setDestinationSearching(false); });
     }, 250);
     return () => { window.clearTimeout(timer); controller.abort(); };
@@ -455,6 +494,7 @@ export default function Home() {
     setOrigin(null);
     setOriginText(value);
     setOriginOptions([]);
+    setOriginSearchError(false);
     setOriginSearching(value.trim().length >= 2);
     setJourneys([]);
     setSelectedJourney(null);
@@ -471,6 +511,7 @@ export default function Home() {
     setDestination(null);
     setDestinationText(value);
     setDestinationOptions([]);
+    setDestinationSearchError(false);
     setDestinationSearching(value.trim().length >= 2);
     setJourneys([]);
     setSelectedJourney(null);
@@ -487,6 +528,7 @@ export default function Home() {
     setOrigin(place);
     setOriginText(place.name);
     setOriginOptions([]);
+    setOriginSearchError(false);
     setOriginSearching(false);
     setJourneys([]);
     setSelectedJourney(null);
@@ -503,6 +545,7 @@ export default function Home() {
     setDestination(place);
     setDestinationText(place.name);
     setDestinationOptions([]);
+    setDestinationSearchError(false);
     setDestinationSearching(false);
     setJourneys([]);
     setSelectedJourney(null);
@@ -532,6 +575,8 @@ export default function Home() {
     setDestinationText(nextDestination?.name ?? "");
     setOriginOptions([]);
     setDestinationOptions([]);
+    setOriginSearchError(false);
+    setDestinationSearchError(false);
     setOriginSearching(false);
     setDestinationSearching(false);
     setJourneys([]);
@@ -600,6 +645,8 @@ export default function Home() {
     setDestinationText(to.name);
     setOriginOptions([]);
     setDestinationOptions([]);
+    setOriginSearchError(false);
+    setDestinationSearchError(false);
     if (online) {
       void searchJourney(from, to);
     } else {
@@ -742,9 +789,9 @@ export default function Home() {
         </div>
         <form className={styles.searchCard} id="planning" onSubmit={(event) => { event.preventDefault(); void findRoute(); }}>
           <div className={styles.searchInputsRow}>
-            <SearchField id="destination-search" label="To" value={destinationText} onChange={changeDestination} options={destinationOptions} onPick={chooseDestination} onClear={clearDestination} onSubmit={() => { void findRoute(); }} loading={destinationSearching} />
+            <SearchField id="destination-search" label="To" value={destinationText} selectedPlace={destination} onChange={changeDestination} options={destinationOptions} onPick={chooseDestination} onClear={clearDestination} onSubmit={() => { void findRoute(); }} loading={destinationSearching} searchError={destinationSearchError} />
             <button type="button" className={styles.swapButton} onClick={swapPlaces} disabled={!origin && !destination} aria-label="Swap origin and destination">⇄</button>
-            <SearchField id="origin-search" label="From" value={originText} onChange={changeOrigin} options={originOptions} onPick={chooseOrigin} onClear={clearOrigin} onSubmit={() => { void findRoute(); }} loading={originSearching} />
+            <SearchField id="origin-search" label="From" value={originText} selectedPlace={origin} onChange={changeOrigin} options={originOptions} onPick={chooseOrigin} onClear={clearOrigin} onSubmit={() => { void findRoute(); }} loading={originSearching} searchError={originSearchError} />
           </div>
           <button className={styles.primaryButton} type="submit" disabled={loadingJourney || loadingNetwork || !online}>
             {loadingJourney ? "Finding…" : online ? "Find route" : "Offline"}
