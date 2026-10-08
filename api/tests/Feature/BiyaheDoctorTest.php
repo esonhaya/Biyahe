@@ -23,7 +23,7 @@ class BiyaheDoctorTest extends TestCase
         $this->seed();
 
         $artisan = $this->artisan('biyahe:doctor')
-            ->expectsOutputToContain('BIYAHE DOCTOR V23')
+            ->expectsOutputToContain('BIYAHE DOCTOR V26')
             ->expectsOutputToContain('Batch 022 importer database boundary')
             ->expectsOutputToContain('postgis');
 
@@ -38,6 +38,26 @@ class BiyaheDoctorTest extends TestCase
         $artisan
             ->expectsOutputToContain('BLOCKED')
             ->assertExitCode(2);
+    }
+
+    public function test_static_doctor_runs_source_checks_and_marks_live_checks_blocked(): void
+    {
+        $exitCode = Artisan::call('biyahe:doctor', ['--static' => true]);
+        $output = Artisan::output();
+
+        $this->assertSame(2, $exitCode, $output);
+        $this->assertStringContainsString('BIYAHE DOCTOR V26 STATIC', $output);
+        $this->assertMatchesRegularExpression('/database\s+BLOCKED/', $output);
+        $this->assertMatchesRegularExpression('/postgis\s+BLOCKED/', $output);
+        $this->assertStringContainsString('frontend contract health', $output);
+        $this->assertStringContainsString('OSM stream source and completeness', $output);
+        $this->assertStringContainsString('database test and import boundary', $output);
+        $this->assertStringContainsString('backup provenance', $output);
+        $this->assertStringContainsString('restore test is recorded', $output);
+        $this->assertStringContainsString('active graph integrity', $output);
+        $this->assertStringContainsString('field planning integrity', $output);
+        $this->assertStringContainsString('summary: PASS=', $output);
+        $this->assertStringContainsString('BLOCKED=', $output);
     }
 
     public function test_doctor_fails_for_invalid_pedestrian_routing_bounds(): void

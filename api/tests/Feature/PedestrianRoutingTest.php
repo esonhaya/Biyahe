@@ -442,6 +442,105 @@ final class PedestrianRoutingTest extends TestCase
         }
     }
 
+    public function test_stream_rejects_a_candidate_way_with_a_missing_node_before_publication(): void
+    {
+        $input = tempnam(sys_get_temp_dir(), 'synthetic-osm-missing-node-');
+        $output = tempnam(sys_get_temp_dir(), 'synthetic-osm-missing-node-json-');
+        if ($input === false || $output === false) {
+            $this->fail('Could not create temporary missing-node stream files.');
+        }
+        @unlink($output);
+        $xml = '<?xml version="1.0"?><osm version="0.6" timestamp="2026-10-07T01:00:21Z">'
+            .'<node id="1" lat="10.3000" lon="123.8700"/>'
+            .'<node id="2" lat="10.3001" lon="123.8700"/>'
+            .'<way id="100"><nd ref="1"/><nd ref="2"/><nd ref="999"/><tag k="highway" v="footway"/></way></osm>';
+        file_put_contents($input, $xml);
+
+        try {
+            $exitCode = Artisan::call('biyahe:pedestrian:prepare-osm-stream', [
+                'input' => $input,
+                '--output' => $output,
+                '--source-path' => $input,
+                '--source-url' => 'https://synthetic.invalid/'.basename($input),
+                '--osmium-version' => '1.19.1',
+            ]);
+
+            $this->assertSame(1, $exitCode);
+            $this->assertStringContainsString('node missing from the source stream', Artisan::output());
+            $this->assertFileDoesNotExist($output);
+            $this->assertSame(0, DB::table('pedestrian_network_datasets')->count());
+        } finally {
+            @unlink($input);
+            @unlink($output);
+        }
+    }
+
+    public function test_stream_rejects_duplicate_node_ids_without_publishing_an_artifact(): void
+    {
+        $input = tempnam(sys_get_temp_dir(), 'synthetic-osm-duplicate-node-');
+        $output = tempnam(sys_get_temp_dir(), 'synthetic-osm-duplicate-json-');
+        if ($input === false || $output === false) {
+            $this->fail('Could not create temporary duplicate-node stream files.');
+        }
+        @unlink($output);
+        $xml = '<?xml version="1.0"?><osm version="0.6" timestamp="2026-10-07T01:00:21Z">'
+            .'<node id="1" lat="10.3000" lon="123.8700"/>'
+            .'<node id="1" lat="10.3001" lon="123.8700"/>'
+            .'<node id="2" lat="10.3002" lon="123.8700"/>'
+            .'<way id="100"><nd ref="1"/><nd ref="2"/><tag k="highway" v="footway"/></way></osm>';
+        file_put_contents($input, $xml);
+
+        try {
+            $exitCode = Artisan::call('biyahe:pedestrian:prepare-osm-stream', [
+                'input' => $input,
+                '--output' => $output,
+                '--source-path' => $input,
+                '--source-url' => 'https://synthetic.invalid/'.basename($input),
+                '--osmium-version' => '1.19.1',
+            ]);
+
+            $this->assertSame(1, $exitCode);
+            $this->assertFileDoesNotExist($output);
+            $this->assertSame(0, DB::table('pedestrian_network_datasets')->count());
+        } finally {
+            @unlink($input);
+            @unlink($output);
+        }
+    }
+
+    public function test_stream_rejects_a_mismatched_source_hash_without_publishing(): void
+    {
+        $input = tempnam(sys_get_temp_dir(), 'synthetic-osm-source-mismatch-');
+        $output = tempnam(sys_get_temp_dir(), 'synthetic-osm-source-mismatch-json-');
+        if ($input === false || $output === false) {
+            $this->fail('Could not create temporary source-mismatch files.');
+        }
+        @unlink($output);
+        $xml = '<?xml version="1.0"?><osm version="0.6" timestamp="2026-10-07T01:00:21Z">'
+            .'<node id="1" lat="10.3000" lon="123.8700"/><node id="2" lat="10.3001" lon="123.8700"/>'
+            .'<way id="100"><nd ref="1"/><nd ref="2"/><tag k="highway" v="footway"/></way></osm>';
+        file_put_contents($input, $xml);
+
+        try {
+            $exitCode = Artisan::call('biyahe:pedestrian:prepare-osm-stream', [
+                'input' => $input,
+                '--output' => $output,
+                '--source-path' => $input,
+                '--source-url' => 'https://synthetic.invalid/'.basename($input),
+                '--source-sha256' => str_repeat('0', 64),
+                '--osmium-version' => '1.19.1',
+            ]);
+
+            $this->assertSame(1, $exitCode);
+            $this->assertStringContainsString('does not match the expected checksum', Artisan::output());
+            $this->assertFileDoesNotExist($output);
+            $this->assertSame(0, DB::table('pedestrian_network_datasets')->count());
+        } finally {
+            @unlink($input);
+            @unlink($output);
+        }
+    }
+
     public function test_import_rejects_source_metadata_for_a_different_url_without_writing_graph_rows(): void
     {
         $input = tempnam(sys_get_temp_dir(), 'synthetic-osm-mismatch-xml-');

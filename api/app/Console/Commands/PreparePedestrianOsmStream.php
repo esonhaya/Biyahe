@@ -138,6 +138,10 @@ final class PreparePedestrianOsmStream extends Command
 
             $scopeNodes = (int) $sqlite->query('SELECT COUNT(*) FROM nodes WHERE inside_scope=1')->fetchColumn();
             $candidateWays = (int) $sqlite->query('SELECT COUNT(*) FROM candidate_ways')->fetchColumn();
+            $missingReferencedNodes = (int) $sqlite->query('SELECT COUNT(*) FROM required_nodes AS required LEFT JOIN nodes ON nodes.id = required.id WHERE nodes.id IS NULL')->fetchColumn();
+            if ($missingReferencedNodes > 0) {
+                throw new InvalidArgumentException('OSM candidate way references a node missing from the source stream.');
+            }
             $outputNodes = (int) $sqlite->query('SELECT COUNT(*) FROM nodes WHERE inside_scope=1 OR id IN (SELECT id FROM required_nodes)')->fetchColumn();
             if ($scopeNodes === 0 || $candidateWays === 0 || $outputNodes > $maxNodes || $candidateWays > $maxWays) {
                 throw new InvalidArgumentException('Stream contains no bounded pedestrian candidates or exceeds configured node/way limits.');

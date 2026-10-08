@@ -42,7 +42,7 @@ use Throwable;
 
 class BiyaheDoctor extends Command
 {
-    protected $signature = 'biyahe:doctor';
+    protected $signature = 'biyahe:doctor {--static : Run source-only checks even when the live database is unavailable}';
 
     protected $description = 'Check Biyahe application, PostGIS, transport network, evidence, imports, and fares.';
 
@@ -55,8 +55,16 @@ class BiyaheDoctor extends Command
     public function handle(): int
     {
         $this->report = new DoctorReport;
-        $this->info('BIYAHE DOCTOR V23');
+        $this->info($this->option('static') ? 'BIYAHE DOCTOR V26 STATIC' : 'BIYAHE DOCTOR V26');
         $this->check('application', 'PASS', 'Laravel booted and configuration loaded.');
+
+        if ($this->option('static')) {
+            $this->check('database', 'BLOCKED', 'Static mode does not contact the configured database.');
+            $this->check('postgis', 'BLOCKED', 'Static mode does not contact PostgreSQL or PostGIS.');
+            $this->runStaticChecks();
+
+            return $this->exitCode();
+        }
 
         $databaseReady = $this->checkDatabase();
         $postgisReady = $this->checkPostgis($databaseReady);
@@ -1944,6 +1952,111 @@ class BiyaheDoctor extends Command
         $this->check('Batch 022 importer database boundary', $safeTargetGuard ? 'PASS' : 'FAIL', $safeTargetGuard
             ? 'The graph updater requires an explicit staging/test target, rejects production names, and clears inherited database URLs.'
             : 'The graph updater is missing one or more protected-database target checks.');
+    }
+
+    private function runStaticChecks(): void
+    {
+        $webRoot = base_path('../web');
+        $page = is_file($webRoot.'/src/app/page.tsx') ? (string) file_get_contents($webRoot.'/src/app/page.tsx') : '';
+        $uxHarness = is_file($webRoot.'/scripts/ux-contract-harness.mjs') ? (string) file_get_contents($webRoot.'/scripts/ux-contract-harness.mjs') : '';
+        $api = is_file($webRoot.'/src/lib/api.ts') ? (string) file_get_contents($webRoot.'/src/lib/api.ts') : '';
+        $worker = is_file($webRoot.'/public/sw.js') ? (string) file_get_contents($webRoot.'/public/sw.js') : '';
+        $importerPath = app_path('Console/Commands/PreparePedestrianOsmStream.php');
+        $importer = is_file($importerPath) ? (string) file_get_contents($importerPath) : '';
+        $importTestsPath = base_path('tests/Feature/PedestrianRoutingTest.php');
+        $importTests = is_file($importTestsPath) ? (string) file_get_contents($importTestsPath) : '';
+        $guardPath = base_path('tests/Support/DatabaseTestSafety.php');
+        $guard = is_file($guardPath) ? (string) file_get_contents($guardPath) : '';
+        $phpunitPath = base_path('phpunit.xml');
+        $phpunit = is_file($phpunitPath) ? (string) file_get_contents($phpunitPath) : '';
+        $updaterPath = base_path('scripts/update-cebu-pedestrian-graph.sh');
+        $updater = is_file($updaterPath) ? (string) file_get_contents($updaterPath) : '';
+
+        $frontendContract = str_contains($page, 'role="combobox"')
+            && str_contains($page, 'Cancel request')
+            && str_contains($page, 'Show all journeys')
+            && str_contains($page, 'Map reading guide')
+            && str_contains($uxHarness, 'UX_CONTRACT_HARNESS');
+        $this->check('frontend contract health', $frontendContract ? 'PASS' : 'FAIL', $frontendContract
+            ? 'Search, cancellation, result recovery, and text-map contracts are present in maintained source and the focused harness.'
+            : 'A required commuter-facing source contract or its focused harness is missing.');
+
+        $offlineBoundary = str_contains($worker, 'pathname.startsWith("/api/")')
+            && str_contains($api, 'cache: "no-store"');
+        $this->check('offline API boundary', $offlineBoundary ? 'PASS' : 'FAIL', $offlineBoundary
+            ? 'The service worker excludes API paths and client fetches opt out of browser response caching.'
+            : 'The offline shell may cache API responses or client requests do not opt out of response caching.');
+
+        $databaseSafety = str_contains($guard, 'production-named databases are protected')
+            && str_contains($guard, 'SQLite :memory:')
+            && str_contains($phpunit, 'name="DB_DATABASE" value=":memory:"')
+            && str_contains($updater, "protected_database_pattern='prod|production'")
+            && str_contains($updater, 'staging_database_pattern=');
+        $this->check('database test and import boundary', $databaseSafety ? 'PASS' : 'FAIL', $databaseSafety
+            ? 'Tests default to isolated SQLite memory storage; the test guard and graph updater reject protected/shared targets.'
+            : 'The isolated test default or protected database boundary is missing.');
+
+        $streamIntegrity = str_contains($importer, "hash_file('sha256'")
+            && str_contains($importer, 'hash_equals(')
+            && str_contains($importer, 'XMLReader')
+            && str_contains($importer, 'new PDO(\'sqlite:\'')
+            && str_contains($importer, 'missingReferencedNodes')
+            && str_contains($importer, 'publishNoClobber')
+            && str_contains($importTests, 'test_incomplete_osm_stream_does_not_publish')
+            && str_contains($importTests, 'test_stream_rejects_a_candidate_way_with_a_missing_node')
+            && str_contains($importTests, 'test_stream_rejects_duplicate_node_ids');
+        $this->check('OSM stream source and completeness', $streamIntegrity ? 'PASS' : 'FAIL', $streamIntegrity
+            ? 'Source checksums, bounded XML/SQLite processing, missing-reference rejection, atomic publication, and interruption fixtures are present.'
+            : 'The streaming importer or its bounded failure fixtures are incomplete.');
+
+        $this->runBackupManifestCheck();
+        $this->check('active graph integrity', 'BLOCKED', 'Static mode cannot inspect active PostgreSQL/PostGIS graph rows or connectivity.');
+        $this->check('field planning integrity', 'BLOCKED', 'Static mode cannot validate current mission-to-claim mappings or review state.');
+        $this->check('live release readiness', 'BLOCKED', 'A live database, active graph, and release check are required for release readiness.');
+        $this->check('device accessibility validation', 'WARN', 'Source contracts do not replace browser, screen-reader, or physical-device validation.');
+    }
+
+    private function runBackupManifestCheck(): void
+    {
+        $home = (string) (getenv('HOME') ?: dirname(base_path()));
+        $manifestPath = (string) (getenv('BIYAHE_BACKUP_MANIFEST') ?: $home.'/.cache/biyahe/backup-manifest.json');
+        if (! is_file($manifestPath) || ! is_readable($manifestPath)) {
+            $this->check('backup provenance', 'BLOCKED', 'No readable backup manifest is configured; a backup file alone does not establish restore verification.');
+
+            return;
+        }
+
+        try {
+            $manifest = json_decode((string) file_get_contents($manifestPath), true, 16, JSON_THROW_ON_ERROR);
+        } catch (Throwable) {
+            $this->check('backup provenance', 'FAIL', 'The configured backup manifest is not valid JSON.');
+
+            return;
+        }
+
+        $artifact = is_array($manifest) ? ($manifest['artifact_path'] ?? null) : null;
+        if (is_string($artifact) && $artifact !== '' && ! str_starts_with($artifact, DIRECTORY_SEPARATOR)) {
+            $artifact = dirname($manifestPath).DIRECTORY_SEPARATOR.$artifact;
+        }
+        $expectedHash = is_array($manifest) ? strtolower((string) ($manifest['sha256'] ?? '')) : '';
+        $restoreStatus = is_array($manifest) ? ($manifest['restore_test_status'] ?? null) : null;
+        $restoreTestedAt = is_array($manifest) ? ($manifest['restore_tested_at'] ?? null) : null;
+        $restoreScope = is_array($manifest) ? ($manifest['restore_test_scope'] ?? null) : null;
+        if (($manifest['format'] ?? null) !== 'biyahe-backup-manifest-v1'
+            || ! is_string($artifact) || ! is_file($artifact) || ! is_readable($artifact)
+            || ! preg_match('/^[a-f0-9]{64}$/', $expectedHash)
+            || $restoreStatus !== 'PASS' || ! is_string($restoreTestedAt) || trim($restoreTestedAt) === ''
+            || ! is_string($restoreScope) || trim($restoreScope) === '') {
+            $this->check('backup provenance', 'BLOCKED', 'The manifest must identify a readable artifact, SHA-256, and recorded isolated restore test.');
+
+            return;
+        }
+
+        $actualHash = hash_file('sha256', $artifact);
+        $verified = is_string($actualHash) && hash_equals($expectedHash, strtolower($actualHash));
+        $this->check('backup provenance', $verified ? 'PASS' : 'FAIL', $verified
+            ? 'The artifact SHA-256 matches its manifest and an isolated restore test is recorded for '.$restoreTestedAt.'.'
+            : 'The backup artifact does not match the SHA-256 in its manifest.');
     }
 
     private function checkCount(string $label, int $count, string $failureMessage): void
