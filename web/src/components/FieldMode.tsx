@@ -20,6 +20,10 @@ import styles from "./FieldMode.module.css";
 
 const OBSERVATION_TYPES = ["ROUTE_SEEN", "ROUTE_NOT_SEEN", "SIGNBOARD", "BOARDING_LOCATION", "ALIGHTING_LOCATION", "STOP_SERVED", "STOP_NOT_SERVED", "SEQUENCE", "DIRECTION", "TRANSFER", "FARE_OBSERVATION", "OTHER"];
 
+type FieldOutboxReceipt = Pick<FieldObservationDraft, "stable_id" | "claim_id" | "type" | "observed_at"> & {
+  outcome: "RECEIVED" | "ALREADY_RECEIVED";
+};
+
 function newId(): string {
   if (typeof crypto !== "undefined" && "randomUUID" in crypto) return crypto.randomUUID();
   return `field-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
@@ -39,6 +43,9 @@ export default function FieldMode() {
   const [notes, setNotes] = useState("");
   const [location, setLocation] = useState<FieldLocation | undefined>();
   const [outboxCount, setOutboxCount] = useState(0);
+  const [outboxDrafts, setOutboxDrafts] = useState<FieldObservationDraft[]>([]);
+  const [outboxIssues, setOutboxIssues] = useState<{ stable_id: string; message: string }[]>([]);
+  const [outboxReceipts, setOutboxReceipts] = useState<FieldOutboxReceipt[]>([]);
   const [cachedAt, setCachedAt] = useState<string | null>(null);
   const [staleMissionSnapshot, setStaleMissionSnapshot] = useState(false);
   const [status, setStatus] = useState("Field Mode is closed. It requires an authorized field operator.");
@@ -87,7 +94,9 @@ export default function FieldMode() {
     if (next) {
       try {
         setToken(window.sessionStorage.getItem(FIELD_TOKEN_KEY) ?? "");
-        setOutboxCount(loadFieldOutbox(window.localStorage).length);
+        const drafts = loadFieldOutbox(window.localStorage);
+        setOutboxDrafts(drafts);
+        setOutboxCount(drafts.length);
       } catch { /* browser storage is optional */ }
       void loadMissions();
     }
@@ -152,8 +161,9 @@ export default function FieldMode() {
       schema_version: 1,
     };
     try {
-      queueFieldObservation(window.localStorage, draft);
-      setOutboxCount(loadFieldOutbox(window.localStorage).length);
+      const queued = queueFieldObservation(window.localStorage, draft);
+      setOutboxDrafts(queued);
+      setOutboxCount(queued.length);
       setFactText("");
       setNotes("");
       setLocation(undefined);
@@ -172,9 +182,28 @@ export default function FieldMode() {
     try {
       const response = await syncFieldOutbox(token, sessionId, items);
       const removed = [...response.data.accepted, ...response.data.idempotent];
+      const accepted = new Set(response.data.accepted);
+      const idempotent = new Set(response.data.idempotent);
+      const receipts = items
+        .filter((item) => accepted.has(item.stable_id) || idempotent.has(item.stable_id))
+        .map((item): FieldOutboxReceipt => ({
+          stable_id: item.stable_id,
+          claim_id: item.claim_id,
+          type: item.type,
+          observed_at: item.observed_at,
+          outcome: accepted.has(item.stable_id) ? "RECEIVED" : "ALREADY_RECEIVED",
+        }));
+      if (receipts.length) {
+        setOutboxReceipts((current) => {
+          const newIds = new Set(receipts.map((item) => item.stable_id));
+          return [...receipts, ...current.filter((item) => !newIds.has(item.stable_id))].slice(0, 20);
+        });
+      }
       if (removed.length) removeFieldOutbox(window.localStorage, removed);
       const remaining = loadFieldOutbox(window.localStorage);
+      setOutboxDrafts(remaining);
       setOutboxCount(remaining.length);
+      setOutboxIssues(response.data.rejected);
       const pendingForSession = hasPendingFieldDrafts(remaining, sessionId);
       setStatus(pendingForSession || response.data.rejected.length
         ? `${removed.length} observation(s) received; local drafts still need attention before this mission can be submitted.`
@@ -198,6 +227,14 @@ export default function FieldMode() {
     finally { setBusy(false); }
   }
 
+  function claimPromptFor(stableId: string): string {
+    for (const mission of missions) {
+      const claim = mission.claims.find((item) => item.stable_id === stableId);
+      if (claim) return claim.prompt;
+    }
+    return "Claim context is not available in the saved mission list.";
+  }
+
   return (
     <section className={styles.section} id="field-mode" aria-labelledby="field-mode-heading">
       <div className={styles.panel}>
@@ -213,6 +250,24 @@ export default function FieldMode() {
             <button type="button" className={styles.secondary} onClick={() => void loadMissions()} disabled={busy}>Refresh missions</button>
           </div>
           {cachedAt && <p className={styles.small}>Last local mission snapshot: {new Date(cachedAt).toLocaleString()} · {outboxCount} local observation(s) waiting.</p>}
+          {(outboxDrafts.length > 0 || outboxReceipts.length > 0) && <details className={styles.outboxDetails}>
+            <summary>Observation sync status · {outboxDrafts.length} waiting · {outboxReceipts.length} received</summary>
+            <ul className={styles.outboxList}>
+              {outboxDrafts.map((draft) => {
+                const issue = outboxIssues.find((item) => item.stable_id === draft.stable_id);
+                return <li className={styles.outboxItem} key={draft.stable_id}>
+                  <strong>{draft.type.replaceAll("_", " ")} · {new Date(draft.observed_at).toLocaleString()}</strong>
+                  <span>Claim: {claimPromptFor(draft.claim_id)}</span>
+                  <span>{issue ? `Server rejection: ${issue.message}. The draft remains stored on this device.` : "Queued locally; server receipt is not confirmed until sync."}</span>
+                </li>;
+              })}
+              {outboxReceipts.map((receipt) => <li className={styles.outboxItem} key={receipt.stable_id}>
+                <strong>{receipt.type.replaceAll("_", " ")} · {new Date(receipt.observed_at).toLocaleString()}</strong>
+                <span>Claim: {claimPromptFor(receipt.claim_id)}</span>
+                <span>{receipt.outcome === "ALREADY_RECEIVED" ? "Already received by server; human review is still required." : "Received by server; pending human review. This does not verify the claim."}</span>
+              </li>)}
+            </ul>
+          </details>}
           <div className={styles.grid}>
             <div><h3 className={styles.subheading}>Planned missions</h3><div className={styles.missionList}>{missions.map((mission) => <button type="button" key={mission.id} className={`${styles.missionButton} ${selectedMission?.id === mission.id ? styles.selected : ""}`} onClick={() => void beginMission(mission)}><strong>{mission.title}</strong><span>{mission.area} · {mission.claims.length} claims · priority {mission.priority}</span></button>)}{!missions.length && <p className={styles.small}>No missions are available in this snapshot.</p>}</div></div>
             <div>{selectedMission && <><h3 className={styles.subheading}>{selectedMission.title}</h3><p className={styles.small}>{selectedMission.instructions}</p><p className={styles.small}><strong>Safety:</strong> {selectedMission.safety_notes}</p>{staleMissionSnapshot && <p className={styles.statusWarn} role="status">Offline mission snapshot{cachedAt ? ` from ${new Date(cachedAt).toLocaleString()}` : ""}. Claim status may have changed; verify before recording an observation.</p>}<div className={styles.checklist}>{selectedMission.claims.slice(0, 120).map((claim) => <button type="button" key={claim.stable_id} className={`${styles.claimButton} ${selectedClaim?.stable_id === claim.stable_id ? styles.selected : ""}`} onClick={() => setSelectedClaim(claim)}><strong>{claim.claim_type.replaceAll("_", " ")}</strong><span>{claim.prompt}</span></button>)}</div><div className={styles.form}><label>Observation type<select value={type} onChange={(event) => setType(event.target.value)}>{OBSERVATION_TYPES.map((item) => <option key={item}>{item.replaceAll("_", " ")}</option>)}</select></label><label>Observed precision<select value={precision} onChange={(event) => setPrecision(event.target.value)}><option value="COULD_NOT_CONFIRM">{observedPrecisionLabel("COULD_NOT_CONFIRM")}</option><option value="BOARDING_AREA_OBSERVED">{observedPrecisionLabel("BOARDING_AREA_OBSERVED")}</option><option value="EXACT_POINT_OBSERVED">{observedPrecisionLabel("EXACT_POINT_OBSERVED")}</option><option value="APPROXIMATE_ONLY">{observedPrecisionLabel("APPROXIMATE_ONLY")}</option></select></label><label>Structured note<textarea value={factText} onChange={(event) => setFactText(event.target.value)} maxLength={1000} placeholder="Signboard, direction, sequence relation, boarding area, or other narrow fact" /></label><label>Additional notes<textarea value={notes} onChange={(event) => setNotes(event.target.value)} maxLength={2000} placeholder="Safety/context note; do not include unrelated personal information" /></label><div className={styles.actions}><button type="button" className={styles.secondary} onClick={captureLocation} disabled={busy}>Attach one foreground location</button><button type="button" className={styles.primary} onClick={() => void submitObservation()} disabled={busy}>Save observation</button><button type="button" className={styles.secondary} onClick={() => void syncOutbox()} disabled={busy || !online}>Sync outbox</button><button type="button" className={styles.secondary} onClick={() => void completeMission()} disabled={busy || !online}>Submit mission for review</button></div>{location && <p className={styles.small}>One location attached · accuracy {Math.round(location.accuracy_m)} m · reviewer will not treat poor accuracy as exact.</p>}</div></>}</div>

@@ -31,8 +31,8 @@ directly affects those users. Testability notes the smallest useful check.
 | 18 | Ride Mode | A resumed local guide needs a visible age/current-service reminder; progress persistence alone does not refresh route or advisory truth. | M | S | Local session timestamp | Mobile trip use | Ride Mode fixture | Follow-up |
 | 19 | Route Explorer | A no-match route filter has no one-tap clear action. | L | S | None | Touch and keyboard | UX contract | Done |
 | 20 | Field Mode | The offline mission view should keep the cache timestamp adjacent to claims after a failed refresh, not only above the overall mission list. | M | S | Local mission cache | Field screen readability | Field Mode harness | Done |
-| 21 | Field Mode | A duplicate outbox sync needs per-draft visible status so an operator can distinguish queued, accepted, and review-pending work. | H | M | Sync response | Field mobile use | Idempotency fixture | Follow-up |
-| 22 | Field Mode | Conflict copy can link the conflicting claim and review state to the affected draft before the operator retries. | M | M | Sync conflict response | Error comprehension | Conflict fixture | Follow-up |
+| 21 | Field Mode | A duplicate outbox sync needs per-draft visible status so an operator can distinguish queued, accepted, and review-pending work. | H | M | Sync response | Field mobile use | Idempotency fixture | Done |
+| 22 | Field Mode | Conflict copy can link the conflicting claim and review state to the affected draft before the operator retries. | M | M | Sync conflict response | Error comprehension | Conflict fixture | Done |
 | 23 | Home | Long secondary sections make return-to-planning cumbersome after scrolling through map and field tools. | L | M | None | Mobile navigation | DOM/keyboard check | Follow-up |
 | 24 | Accessibility | Static checks do not validate 320px layout, zoom, high-contrast rendering, Android screen-reader order, or real focus visibility. | H | L | Real browser/device | All | Physical device QA | Device required |
 
@@ -55,8 +55,8 @@ directly affects those users. Testability notes the smallest useful check.
   snapshot timestamp/staleness warning beside the claim list.
 - Added a relative saved-snapshot age label while retaining the explicit
   warning that route and service details may have changed.
-- Prevented mission submission while that session still has locally queued or
-  rejected observation drafts. This preserves review boundaries; it does not
-  provide per-draft status or promote evidence.
+- Shows each queued/rejected/received Field Mode draft with its claim prompt
+  and receipt/review state, and blocks mission submission while that session
+  has pending drafts. Evidence remains review-only and is never auto-promoted.
 - Kept the outstanding items above as follow-up candidates; this audit does
   not imply visual, screen-reader, or field validation.

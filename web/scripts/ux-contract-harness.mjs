@@ -56,6 +56,7 @@ const checks = [
   ["Route Explorer offers a one-tap filter reset", files.page.includes("No mapped route matches that search.") && files.page.includes("Clear route search") && files.page.includes('setRouteQuery("")')],
   ["Field Mode labels stale mission snapshots beside claim review", files.field.includes("staleMissionSnapshot &&") && files.field.includes("Claim status may have changed; verify before recording an observation.")],
   ["Field Mode cannot submit a mission with local drafts still pending", files.field.includes("const synced = await syncOutbox()") && files.field.includes("if (!synced)") && files.field.includes("Mission not submitted: local observations")],
+  ["Field Mode shows per-draft receipt, rejection, and claim context", files.field.includes("Observation sync status") && files.field.includes("Server rejection:") && files.field.includes("pending human review") && files.field.includes("claimPromptFor")],
   ["Route Explorer shows pattern-load failure beside its retry action", files.page.includes("Could not load the stops for {selectedPattern.name}") && files.page.includes("Retry this direction") && files.page.includes("setPatternLoadError(true)")],
   ["saved offline snapshots show a deterministic age band", files.card.includes("savedSnapshotAgeLabel(savedAt)") && files.savedJourneyLibrary.includes("export function savedSnapshotAgeLabel")],
 ];
