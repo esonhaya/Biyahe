@@ -76,8 +76,13 @@ final class FieldMissionService
                     if ($existing === null) {
                         FieldMissionClaim::query()->create($claim);
                         $claimCount++;
-                    } else {
-                        $existing->forceFill(array_diff_key($claim, ['stable_id' => true, 'field_mission_id' => true]))->save();
+                    } elseif (($existing->current_status?->value ?? $existing->current_status) === FieldMissionClaimStatus::OPEN
+                        && ! $existing->observations()->exists()) {
+                        $existing->forceFill(array_diff_key($claim, [
+                            'stable_id' => true,
+                            'field_mission_id' => true,
+                            'current_status' => true,
+                        ]))->save();
                     }
                 }
             }

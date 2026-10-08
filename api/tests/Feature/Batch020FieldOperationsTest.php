@@ -112,6 +112,47 @@ final class Batch020FieldOperationsTest extends TestCase
         $this->assertDatabaseCount('field_observations', 0);
     }
 
+    public function test_campaign_replay_does_not_reopen_or_retarget_a_reviewed_claim(): void
+    {
+        $this->seedTransportNetwork();
+        [, $mission, $missionClaim] = $this->missionFixture();
+        $missionClaim->forceFill([
+            'current_status' => 'ACCEPTED',
+            'prompt' => 'Reviewed prompt retained after collection.',
+            'metadata' => ['target_entity' => ['stop_name' => 'Reviewed stop'], 'review_note' => 'keep'],
+        ])->save();
+
+        $result = app(FieldMissionService::class)->syncCampaign([
+            'campaign_version' => 'batch027-replay-test-v1',
+            'promotion_gate' => ['automatic_promotions' => 0],
+            'missions' => [[
+                'id' => $mission->stable_id,
+                'title' => 'Updated planning title',
+                'start_area' => 'Carbon',
+                'route_scope' => ['12L'],
+                'claim_ids' => [$missionClaim->stable_id],
+                'records_needed' => ['boarding'],
+                'observe' => 'Observe the mapped boarding area.',
+                'safety_notes' => 'Do not record unrelated movement.',
+            ]],
+            'claims' => [[
+                'claim_id' => $missionClaim->stable_id,
+                'claim_type' => 'BOARDING',
+                'priority_score' => 99,
+                'target_entity' => ['pattern_stable_id' => 'pattern-12l-forward', 'stop_stable_id' => 'stop-carbon'],
+            ]],
+        ]);
+
+        $replayed = $missionClaim->fresh();
+        $this->assertSame(['missions' => 0, 'claims' => 0], $result);
+        $this->assertSame(1, FieldMissionClaim::query()->where('stable_id', $missionClaim->stable_id)->count());
+        $this->assertSame('ACCEPTED', $replayed->current_status->value);
+        $this->assertSame('Reviewed prompt retained after collection.', $replayed->prompt);
+        $this->assertSame('Reviewed stop', $replayed->metadata['target_entity']['stop_name']);
+        $this->assertSame('keep', $replayed->metadata['review_note']);
+        $this->assertDatabaseCount('field_observations', 0);
+    }
+
     /** @return array{0: User, 1: FieldMission, 2: FieldMissionClaim, 3: RoutePatternStop} */
     private function missionFixture(): array
     {

@@ -55,7 +55,7 @@ class BiyaheDoctor extends Command
     public function handle(): int
     {
         $this->report = new DoctorReport;
-        $this->info($this->option('static') ? 'BIYAHE DOCTOR V26 STATIC' : 'BIYAHE DOCTOR V26');
+        $this->info($this->option('static') ? 'BIYAHE DOCTOR V27 STATIC' : 'BIYAHE DOCTOR V27');
         $this->check('application', 'PASS', 'Laravel booted and configuration loaded.');
 
         if ($this->option('static')) {
@@ -70,18 +70,21 @@ class BiyaheDoctor extends Command
         $postgisReady = $this->checkPostgis($databaseReady);
 
         if (! $databaseReady) {
+            $this->check('active graph readiness', 'BLOCKED', 'Database is unavailable; active graph state cannot be determined.');
             $this->check('transport schema', 'BLOCKED', 'Database connection is required before transport checks can run.');
 
             return $this->exitCode();
         }
 
         if (! Schema::hasTable('cities')) {
+            $this->check('active graph readiness', 'BLOCKED', 'Transport schema is unavailable; active graph state cannot be determined.');
             $this->check('transport schema', 'BLOCKED', 'Run the transport migrations before integrity checks.');
 
             return $this->exitCode();
         }
 
         if (! $this->hasBatch006EvidenceSchema()) {
+            $this->check('active graph readiness', 'BLOCKED', 'Required transport evidence schema is incomplete; active graph checks cannot run.');
             $this->check('transport schema', 'FAIL', 'Batch 006 evidence migration is missing or incomplete.');
 
             return $this->exitCode();
@@ -1242,6 +1245,7 @@ class BiyaheDoctor extends Command
         $missing = array_values(array_filter($tables, fn (string $table): bool => ! Schema::hasTable($table)));
         if ($missing !== []) {
             $this->check('pedestrian graph schema', 'WARN', 'Run migrations to enable the bounded graph: '.implode(', ', $missing).'. Walking stays a labelled straight-line estimate until graph data is installed.');
+            $this->check('active graph readiness', 'BLOCKED', 'Pedestrian graph schema is incomplete; graph presence and integrity cannot be determined.');
 
             return;
         }
@@ -1312,17 +1316,22 @@ class BiyaheDoctor extends Command
             ->havingRaw('COUNT(*) > 1')->count();
         $this->checkCount('pedestrian edge integrity', $badEdges + $duplicateSegments, 'graph edges have broken endpoints, invalid lengths, absent geometry, or duplicate segment identifiers.');
 
+        $spatialIntegrityValid = false;
         if ($postgisReady) {
             $badSpatialEdges = DB::table('pedestrian_network_edges')->whereRaw("ST_SRID(geometry) <> 4326 OR ST_GeometryType(geometry) <> 'ST_LineString' OR ST_IsEmpty(geometry) OR NOT ST_IsValid(geometry)")->count();
             $this->checkCount('pedestrian geometry integrity', $badSpatialEdges, 'pedestrian edges have invalid geometry or SRID.');
             $badSpatialNodes = DB::table('pedestrian_network_nodes')->whereRaw("location IS NULL OR ST_SRID(location::geometry) <> 4326 OR ST_GeometryType(location::geometry) <> 'ST_Point' OR ST_IsEmpty(location::geometry) OR NOT ST_IsValid(location::geometry)")->count();
             $this->checkCount('pedestrian node geometry integrity', $badSpatialNodes, 'pedestrian nodes have invalid geometry or SRID.');
+            $spatialIntegrityValid = $badSpatialEdges === 0 && $badSpatialNodes === 0;
             $indexes = collect(DB::select("SELECT indexname FROM pg_indexes WHERE schemaname = current_schema() AND indexname IN ('pedestrian_nodes_location_gix', 'pedestrian_edges_geometry_gix')"))->pluck('indexname')->all();
             $this->checkCount('pedestrian spatial indexes', count(array_diff(['pedestrian_nodes_location_gix', 'pedestrian_edges_geometry_gix'], $indexes)), 'pedestrian PostGIS GiST indexes are missing.');
         } else {
             $this->check('pedestrian geometry integrity', 'BLOCKED', 'PostGIS is required to validate pedestrian geometry and spatial indexes.');
         }
 
+        $activeCountMismatch = false;
+        $validActiveProvenance = false;
+        $smokePassed = false;
         if ($activeDataset === null) {
             $this->check('active pedestrian graph integrity', 'WARN', 'No active graph is installed; graph integrity and route execution cannot be evaluated.');
             $this->check('pedestrian routing smoke test', 'WARN', 'No active graph is installed; no live route was attempted.');
@@ -1408,6 +1417,19 @@ class BiyaheDoctor extends Command
         $this->check('pedestrian transport-trust isolation', $trustColumns === [] ? 'PASS' : 'FAIL', $trustColumns === []
             ? 'Pedestrian connectivity is stored separately and cannot promote transport verification.'
             : 'Pedestrian graph contains transport trust/evidence fields: '.implode(', ', $trustColumns).'.');
+
+        if ($activeDataset === null) {
+            $this->check('active graph readiness', 'WARN', 'No active pedestrian graph is installed; walking remains a labelled estimate and graph routing is unavailable.');
+        } elseif ($activeCountMismatch || ! $validActiveProvenance || $activeDatasets !== 1
+            || $badBounds > 0 || $badNodes > 0 || $badNodeScope > 0 || $badEdges > 0 || $duplicateSegments > 0) {
+            $this->check('active graph readiness', 'FAIL', 'An active graph has invalid counts, provenance, scope, node or edge integrity, or activation cardinality.');
+        } elseif (! $postgisReady) {
+            $this->check('active graph readiness', 'BLOCKED', 'An active graph is present, but PostgreSQL/PostGIS validation is unavailable.');
+        } elseif (! $spatialIntegrityValid || ! $smokePassed) {
+            $this->check('active graph readiness', 'FAIL', 'The active graph failed spatial validation or the bounded routing smoke test.');
+        } else {
+            $this->check('active graph readiness', 'PASS', 'One active graph passed count, provenance, scope, topology, spatial, and bounded routing checks.');
+        }
     }
 
     private function runRideModeChecks(): void
@@ -1972,14 +1994,34 @@ class BiyaheDoctor extends Command
         $updaterPath = base_path('scripts/update-cebu-pedestrian-graph.sh');
         $updater = is_file($updaterPath) ? (string) file_get_contents($updaterPath) : '';
 
+        $latestSearchPath = is_file($webRoot.'/src/lib/latestPlaceSearch.ts') ? (string) file_get_contents($webRoot.'/src/lib/latestPlaceSearch.ts') : '';
+        $placeSearchHarnessPath = is_file($webRoot.'/scripts/place-search-harness.mjs') ? (string) file_get_contents($webRoot.'/scripts/place-search-harness.mjs') : '';
+        $nearbyPath = is_file($webRoot.'/src/components/NearbyRoutes.tsx') ? (string) file_get_contents($webRoot.'/src/components/NearbyRoutes.tsx') : '';
+        $nearbyLookupPath = is_file($webRoot.'/src/lib/nearbyLookup.ts') ? (string) file_get_contents($webRoot.'/src/lib/nearbyLookup.ts') : '';
+        $nearbyHarnessPath = is_file($webRoot.'/scripts/nearby-harness.mjs') ? (string) file_get_contents($webRoot.'/scripts/nearby-harness.mjs') : '';
+        $keyboardPath = is_file($webRoot.'/src/lib/searchKeyboard.ts') ? (string) file_get_contents($webRoot.'/src/lib/searchKeyboard.ts') : '';
+        $keyboardHarnessPath = is_file($webRoot.'/scripts/search-keyboard-harness.mjs') ? (string) file_get_contents($webRoot.'/scripts/search-keyboard-harness.mjs') : '';
         $frontendContract = str_contains($page, 'role="combobox"')
             && str_contains($page, 'Cancel request')
             && str_contains($page, 'Show all journeys')
             && str_contains($page, 'Map reading guide')
-            && str_contains($uxHarness, 'UX_CONTRACT_HARNESS');
+            && str_contains($uxHarness, 'UX_CONTRACT_HARNESS')
+            && str_contains($page, 'LatestPlaceSearch')
+            && str_contains($latestSearchPath, 'this.cancel()')
+            && str_contains($placeSearchHarnessPath, 'SHORT_QUERY_INVALIDATION=PASS');
         $this->check('frontend contract health', $frontendContract ? 'PASS' : 'FAIL', $frontendContract
             ? 'Search, cancellation, result recovery, and text-map contracts are present in maintained source and the focused harness.'
             : 'A required commuter-facing source contract or its focused harness is missing.');
+
+        $frontendIntegration = str_contains($nearbyPath, 'requestNearbyCandidates(')
+            && str_contains($nearbyPath, 'requestRef.current?.abort()')
+            && str_contains($nearbyHarnessPath, 'LATE_RESPONSE_REJECTED=PASS')
+            && str_contains($page, 'moveSuggestionSelection')
+            && str_contains($keyboardPath, 'selectedSuggestionIndex')
+            && str_contains($keyboardHarnessPath, 'SHRINK_CLAMP=PASS');
+        $this->check('frontend integration behavior', $frontendIntegration ? 'PASS' : 'FAIL', $frontendIntegration
+            ? 'Nearby permission, cancellation, late-response, and autocomplete keyboard behavior have production-used helpers and executable regression harnesses.'
+            : 'A Nearby cancellation or search-keyboard behavior path is missing its production integration or regression harness.');
 
         $offlineBoundary = str_contains($worker, 'pathname.startsWith("/api/")')
             && str_contains($api, 'cache: "no-store"');
@@ -2009,8 +2051,23 @@ class BiyaheDoctor extends Command
             ? 'Source checksums, bounded XML/SQLite processing, missing-reference rejection, atomic publication, and interruption fixtures are present.'
             : 'The streaming importer or its bounded failure fixtures are incomplete.');
 
+        $resourceRunnerPath = base_path('scripts/run-bounded-process.sh');
+        $resourceRunner = is_file($resourceRunnerPath) ? (string) file_get_contents($resourceRunnerPath) : '';
+        $resourceTestsPath = base_path('tests/Unit/BoundedProcessGuardTest.php');
+        $resourceTests = is_file($resourceTestsPath) ? (string) file_get_contents($resourceTestsPath) : '';
+        $resourceGuard = str_contains($resourceRunner, 'BIYAHE_RESOURCE_MIN_MEMAVAILABLE_KB')
+            && str_contains($resourceRunner, 'BIYAHE_RESOURCE_MAX_PROCESS_TREE_RSS_KB')
+            && str_contains($resourceRunner, 'process_tree_rss_kb')
+            && str_contains($resourceRunner, 'producer_stop=SIGTERM')
+            && str_contains($resourceTests, 'test_rss_breach_stops_only_the_named_descendant_and_worker_unwinds')
+            && str_contains($resourceTests, 'test_low_swap_does_not_block_a_bounded_worker_and_rss_is_recorded');
+        $this->check('resource-aware importer guard', $resourceGuard ? 'PASS' : 'FAIL', $resourceGuard
+            ? 'The stream runner has configurable memory/RSS budgets, measured process-tree RSS, bounded cancellation, and acceptance/rejection/cleanup fixtures.'
+            : 'The resource guard or its bounded acceptance, rejection, and cleanup tests are incomplete.');
+
         $this->runBackupManifestCheck();
         $this->check('active graph integrity', 'BLOCKED', 'Static mode cannot inspect active PostgreSQL/PostGIS graph rows or connectivity.');
+        $this->check('active graph readiness', 'BLOCKED', 'Static mode cannot distinguish a missing, invalid, or healthy live graph without PostgreSQL/PostGIS.');
         $this->check('field planning integrity', 'BLOCKED', 'Static mode cannot validate current mission-to-claim mappings or review state.');
         $this->check('live release readiness', 'BLOCKED', 'A live database, active graph, and release check are required for release readiness.');
         $this->check('device accessibility validation', 'WARN', 'Source contracts do not replace browser, screen-reader, or physical-device validation.');

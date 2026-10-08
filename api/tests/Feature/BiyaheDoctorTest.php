@@ -23,7 +23,7 @@ class BiyaheDoctorTest extends TestCase
         $this->seed();
 
         $artisan = $this->artisan('biyahe:doctor')
-            ->expectsOutputToContain('BIYAHE DOCTOR V26')
+            ->expectsOutputToContain('BIYAHE DOCTOR V27')
             ->expectsOutputToContain('Batch 022 importer database boundary')
             ->expectsOutputToContain('postgis');
 
@@ -46,7 +46,7 @@ class BiyaheDoctorTest extends TestCase
         $output = Artisan::output();
 
         $this->assertSame(2, $exitCode, $output);
-        $this->assertStringContainsString('BIYAHE DOCTOR V26 STATIC', $output);
+        $this->assertStringContainsString('BIYAHE DOCTOR V27 STATIC', $output);
         $this->assertMatchesRegularExpression('/database\s+BLOCKED/', $output);
         $this->assertMatchesRegularExpression('/postgis\s+BLOCKED/', $output);
         $this->assertStringContainsString('frontend contract health', $output);
@@ -55,9 +55,47 @@ class BiyaheDoctorTest extends TestCase
         $this->assertStringContainsString('backup provenance', $output);
         $this->assertStringContainsString('restore test is recorded', $output);
         $this->assertStringContainsString('active graph integrity', $output);
+        $this->assertStringContainsString('active graph readiness', $output);
+        $this->assertStringContainsString('resource-aware importer guard', $output);
+        $this->assertStringContainsString('frontend integration behavior', $output);
         $this->assertStringContainsString('field planning integrity', $output);
         $this->assertStringContainsString('summary: PASS=', $output);
         $this->assertStringContainsString('BLOCKED=', $output);
+    }
+
+    public function test_live_doctor_distinguishes_missing_and_invalid_graphs(): void
+    {
+        $this->seed();
+
+        Artisan::call('biyahe:doctor');
+        $missingGraphOutput = Artisan::output();
+        $this->assertMatchesRegularExpression('/active graph readiness\s+WARN/', $missingGraphOutput);
+
+        DB::table('pedestrian_network_datasets')->insert([
+            'stable_id' => 'test-b027-invalid-active-graph',
+            'source' => 'OPENSTREETMAP',
+            'source_url' => 'https://example.invalid/test.osm.pbf',
+            'license' => 'ODbL-1.0',
+            'attribution' => '© OpenStreetMap contributors',
+            'source_timestamp' => now(),
+            'imported_at' => now(),
+            'min_latitude' => 10.0,
+            'min_longitude' => 123.8,
+            'max_latitude' => 10.1,
+            'max_longitude' => 123.9,
+            'node_count' => 1,
+            'edge_count' => 1,
+            'content_hash' => str_repeat('b', 64),
+            'metadata' => json_encode(['format' => 'test-only'], JSON_THROW_ON_ERROR),
+            'is_active' => true,
+            'graph_retained' => true,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        Artisan::call('biyahe:doctor');
+        $invalidGraphOutput = Artisan::output();
+        $this->assertMatchesRegularExpression('/active graph readiness\s+FAIL/', $invalidGraphOutput);
     }
 
     public function test_doctor_fails_for_invalid_pedestrian_routing_bounds(): void
