@@ -20,12 +20,13 @@ output_dir="$(dirname "$output_path")"
 fifo_path="$output_dir/.biyahe-offline-osm-$$.fifo"
 consumer_log="$output_dir/.biyahe-offline-consumer-$$.log"
 producer_log="$output_dir/.biyahe-offline-producer-$$.log"
+required_ids_path="$output_path.required-node-ids"
 consumer_pid=
 producer_pid=
 
 [[ -r "$source_path" ]] || { printf 'Verified source PBF is not readable.\n' >&2; exit 2; }
 [[ -d "$output_dir" && -w "$output_dir" ]] || { printf 'Output directory must exist and be writable.\n' >&2; exit 2; }
-[[ ! -e "$output_path" && ! -e "$output_path.building" && ! -e "$fifo_path" && ! -e "$cancel_pid_file" ]] || {
+[[ ! -e "$output_path" && ! -e "$output_path.building" && ! -e "$required_ids_path" && ! -e "$fifo_path" && ! -e "$cancel_pid_file" ]] || {
     printf 'Refusing to overwrite an existing graph, checkpoint, FIFO, or cancellation marker.\n' >&2
     exit 2
 }
@@ -94,6 +95,64 @@ if ((consumer_status != 0)); then exit "$consumer_status"; fi
 if ((producer_status != 0)); then
     printf 'Producer failed; the source checkpoint remains unpublished and requires a fresh verified stream.\n' >&2
     exit "$producer_status"
+fi
+
+# The first complete pass indexes way references and only in-scope coordinates.
+# Confirm its clean producer exit before exporting the bounded node-ID request.
+(
+    cd "$api_dir"
+    php -d memory_limit="$php_memory_limit" artisan biyahe:pedestrian:stage-offline - \
+        --output="$output_path" --source-path="$source_path" --source-url="$source_url" \
+        --source-sha256="$source_sha256" --source-timestamp="$source_timestamp" \
+        --osmium-version="$osmium_version" --resume --stop-after-source \
+        --producer-exit-confirmed --export-required-node-ids="$required_ids_path"
+)
+
+# Resolve only node IDs referenced by candidate ways. Osmium scans the verified
+# PBF again and returns exactly the requested nodes; the stager checks every ID.
+(
+    cd "$api_dir"
+    php -d memory_limit="$php_memory_limit" artisan biyahe:pedestrian:stage-offline - \
+        --output="$output_path" --source-path="$source_path" --source-url="$source_url" \
+        --source-sha256="$source_sha256" --source-timestamp="$source_timestamp" \
+        --osmium-version="$osmium_version" --resume --resolve-required-nodes \
+        --stop-after-source --await-producer-exit
+) < "$fifo_path" >"$consumer_log" 2>&1 &
+consumer_pid=$!
+
+sleep 1
+if ! kill -0 "$consumer_pid" 2>/dev/null; then
+    consumer_status=0
+    wait "$consumer_pid" || consumer_status=$?
+    cat "$consumer_log" >&2
+    exit "$consumer_status"
+fi
+
+run_osmium getid --no-progress --id-file "$required_ids_path" --output-format=osm --output=- "$source_path" >"$fifo_path" 2>"$producer_log" &
+producer_pid=$!
+printf '%s\n' "$producer_pid" > "$cancel_pid_file"
+
+consumer_status=0
+producer_status=0
+wait "$consumer_pid" || consumer_status=$?
+wait "$producer_pid" || producer_status=$?
+if [[ -s "$consumer_log" ]]; then cat "$consumer_log"; fi
+if [[ -s "$producer_log" ]]; then cat "$producer_log" >&2; fi
+if ((consumer_status != 0)); then exit "$consumer_status"; fi
+if ((producer_status != 0)); then
+    printf 'Reference producer failed; the offline graph remains unpublished.\n' >&2
+    exit "$producer_status"
+fi
+
+if [[ "${BIYAHE_OSM_STOP_AFTER_SOURCE:-0}" == 1 ]]; then
+    (
+        cd "$api_dir"
+        php -d memory_limit="$php_memory_limit" artisan biyahe:pedestrian:stage-offline - \
+            --output="$output_path" --source-path="$source_path" --source-url="$source_url" \
+            --source-sha256="$source_sha256" --source-timestamp="$source_timestamp" \
+            --osmium-version="$osmium_version" --resume --stop-after-source --producer-exit-confirmed
+    )
+    exit $?
 fi
 
 (

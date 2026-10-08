@@ -24,7 +24,7 @@ class BiyaheDoctorTest extends TestCase
         $this->seed();
 
         $artisan = $this->artisan('biyahe:doctor')
-            ->expectsOutputToContain('BIYAHE DOCTOR V29')
+            ->expectsOutputToContain('BIYAHE DOCTOR V30')
             ->expectsOutputToContain('Batch 022 importer database boundary')
             ->expectsOutputToContain('postgis');
 
@@ -47,7 +47,7 @@ class BiyaheDoctorTest extends TestCase
         $output = Artisan::output();
 
         $this->assertSame(2, $exitCode, $output);
-        $this->assertStringContainsString('BIYAHE DOCTOR V29 STATIC', $output);
+        $this->assertStringContainsString('BIYAHE DOCTOR V30 STATIC', $output);
         $this->assertMatchesRegularExpression('/database\s+BLOCKED/', $output);
         $this->assertMatchesRegularExpression('/postgis\s+BLOCKED/', $output);
         $this->assertStringContainsString('frontend contract health', $output);
@@ -96,6 +96,54 @@ class BiyaheDoctorTest extends TestCase
             $this->assertSame(2, $exitCode, $output);
             $this->assertMatchesRegularExpression('/offline graph artifact\s+PASS/', $output);
             $this->assertStringContainsString('source fingerprint and SQLite integrity verified', $output);
+            $this->assertStringContainsString('GRAPH_VALIDATED; ROUTING_READY.', $output);
+        } finally {
+            foreach (glob($directory.'/*') ?: [] as $path) {
+                @unlink($path);
+            }
+            @rmdir($directory);
+        }
+    }
+
+    public function test_static_doctor_reports_unfinished_offline_phases_and_resource_stops(): void
+    {
+        $directory = sys_get_temp_dir().'/biyahe-doctor-checkpoint-'.bin2hex(random_bytes(6));
+        mkdir($directory, 0700, true);
+        $source = $directory.'/central_visayas.osm.pbf';
+        $xml = $directory.'/source.osm';
+        $graph = $directory.'/graph.sqlite';
+        $resourceLog = $directory.'/resource.log';
+        file_put_contents($source, 'synthetic verified source bytes');
+        file_put_contents($xml, '<?xml version="1.0"?><osm version="0.6" timestamp="2026-10-07T01:00:21Z">'
+            .'<node id="1" lat="10.3000" lon="123.8700"/><node id="2" lat="10.3001" lon="123.8700"/>'
+            .'<way id="100"><nd ref="1"/><nd ref="2"/><tag k="highway" v="footway"/></way></osm>');
+
+        try {
+            app(OfflinePedestrianGraphStager::class)->build($xml, $graph, $source, [
+                'url' => 'https://synthetic.invalid/central_visayas.osm.pbf',
+                'sha256' => hash_file('sha256', $source),
+                'timestamp' => '2026-10-07T01:00:21Z',
+                'osmium_version' => '1.19.1',
+            ], false, true, true);
+            file_put_contents($resourceLog, "operation=stopped_for_resource_budget worker_exit=143\n");
+            $checkpoint = $graph.'.building';
+            $checkpointBytes = filesize($checkpoint);
+
+            $exitCode = Artisan::call('biyahe:doctor', [
+                '--static' => true,
+                '--offline-checkpoint' => $checkpoint,
+                '--offline-resource-log' => $resourceLog,
+            ]);
+            $output = Artisan::output();
+
+            $this->assertSame(2, $exitCode, $output);
+            $this->assertMatchesRegularExpression('/offline source checkpoint\s+WARN/', $output);
+            $this->assertStringContainsString('SOURCE_INCOMPLETE', $output);
+            $this->assertMatchesRegularExpression('/offline graph checkpoint\s+WARN/', $output);
+            $this->assertStringContainsString('GRAPH_INCOMPLETE', $output);
+            $this->assertMatchesRegularExpression('/offline resource state\s+WARN/', $output);
+            $this->assertStringContainsString('RESOURCE_BLOCKED', $output);
+            $this->assertSame($checkpointBytes, filesize($checkpoint), 'Static checkpoint inspection must not change the SQLite file.');
         } finally {
             foreach (glob($directory.'/*') ?: [] as $path) {
                 @unlink($path);

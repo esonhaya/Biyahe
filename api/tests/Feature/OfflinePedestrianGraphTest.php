@@ -85,6 +85,70 @@ final class OfflinePedestrianGraphTest extends TestCase
         }
     }
 
+    public function test_candidate_ways_keep_boundary_references_and_resolve_only_needed_out_of_scope_nodes(): void
+    {
+        $files = $this->fixtureFiles();
+        file_put_contents($files['xml'], $this->xml([
+            '<node id="10" lat="10.2400" lon="123.8700"/>',
+            '<node id="11" lat="10.3000" lon="123.8700"/>',
+            '<node id="12" lat="10.3001" lon="123.8700"/>',
+            '<node id="13" lat="10.3900" lon="123.8700"/>',
+            '<way id="500"><nd ref="10"/><nd ref="11"/><nd ref="12"/><nd ref="13"/><tag k="highway" v="footway"/></way>',
+        ]));
+
+        try {
+            $result = $this->build($files);
+            $this->assertSame('PASS', $result['status']);
+            $sqlite = new PDO('sqlite:'.$files['output']);
+            $this->assertSame(4, (int) $sqlite->query('SELECT COUNT(*) FROM way_refs WHERE way_id=500')->fetchColumn());
+            $this->assertSame(2, (int) $sqlite->query('SELECT COUNT(*) FROM source_nodes WHERE in_scope=1')->fetchColumn());
+            $this->assertSame(2, (int) $sqlite->query('SELECT COUNT(*) FROM source_nodes WHERE in_scope=0')->fetchColumn());
+            $this->assertSame(1, (int) $sqlite->query('SELECT COUNT(*) FROM graph_edges WHERE osm_way_id=500')->fetchColumn());
+            $this->assertSame(4, (int) json_decode((string) $sqlite->query("SELECT value FROM metadata WHERE key='resolved_nodes'")->fetchColumn(), true));
+        } finally {
+            $this->removeFixtureFiles($files);
+        }
+    }
+
+    public function test_incomplete_reference_resolution_can_restart_without_rebuilding_the_way_index(): void
+    {
+        $files = $this->fixtureFiles();
+        $completeXml = $this->xml([
+            '<node id="1" lat="10.3000" lon="123.8700"/>',
+            '<node id="2" lat="10.3001" lon="123.8700"/>',
+            '<node id="3" lat="10.3900" lon="123.8700"/>',
+            '<way id="100"><nd ref="1"/><nd ref="2"/><nd ref="3"/><tag k="highway" v="footway"/></way>',
+        ]);
+        file_put_contents($files['xml'], $completeXml);
+
+        try {
+            $stager = app(OfflinePedestrianGraphStager::class);
+            $stager->build($files['xml'], $files['output'], $files['source'], $files['source_meta'], false, true, true);
+            $idsPath = $files['directory'].'/required-node-ids.txt';
+            $index = $stager->build('-', $files['output'], $files['source'], $files['source_meta'], true, true, false, true, false, $idsPath);
+            $this->assertSame('WAY_INDEX_COMPLETE', $index['state']);
+
+            file_put_contents($files['xml'], $this->xml([
+                '<node id="1" lat="10.3000" lon="123.8700"/>',
+                '<node id="2" lat="10.3001" lon="123.8700"/>',
+            ]));
+            try {
+                $stager->build($files['xml'], $files['output'], $files['source'], $files['source_meta'], true, false, false, false, true);
+                $this->fail('A node lookup that omitted a requested source node must be rejected.');
+            } catch (\InvalidArgumentException $exception) {
+                $this->assertStringContainsString('missing from the source stream', $exception->getMessage());
+            }
+
+            file_put_contents($files['xml'], $completeXml);
+            $result = $stager->build($files['xml'], $files['output'], $files['source'], $files['source_meta'], true, false, false, false, true);
+            $this->assertSame('PASS', $result['status']);
+            $sqlite = new PDO('sqlite:'.$files['output']);
+            $this->assertSame(1, (int) $sqlite->query('SELECT COUNT(*) FROM source_ways WHERE id=100')->fetchColumn());
+        } finally {
+            $this->removeFixtureFiles($files);
+        }
+    }
+
     public function test_source_complete_checkpoint_resumes_without_rereading_xml_and_never_publishes_early(): void
     {
         $files = $this->fixtureFiles();
@@ -123,7 +187,7 @@ final class OfflinePedestrianGraphTest extends TestCase
         try {
             $stager = app(OfflinePedestrianGraphStager::class);
             $result = $stager->build($files['xml'], $files['output'], $files['source'], $files['source_meta'], false, true, true);
-            $this->assertSame('SOURCE_COMPLETE_PENDING_PRODUCER', $result['state']);
+            $this->assertSame('SOURCE_PASS_PENDING_PRODUCER', $result['state']);
             try {
                 $stager->build('-', $files['output'], $files['source'], $files['source_meta'], true);
                 $this->fail('A pipeline checkpoint must wait for the producer exit result.');
@@ -131,6 +195,18 @@ final class OfflinePedestrianGraphTest extends TestCase
                 $this->assertStringContainsString('has not reported a clean exit', $exception->getMessage());
             }
             $this->assertFileDoesNotExist($files['output']);
+            $idsPath = $files['directory'].'/required-node-ids.txt';
+            $result = $stager->build('-', $files['output'], $files['source'], $files['source_meta'], true, true, false, true, false, $idsPath);
+            $this->assertSame('WAY_INDEX_COMPLETE', $result['state']);
+            $this->assertSame("n1\nn2\n", file_get_contents($idsPath));
+            $result = $stager->build($files['xml'], $files['output'], $files['source'], $files['source_meta'], true, true, true, false, true);
+            $this->assertSame('RESOLUTION_PENDING_PRODUCER', $result['state']);
+            try {
+                $stager->build('-', $files['output'], $files['source'], $files['source_meta'], true);
+                $this->fail('A reference pass must also wait for a clean producer exit.');
+            } catch (\InvalidArgumentException $exception) {
+                $this->assertStringContainsString('has not reported a clean exit', $exception->getMessage());
+            }
             $result = $stager->build('-', $files['output'], $files['source'], $files['source_meta'], true, false, false, true);
             $this->assertSame('PASS', $result['status']);
             $this->assertFileExists($files['output']);

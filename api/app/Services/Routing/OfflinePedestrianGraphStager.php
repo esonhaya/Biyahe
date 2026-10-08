@@ -13,8 +13,8 @@ use XMLReader;
 /** Builds a crash-safe SQLite graph artifact without opening the application database. */
 final class OfflinePedestrianGraphStager
 {
-    private const FORMAT = 'biyahe-pedestrian-sqlite-v1';
-    private const SCHEMA_VERSION = 1;
+    private const FORMAT = 'biyahe-pedestrian-sqlite-v2';
+    private const SCHEMA_VERSION = 2;
     private const MAX_WAY_REFERENCES = 100_000;
     private const COMMIT_EVERY_ELEMENTS = 25_000;
 
@@ -31,6 +31,8 @@ final class OfflinePedestrianGraphStager
         bool $stopAfterSource = false,
         bool $awaitProducerExit = false,
         bool $producerExitConfirmed = false,
+        bool $resolveRequiredNodes = false,
+        ?string $exportRequiredNodeIds = null,
     ): array {
         $sourceIdentity = $this->verifySource($sourcePath, $source);
         if ($outputPath === '' || ! is_dir(dirname($outputPath)) || ! is_writable(dirname($outputPath)) || file_exists($outputPath)) {
@@ -61,30 +63,88 @@ final class OfflinePedestrianGraphStager
         $this->initialize($sqlite, $sourceIdentity, $resume);
 
         $state = $this->meta($sqlite, 'state');
-        if (! in_array($state, ['SOURCE_COMPLETE', 'SOURCE_COMPLETE_PENDING_PRODUCER', 'GRAPH_BUILDING', 'COMPLETE'], true)) {
+        if (! in_array($state, [
+            'WAY_INDEX_COMPLETE', 'SOURCE_PASS_PENDING_PRODUCER', 'RESOLVING_REFERENCES',
+            'RESOLUTION_PENDING_PRODUCER', 'REFERENCE_RESOLUTION_INCOMPLETE',
+            'RESOLUTION_COMPLETE', 'SOURCE_COMPLETE', 'GRAPH_BUILDING', 'COMPLETE',
+        ], true)) {
             $this->resetSource($sqlite, $sourceIdentity);
-            $this->ingest($sqlite, $inputPath, $sourceIdentity);
+            $this->ingest($sqlite, $inputPath, $sourceIdentity, $awaitProducerExit);
             $state = $this->meta($sqlite, 'state');
         }
-        if ($state === 'SOURCE_COMPLETE_PENDING_PRODUCER') {
+        if (in_array($state, ['SOURCE_PASS_PENDING_PRODUCER', 'RESOLUTION_PENDING_PRODUCER'], true)) {
             if (! $producerExitConfirmed) {
-                throw new InvalidArgumentException('The producer has not reported a clean exit; the offline graph remains unpublished.');
+                if (! ($awaitProducerExit && $stopAfterSource)) {
+                    throw new InvalidArgumentException('The producer has not reported a clean exit; the offline graph remains unpublished.');
+                }
+            } elseif ($state === 'SOURCE_PASS_PENDING_PRODUCER') {
+                $this->setMeta($sqlite, 'source_pass_producer_exit', 'PASS');
+                $this->setMeta($sqlite, 'state', 'WAY_INDEX_COMPLETE');
+            } else {
+                $this->setMeta($sqlite, 'resolution_producer_exit', 'PASS');
+                $this->setMeta($sqlite, 'references_complete', true);
+                $this->setMeta($sqlite, 'input_complete', true);
+                $this->setMeta($sqlite, 'state', 'SOURCE_COMPLETE');
             }
-            $this->setMeta($sqlite, 'producer_exit', 'PASS');
-            $this->setMeta($sqlite, 'state', 'SOURCE_COMPLETE');
         } elseif ($producerExitConfirmed) {
             throw new InvalidArgumentException('Producer-exit confirmation does not match a pending producer checkpoint.');
         }
 
-        if ($stopAfterSource) {
-            if ($awaitProducerExit) {
-                $this->setMeta($sqlite, 'producer_exit', 'PENDING');
-                $this->setMeta($sqlite, 'state', 'SOURCE_COMPLETE_PENDING_PRODUCER');
-            }
+        if ($this->meta($sqlite, 'state') === 'RESOLUTION_COMPLETE') {
+            $this->setMeta($sqlite, 'references_complete', true);
+            $this->setMeta($sqlite, 'input_complete', true);
+            $this->setMeta($sqlite, 'state', 'SOURCE_COMPLETE');
+        }
 
-            return ['state' => $awaitProducerExit ? 'SOURCE_COMPLETE_PENDING_PRODUCER' : 'SOURCE_COMPLETE', 'artifact_ready' => false];
+        if ($this->meta($sqlite, 'state') === 'GRAPH_BUILDING') {
+            // Graph writes are deterministic and are rebuilt from the committed source index.
+            $this->setMeta($sqlite, 'state', 'SOURCE_COMPLETE');
+        }
+
+        if ($resolveRequiredNodes) {
+            if (in_array($this->meta($sqlite, 'state'), [
+                'RESOLVING_REFERENCES', 'RESOLUTION_PENDING_PRODUCER', 'REFERENCE_RESOLUTION_INCOMPLETE',
+            ], true)) {
+                // A failed reference pass is replayed in full; its partial IDs are not proof of completion.
+                $this->resetReferenceResolution($sqlite);
+            }
+            if ($this->meta($sqlite, 'state') !== 'WAY_INDEX_COMPLETE') {
+                throw new InvalidArgumentException('Referenced-node resolution requires a completed, producer-verified way index.');
+            }
+            $this->resolveRequiredNodes($sqlite, $inputPath, $sourceIdentity, $inputPath === '-', $awaitProducerExit);
+            $state = $this->meta($sqlite, 'state');
+            if ($state === 'RESOLUTION_COMPLETE') {
+                $this->setMeta($sqlite, 'references_complete', true);
+                $this->setMeta($sqlite, 'input_complete', true);
+                $this->setMeta($sqlite, 'state', 'SOURCE_COMPLETE');
+                $state = 'SOURCE_COMPLETE';
+            }
+        } elseif ($this->meta($sqlite, 'state') === 'WAY_INDEX_COMPLETE' && $inputPath !== '-') {
+            // A regular XML file is replayable. Resolve its referenced nodes directly;
+            // streamed PBF input uses the explicit second Osmium pass in the wrapper.
+            $this->resolveRequiredNodes($sqlite, $inputPath, $sourceIdentity, false, false);
+            $this->setMeta($sqlite, 'references_complete', true);
+            $this->setMeta($sqlite, 'input_complete', true);
+            $this->setMeta($sqlite, 'state', 'SOURCE_COMPLETE');
+            $state = 'SOURCE_COMPLETE';
+        }
+
+        if ($exportRequiredNodeIds !== null) {
+            if ($this->meta($sqlite, 'state') !== 'WAY_INDEX_COMPLETE') {
+                throw new InvalidArgumentException('Required-node IDs can be exported only from a producer-verified way index.');
+            }
+            $this->exportRequiredNodeIds($sqlite, $exportRequiredNodeIds);
+        }
+
+        if ($stopAfterSource) {
+            $state = (string) $this->meta($sqlite, 'state');
+
+            return ['state' => $state, 'artifact_ready' => false];
         }
         if ($this->meta($sqlite, 'state') !== 'COMPLETE') {
+            if ($this->meta($sqlite, 'state') !== 'SOURCE_COMPLETE') {
+                throw new InvalidArgumentException('Source ways and referenced nodes are not both complete; graph generation is blocked.');
+            }
             $this->buildGraph($sqlite);
         }
 
@@ -160,11 +220,17 @@ final class OfflinePedestrianGraphStager
         $sqlite->exec('CREATE TABLE seen_relation_ids (id INTEGER PRIMARY KEY)');
         $sqlite->exec('CREATE TABLE source_ways (id INTEGER PRIMARY KEY, tags TEXT NOT NULL)');
         $sqlite->exec('CREATE TABLE required_nodes (id INTEGER PRIMARY KEY)');
+        $sqlite->exec('CREATE TABLE resolved_node_ids (id INTEGER PRIMARY KEY)');
         $sqlite->exec('CREATE TABLE way_refs (way_id INTEGER NOT NULL, sequence_index INTEGER NOT NULL, node_id INTEGER NOT NULL, PRIMARY KEY (way_id, sequence_index))');
         $sqlite->exec('CREATE INDEX way_refs_node_idx ON way_refs (node_id)');
         $sqlite->exec('CREATE TABLE graph_nodes (osm_node_id INTEGER PRIMARY KEY, latitude REAL NOT NULL, longitude REAL NOT NULL, in_scope INTEGER NOT NULL, walkable INTEGER NOT NULL, barrier TEXT NULL, crossing TEXT NULL)');
         $sqlite->exec('CREATE TABLE graph_edges (osm_way_id INTEGER NOT NULL, segment_index INTEGER NOT NULL, from_node_id INTEGER NOT NULL, to_node_id INTEGER NOT NULL, bidirectional INTEGER NOT NULL, length_meters REAL NOT NULL, highway TEXT NOT NULL, properties TEXT NOT NULL, geometry_wkt TEXT NOT NULL, PRIMARY KEY (osm_way_id, segment_index), FOREIGN KEY (from_node_id) REFERENCES graph_nodes(osm_node_id), FOREIGN KEY (to_node_id) REFERENCES graph_nodes(osm_node_id))');
-        foreach (['format' => self::FORMAT, 'schema_version' => self::SCHEMA_VERSION, 'state' => 'INGESTING', 'input_complete' => false, 'routing_complete' => false] as $key => $value) {
+        foreach ([
+            'format' => self::FORMAT, 'schema_version' => self::SCHEMA_VERSION,
+            'state' => 'INGESTING', 'input_complete' => false,
+            'way_index_complete' => false, 'references_complete' => false,
+            'routing_complete' => false,
+        ] as $key => $value) {
             $this->setMeta($sqlite, $key, $value);
         }
         foreach ($source as $key => $value) {
@@ -176,16 +242,16 @@ final class OfflinePedestrianGraphStager
         $this->setMeta($sqlite, 'crs', 'EPSG:4326');
         $this->setMeta($sqlite, 'license', 'ODbL-1.0');
         $this->setMeta($sqlite, 'attribution', '© OpenStreetMap contributors');
-        $this->setMeta($sqlite, 'extract_strategy', 'streaming_sqlite_ref_complete');
+        $this->setMeta($sqlite, 'extract_strategy', 'scope_first_way_index_then_osmium_getid');
     }
 
     private function resetSource(PDO $sqlite, array $source): void
     {
         $sqlite->beginTransaction();
-        foreach (['source_nodes', 'seen_way_ids', 'seen_relation_ids', 'source_ways', 'required_nodes', 'way_refs', 'graph_nodes', 'graph_edges'] as $table) {
+        foreach (['source_nodes', 'seen_way_ids', 'seen_relation_ids', 'source_ways', 'required_nodes', 'resolved_node_ids', 'way_refs', 'graph_nodes', 'graph_edges'] as $table) {
             $sqlite->exec('DELETE FROM '.$table);
         }
-        foreach (['source_nodes', 'source_ways', 'candidate_ways', 'relations', 'relation_restrictions', 'required_nodes', 'graph_nodes', 'graph_edges', 'component_count', 'graph_content_sha256'] as $key) {
+        foreach (['source_nodes', 'indexed_source_nodes', 'source_ways', 'candidate_ways', 'relations', 'relation_restrictions', 'required_nodes', 'resolved_nodes', 'scope_nodes', 'graph_nodes', 'graph_edges', 'component_count', 'graph_content_sha256'] as $key) {
             $sqlite->exec('DELETE FROM metadata WHERE key='. $sqlite->quote($key));
         }
         if (($source['timestamp'] ?? null) === null) {
@@ -193,6 +259,8 @@ final class OfflinePedestrianGraphStager
         }
         $this->setMeta($sqlite, 'state', 'INGESTING');
         $this->setMeta($sqlite, 'input_complete', false);
+        $this->setMeta($sqlite, 'way_index_complete', false);
+        $this->setMeta($sqlite, 'references_complete', false);
         foreach ($source as $key => $value) {
             $this->setMeta($sqlite, 'source_identity_'.$key, $value);
             if ($key !== 'timestamp' || $value !== null) {
@@ -202,7 +270,7 @@ final class OfflinePedestrianGraphStager
         $sqlite->commit();
     }
 
-    private function ingest(PDO $sqlite, string $inputPath, array $source): void
+    private function ingest(PDO $sqlite, string $inputPath, array $source, bool $awaitProducerExit): void
     {
         $previousLibxmlSetting = libxml_use_internal_errors(true);
         libxml_clear_errors();
@@ -264,16 +332,18 @@ final class OfflinePedestrianGraphStager
                     }
                     $node = $this->readNode($reader);
                     $inside = PedestrianOsmPolicy::insideScope($node['lat'], $node['lon'], $scope);
-                    $tags = $inside ? PedestrianOsmPolicy::tags($node['tags']) : [];
-                    try {
-                        $nodeInsert->execute([
-                            $node['id'], $node['lat'], $node['lon'], $inside ? 1 : 0,
-                            $inside && PedestrianOsmPolicy::blockedNode($tags) ? 0 : 1,
-                            $tags['barrier'] ?? null,
-                            $tags['crossing'] ?? (($tags['highway'] ?? null) === 'crossing' ? 'MAPPED' : null),
-                        ]);
-                    } catch (PDOException $exception) {
-                        throw new InvalidArgumentException('Duplicate OSM node ID in source stream.', 0, $exception);
+                    if ($inside) {
+                        $tags = PedestrianOsmPolicy::tags($node['tags']);
+                        try {
+                            $nodeInsert->execute([
+                                $node['id'], $node['lat'], $node['lon'], 1,
+                                PedestrianOsmPolicy::blockedNode($tags) ? 0 : 1,
+                                $tags['barrier'] ?? null,
+                                $tags['crossing'] ?? (($tags['highway'] ?? null) === 'crossing' ? 'MAPPED' : null),
+                            ]);
+                        } catch (PDOException $exception) {
+                            throw new InvalidArgumentException('Duplicate OSM node ID in source stream (in-scope index).', 0, $exception);
+                        }
                     }
                     $nodeCount++;
                     if ($nodeCount > 10_000_000) {
@@ -311,9 +381,6 @@ final class OfflinePedestrianGraphStager
                         if (++$candidateWays > max(1, (int) config('biyahe.pedestrian.maximum_input_ways', 25_000))) {
                             throw new InvalidArgumentException('OSM source exceeds the configured candidate-way limit.');
                         }
-                        if (count($known) !== count(array_unique($way['refs']))) {
-                            throw new InvalidArgumentException('A candidate way references a node missing from the source stream.');
-                        }
                         $wayInsert->execute([$way['id'], json_encode($wayTags, JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES)]);
                         foreach ($way['refs'] as $index => $nodeId) {
                             $refInsert->execute([$way['id'], $index, $nodeId]);
@@ -347,6 +414,7 @@ final class OfflinePedestrianGraphStager
                     $this->writeProgress($sqlite, $nodeCount, $wayCount, $relationCount, $candidateWays, $scopeNodes, $requiredCount);
                     $sqlite->commit();
                     $transaction = false;
+                    $this->recordProgress('phase=way-index source_nodes='.$nodeCount.' source_ways='.$wayCount.' relations='.$relationCount.' candidate_ways='.$candidateWays.' scope_nodes='.$scopeNodes.' required_nodes='.$requiredCount);
                     $sqlite->beginTransaction();
                     $transaction = true;
                 }
@@ -363,10 +431,12 @@ final class OfflinePedestrianGraphStager
             $this->writeProgress($sqlite, $nodeCount, $wayCount, $relationCount, $candidateWays, $scopeNodes, $requiredCount);
             $this->setMeta($sqlite, 'source_timestamp', $timestamp);
             $this->setMeta($sqlite, 'relation_restrictions', $restrictedRelations);
-            $this->setMeta($sqlite, 'input_complete', true);
-            $this->setMeta($sqlite, 'state', 'SOURCE_COMPLETE');
+            $this->setMeta($sqlite, 'way_index_complete', true);
+            $this->setMeta($sqlite, 'source_pass_producer_exit', $awaitProducerExit ? 'PENDING' : 'PASS');
+            $this->setMeta($sqlite, 'state', $awaitProducerExit ? 'SOURCE_PASS_PENDING_PRODUCER' : 'WAY_INDEX_COMPLETE');
             $sqlite->commit();
             $transaction = false;
+            $this->recordProgress('phase=way-index source_nodes='.$nodeCount.' source_ways='.$wayCount.' relations='.$relationCount.' candidate_ways='.$candidateWays.' scope_nodes='.$scopeNodes.' required_nodes='.$requiredCount);
         } catch (\Throwable $exception) {
             if ($transaction && $sqlite->inTransaction()) {
                 $sqlite->rollBack();
@@ -378,6 +448,189 @@ final class OfflinePedestrianGraphStager
             $reader->close();
             libxml_clear_errors();
             libxml_use_internal_errors($previousLibxmlSetting);
+        }
+    }
+
+    private function resetReferenceResolution(PDO $sqlite): void
+    {
+        $sqlite->beginTransaction();
+        $sqlite->exec('DELETE FROM resolved_node_ids');
+        $sqlite->exec('DELETE FROM source_nodes WHERE in_scope=0');
+        foreach (['resolved_nodes', 'indexed_source_nodes'] as $key) {
+            $sqlite->exec('DELETE FROM metadata WHERE key='.$sqlite->quote($key));
+        }
+        $this->setMeta($sqlite, 'references_complete', false);
+        $this->setMeta($sqlite, 'input_complete', false);
+        $this->setMeta($sqlite, 'state', 'WAY_INDEX_COMPLETE');
+        $sqlite->commit();
+    }
+
+    private function resolveRequiredNodes(PDO $sqlite, string $inputPath, array $source, bool $strictNodesOnly, bool $awaitProducerExit): void
+    {
+        $this->resetReferenceResolution($sqlite);
+        $this->setMeta($sqlite, 'state', 'RESOLVING_REFERENCES');
+        $previousLibxmlSetting = libxml_use_internal_errors(true);
+        libxml_clear_errors();
+        $reader = new XMLReader;
+        $opened = $inputPath === '-'
+            ? $reader->open('php://stdin', null, LIBXML_NONET | LIBXML_COMPACT)
+            : $reader->open($inputPath, null, LIBXML_NONET | LIBXML_COMPACT);
+        if (! $opened) {
+            libxml_clear_errors();
+            libxml_use_internal_errors($previousLibxmlSetting);
+            throw new InvalidArgumentException('Could not open the referenced-node XML stream.');
+        }
+
+        $scope = $source['bounds'];
+        $required = $sqlite->prepare('SELECT 1 FROM required_nodes WHERE id=?');
+        $resolvedInsert = $sqlite->prepare('INSERT INTO resolved_node_ids (id) VALUES (?)');
+        $existingNode = $sqlite->prepare('SELECT latitude, longitude, in_scope, walkable, barrier, crossing FROM source_nodes WHERE id=?');
+        $insertNode = $sqlite->prepare('INSERT INTO source_nodes (id, latitude, longitude, in_scope, walkable, barrier, crossing) VALUES (?, ?, ?, ?, ?, ?, ?)');
+        $resolvedCount = 0;
+        $rootSeen = $rootClosed = false;
+        $transaction = false;
+
+        try {
+            $sqlite->beginTransaction();
+            $transaction = true;
+            while ($reader->read()) {
+                if ($reader->nodeType === XMLReader::END_ELEMENT && $reader->name === 'osm' && $reader->depth === 0) {
+                    $rootClosed = true;
+                    continue;
+                }
+                if ($reader->nodeType !== XMLReader::ELEMENT) {
+                    continue;
+                }
+                if (! $rootSeen) {
+                    if ($reader->name !== 'osm') {
+                        throw new InvalidArgumentException('Referenced-node input does not contain an OSM XML root.');
+                    }
+                    $rootSeen = true;
+                    $timestamp = $reader->getAttribute('timestamp');
+                    if (is_string($timestamp) && $timestamp !== '' && $source['timestamp'] !== null) {
+                        try {
+                            $normalized = (new DateTimeImmutable($timestamp))->format(DATE_ATOM);
+                        } catch (\Throwable) {
+                            throw new InvalidArgumentException('Referenced-node XML snapshot timestamp is malformed.');
+                        }
+                        if ($normalized !== $source['timestamp']) {
+                            throw new InvalidArgumentException('Referenced-node XML snapshot does not match the declared source timestamp.');
+                        }
+                    }
+                    continue;
+                }
+
+                if ($reader->name !== 'node') {
+                    if ($strictNodesOnly && in_array($reader->name, ['way', 'relation'], true)) {
+                        throw new InvalidArgumentException('The Osmium reference pass must contain nodes only.');
+                    }
+                    continue;
+                }
+
+                $id = self::positiveId($reader->getAttribute('id'));
+                $required->execute([$id]);
+                $isRequired = $required->fetchColumn() !== false;
+                $required->closeCursor();
+                if (! $isRequired) {
+                    if ($strictNodesOnly) {
+                        throw new InvalidArgumentException('Osmium reference pass returned an unrequested node.');
+                    }
+                    continue;
+                }
+
+                $node = $this->readNode($reader);
+                try {
+                    $resolvedInsert->execute([$node['id']]);
+                } catch (PDOException $exception) {
+                    throw new InvalidArgumentException('Duplicate required OSM node ID in reference stream.', 0, $exception);
+                }
+                $inside = PedestrianOsmPolicy::insideScope($node['lat'], $node['lon'], $scope);
+                $tags = PedestrianOsmPolicy::tags($node['tags']);
+                $walkable = PedestrianOsmPolicy::blockedNode($tags) ? 0 : 1;
+                $barrier = $tags['barrier'] ?? null;
+                $crossing = $tags['crossing'] ?? (($tags['highway'] ?? null) === 'crossing' ? 'MAPPED' : null);
+                $existingNode->execute([$node['id']]);
+                $existing = $existingNode->fetch(PDO::FETCH_ASSOC);
+                $existingNode->closeCursor();
+                if ($existing !== false) {
+                    if ((float) $existing['latitude'] !== $node['lat'] || (float) $existing['longitude'] !== $node['lon']
+                        || (int) $existing['in_scope'] !== (int) $inside || (int) $existing['walkable'] !== $walkable
+                        || $existing['barrier'] !== $barrier || $existing['crossing'] !== $crossing) {
+                        throw new InvalidArgumentException('Referenced node data differs between source passes.');
+                    }
+                } else {
+                    $insertNode->execute([$node['id'], $node['lat'], $node['lon'], $inside ? 1 : 0, $walkable, $barrier, $crossing]);
+                }
+                $resolvedCount++;
+                if ($resolvedCount > max(1, (int) config('biyahe.pedestrian.maximum_input_nodes', 100_000))) {
+                    throw new InvalidArgumentException('Resolved candidate references exceed the configured node limit.');
+                }
+                if ($resolvedCount % self::COMMIT_EVERY_ELEMENTS === 0) {
+                    $sqlite->commit();
+                    $transaction = false;
+                    $sqlite->beginTransaction();
+                    $transaction = true;
+                    $this->setMeta($sqlite, 'resolved_nodes', $resolvedCount);
+                    $this->setMeta($sqlite, 'indexed_source_nodes', (int) $sqlite->query('SELECT COUNT(*) FROM source_nodes')->fetchColumn());
+                    $sqlite->commit();
+                    $transaction = false;
+                    $this->recordProgress('phase=references resolved_nodes='.$resolvedCount.' required_nodes='.(int) $sqlite->query('SELECT COUNT(*) FROM required_nodes')->fetchColumn());
+                    $sqlite->beginTransaction();
+                    $transaction = true;
+                }
+            }
+
+            $expected = (int) $sqlite->query('SELECT COUNT(*) FROM required_nodes')->fetchColumn();
+            $resolved = (int) $sqlite->query('SELECT COUNT(*) FROM resolved_node_ids')->fetchColumn();
+            if (! $rootSeen || ! $rootClosed || libxml_get_errors() !== []) {
+                throw new InvalidArgumentException('Referenced-node XML stream is malformed or incomplete.');
+            }
+            if ($resolved !== $expected) {
+                throw new InvalidArgumentException('A candidate way references a node missing from the source stream.');
+            }
+            $this->setMeta($sqlite, 'resolved_nodes', $resolved);
+            $this->setMeta($sqlite, 'indexed_source_nodes', (int) $sqlite->query('SELECT COUNT(*) FROM source_nodes')->fetchColumn());
+            $this->setMeta($sqlite, 'resolution_xml_complete', true);
+            $this->setMeta($sqlite, 'resolution_producer_exit', $awaitProducerExit ? 'PENDING' : 'PASS');
+            $this->setMeta($sqlite, 'state', $awaitProducerExit ? 'RESOLUTION_PENDING_PRODUCER' : 'RESOLUTION_COMPLETE');
+            $sqlite->commit();
+            $transaction = false;
+            $this->recordProgress('phase=references resolved_nodes='.$resolved.' required_nodes='.$expected);
+        } catch (\Throwable $exception) {
+            if ($transaction && $sqlite->inTransaction()) {
+                $sqlite->rollBack();
+            }
+            $this->setMeta($sqlite, 'references_complete', false);
+            $this->setMeta($sqlite, 'input_complete', false);
+            $this->setMeta($sqlite, 'state', 'REFERENCE_RESOLUTION_INCOMPLETE');
+            throw $exception;
+        } finally {
+            $reader->close();
+            libxml_clear_errors();
+            libxml_use_internal_errors($previousLibxmlSetting);
+        }
+    }
+
+    private function exportRequiredNodeIds(PDO $sqlite, string $path): void
+    {
+        if ($path === '' || file_exists($path) || ! is_dir(dirname($path)) || ! is_writable(dirname($path))) {
+            throw new InvalidArgumentException('Required-node ID output must be a new file in an existing writable directory.');
+        }
+        $stream = @fopen($path, 'x');
+        if ($stream === false) {
+            throw new RuntimeException('Could not reserve the required-node ID file.');
+        }
+        try {
+            foreach ($sqlite->query('SELECT id FROM required_nodes ORDER BY id') as $row) {
+                if (fwrite($stream, 'n'.(int) $row['id']."\n") === false) {
+                    throw new RuntimeException('Could not write the complete required-node ID file.');
+                }
+            }
+            if (! fflush($stream) || (function_exists('fsync') && ! fsync($stream))) {
+                throw new RuntimeException('Could not flush the required-node ID file.');
+            }
+        } finally {
+            fclose($stream);
         }
     }
 
@@ -448,6 +701,7 @@ final class OfflinePedestrianGraphStager
                             $sqlite->commit();
                             $sqlite->beginTransaction();
                             $transactionEdges = 0;
+                            $this->recordProgress('phase=graph edges='.$edgeCount.' accepted_ways='.$acceptedWays);
                         }
                     }
                 }
@@ -458,6 +712,7 @@ final class OfflinePedestrianGraphStager
             }
         }
         $sqlite->commit();
+        $this->recordProgress('phase=graph edges='.$edgeCount.' accepted_ways='.$acceptedWays);
 
         $sqlite->beginTransaction();
         $sqlite->exec('INSERT OR IGNORE INTO graph_nodes (osm_node_id, latitude, longitude, in_scope, walkable, barrier, crossing) SELECT id, latitude, longitude, in_scope, walkable, barrier, crossing FROM source_nodes WHERE in_scope=1 AND walkable=0');
@@ -478,6 +733,7 @@ final class OfflinePedestrianGraphStager
             $this->setMeta($sqlite, $key, $value);
         }
         $sqlite->commit();
+        $this->recordProgress('phase=graph nodes='.$nodeCount.' edges='.$edgeCount.' components='.$components);
     }
 
     private function lookupInsideNodes(PDO $sqlite, array $references): array
@@ -588,9 +844,26 @@ final class OfflinePedestrianGraphStager
 
     private function writeProgress(PDO $sqlite, int $nodes, int $ways, int $relations, int $candidates, int $scopeNodes, int $requiredNodes): void
     {
-        foreach (['source_nodes' => $nodes, 'source_ways' => $ways, 'relations' => $relations, 'candidate_ways' => $candidates, 'scope_nodes' => $scopeNodes, 'required_nodes' => $requiredNodes] as $key => $value) {
+        foreach ([
+            'source_nodes' => $nodes,
+            'indexed_source_nodes' => $scopeNodes,
+            'source_ways' => $ways,
+            'relations' => $relations,
+            'candidate_ways' => $candidates,
+            'scope_nodes' => $scopeNodes,
+            'required_nodes' => $requiredNodes,
+        ] as $key => $value) {
             $this->setMeta($sqlite, $key, $value);
         }
+    }
+
+    private function recordProgress(string $message): void
+    {
+        $path = getenv('BIYAHE_OSM_PROGRESS_FILE');
+        if (! is_string($path) || $path === '' || ! is_dir(dirname($path)) || ! is_writable(dirname($path))) {
+            return;
+        }
+        @file_put_contents($path, gmdate(DATE_ATOM).' '.$message."\n", FILE_APPEND | LOCK_EX);
     }
 
     private function setMeta(PDO $sqlite, string $key, mixed $value): void

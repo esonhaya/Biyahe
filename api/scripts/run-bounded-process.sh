@@ -77,7 +77,20 @@ command -v ps >/dev/null || { printf 'ps is required for process RSS monitoring.
 
 memavailable_kb() { awk '$1 == "MemAvailable:" { print $2; exit }' "$meminfo_path"; }
 swapfree_kb() { awk '$1 == "SwapFree:" { print $2; exit }' "$meminfo_path"; }
+meminfo_value_kb() { awk -v key="$1:" '$1 == key { print $2; exit }' "$meminfo_path"; }
 diskfree_kb() { df -Pk "$disk_path" | awk 'NR == 2 { print $4; exit }'; }
+file_size_bytes() {
+    local path="$1" bytes
+    [[ -f "$path" ]] || { printf '0\n'; return; }
+    bytes="$(stat -c '%s' "$path" 2>/dev/null || true)"
+    [[ "$bytes" =~ ^[0-9]+$ ]] && printf '%s\n' "$bytes" || printf 'unknown\n'
+}
+progress_sample() {
+    local path="$1"
+    [[ -n "$path" ]] || { printf 'not_configured\n'; return; }
+    [[ -r "$path" ]] || { printf 'unavailable\n'; return; }
+    tail -n 1 "$path" 2>/dev/null | tr '\n' ' '
+}
 process_running() {
     local state
     kill -0 "$1" 2>/dev/null || return 1
@@ -139,13 +152,31 @@ record() {
 
 initial_mem="$(memavailable_kb)"
 initial_swap="$(swapfree_kb)"
+initial_cached="$(meminfo_value_kb Cached)"
+initial_reclaimable="$(meminfo_value_kb SReclaimable)"
 initial_disk="$(diskfree_kb)"
 [[ -n "$initial_swap" ]] || initial_swap=unknown
+[[ -n "$initial_cached" ]] || initial_cached=unknown
+[[ -n "$initial_reclaimable" ]] || initial_reclaimable=unknown
 if [[ ! "$initial_mem" =~ ^[0-9]+$ || ! "$initial_disk" =~ ^[0-9]+$ ]]; then
     record "operation=$operation blocked; resource metrics unavailable; command_not_started=yes"
     exit 4
 fi
-record "operation=$operation preflight_memavailable_kb=$initial_mem swapfree_kb=$initial_swap diskfree_kb=$initial_disk budgets_min_memavailable_kb=$min_mem_kb min_diskfree_kb=$min_disk_kb max_process_tree_rss_kb=$max_rss_kb"
+watch_file="$(printenv BIYAHE_RESOURCE_WATCH_FILE 2>/dev/null || true)"
+progress_file="$(printenv BIYAHE_RESOURCE_PROGRESS_FILE 2>/dev/null || true)"
+watch_db_bytes=not_configured
+watch_journal_bytes=not_configured
+watch_wal_bytes=not_configured
+initial_watch_bytes=0
+if [[ -n "$watch_file" ]]; then
+    watch_db_bytes="$(file_size_bytes "$watch_file")"
+    watch_journal_bytes="$(file_size_bytes "$watch_file-journal")"
+    watch_wal_bytes="$(file_size_bytes "$watch_file-wal")"
+    for bytes in "$watch_db_bytes" "$watch_journal_bytes" "$watch_wal_bytes"; do
+        if [[ "$bytes" =~ ^[0-9]+$ ]]; then initial_watch_bytes=$((initial_watch_bytes + bytes)); else initial_watch_bytes=unknown; break; fi
+    done
+fi
+record "operation=$operation preflight_memavailable_kb=$initial_mem cached_kb=$initial_cached sreclaimable_kb=$initial_reclaimable swapfree_kb=$initial_swap diskfree_kb=$initial_disk sqlite_bytes=$watch_db_bytes sqlite_journal_bytes=$watch_journal_bytes sqlite_wal_bytes=$watch_wal_bytes producer_consumer_progress=$(progress_sample "$progress_file") budgets_min_memavailable_kb=$min_mem_kb min_diskfree_kb=$min_disk_kb max_process_tree_rss_kb=$max_rss_kb"
 if ((initial_mem < min_mem_kb || initial_disk < min_disk_kb)); then
     record 'operation=blocked; resource preflight failed; command_not_started=yes'
     exit 4
@@ -182,21 +213,49 @@ stop_reason=
 peak_rss_kb=0
 min_observed_mem_kb="$initial_mem"
 min_observed_disk_kb="$initial_disk"
+previous_watch_bytes="$initial_watch_bytes"
+if [[ ! "$previous_watch_bytes" =~ ^[0-9]+$ ]]; then previous_watch_bytes=0; fi
 elapsed=0
 while process_running "$runner_pid"; do
     sleep "$poll_seconds"
     elapsed=$((elapsed + poll_seconds))
     process_running "$runner_pid" || break
     mem_now="$(memavailable_kb)"
+    cached_now="$(meminfo_value_kb Cached)"
+    reclaimable_now="$(meminfo_value_kb SReclaimable)"
+    swap_now="$(swapfree_kb)"
     disk_now="$(diskfree_kb)"
+    if [[ -n "$watch_file" ]]; then
+        watch_db_bytes="$(file_size_bytes "$watch_file")"
+        watch_journal_bytes="$(file_size_bytes "$watch_file-journal")"
+        watch_wal_bytes="$(file_size_bytes "$watch_file-wal")"
+        watched_now=0
+        for bytes in "$watch_db_bytes" "$watch_journal_bytes" "$watch_wal_bytes"; do
+            if [[ "$bytes" =~ ^[0-9]+$ ]]; then watched_now=$((watched_now + bytes)); else watched_now=unknown; break; fi
+        done
+    else
+        watch_db_bytes=not_configured
+        watch_journal_bytes=not_configured
+        watch_wal_bytes=not_configured
+        watched_now=not_configured
+    fi
+    progress_now="$(progress_sample "$progress_file")"
     rss_now="$(process_tree_rss_kb "$runner_pid" 2>/dev/null || true)"
     [[ "$rss_now" =~ ^[0-9]+$ ]] || rss_now=unknown
     [[ -n "$mem_now" ]] || mem_now=unknown
     [[ -n "$disk_now" ]] || disk_now=unknown
+    [[ -n "$cached_now" ]] || cached_now=unknown
+    [[ -n "$reclaimable_now" ]] || reclaimable_now=unknown
+    [[ -n "$swap_now" ]] || swap_now=unknown
+    watched_growth=unknown
+    if [[ "$watched_now" =~ ^[0-9]+$ ]]; then
+        watched_growth=$((watched_now - previous_watch_bytes))
+        previous_watch_bytes="$watched_now"
+    fi
     if [[ "$mem_now" =~ ^[0-9]+$ ]] && ((mem_now < min_observed_mem_kb)); then min_observed_mem_kb="$mem_now"; fi
     if [[ "$disk_now" =~ ^[0-9]+$ ]] && ((disk_now < min_observed_disk_kb)); then min_observed_disk_kb="$disk_now"; fi
     if [[ "$rss_now" =~ ^[0-9]+$ ]] && ((rss_now > peak_rss_kb)); then peak_rss_kb="$rss_now"; fi
-    record "sample_elapsed_seconds=$elapsed process_tree_rss_kb=$rss_now peak_rss_kb=$peak_rss_kb memavailable_kb=$mem_now min_memavailable_kb=$min_observed_mem_kb diskfree_kb=$disk_now min_diskfree_kb=$min_observed_disk_kb"
+    record "sample_elapsed_seconds=$elapsed process_tree_rss_kb=$rss_now peak_rss_kb=$peak_rss_kb memavailable_kb=$mem_now min_memavailable_kb=$min_observed_mem_kb cached_kb=$cached_now sreclaimable_kb=$reclaimable_now swapfree_kb=$swap_now diskfree_kb=$disk_now min_diskfree_kb=$min_observed_disk_kb sqlite_bytes=$watch_db_bytes sqlite_journal_bytes=$watch_journal_bytes sqlite_wal_bytes=$watch_wal_bytes sqlite_growth_bytes=$watched_growth producer_consumer_progress=$progress_now"
 
     breach_reason=
     if [[ "$rss_now" == unknown || ! "$mem_now" =~ ^[0-9]+$ || ! "$disk_now" =~ ^[0-9]+$ ]]; then

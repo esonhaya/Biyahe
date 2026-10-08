@@ -39,12 +39,13 @@ use Illuminate\Console\Command;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use PDO;
 use Symfony\Component\Process\Process;
 use Throwable;
 
 class BiyaheDoctor extends Command
 {
-    protected $signature = 'biyahe:doctor {--static : Run source-only checks even when the live database is unavailable} {--offline-graph= : Optional completed offline SQLite graph artifact to validate} {--source-path= : Verified local OSM PBF backing the offline graph}';
+    protected $signature = 'biyahe:doctor {--static : Run source-only checks even when the live database is unavailable} {--offline-graph= : Optional completed offline SQLite graph artifact to validate} {--offline-checkpoint= : Optional SQLite .building checkpoint to inspect read-only} {--offline-resource-log= : Optional bounded-process log to classify resource stops} {--source-path= : Verified local OSM PBF backing the offline graph}';
 
     protected $description = 'Check Biyahe application, PostGIS, transport network, evidence, imports, and fares.';
 
@@ -57,9 +58,10 @@ class BiyaheDoctor extends Command
     public function handle(): int
     {
         $this->report = new DoctorReport;
-        $this->info($this->option('static') ? 'BIYAHE DOCTOR V29 STATIC' : 'BIYAHE DOCTOR V29');
+        $this->info($this->option('static') ? 'BIYAHE DOCTOR V30 STATIC' : 'BIYAHE DOCTOR V30');
         $this->check('application', 'PASS', 'Laravel booted and configuration loaded.');
         $this->runOsmiumRuntimeCheck();
+        $this->runOfflineCheckpointCheck();
 
         if ($this->option('static')) {
             $this->check('database', 'BLOCKED', 'Static mode does not contact the configured database.');
@@ -2163,10 +2165,86 @@ class BiyaheDoctor extends Command
         try {
             $result = app(OfflinePedestrianGraphValidator::class)->validate($graphPath, $sourcePath);
             $this->check('offline graph artifact', (string) $result['status'], $result['routing_ready']
-                ? $result['nodes'].' nodes, '.$result['edges'].' edges, '.$result['components'].' weak components; source fingerprint and SQLite integrity verified.'
-                : $result['nodes'].' nodes and '.$result['edges'].' edges are structurally valid, but '.$result['relation_restrictions'].' pedestrian restriction relation(s) are unsupported.');
+                ? 'GRAPH_VALIDATED; ROUTING_READY. '.$result['nodes'].' nodes, '.$result['edges'].' edges, '.$result['components'].' weak components; source fingerprint and SQLite integrity verified.'
+                : 'GRAPH_VALIDATED; ROUTING_READY=false. '.$result['nodes'].' nodes and '.$result['edges'].' edges are structurally valid, but '.$result['relation_restrictions'].' pedestrian restriction relation(s) are unsupported.');
         } catch (Throwable $exception) {
             $this->check('offline graph artifact', 'FAIL', 'Offline graph validation failed: '.$exception->getMessage());
+        }
+    }
+
+    private function runOfflineCheckpointCheck(): void
+    {
+        $checkpointPath = trim((string) $this->option('offline-checkpoint'));
+        $resourceLogPath = trim((string) $this->option('offline-resource-log'));
+        if ($checkpointPath === '' && $resourceLogPath === '') {
+            return;
+        }
+
+        if ($resourceLogPath !== '') {
+            if (! is_file($resourceLogPath) || ! is_readable($resourceLogPath)) {
+                $this->check('offline resource state', 'BLOCKED', 'RESOURCE_BLOCKED status is unavailable because the supplied runner log is unreadable.');
+            } else {
+                $handle = fopen($resourceLogPath, 'rb');
+                $size = filesize($resourceLogPath);
+                if ($handle === false || ! is_int($size)) {
+                    $this->check('offline resource state', 'BLOCKED', 'RESOURCE_BLOCKED status is unavailable because the supplied runner log could not be sampled.');
+                } else {
+                    fseek($handle, max(0, $size - 16384));
+                    $tail = stream_get_contents($handle) ?: '';
+                    fclose($handle);
+                    if (str_contains($tail, 'operation=stopped_for_resource_budget')) {
+                        $this->check('offline resource state', 'WARN', 'RESOURCE_BLOCKED: the bounded runner stopped the operation for its configured resource budget.');
+                    } elseif (str_contains($tail, 'operation=complete worker_exit=0')) {
+                        $this->check('offline resource state', 'PASS', 'The bounded runner recorded a clean operation exit.');
+                    } else {
+                        $this->check('offline resource state', 'WARN', 'The supplied runner log does not establish either a resource stop or a clean completion.');
+                    }
+                }
+            }
+        }
+
+        if ($checkpointPath === '') {
+            return;
+        }
+        if (! is_file($checkpointPath) || ! is_readable($checkpointPath)) {
+            $this->check('offline source checkpoint', 'BLOCKED', 'SOURCE_INCOMPLETE: no readable SQLite checkpoint was supplied.');
+            $this->check('offline graph checkpoint', 'BLOCKED', 'GRAPH_INCOMPLETE: checkpoint metadata is unavailable.');
+
+            return;
+        }
+
+        try {
+            $path = str_replace(' ', '%20', realpath($checkpointPath) ?: $checkpointPath);
+            $sqlite = new PDO('sqlite:file:'.$path.'?mode=ro', null, null, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
+            $sqlite->exec('PRAGMA query_only=ON');
+            $metadata = [];
+            foreach ($sqlite->query('SELECT key, value FROM metadata') as $row) {
+                $metadata[(string) $row['key']] = json_decode((string) $row['value'], true, 32, JSON_THROW_ON_ERROR);
+            }
+            $schemaReady = ($metadata['format'] ?? null) === 'biyahe-pedestrian-sqlite-v2'
+                && (int) ($metadata['schema_version'] ?? 0) === 2;
+            if (! $schemaReady) {
+                $this->check('offline source checkpoint', 'FAIL', 'Checkpoint format or schema version is unsupported.');
+                $this->check('offline graph checkpoint', 'FAIL', 'GRAPH_INCOMPLETE: checkpoint format cannot be trusted.');
+
+                return;
+            }
+
+            $sourceComplete = ($metadata['way_index_complete'] ?? false) === true
+                && ($metadata['source_pass_producer_exit'] ?? null) === 'PASS';
+            $this->check('offline source checkpoint', $sourceComplete ? 'PASS' : 'WARN', $sourceComplete
+                ? 'SOURCE_COMPLETE: the full way/relation pass and clean producer exit are checkpointed.'
+                : 'SOURCE_INCOMPLETE: a complete way/relation pass and clean producer exit are not both recorded.');
+
+            $graphComplete = ($metadata['input_complete'] ?? false) === true
+                && ($metadata['references_complete'] ?? false) === true
+                && ($metadata['state'] ?? null) === 'COMPLETE';
+            $this->check('offline graph checkpoint', 'WARN', $graphComplete
+                ? 'GRAPH_INCOMPLETE: graph rows are in a .building checkpoint and have not passed published-artifact validation.'
+                : 'GRAPH_INCOMPLETE: referenced nodes and complete graph validation are not checkpointed.');
+        } catch (Throwable $exception) {
+            $this->check('offline source checkpoint', 'FAIL', 'Checkpoint metadata could not be read safely: '.$exception->getMessage());
+            $this->check('offline graph checkpoint', 'FAIL', 'GRAPH_INCOMPLETE: checkpoint metadata could not be validated.');
         }
     }
 

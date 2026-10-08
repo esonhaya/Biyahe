@@ -24,10 +24,12 @@ final class OfflinePedestrianGraphValidator
             throw new RuntimeException('Offline SQLite integrity check failed: '.$integrity);
         }
         $metadata = $this->metadata($sqlite);
-        if (($metadata['format'] ?? null) !== 'biyahe-pedestrian-sqlite-v1'
-            || (int) ($metadata['schema_version'] ?? 0) !== 1
+        if (($metadata['format'] ?? null) !== 'biyahe-pedestrian-sqlite-v2'
+            || (int) ($metadata['schema_version'] ?? 0) !== 2
             || ($metadata['state'] ?? null) !== 'COMPLETE'
             || ($metadata['input_complete'] ?? false) !== true
+            || ($metadata['way_index_complete'] ?? false) !== true
+            || ($metadata['references_complete'] ?? false) !== true
             || ($metadata['crs'] ?? null) !== 'EPSG:4326') {
             throw new RuntimeException('Offline graph artifact is incomplete or uses an unsupported format.');
         }
@@ -69,13 +71,19 @@ final class OfflinePedestrianGraphValidator
         if ($nodes === 0 || $edges === 0 || $nodes !== (int) ($metadata['graph_nodes'] ?? -1) || $edges !== (int) ($metadata['graph_edges'] ?? -1)) {
             throw new RuntimeException('Offline graph counts do not match the completed staging metadata.');
         }
-        $sourceNodes = (int) $sqlite->query('SELECT COUNT(*) FROM source_nodes')->fetchColumn();
+        $indexedSourceNodes = (int) $sqlite->query('SELECT COUNT(*) FROM source_nodes')->fetchColumn();
+        $scopeNodes = (int) $sqlite->query('SELECT COUNT(*) FROM source_nodes WHERE in_scope=1')->fetchColumn();
         $candidateWays = (int) $sqlite->query('SELECT COUNT(*) FROM source_ways')->fetchColumn();
         $references = (int) $sqlite->query('SELECT COUNT(*) FROM way_refs')->fetchColumn();
         $requiredNodes = (int) $sqlite->query('SELECT COUNT(*) FROM required_nodes')->fetchColumn();
-        if ($sourceNodes !== (int) ($metadata['source_nodes'] ?? -1)
+        $resolvedNodes = (int) $sqlite->query('SELECT COUNT(*) FROM resolved_node_ids')->fetchColumn();
+        $sourceNodes = (int) ($metadata['source_nodes'] ?? -1);
+        if ($sourceNodes < $scopeNodes
+            || $indexedSourceNodes !== (int) ($metadata['indexed_source_nodes'] ?? -1)
+            || $scopeNodes !== (int) ($metadata['scope_nodes'] ?? -1)
             || $candidateWays === 0 || $candidateWays !== (int) ($metadata['candidate_ways'] ?? -1)
             || $references === 0 || $requiredNodes !== (int) ($metadata['required_nodes'] ?? -1)
+            || $resolvedNodes !== $requiredNodes || $resolvedNodes !== (int) ($metadata['resolved_nodes'] ?? -1)
             || (int) $sqlite->query('SELECT COUNT(*) FROM seen_way_ids')->fetchColumn() !== (int) ($metadata['source_ways'] ?? -1)
             || (int) $sqlite->query('SELECT COUNT(*) FROM seen_relation_ids')->fetchColumn() !== (int) ($metadata['relations'] ?? -1)) {
             throw new RuntimeException('Offline source index counts do not match the completed input checkpoint.');
@@ -84,7 +92,9 @@ final class OfflinePedestrianGraphValidator
         $referenceGaps = (int) $sqlite->query('SELECT COUNT(*) FROM (SELECT way_id FROM way_refs GROUP BY way_id HAVING MIN(sequence_index)<>0 OR MAX(sequence_index)+1<>COUNT(*))')->fetchColumn();
         $requiredMismatch = (int) $sqlite->query('SELECT COUNT(*) FROM (SELECT node_id FROM way_refs EXCEPT SELECT id FROM required_nodes)')->fetchColumn()
             + (int) $sqlite->query('SELECT COUNT(*) FROM (SELECT id FROM required_nodes EXCEPT SELECT node_id FROM way_refs)')->fetchColumn();
-        if ($missingReferences !== 0 || $referenceGaps !== 0 || $requiredMismatch !== 0) {
+        $resolutionMismatch = (int) $sqlite->query('SELECT COUNT(*) FROM (SELECT id FROM required_nodes EXCEPT SELECT id FROM resolved_node_ids)')->fetchColumn()
+            + (int) $sqlite->query('SELECT COUNT(*) FROM (SELECT id FROM resolved_node_ids EXCEPT SELECT id FROM required_nodes)')->fetchColumn();
+        if ($missingReferences !== 0 || $referenceGaps !== 0 || $requiredMismatch !== 0 || $resolutionMismatch !== 0) {
             throw new RuntimeException('Offline source index contains missing nodes, incomplete way references, or inconsistent required-node rows.');
         }
         $sourceNodeMismatch = (int) $sqlite->query("SELECT COUNT(*) FROM graph_nodes AS graph LEFT JOIN source_nodes AS source ON source.id=graph.osm_node_id WHERE source.id IS NULL OR graph.latitude<>source.latitude OR graph.longitude<>source.longitude OR graph.in_scope<>source.in_scope OR graph.walkable<>source.walkable OR COALESCE(graph.barrier, '')<>COALESCE(source.barrier, '') OR COALESCE(graph.crossing, '')<>COALESCE(source.crossing, '')")->fetchColumn();

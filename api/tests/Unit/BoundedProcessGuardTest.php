@@ -38,11 +38,17 @@ class BoundedProcessGuardTest extends TestCase
                 'BIYAHE_RESOURCE_MIN_MEMAVAILABLE_KB' => '524288',
                 'BIYAHE_RESOURCE_MIN_DISKFREE_KB' => '524288',
                 'BIYAHE_RESOURCE_MAX_PROCESS_TREE_RSS_KB' => '65536',
-            ], ['bash', '-c', 'sleep 1.4; printf complete > "$1"', 'worker', $marker]);
+                'BIYAHE_RESOURCE_WATCH_FILE' => $marker,
+                'BIYAHE_RESOURCE_PROGRESS_FILE' => $marker,
+            ], ['bash', '-c', 'printf complete > "$1"; sleep 1.4', 'worker', $marker]);
 
             $this->assertSame(0, $process->getExitCode(), $process->getOutput().$process->getErrorOutput());
             $this->assertSame('complete', file_get_contents($marker));
             $this->assertStringContainsString('swapfree_kb=0', $process->getOutput());
+            $this->assertStringContainsString('cached_kb=1234', $process->getOutput());
+            $this->assertStringContainsString('sreclaimable_kb=4321', $process->getOutput());
+            $this->assertStringContainsString('sqlite_bytes=8', $process->getOutput());
+            $this->assertStringContainsString('producer_consumer_progress=complete', $process->getOutput());
             $this->assertStringContainsString('process_tree_rss_kb=4000', $process->getOutput());
             $this->assertStringContainsString('operation=complete worker_exit=0 peak_rss_kb=4000', $process->getOutput());
             $this->assertFileDoesNotExist($fixture['log'].'.runner');
@@ -105,7 +111,7 @@ BASH);
         $runnerPid = $log.'.runner';
         $producerPid = $root.'/producer.pid';
         file_put_contents($calls, '');
-        file_put_contents($meminfo, "MemTotal: 1024000 kB\nMemAvailable: ".$availableMemory." kB\nSwapTotal: 0 kB\nSwapFree: 0 kB\n");
+        file_put_contents($meminfo, "MemTotal: 1024000 kB\nMemAvailable: ".$availableMemory." kB\nCached: 1234 kB\nSReclaimable: 4321 kB\nSwapTotal: 0 kB\nSwapFree: 0 kB\n");
 
         $realPs = $this->findExecutable('ps');
         $ps = <<<'BASH'

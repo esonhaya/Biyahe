@@ -8,7 +8,7 @@ use Throwable;
 
 final class PrepareOfflinePedestrianGraph extends Command
 {
-    protected $signature = 'biyahe:pedestrian:stage-offline {input : Complete OSM XML path or - for a producer stream} {--output= : New SQLite graph artifact path} {--source-path= : Verified local source PBF} {--source-url= : Source extract URL} {--source-sha256= : Expected local PBF SHA-256} {--source-timestamp= : OSM snapshot timestamp when supplied} {--osmium-version= : Version of the PBF-to-XML producer} {--resume : Resume a matching .building SQLite checkpoint} {--stop-after-source : Keep a source checkpoint without publishing the graph} {--await-producer-exit : Require an explicit clean producer-exit confirmation before graph generation} {--producer-exit-confirmed : Confirm the producer exited successfully for a pending source checkpoint}';
+    protected $signature = 'biyahe:pedestrian:stage-offline {input : Complete OSM XML path or - for a producer stream} {--output= : New SQLite graph artifact path} {--source-path= : Verified local source PBF} {--source-url= : Source extract URL} {--source-sha256= : Expected local PBF SHA-256} {--source-timestamp= : OSM snapshot timestamp when supplied} {--osmium-version= : Version of the PBF-to-XML producer} {--resume : Resume a matching .building SQLite checkpoint} {--stop-after-source : Keep a source checkpoint without publishing the graph} {--await-producer-exit : Require an explicit clean producer-exit confirmation before graph generation} {--producer-exit-confirmed : Confirm the producer exited successfully for a pending source checkpoint} {--resolve-required-nodes : Consume an Osmium node-ID resolution stream} {--export-required-node-ids= : Write producer-verified candidate node IDs for Osmium getid}';
 
     protected $description = 'Create a bounded, resumable SQLite pedestrian graph artifact without PostgreSQL.';
 
@@ -31,6 +31,8 @@ final class PrepareOfflinePedestrianGraph extends Command
                 (bool) $this->option('stop-after-source'),
                 (bool) $this->option('await-producer-exit'),
                 (bool) $this->option('producer-exit-confirmed'),
+                (bool) $this->option('resolve-required-nodes'),
+                $this->option('export-required-node-ids') ?: null,
             );
         } catch (Throwable $exception) {
             $this->error($exception->getMessage());
