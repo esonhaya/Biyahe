@@ -2,6 +2,7 @@
 
 import importlib.util
 from pathlib import Path
+import tempfile
 import unittest
 
 SCRIPT = Path(__file__).with_name("summarize-offline-coverage.py")
@@ -118,6 +119,33 @@ class CoverageSummaryTests(unittest.TestCase):
         actual["cases"][0]["case_id"] = "wrong_case"
         with self.assertRaisesRegex(COMPARE.CompareError, "case identity"):
             COMPARE.compare(expected, actual, "a" * 64, "b" * 64)
+        actual["cases"][0] = None
+        with self.assertRaisesRegex(COMPARE.CompareError, "case is not an object"):
+            COMPARE.compare(expected, actual, "a" * 64, "b" * 64)
+
+    def test_comparator_publication_preserves_existing_outputs(self):
+        with tempfile.TemporaryDirectory() as directory:
+            target = Path(directory) / "comparison.json"
+            target.write_text("existing output", encoding="utf-8")
+            with self.assertRaisesRegex(COMPARE.CompareError, "already exists"):
+                COMPARE.write_new(target, {"status": "PASS"})
+            self.assertEqual(target.read_text(encoding="utf-8"), "existing output")
+
+            race_target = Path(directory) / "race.json"
+            original_link = COMPARE.os.link
+
+            def create_competing_destination(source, destination):
+                Path(destination).write_text("concurrent output", encoding="utf-8")
+                raise FileExistsError(destination)
+
+            COMPARE.os.link = create_competing_destination
+            try:
+                with self.assertRaises(FileExistsError):
+                    COMPARE.write_new(race_target, {"status": "PASS"})
+            finally:
+                COMPARE.os.link = original_link
+            self.assertEqual(race_target.read_text(encoding="utf-8"), "concurrent output")
+            self.assertFalse(race_target.with_name(race_target.name + ".building").exists())
 
 
 if __name__ == "__main__":

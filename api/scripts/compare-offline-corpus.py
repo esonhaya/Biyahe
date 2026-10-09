@@ -4,6 +4,7 @@
 import argparse
 import hashlib
 import json
+import math
 import os
 from pathlib import Path
 import sys
@@ -27,6 +28,8 @@ def read_pinned(path):
 
 
 def compare(expected, actual, expected_sha, actual_sha):
+    if not isinstance(expected, dict) or not isinstance(actual, dict):
+        raise CompareError("expected and actual replay reports must be JSON objects")
     if expected.get("format") != "biyahe-cebu-offline-coverage-v1" or expected.get("complete") is not True:
         raise CompareError("pinned source coverage report is incomplete or unsupported")
     if actual.get("format") != "biyahe-offline-walking-corpus-v1":
@@ -51,17 +54,24 @@ def compare(expected, actual, expected_sha, actual_sha):
         raise CompareError("actual case keys are missing or duplicated")
     results = []
     for index, (expected_case, actual_case) in enumerate(zip(expected_cases, actual_cases)):
+        if not isinstance(expected_case, dict) or not isinstance(actual_case, dict):
+            raise CompareError(f"expected or actual corpus case is not an object at {index}")
         if actual_case.get("case_index") != index:
             raise CompareError(f"actual corpus case order/index mismatch at {index}")
         expected_key = f"{index:02d}:{expected_case.get('case_id')}"
         if actual_case.get("case_key") != expected_key or actual_case.get("case_id") != expected_case.get("case_id"):
             raise CompareError(f"actual corpus case identity mismatch at {index}")
         expected_route = expected_case.get("route") or {}
+        if not isinstance(expected_route, dict):
+            raise CompareError(f"expected route evidence is malformed at {index}")
         found = expected_route.get("status") == "ROUTE_FOUND"
         status_match = actual_case.get("actual_status") == expected_route.get("status")
         reason_match = actual_case.get("actual_reason_code") == expected_route.get("reason_code")
-        distance_match = not found or (isinstance(actual_case.get("distance_meters"), (int, float))
-                                       and abs(actual_case["distance_meters"] - expected_route.get("distance_meters", -1)) <= 0.02)
+        expected_distance = expected_route.get("distance_meters")
+        actual_distance = actual_case.get("distance_meters")
+        valid_distances = all(isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(value)
+                              for value in (expected_distance, actual_distance))
+        distance_match = not found or (valid_distances and abs(actual_distance - expected_distance) <= 0.02)
         component_match = actual_case.get("component_id") == expected_route.get("component_id")
         geometry_match = not found or actual_case.get("geometry_matches_stored_route") is True
         direction_match = not found or actual_case.get("geometry_direction_matches") is True
@@ -117,16 +127,21 @@ def write_new(path, document):
         raise CompareError("output path or .building path already exists")
     path.parent.mkdir(parents=True, exist_ok=True)
     temporary = path.with_name(path.name + ".building")
+    owns_temporary = False
     try:
         with temporary.open("x", encoding="utf-8") as handle:
+            owns_temporary = True
             handle.write(json.dumps(document, sort_keys=True, ensure_ascii=False, indent=2) + "\n")
             handle.flush()
             os.fsync(handle.fileno())
-        if path.exists():
-            raise CompareError("output appeared before publication")
-        os.rename(temporary, path)
+        # A same-directory hard link publishes atomically and fails if another
+        # process created the destination after the initial check.
+        os.link(temporary, path)
+        temporary.unlink()
+        owns_temporary = False
     except Exception:
-        temporary.unlink(missing_ok=True)
+        if owns_temporary:
+            temporary.unlink(missing_ok=True)
         raise
 
 
