@@ -29,7 +29,7 @@ final class DevelopmentOfflineWalkingPreviewController
         $validator = Validator::make($request->all(), [
             'journey' => ['required', 'array'],
             'journey.id' => ['required', 'string', 'max:180'],
-            'journey.legs' => ['required', 'array', 'max:12'],
+            'journey.legs' => ['required', 'array', 'min:1', 'max:12'],
             'journey.legs.*.type' => ['required', 'string', 'in:WALK_ACCESS,RIDE,TRANSFER_WALK,WALK_EGRESS'],
         ]);
         if ($validator->fails()) {

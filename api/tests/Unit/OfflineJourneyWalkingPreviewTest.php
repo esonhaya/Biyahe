@@ -63,6 +63,7 @@ final class OfflineJourneyWalkingPreviewTest extends TestCase
             $this->assertSame('ROUTE_UNAVAILABLE', $walk['routing_status']);
             $this->assertSame('component_disconnected', $walk['offline_walking_preview']['reason_code']);
             $this->assertSame('UNAVAILABLE', $walk['distance_type']);
+            $this->assertFalse($walk['distance_is_estimate']);
             $this->assertNull($walk['geometry']);
             $this->assertSame('PARTIAL', $result['preview']['status']);
         } finally {
@@ -194,6 +195,21 @@ final class OfflineJourneyWalkingPreviewTest extends TestCase
             $this->fail('Resource pressure must stop local graph routing.');
         } catch (OfflineWalkingPreviewException $exception) {
             $this->assertSame('resource_budget_exceeded', $exception->reasonCode);
+        }
+    }
+
+    public function test_empty_journey_is_rejected_instead_of_returning_a_no_walking_preview(): void
+    {
+        $previewer = new OfflineJourneyWalkingPreview([], static fn (): array => [
+            'memavailable_kib' => 600_000,
+            'swapfree_kib' => 200_000,
+        ]);
+
+        try {
+            $previewer->preview(['id' => 'empty-journey', 'legs' => []]);
+            $this->fail('A journey without legs is not a valid preview input.');
+        } catch (OfflineWalkingPreviewException $exception) {
+            $this->assertSame('invalid_journey', $exception->reasonCode);
         }
     }
 

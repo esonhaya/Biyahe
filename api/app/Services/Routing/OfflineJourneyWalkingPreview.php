@@ -208,8 +208,8 @@ final class OfflineJourneyWalkingPreview
     private function validateJourney(array $journey): void
     {
         if (! is_string($journey['id'] ?? null) || trim($journey['id']) === ''
-            || ! is_array($journey['legs'] ?? null) || count($journey['legs']) > 12) {
-            throw new OfflineWalkingPreviewException('invalid_journey', 'A journey ID and no more than twelve ordered legs are required.');
+            || ! is_array($journey['legs'] ?? null) || count($journey['legs']) < 1 || count($journey['legs']) > 12) {
+            throw new OfflineWalkingPreviewException('invalid_journey', 'A journey ID and one to twelve ordered legs are required.');
         }
         foreach ($journey['legs'] as $leg) {
             if (! is_array($leg) || ! is_string($leg['type'] ?? null)
@@ -238,7 +238,7 @@ final class OfflineJourneyWalkingPreview
         $approximateConnectors = $found && (float) ($route['total_distance_with_approximate_snaps_meters'] ?? 0)
             > (float) ($route['distance_meters'] ?? 0);
         $leg['distance_meters'] = $found ? $route['total_distance_with_approximate_snaps_meters'] : null;
-        $leg['distance_is_estimate'] = ! $found || $approximateConnectors;
+        $leg['distance_is_estimate'] = $found && $approximateConnectors;
         $leg['distance_type'] = $found ? ($approximateConnectors
             ? 'PEDESTRIAN_NETWORK_WITH_APPROXIMATE_CONNECTORS'
             : 'PEDESTRIAN_NETWORK') : 'UNAVAILABLE';
