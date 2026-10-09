@@ -1,0 +1,27 @@
+{
+  "format": "biyahe-batch035-cancellation-probe-v1",
+  "status": "PASS",
+  "probe_type": "controlled shell worker with synthetic resource-file breach; no memory or swap exhaustion was induced",
+  "guard_log": "/data/data/com.termux/files/home/.cache/biyahe/batch035/cancel-probe-080819/guard.log",
+  "worker_log": "/data/data/com.termux/files/home/.cache/biyahe/batch035/cancel-probe-080819/guard.log.worker.log",
+  "worker_group_verified": true,
+  "worker_pid": 6077,
+  "worker_pgid": 6077,
+  "worker_sid": 6077,
+  "parent_pgid": 5966,
+  "parent_sid": 5966,
+  "worker_and_child_stopped": true,
+  "child_pid": 6096,
+  "child_state_after_cancel": "ABSENT",
+  "termination_sequence": [
+    "SIGTERM",
+    "SIGKILL"
+  ],
+  "worker_exit": 137,
+  "worker_exit_signal": "SIGKILL",
+  "guard_exit": 6,
+  "parent_shell_survived": true,
+  "unrelated_sibling_survived": true,
+  "full_worker_log_retained": true,
+  "evidence": "Guard output recorded worker_group_cancel=COMPLETE; the parent shell wrote its post-wait sentinel, the unrelated sibling remained alive until test cleanup, and /proc confirmed the worker and child PIDs absent."
+}

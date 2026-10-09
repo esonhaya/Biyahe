@@ -21,7 +21,13 @@ final class OfflinePedestrianGraphImportTest extends TestCase
         $files = $this->graphFixture();
         try {
             $importer = app(PedestrianNetworkImporter::class);
-            $first = $importer->importOfflineSqlite($files['output'], $files['source'], DB::connection()->getDatabaseName());
+            $first = $importer->importOfflineSqlite(
+                $files['output'],
+                $files['source'],
+                DB::connection()->getDatabaseName(),
+                hash_file('sha256', $files['output']),
+                hash_file('sha256', $files['source']),
+            );
             $this->assertFalse($first->alreadyImported);
             $this->assertSame(2, $first->nodes);
             $this->assertSame(1, $first->edges);
@@ -29,6 +35,15 @@ final class OfflinePedestrianGraphImportTest extends TestCase
             $this->assertSame(1, DB::table('pedestrian_network_datasets')->count());
             $this->assertSame(0, DB::table('field_observations')->count());
             $datasetMetadata = json_decode((string) DB::table('pedestrian_network_datasets')->value('metadata'), true, 32, JSON_THROW_ON_ERROR);
+            $this->assertSame('VALIDATED', $datasetMetadata['import_state']);
+            $this->assertTrue($datasetMetadata['routing_ready']);
+            $this->assertSame(1, $datasetMetadata['import_checkpoint']['version']);
+            $this->assertSame('offline-pedestrian-import-v1', $datasetMetadata['import_checkpoint']['import_schema']);
+            $this->assertSame(2, $datasetMetadata['import_progress']['nodes_committed']);
+            $this->assertSame(1, $datasetMetadata['import_progress']['edges_committed']);
+            $this->assertSame(2, $datasetMetadata['import_progress']['last_node_osm_id']);
+            $this->assertSame(100, $datasetMetadata['import_progress']['node_batch_size']);
+            $this->assertSame(['nodes_match' => true, 'edges_match' => true, 'directionality_match' => true, 'geometry_match' => true, 'nodes_verified' => 2, 'edges_verified' => 1, 'graph_fingerprint' => $this->graphFingerprint($files)], $datasetMetadata['staging_integrity']);
             $this->assertSame('offline_scope_first_sqlite_v3', $datasetMetadata['source_details']['extract_strategy']);
             $this->assertSame(hash_file('sha256', $files['source']), $datasetMetadata['source_details']['source_checksum_sha256']);
             $route = app(LocalPedestrianGraphRouter::class)->route(new PedestrianRouteRequest(
@@ -40,7 +55,41 @@ final class OfflinePedestrianGraphImportTest extends TestCase
             $this->assertSame(PedestrianRouteStatus::UNAVAILABLE, $route->status);
             $this->assertNull($route->geometry);
 
-            $second = $importer->importOfflineSqlite($files['output'], $files['source'], DB::connection()->getDatabaseName());
+            $stagedRoute = app(LocalPedestrianGraphRouter::class)->routeValidatedStaging(
+                new PedestrianRouteRequest(
+                    ['lat' => 10.3, 'lng' => 123.87],
+                    ['lat' => 10.3001, 'lng' => 123.87],
+                    PedestrianRoutePurpose::ACCESS_WALK,
+                    500,
+                ),
+                (int) DB::table('pedestrian_network_datasets')->value('id'),
+                hash_file('sha256', $files['output']),
+                hash_file('sha256', $files['source']),
+            );
+            $this->assertTrue($stagedRoute->status->isAvailable());
+            $this->assertSame([1, 2], [$stagedRoute->originSnapNodeId, $stagedRoute->destinationSnapNodeId]);
+            $this->assertSame(2, count($stagedRoute->geometry['coordinates'] ?? []));
+            $this->assertNull($stagedRoute->reasonCode);
+
+            $mismatchedStagedRoute = app(LocalPedestrianGraphRouter::class)->routeValidatedStaging(
+                new PedestrianRouteRequest(
+                    ['lat' => 10.3, 'lng' => 123.87],
+                    ['lat' => 10.3001, 'lng' => 123.87],
+                    PedestrianRoutePurpose::ACCESS_WALK,
+                    500,
+                ),
+                (int) DB::table('pedestrian_network_datasets')->value('id'),
+                str_repeat('f', 64),
+                hash_file('sha256', $files['source']),
+            );
+            $this->assertSame(PedestrianRouteStatus::UNAVAILABLE, $mismatchedStagedRoute->status);
+            $this->assertSame('staging_identity_mismatch', $mismatchedStagedRoute->reasonCode);
+            $this->assertSame(0, DB::table('pedestrian_network_datasets')->where('is_active', true)->count());
+
+            $second = $importer->importOfflineSqlite(
+                $files['output'], $files['source'], DB::connection()->getDatabaseName(),
+                hash_file('sha256', $files['output']), hash_file('sha256', $files['source']),
+            );
             $this->assertTrue($second->alreadyImported);
             $this->assertSame(1, DB::table('pedestrian_network_datasets')->count());
             $this->assertSame(0, DB::table('pedestrian_network_datasets')->where('is_active', true)->count());
@@ -78,20 +127,261 @@ final class OfflinePedestrianGraphImportTest extends TestCase
             $this->markTestSkipped('The staged-import rollback fixture uses an isolated SQLite trigger.');
         }
         $files = $this->graphFixture();
-        $trigger = 'offline_graph_test_corrupt_edge';
+        $trigger = 'offline_graph_test_abort_edge';
         try {
-            DB::unprepared("CREATE TRIGGER {$trigger} AFTER INSERT ON pedestrian_network_edges BEGIN UPDATE pedestrian_network_edges SET length_meters=0 WHERE id=NEW.id; END");
+            DB::unprepared("CREATE TRIGGER {$trigger} BEFORE INSERT ON pedestrian_network_edges BEGIN SELECT RAISE(ABORT, 'controlled edge batch failure'); END");
             try {
                 app(PedestrianNetworkImporter::class)->importOfflineSqlite($files['output'], $files['source'], DB::connection()->getDatabaseName());
-                $this->fail('A corrupt staged edge must abort the import transaction.');
-            } catch (\RuntimeException $exception) {
-                $this->assertStringContainsString('validation failed before activation', $exception->getMessage());
+                $this->fail('An aborted edge batch must fail the import.');
+            } catch (\Throwable $exception) {
+                $this->assertStringContainsString('controlled edge batch failure', $exception->getMessage());
             }
-            $this->assertSame(0, DB::table('pedestrian_network_datasets')->count());
-            $this->assertSame(0, DB::table('pedestrian_network_nodes')->count());
+            $this->assertSame(1, DB::table('pedestrian_network_datasets')->count());
+            $this->assertSame(2, DB::table('pedestrian_network_nodes')->count());
             $this->assertSame(0, DB::table('pedestrian_network_edges')->count());
+            $metadata = json_decode((string) DB::table('pedestrian_network_datasets')->value('metadata'), true, 32, JSON_THROW_ON_ERROR);
+            $this->assertSame('FAILED', $metadata['import_state']);
+            $this->assertFalse($metadata['routing_ready']);
+            $this->assertSame(0, DB::table('pedestrian_network_datasets')->where('is_active', true)->count());
+            $route = app(LocalPedestrianGraphRouter::class)->route(new PedestrianRouteRequest(
+                ['lat' => 10.3, 'lng' => 123.87],
+                ['lat' => 10.3001, 'lng' => 123.87],
+                PedestrianRoutePurpose::ACCESS_WALK,
+                500,
+            ));
+            $this->assertSame(PedestrianRouteStatus::UNAVAILABLE, $route->status);
+            $this->assertNull($route->geometry);
         } finally {
             DB::unprepared("DROP TRIGGER IF EXISTS {$trigger}");
+            $this->cleanup($files);
+        }
+    }
+
+    public function test_post_import_source_comparison_rejects_mutated_staged_node_tags(): void
+    {
+        if (DB::connection()->getDriverName() !== 'sqlite') {
+            $this->markTestSkipped('The staged source-comparison fixture uses an isolated SQLite trigger.');
+        }
+        $files = $this->graphFixture();
+        $trigger = 'offline_graph_test_mutate_node';
+        try {
+            DB::unprepared("CREATE TRIGGER {$trigger} AFTER INSERT ON pedestrian_network_nodes BEGIN UPDATE pedestrian_network_nodes SET barrier='fence' WHERE id=NEW.id; END");
+            try {
+                app(PedestrianNetworkImporter::class)->importOfflineSqlite($files['output'], $files['source'], DB::connection()->getDatabaseName());
+                $this->fail('A staged node tag differing from the source graph must fail validation.');
+            } catch (\RuntimeException $exception) {
+                $this->assertStringContainsString('node data differs', $exception->getMessage());
+            }
+            $metadata = json_decode((string) DB::table('pedestrian_network_datasets')->value('metadata'), true, 32, JSON_THROW_ON_ERROR);
+            $this->assertSame('FAILED', $metadata['import_state']);
+            $this->assertFalse($metadata['routing_ready']);
+            $this->assertSame(0, DB::table('pedestrian_network_datasets')->where('is_active', true)->count());
+        } finally {
+            DB::unprepared("DROP TRIGGER IF EXISTS {$trigger}");
+            $this->cleanup($files);
+        }
+    }
+
+    public function test_interrupted_chunk_is_hidden_and_retry_verifies_then_resumes_its_source_prefix(): void
+    {
+        config([
+            'biyahe.pedestrian.offline_import_node_batch_size' => 1,
+            'biyahe.pedestrian.offline_import_edge_batch_size' => 1,
+        ]);
+        $files = $this->graphFixture();
+        $importer = app(PedestrianNetworkImporter::class);
+        try {
+            try {
+                $importer->importOfflineSqlite(
+                    $files['output'], $files['source'], DB::connection()->getDatabaseName(),
+                    hash_file('sha256', $files['output']), hash_file('sha256', $files['source']),
+                    static function (string $phase, array $progress): void {
+                        if ($phase === 'NODES' && $progress['nodes_committed'] === 1) {
+                            throw new \RuntimeException('controlled interruption after committed node batch');
+                        }
+                    },
+                );
+                $this->fail('The controlled interruption callback should abort this attempt.');
+            } catch (\RuntimeException $exception) {
+                $this->assertStringContainsString('controlled interruption', $exception->getMessage());
+            }
+
+            $this->assertSame(1, DB::table('pedestrian_network_nodes')->count());
+            $this->assertSame(0, DB::table('pedestrian_network_edges')->count());
+            $this->assertSame(0, DB::table('pedestrian_network_datasets')->where('is_active', true)->count());
+            $interruptedMetadata = json_decode((string) DB::table('pedestrian_network_datasets')->value('metadata'), true, 32, JSON_THROW_ON_ERROR);
+            $this->assertSame('FAILED', $interruptedMetadata['import_state']);
+            $this->assertFalse($interruptedMetadata['routing_ready']);
+
+            $retried = $importer->importOfflineSqlite(
+                $files['output'], $files['source'], DB::connection()->getDatabaseName(),
+                hash_file('sha256', $files['output']), hash_file('sha256', $files['source']),
+            );
+            $this->assertFalse($retried->alreadyImported);
+            $this->assertSame(2, DB::table('pedestrian_network_nodes')->count());
+            $this->assertSame(1, DB::table('pedestrian_network_edges')->count());
+            $recoveredMetadata = json_decode((string) DB::table('pedestrian_network_datasets')->value('metadata'), true, 32, JSON_THROW_ON_ERROR);
+            $this->assertSame('VALIDATED', $recoveredMetadata['import_state']);
+            $this->assertSame(0, $recoveredMetadata['import_recovery']['restart_count']);
+            $this->assertSame(1, $recoveredMetadata['import_recovery']['resume_count']);
+            $this->assertSame('FAILED', $recoveredMetadata['import_recovery']['last_recovered_state']);
+            $this->assertSame(2, $recoveredMetadata['import_progress']['nodes_committed']);
+            $this->assertSame(2, $recoveredMetadata['import_progress']['last_node_osm_id']);
+            $this->assertSame(0, DB::table('pedestrian_network_datasets')->where('is_active', true)->count());
+
+            $reused = $importer->importOfflineSqlite(
+                $files['output'], $files['source'], DB::connection()->getDatabaseName(),
+                hash_file('sha256', $files['output']), hash_file('sha256', $files['source']),
+            );
+            $this->assertTrue($reused->alreadyImported);
+            $this->assertSame(2, DB::table('pedestrian_network_nodes')->count());
+            $this->assertSame(1, DB::table('pedestrian_network_edges')->count());
+        } finally {
+            $this->cleanup($files);
+        }
+    }
+
+    public function test_corrupt_checkpoint_prefix_is_rejected_without_deleting_partial_rows(): void
+    {
+        config(['biyahe.pedestrian.offline_import_node_batch_size' => 1]);
+        $files = $this->graphFixture();
+        $importer = app(PedestrianNetworkImporter::class);
+        try {
+            try {
+                $importer->importOfflineSqlite(
+                    $files['output'], $files['source'], DB::connection()->getDatabaseName(),
+                    hash_file('sha256', $files['output']), hash_file('sha256', $files['source']),
+                    static function (string $phase, array $progress): void {
+                        if ($phase === 'NODES' && $progress['nodes_committed'] === 1) {
+                            throw new \RuntimeException('controlled stop after node checkpoint');
+                        }
+                    },
+                );
+                $this->fail('The first committed node batch should be interrupted.');
+            } catch (\RuntimeException $exception) {
+                $this->assertStringContainsString('controlled stop', $exception->getMessage());
+            }
+            DB::table('pedestrian_network_nodes')->where('osm_node_id', 1)->update(['barrier' => 'fence']);
+
+            try {
+                $importer->importOfflineSqlite($files['output'], $files['source'], DB::connection()->getDatabaseName());
+                $this->fail('A changed staged prefix must not be resumed.');
+            } catch (\RuntimeException $exception) {
+                $this->assertStringContainsString('not the exact SQLite source prefix', $exception->getMessage());
+            }
+
+            $this->assertSame(1, DB::table('pedestrian_network_nodes')->count());
+            $this->assertSame(0, DB::table('pedestrian_network_edges')->count());
+            $this->assertSame(0, DB::table('pedestrian_network_datasets')->where('is_active', true)->count());
+        } finally {
+            $this->cleanup($files);
+        }
+    }
+
+    public function test_interrupted_edge_checkpoint_resumes_only_after_direction_and_geometry_match(): void
+    {
+        config([
+            'biyahe.pedestrian.offline_import_node_batch_size' => 1,
+            'biyahe.pedestrian.offline_import_edge_batch_size' => 1,
+        ]);
+        $files = $this->graphFixture();
+        $importer = app(PedestrianNetworkImporter::class);
+        try {
+            try {
+                $importer->importOfflineSqlite(
+                    $files['output'], $files['source'], DB::connection()->getDatabaseName(),
+                    hash_file('sha256', $files['output']), hash_file('sha256', $files['source']),
+                    static function (string $phase, array $progress): void {
+                        if ($phase === 'EDGES' && $progress['edges_committed'] === 1) {
+                            throw new \RuntimeException('controlled stop after edge checkpoint');
+                        }
+                    },
+                );
+                $this->fail('The first committed edge batch should be interrupted.');
+            } catch (\RuntimeException $exception) {
+                $this->assertStringContainsString('controlled stop', $exception->getMessage());
+            }
+            $this->assertSame(2, DB::table('pedestrian_network_nodes')->count());
+            $this->assertSame(1, DB::table('pedestrian_network_edges')->count());
+
+            $resumed = $importer->importOfflineSqlite($files['output'], $files['source'], DB::connection()->getDatabaseName());
+            $metadata = json_decode((string) DB::table('pedestrian_network_datasets')->value('metadata'), true, 32, JSON_THROW_ON_ERROR);
+            $this->assertFalse($resumed->alreadyImported);
+            $this->assertSame(2, DB::table('pedestrian_network_nodes')->count());
+            $this->assertSame(1, DB::table('pedestrian_network_edges')->count());
+            $this->assertTrue($metadata['staging_integrity']['directionality_match']);
+            $this->assertTrue($metadata['staging_integrity']['geometry_match']);
+            $this->assertSame(1, $metadata['import_recovery']['resume_count']);
+            $this->assertSame(0, DB::table('pedestrian_network_datasets')->where('is_active', true)->count());
+        } finally {
+            $this->cleanup($files);
+        }
+    }
+
+    public function test_explicit_restart_replaces_only_a_matching_inactive_partial_import(): void
+    {
+        config(['biyahe.pedestrian.offline_import_node_batch_size' => 1]);
+        $files = $this->graphFixture();
+        $importer = app(PedestrianNetworkImporter::class);
+        try {
+            try {
+                $importer->importOfflineSqlite(
+                    $files['output'], $files['source'], DB::connection()->getDatabaseName(),
+                    hash_file('sha256', $files['output']), hash_file('sha256', $files['source']),
+                    static function (string $phase, array $progress): void {
+                        if ($phase === 'NODES' && $progress['nodes_committed'] === 1) {
+                            throw new \RuntimeException('controlled stop before explicit restart');
+                        }
+                    },
+                );
+                $this->fail('The first committed node batch should be interrupted.');
+            } catch (\RuntimeException $exception) {
+                $this->assertStringContainsString('controlled stop', $exception->getMessage());
+            }
+
+            $retried = $importer->importOfflineSqlite(
+                $files['output'], $files['source'], DB::connection()->getDatabaseName(),
+                hash_file('sha256', $files['output']), hash_file('sha256', $files['source']), null, true,
+            );
+            $metadata = json_decode((string) DB::table('pedestrian_network_datasets')->value('metadata'), true, 32, JSON_THROW_ON_ERROR);
+            $this->assertFalse($retried->alreadyImported);
+            $this->assertSame(2, DB::table('pedestrian_network_nodes')->count());
+            $this->assertSame(1, DB::table('pedestrian_network_edges')->count());
+            $this->assertSame(1, $metadata['import_recovery']['restart_count']);
+            $this->assertSame('FAILED', $metadata['import_recovery']['last_recovered_state']);
+            $this->assertSame('VALIDATED', $metadata['import_state']);
+            $this->assertSame(0, DB::table('pedestrian_network_datasets')->where('is_active', true)->count());
+        } finally {
+            $this->cleanup($files);
+        }
+    }
+
+    public function test_expected_graph_or_source_hash_mismatch_is_rejected_before_staging(): void
+    {
+        $files = $this->graphFixture();
+        try {
+            try {
+                app(PedestrianNetworkImporter::class)->importOfflineSqlite(
+                    $files['output'], $files['source'], DB::connection()->getDatabaseName(),
+                    str_repeat('f', 64), hash_file('sha256', $files['source']),
+                );
+                $this->fail('A mismatched graph hash must be rejected.');
+            } catch (\InvalidArgumentException $exception) {
+                $this->assertStringContainsString('graph artifact SHA-256', $exception->getMessage());
+            }
+            $this->assertSame(0, DB::table('pedestrian_network_datasets')->count());
+
+            try {
+                app(PedestrianNetworkImporter::class)->importOfflineSqlite(
+                    $files['output'], $files['source'], DB::connection()->getDatabaseName(),
+                    hash_file('sha256', $files['output']), str_repeat('f', 64),
+                );
+                $this->fail('A mismatched PBF hash must be rejected.');
+            } catch (\RuntimeException $exception) {
+                $this->assertStringContainsString('source fingerprint', $exception->getMessage());
+            }
+            $this->assertSame(0, DB::table('pedestrian_network_datasets')->count());
+        } finally {
             $this->cleanup($files);
         }
     }
@@ -182,6 +472,16 @@ final class OfflinePedestrianGraphImportTest extends TestCase
         ]);
 
         return compact('directory', 'source', 'xml', 'output');
+    }
+
+    private function graphFingerprint(array $files): string
+    {
+        $sqlite = new \PDO('sqlite:'.$files['output'], null, null, [\PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION]);
+        foreach ($sqlite->query("SELECT value FROM metadata WHERE key='graph_content_sha256'") as $row) {
+            return (string) json_decode((string) $row['value'], true, 32, JSON_THROW_ON_ERROR);
+        }
+
+        return '';
     }
 
     private function cleanup(array $files): void

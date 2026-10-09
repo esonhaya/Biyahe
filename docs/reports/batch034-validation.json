@@ -1,0 +1,67 @@
+{
+  "format": "biyahe-batch034-validation-v1",
+  "captured_at_utc": "2026-10-09T04:44:10Z",
+  "focused_tests": {
+    "status": "PASS_WITH_RESOURCE_GUARD_BREACH",
+    "command": "php artisan test --compact --filter=OfflinePedestrianGraphImportTest|OfflinePedestrianGraphReadinessV34Test",
+    "runner": "api/scripts/run-bounded-process.sh",
+    "worker_started": true,
+    "preflight_memavailable_kib": 805108,
+    "required_min_memavailable_kib": 524288,
+    "preflight_swapfree_kib": 196272,
+    "required_min_swapfree_kib": 131072,
+    "min_memavailable_kib": 741276,
+    "min_swapfree_kib": 83380,
+    "php_process_tree_peak_rss_kib": 49460,
+    "postgres_peak_rss_kib": 0,
+    "tests_executed": 14,
+    "tests_passed": 14,
+    "assertions": 111,
+    "worker_exit": 0,
+    "runner_result": "stopped_for_resource_budget; cancellation was requested after swap-floor breach but no worker descendant PID was available, and the worker subsequently completed successfully",
+    "reason": "The guarded run crossed the unchanged 128 MiB SwapFree floor. PHPUnit reported 14/14 passing tests and 111 assertions. Do not repeat under current resource variability.",
+    "log": "~/.cache/biyahe/batch034/focused-tests-20261009T044011Z.log"
+  },
+  "php_lint": {
+    "status": "PASS",
+    "files": [
+      "api/app/Services/Routing/PedestrianNetworkImporter.php",
+      "api/app/Services/Routing/OfflinePedestrianGraphReadinessV34.php",
+      "api/app/Console/Commands/StageOfflinePedestrianGraph.php",
+      "api/app/Console/Commands/BiyaheDoctorV34.php",
+      "api/tests/Feature/OfflinePedestrianGraphImportTest.php",
+      "api/tests/Unit/OfflinePedestrianGraphReadinessV34Test.php"
+    ]
+  },
+  "bash_syntax": {
+    "status": "PASS",
+    "files": [
+      "api/scripts/run-bounded-process.sh"
+    ]
+  },
+  "json_parse": {
+    "status": "PASS",
+    "files": [
+      "docs/reports/batch033-doctor-v33-final.json",
+      "docs/reports/batch033-staging-evidence.json",
+      "docs/reports/batch034-resource-diagnostic.json",
+      "docs/reports/batch034-validation.json",
+      "docs/reports/batch034-doctor-v34-report-final.json"
+    ]
+  },
+  "git_diff_check": {
+    "status": "PASS"
+  },
+  "doctor_v34": {
+    "status": "BLOCKED",
+    "executed": true,
+    "postgresql_contacted": false,
+    "production_activation": "NO",
+    "report": "docs/reports/batch034-doctor-v34-report-final.json",
+    "evidence": "Source, graph, restriction inventory, and ten-case offline corpus PASS; resource readiness, current isolated import/checkpoint state, current Batch034 rollback/idempotency/conflict, staged route parity, and field safety remain BLOCKED. Stop/place coverage and transfer evidence WARN."
+  },
+  "batch033_rollback_evidence": {
+    "status": "PASS",
+    "scope": "Real controlled second-node-batch failure on the previous Batch033 importer code; not rerun after Batch034 checkpoint changes."
+  }
+}

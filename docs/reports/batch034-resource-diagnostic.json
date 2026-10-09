@@ -1,0 +1,222 @@
+{
+  "format": "biyahe-termux-resource-diagnostic-v1",
+  "status": "BLOCKED",
+  "captured_at_utc": "2026-10-09T04:44:10Z",
+  "method": {
+    "meminfo": "/proc/meminfo",
+    "process_inventory": "ps -A -o pid,ppid,rss,comm; /proc/<pid>/status for visible Termux processes",
+    "sample_count": 4,
+    "visibility_limit": "Termux-visible processes only; Android system and other-app processes are not exposed in this app context.",
+    "sample_schedule": "Three sequential two-second samples at 04:32:33Z-04:32:37Z plus a later snapshot at 04:44:10Z; intervening test and diagnostic observations are recorded separately."
+  },
+  "guard": {
+    "minimum_memavailable_kib": 524288,
+    "minimum_swapfree_kib": 131072,
+    "minimum_diskfree_kib": 1048576,
+    "source": "Batch033 isolated import guard settings; no threshold was lowered."
+  },
+  "samples": [
+    {
+      "timestamp_utc": "2026-10-09T04:32:33Z",
+      "memavailable_kib": 740664,
+      "cached_kib": 794472,
+      "sreclaimable_kib": 113596,
+      "swapcached_kib": 114316,
+      "swaptotal_kib": 2621436,
+      "swapfree_kib": 83668,
+      "codex_processes": [
+        {
+          "name": "codex.bin",
+          "rss_kib": 13760,
+          "vmswap_kib": 213004
+        },
+        {
+          "name": "codex.bin",
+          "rss_kib": 57696,
+          "vmswap_kib": 52260
+        },
+        {
+          "name": "codex-code-mode",
+          "rss_kib": 12428,
+          "vmswap_kib": 4080
+        }
+      ],
+      "php_processes_visible": 0,
+      "postgres_processes_visible": 0
+    },
+    {
+      "timestamp_utc": "2026-10-09T04:32:35Z",
+      "memavailable_kib": 841604,
+      "cached_kib": 815308,
+      "sreclaimable_kib": 113596,
+      "swapcached_kib": 88976,
+      "swaptotal_kib": 2621436,
+      "swapfree_kib": 85488,
+      "codex_processes": [
+        {
+          "name": "codex.bin",
+          "vmswap_kib": 212180
+        },
+        {
+          "name": "codex.bin",
+          "vmswap_kib": 52404
+        },
+        {
+          "name": "codex-code-mode",
+          "vmswap_kib": 4080
+        }
+      ],
+      "php_processes_visible": 0,
+      "postgres_processes_visible": 0
+    },
+    {
+      "timestamp_utc": "2026-10-09T04:32:37Z",
+      "memavailable_kib": 906144,
+      "cached_kib": 869672,
+      "sreclaimable_kib": 113660,
+      "swapcached_kib": 24276,
+      "swaptotal_kib": 2621436,
+      "swapfree_kib": 95612,
+      "codex_processes": [
+        {
+          "name": "codex.bin",
+          "vmswap_kib": 212964
+        },
+        {
+          "name": "codex.bin",
+          "vmswap_kib": 55856
+        },
+        {
+          "name": "codex-code-mode",
+          "vmswap_kib": 4116
+        }
+      ],
+      "php_processes_visible": 0,
+      "postgres_processes_visible": 0
+    },
+    {
+      "timestamp_utc": "2026-10-09T04:44:10Z",
+      "memavailable_kib": 860940,
+      "cached_kib": 840528,
+      "sreclaimable_kib": 114108,
+      "swapcached_kib": 25812,
+      "swaptotal_kib": 2621436,
+      "swapfree_kib": 211160,
+      "codex_processes": [
+        {
+          "name": "codex.bin",
+          "rss_kib": 23356,
+          "vmswap_kib": 213840
+        },
+        {
+          "name": "codex.bin",
+          "rss_kib": 60560,
+          "vmswap_kib": 49828
+        },
+        {
+          "name": "codex-code-mode",
+          "rss_kib": 11188,
+          "vmswap_kib": 3680
+        }
+      ],
+      "php_processes_visible": 0,
+      "postgres_processes_visible": 0
+    }
+  ],
+  "latest_sample": {
+    "timestamp_utc": "2026-10-09T04:44:10Z",
+    "memavailable_kib": 860940,
+    "cached_kib": 840528,
+    "sreclaimable_kib": 114108,
+    "swapcached_kib": 25812,
+    "swaptotal_kib": 2621436,
+    "swapfree_kib": 211160,
+    "php_processes_visible": 0,
+    "postgres_processes_visible": 0,
+    "codex_processes_vmswap_sum_kib": 267348,
+    "codex_processes_rss_sum_kib": 95104
+  },
+  "prior_short_observations": [
+    {
+      "timestamp_utc": "2026-10-09T04:23:50Z",
+      "memavailable_kib": 961604,
+      "swapfree_kib": 132768
+    },
+    {
+      "timestamp_utc": "2026-10-09T04:24:01Z",
+      "memavailable_kib": 953120,
+      "swapfree_kib": 18696
+    },
+    {
+      "timestamp_utc": "2026-10-09T04:24:03Z",
+      "memavailable_kib": 932380,
+      "swapfree_kib": 86832
+    },
+    {
+      "timestamp_utc": "2026-10-09T04:24:06Z",
+      "memavailable_kib": 946080,
+      "swapfree_kib": 121244
+    },
+    {
+      "timestamp_utc": "2026-10-09T04:43:16Z",
+      "memavailable_kib": 679748,
+      "swapfree_kib": 3748,
+      "php_processes_visible": 0,
+      "postgres_processes_visible": 0
+    }
+  ],
+  "previous_import_measurements": {
+    "php_process_tree_peak_rss_kib": 93596,
+    "php_import_callback_peak_rss_kib": 78324,
+    "postgres_process_list_aggregate_rss_kib": 105324,
+    "postgres_sampler_window_peak_rss_kib": 71324,
+    "minimum_memavailable_kib": 814060,
+    "minimum_swapfree_kib": 66652,
+    "swap_guard_floor_kib": 131072,
+    "committed_nodes_at_stop": 30000,
+    "edges_at_stop": 0,
+    "postgres_rss_sampler_caveat": "No continuous PostgreSQL peak was sampled; process RSS sums can double-count shared pages."
+  },
+  "postgresql_configuration_observed": {
+    "data_directory": "~/.cache/biyahe/batch033-isolated-20261009/data",
+    "cluster_system_identifier": "7694494303197720087",
+    "cluster_state": "shut down",
+    "port": 56433,
+    "listen_addresses": "127.0.0.1",
+    "max_connections": 8,
+    "shared_buffers": "16MB",
+    "work_mem": "1MB",
+    "maintenance_work_mem": "8MB",
+    "autovacuum_work_mem": "8MB",
+    "dynamic_shared_memory_type": "mmap"
+  },
+  "access_limits": {
+    "proc_vmstat": "permission denied",
+    "proc_pressure_memory_io_cpu": "unavailable or permission denied",
+    "cgroup_memory_counters": "not mounted/readable from Termux app context",
+    "proc_loadavg": "permission denied",
+    "android_background_process_inventory": "not available from this app context"
+  },
+  "diagnosis": {
+    "measured": "SwapFree was highly volatile without visible PHP or PostgreSQL workers: it was 3,748 KiB at 04:43:16Z and 211,160 KiB at 04:44:10Z while MemAvailable was 679,748 and 860,940 KiB respectively. Visible Codex processes at 04:44:10Z summed to 267,348 KiB VmSwap and 95,104 KiB VmRSS. During the guarded test run, SwapFree fell from 196,272 KiB to 83,380 KiB in about two seconds while MemAvailable remained 741,276 KiB; PHP process-tree RSS was 49,460 KiB and no PostgreSQL process was visible. The test worker eventually exited 0 with 14 tests/111 assertions, but the guard requested cancellation at the first below-floor sample and the runner could not target it.",
+    "interpretation": "There is measured PHP-associated swap pressure during the test window and measured Codex swap residency outside it. The much larger, rapid global SwapFree swings cannot be assigned to a single process: Android process inventory, vmstat counters, PSI, and cgroup memory counters are inaccessible. Falling SwapFree does not establish a PHP leak or PostgreSQL cause.",
+    "safe_action": "Keep PostgreSQL/import disabled. Do not rerun tests after the guard breach. Preserve the configured floors; do not kill Android services or alter swap settings. A future attempt requires several stable above-floor samples and a corrected/validated cancellation path."
+  },
+  "guarded_test_observation": {
+    "timestamp_utc": "2026-10-09T04:40:12Z",
+    "preflight_swapfree_kib": 196272,
+    "minimum_swapfree_kib": 83380,
+    "guard_floor_kib": 131072,
+    "memavailable_at_floor_breach_kib": 741276,
+    "php_process_tree_peak_rss_kib": 49460,
+    "postgres_peak_rss_kib": 0,
+    "worker_result": "14 tests passed, 111 assertions, worker exit 0",
+    "runner_result": "stopped_for_resource_budget; required cancellation could not target a worker descendant, and worker later completed",
+    "log": "~/.cache/biyahe/batch034/focused-tests-20261009T044011Z.log"
+  },
+  "protected_artifact_hashes_verified_at": {
+    "graph_sha256": "29d7aaf9c45a596f4065c44d13f983f4a7edeec5ac2ea41b718b1c52ca865bf8",
+    "source_pbf_sha256": "787cac20ecc586b754b1a464643a040566d486457c6a37bc0b11ce683bc66d4d",
+    "batch024_backup_sha256": "e55af400fde88d0a3434b194e0625e204eb0a2726374eabb8286c152b11a4a92"
+  }
+}

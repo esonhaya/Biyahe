@@ -1,0 +1,301 @@
+{
+    "format": "biyahe-doctor-v34-static-v1",
+    "status": "BLOCKED",
+    "postgresql_contacted": false,
+    "activation": "NO",
+    "graph_sha256": "29d7aaf9c45a596f4065c44d13f983f4a7edeec5ac2ea41b718b1c52ca865bf8",
+    "source_sha256": "787cac20ecc586b754b1a464643a040566d486457c6a37bc0b11ce683bc66d4d",
+    "checks": [
+        {
+            "name": "source integrity",
+            "status": "PASS",
+            "evidence": {
+                "sha256": "787cac20ecc586b754b1a464643a040566d486457c6a37bc0b11ce683bc66d4d",
+                "identity_matches": true
+            }
+        },
+        {
+            "name": "graph integrity",
+            "status": "PASS",
+            "evidence": {
+                "sha256": "29d7aaf9c45a596f4065c44d13f983f4a7edeec5ac2ea41b718b1c52ca865bf8",
+                "evidence": {
+                    "sha256": "29d7aaf9c45a596f4065c44d13f983f4a7edeec5ac2ea41b718b1c52ca865bf8",
+                    "nodes": 76685,
+                    "edges": 78225,
+                    "baseline_status": "PASS",
+                    "identity_matches": true
+                }
+            }
+        },
+        {
+            "name": "restriction readiness",
+            "status": "PASS",
+            "evidence": {
+                "status": "PASS",
+                "evidence": {
+                    "complete_restriction_inventory": true,
+                    "turn_restrictions_needed": false,
+                    "routing_ready": true,
+                    "state_aware_search": false,
+                    "via_node_enforced": false,
+                    "via_way_enforced": false,
+                    "conditional_turn_restrictions_evaluated": false
+                }
+            }
+        },
+        {
+            "name": "offline routing",
+            "status": "PASS",
+            "evidence": {
+                "status": "PASS",
+                "evidence": {
+                    "cases": 10,
+                    "routes_found": 9,
+                    "routes_unavailable": 1,
+                    "latency_milliseconds": {
+                        "p50": 61,
+                        "p95": 482.013,
+                        "samples": 10
+                    }
+                }
+            }
+        },
+        {
+            "name": "staging resource readiness",
+            "status": "BLOCKED",
+            "evidence": {
+                "timestamp_utc": "2026-10-09T04:44:10Z",
+                "memavailable_kib": 860940,
+                "cached_kib": 840528,
+                "sreclaimable_kib": 114108,
+                "swapcached_kib": 25812,
+                "swaptotal_kib": 2621436,
+                "swapfree_kib": 211160,
+                "php_processes_visible": 0,
+                "postgres_processes_visible": 0,
+                "codex_processes_vmswap_sum_kib": 267348,
+                "codex_processes_rss_sum_kib": 95104
+            }
+        },
+        {
+            "name": "import state",
+            "status": "BLOCKED",
+            "evidence": {
+                "persisted_state_queried_in_batch034": false,
+                "state": "NOT_QUERIED",
+                "nodes": null,
+                "expected_nodes": 76685,
+                "edges": null,
+                "expected_edges": 78225,
+                "prior_batch033_observation": {
+                    "status": "BLOCKED",
+                    "nodes": 30000,
+                    "expected_nodes": 76685,
+                    "edges": 0,
+                    "expected_edges": 78225,
+                    "state": "INCOMPLETE; resource-stopped after last committed node checkpoint",
+                    "is_active": false
+                }
+            }
+        },
+        {
+            "name": "checkpoint validity",
+            "status": "BLOCKED",
+            "evidence": {
+                "status": "NOT_QUERIED",
+                "data_directory_must_remain_stopped_until_guard_passes": true
+            }
+        },
+        {
+            "name": "real artifact completeness",
+            "status": "BLOCKED",
+            "evidence": {
+                "persisted_state_queried_in_batch034": false,
+                "state": "NOT_QUERIED",
+                "nodes": null,
+                "expected_nodes": 76685,
+                "edges": null,
+                "expected_edges": 78225,
+                "prior_batch033_observation": {
+                    "status": "BLOCKED",
+                    "nodes": 30000,
+                    "expected_nodes": 76685,
+                    "edges": 0,
+                    "expected_edges": 78225,
+                    "state": "INCOMPLETE; resource-stopped after last committed node checkpoint",
+                    "is_active": false
+                }
+            }
+        },
+        {
+            "name": "real rollback",
+            "status": "BLOCKED",
+            "evidence": {
+                "current_batch034": {
+                    "status": "NOT_RUN"
+                },
+                "prior_batch033": {
+                    "status": "PASS",
+                    "evidence": "Real second-node-batch insert transaction rolled back; only the first 100-node transaction remained before restart."
+                }
+            }
+        },
+        {
+            "name": "interruption recovery",
+            "status": "BLOCKED",
+            "evidence": {
+                "current_batch034": {
+                    "status": "NOT_RUN"
+                },
+                "prior_batch033": {
+                    "status": "PARTIAL",
+                    "evidence": "Real retry restarted at node batch 1 and committed through batch 300 before the swap guard stopped it; completion was not reached."
+                }
+            }
+        },
+        {
+            "name": "partial import visibility",
+            "status": "BLOCKED",
+            "evidence": {
+                "current_batch034": {
+                    "status": "NOT_RUN"
+                },
+                "prior_batch033": {
+                    "status": "PASS",
+                    "evidence": "Controlled failure dataset was is_active=false and routing_ready=false; ordinary routing only selects active datasets and diagnostic staging routing requires VALIDATED."
+                }
+            }
+        },
+        {
+            "name": "real idempotency",
+            "status": "BLOCKED",
+            "evidence": {
+                "status": "NOT_RUN"
+            }
+        },
+        {
+            "name": "conflict rejection",
+            "status": "BLOCKED",
+            "evidence": {
+                "status": "NOT_RUN"
+            }
+        },
+        {
+            "name": "route parity",
+            "status": "BLOCKED",
+            "evidence": {
+                "status": "NOT_RUN"
+            }
+        },
+        {
+            "name": "stop coverage limitations",
+            "status": "WARN",
+            "evidence": {
+                "total": 503,
+                "with_usable_coordinates": 503,
+                "within_snap_policy": 436,
+                "connected_to_largest_component": 433,
+                "snapped_to_smaller_components": 3,
+                "out_of_scope": 0,
+                "blocked_by_mapped_barrier": 0,
+                "unreachable_or_unsnappable": 70
+            }
+        },
+        {
+            "name": "source-bound stop and place coverage",
+            "status": "WARN",
+            "evidence": {
+                "source_backed": true,
+                "snap_radius_meters": 25,
+                "stops_total": 503,
+                "stops_snappable": 436,
+                "stops_largest_component": 433,
+                "stops_unreachable_or_unsnappable": 70,
+                "stops_unsnappable": 67,
+                "places_total": 37,
+                "places_snappable": 30,
+                "places_largest_component": 29,
+                "places_unreachable_or_unsnappable": 8,
+                "places_unsnappable": 7
+            }
+        },
+        {
+            "name": "transfer verification",
+            "status": "WARN",
+            "evidence": {
+                "total": 2,
+                "records_marked_verified": 0,
+                "graph_route_connected": 2,
+                "graph_route_unavailable": 0,
+                "records": [
+                    {
+                        "id": 11,
+                        "from_stop_id": 266,
+                        "to_stop_id": 268,
+                        "source": {
+                            "provenance_source_id": 42,
+                            "source_type": "COMMUNITY_OPEN_DATA"
+                        },
+                        "trust_status": "UNVERIFIED_RECORD",
+                        "is_active": true,
+                        "relationship_type": "CURATED_WALK_ESTIMATE",
+                        "stored_distance_meters": 356.26,
+                        "graph_route_status": "ROUTE_FOUND",
+                        "graph_route_reason_code": null,
+                        "graph_route_distance_meters": 401.82
+                    },
+                    {
+                        "id": 12,
+                        "from_stop_id": 268,
+                        "to_stop_id": 266,
+                        "source": {
+                            "provenance_source_id": 42,
+                            "source_type": "COMMUNITY_OPEN_DATA"
+                        },
+                        "trust_status": "UNVERIFIED_RECORD",
+                        "is_active": true,
+                        "relationship_type": "CURATED_WALK_ESTIMATE",
+                        "stored_distance_meters": 356.26,
+                        "graph_route_status": "ROUTE_FOUND",
+                        "graph_route_reason_code": null,
+                        "graph_route_distance_meters": 401.82
+                    }
+                ],
+                "interpretation": "Graph connectivity does not verify a transfer relationship or a safe physical interchange."
+            }
+        },
+        {
+            "name": "field safety evidence",
+            "status": "BLOCKED",
+            "evidence": {
+                "complete": false,
+                "gaps": [
+                    "No field observations establish sidewalk continuity, legal/safe crossings, gate status, accessibility, or current conditions.",
+                    "Transport stop/place verification state is reported as stored and is not upgraded by graph proximity.",
+                    "OSM geometry may be roadway centerline geometry; crossing tags do not independently establish a safe crossing."
+                ]
+            }
+        },
+        {
+            "name": "production activation state",
+            "status": "PASS",
+            "evidence": {
+                "activation": "NO",
+                "activated": false,
+                "reason": "Batch034 does not activate pedestrian routing."
+            }
+        },
+        {
+            "name": "private beta readiness",
+            "status": "BLOCKED",
+            "evidence": {
+                "all_required_gates_pass": false,
+                "unsnappable_stops": 67,
+                "unsnappable_places": 7,
+                "transfer_locations_verified": 0,
+                "field_safety_evidence_complete": false
+            }
+        }
+    ]
+}

@@ -1,0 +1,189 @@
+{
+  "format": "biyahe-batch035-resource-stability-v1",
+  "status": "BLOCKED",
+  "log": "/data/data/com.termux/files/home/.cache/biyahe/batch035/resource-stability-081036.log",
+  "sample_count": 3,
+  "interval_seconds": 5,
+  "guard": {
+    "minimum_memavailable_kib": 524288,
+    "minimum_swapfree_kib": 131072,
+    "minimum_diskfree_kib": 1048576
+  },
+  "samples": [
+    {
+      "index": 1,
+      "timestamp_utc": "2026-10-09T08:10:37Z",
+      "memavailable_kib": 830000,
+      "cached_kib": 744612,
+      "sreclaimable_kib": 109316,
+      "swapcached_kib": 79740,
+      "swapfree_kib": 93256,
+      "diskfree_kib": 5738916,
+      "postgres_process_rss_kib": 0,
+      "php_processes_visible": 0,
+      "postgres_processes_visible": 0,
+      "visible_codex_group_vmswap_kib": 283492,
+      "visible_codex_processes": [
+        {
+          "pid": 24186,
+          "ppid": 20042,
+          "pgid": 24186,
+          "sid": 20042,
+          "uid": 10664,
+          "name": "node",
+          "rss_kib": 608,
+          "vmswap_kib": 14540
+        },
+        {
+          "pid": 24255,
+          "ppid": 24186,
+          "pgid": 24186,
+          "sid": 20042,
+          "uid": 10664,
+          "name": "codex",
+          "rss_kib": 12864,
+          "vmswap_kib": 219036
+        },
+        {
+          "pid": 24437,
+          "ppid": 24255,
+          "pgid": 24437,
+          "sid": 24437,
+          "uid": 10664,
+          "name": "codex",
+          "rss_kib": 51712,
+          "vmswap_kib": 46296
+        },
+        {
+          "pid": 26013,
+          "ppid": 24437,
+          "pgid": 26013,
+          "sid": 24437,
+          "uid": 10664,
+          "name": "codex",
+          "rss_kib": 9812,
+          "vmswap_kib": 3620
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "timestamp_utc": "2026-10-09T08:10:51Z",
+      "memavailable_kib": 820948,
+      "cached_kib": 769316,
+      "sreclaimable_kib": 109244,
+      "swapcached_kib": 137424,
+      "swapfree_kib": 37928,
+      "diskfree_kib": 5738896,
+      "postgres_process_rss_kib": 0,
+      "php_processes_visible": 0,
+      "postgres_processes_visible": 0,
+      "visible_codex_group_vmswap_kib": 291288,
+      "visible_codex_processes": [
+        {
+          "pid": 24186,
+          "ppid": 20042,
+          "pgid": 24186,
+          "sid": 20042,
+          "uid": 10664,
+          "name": "node",
+          "rss_kib": 608,
+          "vmswap_kib": 14544
+        },
+        {
+          "pid": 24255,
+          "ppid": 24186,
+          "pgid": 24186,
+          "sid": 20042,
+          "uid": 10664,
+          "name": "codex",
+          "rss_kib": 9856,
+          "vmswap_kib": 221856
+        },
+        {
+          "pid": 24437,
+          "ppid": 24255,
+          "pgid": 24437,
+          "sid": 24437,
+          "uid": 10664,
+          "name": "codex",
+          "rss_kib": 46516,
+          "vmswap_kib": 51096
+        },
+        {
+          "pid": 26013,
+          "ppid": 24437,
+          "pgid": 26013,
+          "sid": 24437,
+          "uid": 10664,
+          "name": "codex",
+          "rss_kib": 9640,
+          "vmswap_kib": 3792
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "timestamp_utc": "2026-10-09T08:10:57Z",
+      "memavailable_kib": 714876,
+      "cached_kib": 709460,
+      "sreclaimable_kib": 109288,
+      "swapcached_kib": 129948,
+      "swapfree_kib": 22316,
+      "diskfree_kib": 5739192,
+      "postgres_process_rss_kib": 0,
+      "php_processes_visible": 0,
+      "postgres_processes_visible": 0,
+      "visible_codex_group_vmswap_kib": 291096,
+      "visible_codex_processes": [
+        {
+          "pid": 24186,
+          "ppid": 20042,
+          "pgid": 24186,
+          "sid": 20042,
+          "uid": 10664,
+          "name": "node",
+          "rss_kib": 608,
+          "vmswap_kib": 14544
+        },
+        {
+          "pid": 24255,
+          "ppid": 24186,
+          "pgid": 24186,
+          "sid": 20042,
+          "uid": 10664,
+          "name": "codex",
+          "rss_kib": 8944,
+          "vmswap_kib": 221852
+        },
+        {
+          "pid": 24437,
+          "ppid": 24255,
+          "pgid": 24437,
+          "sid": 24437,
+          "uid": 10664,
+          "name": "codex",
+          "rss_kib": 35624,
+          "vmswap_kib": 50916
+        },
+        {
+          "pid": 26013,
+          "ppid": 24437,
+          "pgid": 26013,
+          "sid": 24437,
+          "uid": 10664,
+          "name": "codex",
+          "rss_kib": 8552,
+          "vmswap_kib": 3784
+        }
+      ]
+    }
+  ],
+  "observed_min_memavailable_kib": 714876,
+  "observed_min_swapfree_kib": 22316,
+  "observed_min_diskfree_kib": 5738896,
+  "preflight_result": "BLOCKED; worker command was not started",
+  "known_contributors": "Visible Codex launcher/descendant process group had about 283492-291288 KiB combined VmSwap in these samples; no visible PHP or PostgreSQL processes.",
+  "unknown_contributors": "Android system and other-app process inventory plus /proc/vmstat, pressure stall, and cgroup memory counters were inaccessible. No exclusive attribution is supported.",
+  "source_completeness": "Complete for Termux-visible process entries at each capture; system-wide process inventory is unavailable."
+}

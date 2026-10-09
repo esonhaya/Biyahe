@@ -26,6 +26,9 @@ final readonly class PedestrianRouteResult
         public ?float $originSnapDistanceMeters = null,
         public ?float $destinationSnapDistanceMeters = null,
         public array $warnings = [],
+        public ?string $reasonCode = null,
+        public ?int $originSnapNodeId = null,
+        public ?int $destinationSnapNodeId = null,
     ) {}
 
     public function totalDistanceMeters(): ?float

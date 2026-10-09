@@ -43,6 +43,8 @@ return [
         'maximum_offline_scope_nodes' => (int) env('BIYAHE_OSM_OFFLINE_MAX_SCOPE_NODES', 200000),
         'maximum_input_ways' => 25000,
         'maximum_input_edges' => 100000,
+        'offline_import_node_batch_size' => (int) env('BIYAHE_OFFLINE_IMPORT_NODE_BATCH_SIZE', 100),
+        'offline_import_edge_batch_size' => (int) env('BIYAHE_OFFLINE_IMPORT_EDGE_BATCH_SIZE', 40),
         'coverage' => [
             'min_latitude' => 10.250,
             'min_longitude' => 123.845,

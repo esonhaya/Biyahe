@@ -34,8 +34,7 @@ final class OfflinePedestrianGraphValidator
             throw new RuntimeException('Offline graph artifact is incomplete or uses an unsupported format.');
         }
 
-        $actualHash = hash_file('sha256', $sourcePath);
-        $actualMd5 = hash_file('md5', $sourcePath);
+        [$actualHash, $actualMd5] = $this->sourceChecksums($sourcePath);
         $storedHash = strtolower((string) ($metadata['source_sha256'] ?? ''));
         if (! is_string($actualHash) || ! preg_match('/^[a-f0-9]{64}$/', $storedHash)
             || ! hash_equals($storedHash, strtolower($actualHash))
@@ -236,5 +235,33 @@ final class OfflinePedestrianGraphValidator
         }
 
         return $metadata;
+    }
+
+    /** Compute both retained provenance checks in one bounded source-file pass. @return array{string, string} */
+    private function sourceChecksums(string $path): array
+    {
+        $stream = fopen($path, 'rb');
+        if ($stream === false) {
+            throw new RuntimeException('Offline graph source PBF could not be opened for checksum verification.');
+        }
+        $sha256 = hash_init('sha256');
+        $md5 = hash_init('md5');
+        try {
+            while (! feof($stream)) {
+                $chunk = fread($stream, 1024 * 1024);
+                if ($chunk === false || ($chunk === '' && ! feof($stream))) {
+                    throw new RuntimeException('Offline graph source PBF checksum read was incomplete.');
+                }
+                if ($chunk === '') {
+                    break;
+                }
+                hash_update($sha256, $chunk);
+                hash_update($md5, $chunk);
+            }
+        } finally {
+            fclose($stream);
+        }
+
+        return [hash_final($sha256), hash_final($md5)];
     }
 }

@@ -1,0 +1,153 @@
+{
+  "format": "biyahe-batch033-staging-evidence-v1",
+  "status": "BLOCKED",
+  "identity": {
+    "graph_sha256": "29d7aaf9c45a596f4065c44d13f983f4a7edeec5ac2ea41b718b1c52ca865bf8",
+    "source_sha256": "787cac20ecc586b754b1a464643a040566d486457c6a37bc0b11ce683bc66d4d",
+    "backup_sha256": "e55af400fde88d0a3434b194e0625e204eb0a2726374eabb8286c152b11a4a92",
+    "graph_fingerprint": "a0d9f1cb8289cf1f9bde3905d1ad8a57124ee41120153b4efc1f5b31e4c03ecd",
+    "existing_cluster_touched": false,
+    "activation": "NO"
+  },
+  "resource_preflight": {
+    "status": "BLOCKED",
+    "timestamp_utc": "2026-10-09T03:02:24Z",
+    "memavailable_kib": 854428,
+    "swapfree_kib": 252352,
+    "required_minimum_swapfree_kib": 131072,
+    "diskfree_kib": 5334064,
+    "worker_started": true,
+    "reason": "The isolated real staging attempt reached 30,000 committed nodes, then the resource guard stopped it when SwapFree fell to 66,652 KiB, below the 131,072 KiB floor."
+  },
+  "earlier_test_resource_refusal": {
+    "timestamp_utc": "2026-10-09T02:50:37Z",
+    "status": "BLOCKED_BEFORE_WORKER",
+    "memavailable_kib": 918548,
+    "swapfree_kib": 52500,
+    "required_minimum_swapfree_kib": 65536,
+    "worker_started": false,
+    "reason": "The guarded exact-importer-verifier test declined to start and no guard floor was lowered."
+  },
+  "batch032_failure_evidence": {
+    "guard_stop_reason": "SwapFree-floor",
+    "elapsed_seconds": 13,
+    "minimum_memavailable_kib": 973548,
+    "minimum_swapfree_kib": 15292,
+    "maximum_sampled_php_process_rss_kib": 101708,
+    "postgres_process_rss_measured": false,
+    "graph_rows_after_attempt": 0,
+    "cause_of_swap_decline": "UNKNOWN"
+  },
+  "batch033_cluster_preparation": {
+    "data_directory": "~/.cache/biyahe/batch033-isolated-20261009/data",
+    "postgresql_version": "18.6",
+    "initdb_worker_exit": 0,
+    "guard_status": "STOPPED_AT_SWAP_FLOOR_AFTER_INITDB_COMPLETED",
+    "minimum_swapfree_kib": 257360,
+    "configured_minimum_swapfree_kib": 262144,
+    "server_started": false,
+    "cluster_state": "shut down",
+    "database_created": false,
+    "backup_restored": false,
+    "note": "These fields describe the first initdb-only stop. The same fresh Batch033 cluster was later started for one guarded isolated staging attempt, then shut down cleanly."
+  },
+  "batch033_real_staging_attempt": {
+    "status": "BLOCKED",
+    "started_at_utc": "2026-10-09T03:02:24Z",
+    "data_directory": "~/.cache/biyahe/batch033-isolated-20261009/data",
+    "host": "127.0.0.1",
+    "port": 56433,
+    "database": "biyahe_batch033_staging",
+    "server_started": true,
+    "server_stopped_cleanly": true,
+    "cluster_state_after_stop": "shut down",
+    "database_created": true,
+    "backup_restore": "PASS",
+    "backup_sha256": "e55af400fde88d0a3434b194e0625e204eb0a2726374eabb8286c152b11a4a92",
+    "migrations": "PASS; no migrations pending",
+    "restored_transit_baseline": {
+      "stops": 503,
+      "places": 37,
+      "transfer_relationships": 2
+    },
+    "controlled_second_batch_failure": {
+      "status": "PASS",
+      "mechanism": "isolated PostgreSQL trigger raised on the first node of the second 100-node insert batch",
+      "dataset_state": "FAILED",
+      "is_active": false,
+      "routing_ready": false,
+      "committed_nodes_after_failure": 100,
+      "edges_after_failure": 0,
+      "second_batch_rolled_back": true,
+      "trigger_removed": true
+    },
+    "restart_attempt": {
+      "status": "STOPPED_BY_RESOURCE_GUARD",
+      "restarted_from_beginning": true,
+      "last_committed_nodes": 30000,
+      "expected_nodes": 76685,
+      "last_committed_edges": 0,
+      "expected_edges": 78225,
+      "last_import_progress_elapsed_milliseconds": 80529,
+      "database_state_queried_after_stop": false,
+      "dataset_activation": "NO"
+    },
+    "resource_guard": {
+      "minimum_memavailable_kib": 814060,
+      "minimum_swapfree_kib": 66652,
+      "required_minimum_swapfree_kib": 131072,
+      "peak_php_process_tree_rss_kib": 93596,
+      "peak_php_rss_from_import_progress_kib": 78324,
+      "peak_postgres_aggregate_rss_kib_observed": 105324,
+      "postgres_rss_later_sampler_window_max_kib": 71324,
+      "postgres_rss_measurement": "Manual process-list RSS sum observed 105,324 KiB; a later 14-second /proc sampler window peaked at 71,324 KiB. No continuous aggregate sampler covered the whole run, and summed RSS may count shared pages more than once.",
+      "minimum_diskfree_kib": 5290316,
+      "diskfree_at_preflight_kib": 5334064,
+      "diskfree_drop_at_minimum_kib": 43748,
+      "stop_reason": "SwapFree fell below the 128 MiB floor; the guard sent SIGTERM and the isolated cluster shut down cleanly"
+    },
+    "postgres_rss_guard_diagnostic": {
+      "real_run_guard_reported_kib": 0,
+      "reason": "pgrep -x postgres did not match Termux's truncated postmaster comm or postgres: worker titles",
+      "manual_process_list_aggregate_rss_snapshot_kib": 105324,
+      "later_independent_sampler_window_peak_aggregate_rss_kib": 71324,
+      "fix": "single ps PID/RSS/args pass matches the full postgres executable path and postgres: worker process titles",
+      "regression_test": {"status": "PASS", "tests": 1, "assertions": 4, "scope": "mocked Termux process titles"}
+    },
+    "route_parity": "NOT_RUN; no complete validated staging graph",
+    "existing_cluster_touched": false,
+    "production_activation": "NO"
+  },
+  "prior_batch032_restore": {
+    "status": "PASS",
+    "isolated_cluster": true,
+    "backup_sha256": "e55af400fde88d0a3434b194e0625e204eb0a2726374eabb8286c152b11a4a92",
+    "stops": 503,
+    "places": 37,
+    "transfer_relationships": 2,
+    "field_verification_claimed": false,
+    "note": "This was a separate stopped Batch032 cluster and was not reused or modified."
+  },
+  "import": {
+    "status": "BLOCKED",
+    "nodes": 30000,
+    "expected_nodes": 76685,
+    "edges": 0,
+    "expected_edges": 78225,
+    "state": "INCOMPLETE; resource-stopped after last committed node checkpoint",
+    "rollback": {"status": "PASS", "evidence": "Real second-node-batch insert transaction rolled back; only the first 100-node transaction remained before restart."},
+    "idempotency": {"status": "NOT_RUN"},
+    "interruption_recovery": {"status": "PARTIAL", "evidence": "Real retry restarted at node batch 1 and committed through batch 300 before the swap guard stopped it; completion was not reached."},
+    "partial_visibility": {"status": "PASS", "evidence": "Controlled failure dataset was is_active=false and routing_ready=false; ordinary routing only selects active datasets and diagnostic staging routing requires VALIDATED."},
+    "conflict_rejection": {"status": "NOT_RUN"},
+    "is_active": false,
+    "database_state_queried_after_resource_stop": false
+  },
+  "route_parity": {
+    "status": "NOT_RUN",
+    "cases": 0,
+    "reason": "No validated real PostgreSQL staging dataset exists."
+  },
+  "production_cluster_touched": false,
+  "production_activation": "NO"
+}

@@ -1,0 +1,192 @@
+{
+    "format": "biyahe-doctor-v33-static-v1",
+    "status": "BLOCKED",
+    "postgresql_contacted": false,
+    "graph_sha256": "29d7aaf9c45a596f4065c44d13f983f4a7edeec5ac2ea41b718b1c52ca865bf8",
+    "source_sha256": "787cac20ecc586b754b1a464643a040566d486457c6a37bc0b11ce683bc66d4d",
+    "checks": [
+        {
+            "name": "source integrity",
+            "status": "PASS",
+            "evidence": {
+                "sha256": "787cac20ecc586b754b1a464643a040566d486457c6a37bc0b11ce683bc66d4d",
+                "baseline_status": "PASS",
+                "identity_matches": true
+            }
+        },
+        {
+            "name": "graph integrity",
+            "status": "PASS",
+            "evidence": {
+                "sha256": "29d7aaf9c45a596f4065c44d13f983f4a7edeec5ac2ea41b718b1c52ca865bf8",
+                "nodes": 76685,
+                "edges": 78225,
+                "baseline_status": "PASS",
+                "identity_matches": true
+            }
+        },
+        {
+            "name": "restriction readiness",
+            "status": "PASS",
+            "evidence": {
+                "status": "PASS",
+                "evidence": {
+                    "complete_restriction_inventory": true,
+                    "turn_restrictions_needed": false,
+                    "routing_ready": true,
+                    "state_aware_search": false,
+                    "via_node_enforced": false,
+                    "via_way_enforced": false,
+                    "conditional_turn_restrictions_evaluated": false
+                }
+            }
+        },
+        {
+            "name": "offline route readiness",
+            "status": "PASS",
+            "evidence": {
+                "status": "PASS",
+                "evidence": {
+                    "cases": 10,
+                    "routes_found": 9,
+                    "routes_unavailable": 1,
+                    "latency_milliseconds": {
+                        "p50": 61,
+                        "p95": 482.013,
+                        "samples": 10
+                    }
+                }
+            }
+        },
+        {
+            "name": "staging resource readiness",
+            "status": "BLOCKED",
+            "evidence": {
+                "status": "BLOCKED",
+                "timestamp_utc": "2026-10-09T03:02:24Z",
+                "memavailable_kib": 854428,
+                "swapfree_kib": 252352,
+                "required_minimum_swapfree_kib": 131072,
+                "diskfree_kib": 5334064,
+                "worker_started": true,
+                "reason": "The isolated real staging attempt reached 30,000 committed nodes, then the resource guard stopped it when SwapFree fell to 66,652 KiB, below the 131,072 KiB floor."
+            }
+        },
+        {
+            "name": "real import completeness",
+            "status": "BLOCKED",
+            "evidence": {
+                "status": "BLOCKED",
+                "nodes": 30000,
+                "expected_nodes": 76685,
+                "edges": 0,
+                "expected_edges": 78225,
+                "state": "INCOMPLETE; resource-stopped after last committed node checkpoint",
+                "is_active": false
+            }
+        },
+        {
+            "name": "real rollback",
+            "status": "PASS",
+            "evidence": {
+                "status": "PASS",
+                "evidence": "Real second-node-batch insert transaction rolled back; only the first 100-node transaction remained before restart."
+            }
+        },
+        {
+            "name": "real idempotency",
+            "status": "BLOCKED",
+            "evidence": {
+                "status": "NOT_RUN"
+            }
+        },
+        {
+            "name": "interruption recovery",
+            "status": "BLOCKED",
+            "evidence": {
+                "status": "PARTIAL",
+                "evidence": "Real retry restarted at node batch 1 and committed through batch 300 before the swap guard stopped it; completion was not reached."
+            }
+        },
+        {
+            "name": "partial visibility guard",
+            "status": "PASS",
+            "evidence": {
+                "status": "PASS",
+                "evidence": "Controlled failure dataset was is_active=false and routing_ready=false; ordinary routing only selects active datasets and diagnostic staging routing requires VALIDATED."
+            }
+        },
+        {
+            "name": "conflicting artifact rejection",
+            "status": "BLOCKED",
+            "evidence": {
+                "status": "NOT_RUN"
+            }
+        },
+        {
+            "name": "offline/staged route parity",
+            "status": "BLOCKED",
+            "evidence": {
+                "status": "NOT_RUN"
+            }
+        },
+        {
+            "name": "stop coverage limitations",
+            "status": "WARN",
+            "evidence": {
+                "total": 503,
+                "with_usable_coordinates": 503,
+                "within_snap_policy": 436,
+                "connected_to_largest_component": 433,
+                "snapped_to_smaller_components": 3,
+                "out_of_scope": 0,
+                "blocked_by_mapped_barrier": 0,
+                "unreachable_or_unsnappable": 70
+            }
+        },
+        {
+            "name": "transfer verification",
+            "status": "WARN",
+            "evidence": {
+                "total": 2,
+                "records_marked_verified": 0,
+                "graph_route_connected": 2,
+                "graph_route_unavailable": 0
+            }
+        },
+        {
+            "name": "field safety evidence",
+            "status": "BLOCKED",
+            "evidence": {
+                "complete": false,
+                "gaps": [
+                    "No field observations establish sidewalk continuity, legal/safe crossings, gate status, accessibility, or current conditions.",
+                    "Transport stop/place verification state is reported as stored and is not upgraded by graph proximity.",
+                    "OSM geometry may be roadway centerline geometry; crossing tags do not independently establish a safe crossing."
+                ]
+            }
+        },
+        {
+            "name": "production activation",
+            "status": "BLOCKED",
+            "evidence": {
+                "activation": "NO",
+                "reason": "Batch033 never activates production routing."
+            }
+        },
+        {
+            "name": "private beta readiness",
+            "status": "BLOCKED",
+            "evidence": {
+                "import_complete": false,
+                "rollback": "PASS",
+                "idempotency": "BLOCKED",
+                "interruption_recovery": "BLOCKED",
+                "partial_visibility": "PASS",
+                "conflict_rejection": "BLOCKED",
+                "route_parity": "BLOCKED",
+                "field_safety_evidence": "BLOCKED"
+            }
+        }
+    ]
+}

@@ -1,0 +1,28 @@
+{
+  "format": "biyahe-batch035-isolated-cluster-evidence-v1",
+  "data_directory": "/data/data/com.termux/files/home/.cache/biyahe/batch033-isolated-20261009/data",
+  "data_directory_matches_expected": true,
+  "system_identifier": "7694494303197720087",
+  "pg_version": "18",
+  "cluster_state": "shut down",
+  "port": 56433,
+  "listen_addresses": "127.0.0.1",
+  "socket_directory": "/data/data/com.termux/files/home/.cache/biyahe/batch033-isolated-20261009/socket",
+  "socket_directory_matches_expected": true,
+  "owner_uid": 10664,
+  "owner_matches_current_user": true,
+  "directory_mode": "0700",
+  "pg_control_mode": "0600",
+  "postmaster_pid_present": false,
+  "port_accepting_connections": false,
+  "original_cluster_touched": false,
+  "production_activation": "NO",
+  "read_only_checks": [
+    "pg_controldata",
+    "PG_VERSION",
+    "postgresql.auto.conf",
+    "stat",
+    "pg_isready"
+  ],
+  "database_rows_queried": false
+}

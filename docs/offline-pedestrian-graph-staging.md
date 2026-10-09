@@ -253,20 +253,130 @@ source binary stays local unless its owner transfers it manually.
 
 ## Optional isolated database staging
 
-Database staging is a later, separate operation. Configure the application to
-use a disposable PostgreSQL staging/test database and pass its exact configured
-database name. The importer verifies the artifact and source again, streams
-bounded inserts in one transaction, stages the dataset inactive, and does not
-modify transport or field-observation records. A failed batch rolls back. An
-idempotent retry reuses the staged dataset without activating it.
+Database staging is a later, separate operation. Use a newly initialized,
+disposable PostgreSQL cluster under an explicit Batch033 cache directory, on a
+loopback-only port and socket. Keep `PGDATA` off the SD card. The staging
+command checks the server's live `data_directory`, loopback host, port, and
+database name before importing. The generic `import-offline` command also
+requires `BIYAHE_ISOLATED_PGDATA` to match a path of the form
+`~/.cache/biyahe/batch033-isolated-*/data`; this prevents a staging-named
+database on an existing cluster from passing the importer boundary.
+
+The importer verifies the graph SHA-256, source PBF checksums, graph
+fingerprint, and restriction capability before writes. It streams bounded
+SQLite cursors with 100-node and 40-edge batches by default. Each batch and its
+last source key, committed counts, batch counters, and progress metadata commit
+together. The checkpoint binds the graph/source hashes, graph fingerprint,
+graph schema, importer schema, expected counts, deterministic ordering, and
+last imported node or way/segment key. Dataset states include `PENDING`,
+`IMPORTING`, `INTERRUPTED`, `FAILED`, `STAGED_INACTIVE`, and `VALIDATED`; every
+state remains inactive. The ordinary router reads active datasets only, and
+the staging diagnostic router accepts only a hash-matched `VALIDATED` dataset
+with complete source-to-database node, edge, direction, property, and geometry
+checks.
+
+After interruption, the same verified source and graph can resume from the
+last committed node or edge key only after the importer compares every staged
+row in that committed prefix with the SQLite source in bounded pages. It also
+checks row counts, phase, batch counts, last keys, and checkpoint identity.
+Inconsistent checkpoints are rejected without deleting their rows. Legacy
+partial datasets without these prefix proofs are not resumed automatically;
+after inspecting their inactive state, an operator must explicitly pass
+`--restart-incomplete` to discard only that matching dataset's node/edge rows
+and replay from the source beginning. A completed identical artifact is
+revalidated and reused; conflicting identities or unrecognized states are
+rejected. Per-batch failures roll back the current transaction and leave the
+dataset inactive. Transport and field-observation rows are not modified.
 
 ```sh
-php artisan biyahe:pedestrian:import-offline "$OUTPUT" \
-  --source-path="$PBF" \
-  --staging-database="<exact-isolated-database-name>"
+RUN_ID="$(date -u +%Y%m%d%H%M%S)"
+STAGE_ROOT="$HOME/.cache/biyahe/batch033-isolated-$RUN_ID"
+BIYAHE_ISOLATED_PGDATA="$STAGE_ROOT/data"
+DB_PORT=56433
+test ! -e "$STAGE_ROOT" || { echo "Choose a new RUN_ID" >&2; exit 1; }
+if pg_isready -h 127.0.0.1 -p "$DB_PORT" -d postgres >/dev/null 2>&1; then
+  echo "Choose a loopback port with no PostgreSQL listener" >&2
+  exit 1
+fi
+mkdir -p "$STAGE_ROOT/socket"
+initdb -D "$BIYAHE_ISOLATED_PGDATA" --username="$(id -un)" --locale=C --encoding=UTF8 --auth-local=trust --auth-host=trust
+cat >> "$BIYAHE_ISOLATED_PGDATA/postgresql.auto.conf" <<EOF
+listen_addresses='127.0.0.1'
+port=$DB_PORT
+unix_socket_directories='$STAGE_ROOT/socket'
+max_connections=8
+shared_buffers='16MB'
+work_mem='1MB'
+maintenance_work_mem='8MB'
+autovacuum_work_mem='8MB'
+max_parallel_workers=0
+max_worker_processes=2
+dynamic_shared_memory_type='mmap'
+huge_pages=off
+jit=off
+EOF
+pg_ctl -D "$BIYAHE_ISOLATED_PGDATA" -l "$STAGE_ROOT/server.log" -w start
+pg_isready -h 127.0.0.1 -p "$DB_PORT"
+
+export BIYAHE_ISOLATED_PGDATA
+export DB_CONNECTION=pgsql DB_HOST=127.0.0.1 DB_PORT
+export DB_DATABASE=biyahe_batch033_staging DB_USERNAME="$(id -un)" DB_PASSWORD=
+export DB_URL=
+createdb -h 127.0.0.1 -p "$DB_PORT" -U "$DB_USERNAME" "$DB_DATABASE"
+pg_restore --exit-on-error --no-owner --no-privileges \
+  -h 127.0.0.1 -p "$DB_PORT" -U "$DB_USERNAME" -d "$DB_DATABASE" "$BACKUP"
+psql -h 127.0.0.1 -p "$DB_PORT" -U "$DB_USERNAME" -d "$DB_DATABASE" \
+  -c 'SELECT (SELECT count(*) FROM stops) AS stops, (SELECT count(*) FROM places) AS places, (SELECT count(*) FROM transfer_relationships) AS transfers;'
+php artisan migrate --force
+
+export BIYAHE_RESOURCE_PROGRESS_FILE="$HOME/.cache/biyahe/batch033-import-progress.log"
+export BIYAHE_RESOURCE_MIN_MEMAVAILABLE_KB=524288
+export BIYAHE_RESOURCE_MIN_SWAPFREE_KB=131072
+export BIYAHE_RESOURCE_BREACH_SAMPLES=1
+
+php artisan biyahe:pedestrian:stage-offline-graph \
+  --graph="$OUTPUT" --graph-sha256="$GRAPH_SHA256" \
+  --source="$PBF" --source-sha256="$SOURCE_SHA256" \
+  --database="$DB_DATABASE" --port="$DB_PORT" \
+  --pgdata="$BIYAHE_ISOLATED_PGDATA"
+pg_ctl -D "$BIYAHE_ISOLATED_PGDATA" -m fast -w stop
 ```
 
-Do not start PostgreSQL on a resource-unstable device just to exercise import.
+Run the command through `scripts/run-bounded-process.sh` with a new log and
+worker cancellation marker. The wrapper requires three resource samples,
+spaced five seconds apart by default, before it launches the command. Each
+sample records MemAvailable, SwapFree, disk space, visible process RSS and
+VmSwap, PID ownership, process group/session, and PostgreSQL RSS. Any sample
+below a configured floor blocks launch; do not lower a floor to force staging.
+Set `BIYAHE_RESOURCE_PREFLIGHT_SAMPLES` and
+`BIYAHE_RESOURCE_PREFLIGHT_INTERVAL_SECONDS` only when changing the sampling
+window is justified and documented.
+
+The wrapper starts the worker behind a private-session handshake and verifies
+that its process group differs from the parent shell before releasing it. On a
+resource breach it signals only that owned group with SIGTERM, waits the
+configured grace period, and uses SIGKILL only for remaining members of the
+same verified group. The parent shell and sibling processes stay outside that
+group. The guard log records the worker's exit status and signal; the complete
+worker output remains beside it as `<log>.worker.log`. The monitor also samples
+PHP's process-tree RSS and aggregate PostgreSQL RSS during work; progress and
+filesystem free-space changes are recorded. Measure the isolated cluster's
+`du -sk` before and after the import for database-directory growth. If the guard
+blocks before launch, do not lower its floor to force staging. Do not start
+PostgreSQL on a resource-unstable device just to exercise import.
+
+After a `VALIDATED` result, run
+`biyahe:pedestrian:audit-staged-route-parity` against the existing Batch032
+journey corpus. It selects an inactive dataset by ID, rechecks the graph and
+source identities and isolated `data_directory`, then compares status, snap
+node IDs, reason families, network and total distance, geometry, and estimate
+labeling. Parity is unverified until this command completes against a real
+staging import.
+
+`biyahe:doctor-v33` consumes static Batch032 and Batch033 evidence only; it
+does not connect to PostgreSQL. Missing real import, rollback, idempotency,
+recovery, parity, or field evidence remains `BLOCKED`.
+
 Production activation is not part of artifact preparation or this staging
 command. It requires a separately reviewed source validation, restored and
 verified backup, isolated staging audit, routing review (including restrictions

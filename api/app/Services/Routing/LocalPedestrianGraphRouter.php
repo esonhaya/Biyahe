@@ -62,6 +62,7 @@ final class LocalPedestrianGraphRouter implements PedestrianRouter
                 $request,
                 ['The local pedestrian graph could not be queried. A straight-line estimate is shown instead.'],
                 $dataset,
+                reasonCode: 'graph_unavailable',
             );
         } finally {
             $this->routingMilliseconds += (hrtime(true) - $startedAt) / 1_000_000;
@@ -82,6 +83,74 @@ final class LocalPedestrianGraphRouter implements PedestrianRouter
         return $result;
     }
 
+    /**
+     * Diagnostic route entry point for one validated, inactive offline import.
+     * Normal route consumers continue to select active datasets only.
+     */
+    public function routeValidatedStaging(
+        PedestrianRouteRequest $request,
+        int $datasetId,
+        string $expectedGraphSha256,
+        string $expectedSourceSha256,
+    ): PedestrianRouteResult {
+        $this->candidates++;
+        $dataset = null;
+        try {
+            if (! $this->hasGraphSchema() || $datasetId < 1) {
+                return $this->result(PedestrianRouteStatus::UNAVAILABLE, $request, ['Validated staging dataset is unavailable.'], null, reasonCode: 'graph_unavailable');
+            }
+            if (! $this->isolatedStagingConnection()) {
+                return $this->result(PedestrianRouteStatus::UNAVAILABLE, $request, ['Staged route diagnostics require loopback isolated staging.'], null, reasonCode: 'staging_isolation_required');
+            }
+
+            $dataset = DB::table('pedestrian_network_datasets')->where('id', $datasetId)->first();
+            $metadata = $dataset === null ? null : $this->decodeMetadata($dataset->metadata ?? null);
+            $capabilities = is_array($metadata['routing_capabilities'] ?? null) ? $metadata['routing_capabilities'] : [];
+            $restrictionAudit = is_array($metadata['restriction_audit'] ?? null) ? $metadata['restriction_audit'] : [];
+            $identityValid = $dataset !== null
+                && ! (bool) $dataset->is_active
+                && ($metadata['offline_staging'] ?? false) === true
+                && ($metadata['import_state'] ?? null) === 'VALIDATED'
+                && ($metadata['routing_ready'] ?? false) === true
+                && ($metadata['activation'] ?? null) === 'NOT_ACTIVATED'
+                && ($capabilities['complete_restriction_inventory'] ?? false) === true
+                && ($capabilities['routing_ready'] ?? false) === true
+                && ($capabilities['turn_restrictions_needed'] ?? true) === false
+                && ($restrictionAudit['inventory_complete'] ?? false) === true
+                && ($metadata['staging_integrity']['nodes_match'] ?? false) === true
+                && ($metadata['staging_integrity']['edges_match'] ?? false) === true
+                && ($metadata['staging_integrity']['directionality_match'] ?? false) === true
+                && ($metadata['staging_integrity']['geometry_match'] ?? false) === true
+                && preg_match('/^[a-f0-9]{64}$/i', $expectedGraphSha256) === 1
+                && preg_match('/^[a-f0-9]{64}$/i', $expectedSourceSha256) === 1
+                && hash_equals(strtolower($expectedGraphSha256), strtolower((string) ($metadata['graph_sha256'] ?? '')))
+                && hash_equals(strtolower($expectedSourceSha256), strtolower((string) ($metadata['source_details']['source_checksum_sha256'] ?? '')));
+            if (! $identityValid) {
+                return $this->result(PedestrianRouteStatus::UNAVAILABLE, $request, ['Staging dataset is incomplete, active, or bound to a different graph/source identity.'], $dataset, reasonCode: 'staging_identity_mismatch');
+            }
+
+            $this->routesComputed++;
+            $startedAt = hrtime(true);
+            try {
+                $result = $this->calculate($request, $dataset);
+            } finally {
+                $this->routingMilliseconds += (hrtime(true) - $startedAt) / 1_000_000;
+            }
+            if ($result->status->isAvailable()) {
+                $this->routesAvailable++;
+            }
+            if (in_array($result->status, [PedestrianRouteStatus::NO_ROUTE, PedestrianRouteStatus::DISTANCE_LIMIT], true)) {
+                $this->noRouteResults++;
+            }
+
+            return $result;
+        } catch (Throwable) {
+            $this->providerStatus = 'STAGING_QUERY_FAILED';
+
+            return $this->result(PedestrianRouteStatus::UNAVAILABLE, $request, ['The isolated staged graph could not be queried.'], $dataset, reasonCode: 'staging_query_failed');
+        }
+    }
+
     public function metrics(): array
     {
         return [
@@ -99,12 +168,7 @@ final class LocalPedestrianGraphRouter implements PedestrianRouter
     /** @return array<string, mixed>|null */
     private function activeDataset(): ?object
     {
-        if (! $this->schemaChecked) {
-            $this->schemaAvailable = Schema::hasTable('pedestrian_network_datasets')
-                && Schema::hasTable('pedestrian_network_nodes')
-                && Schema::hasTable('pedestrian_network_edges');
-            $this->schemaChecked = true;
-        }
+        $this->hasGraphSchema();
         if (! $this->schemaAvailable) {
             $this->providerStatus = 'SCHEMA_MISSING';
 
@@ -117,6 +181,46 @@ final class LocalPedestrianGraphRouter implements PedestrianRouter
         }
 
         return $this->dataset;
+    }
+
+    private function hasGraphSchema(): bool
+    {
+        if (! $this->schemaChecked) {
+            $this->schemaAvailable = Schema::hasTable('pedestrian_network_datasets')
+                && Schema::hasTable('pedestrian_network_nodes')
+                && Schema::hasTable('pedestrian_network_edges');
+            $this->schemaChecked = true;
+        }
+
+        return $this->schemaAvailable;
+    }
+
+    private function isolatedStagingConnection(): bool
+    {
+        $connection = DB::connection();
+        if (app()->runningUnitTests() && $connection->getDriverName() === 'sqlite') {
+            return true;
+        }
+        $database = (string) $connection->getDatabaseName();
+        $host = (string) $connection->getConfig('host');
+
+        return $connection->getDriverName() === 'pgsql'
+            && $host === '127.0.0.1'
+            && preg_match('/(?:^|[_-])(?:staging|test|testing|sandbox|scratch)(?:$|[_-])/i', $database) === 1
+            && preg_match('/(?:^|[_-])(?:prod|production)(?:$|[_-])/i', $database) !== 1;
+    }
+
+    private function decodeMetadata(mixed $metadata): ?array
+    {
+        if (is_array($metadata)) {
+            return $metadata;
+        }
+        if (! is_string($metadata) || $metadata === '') {
+            return null;
+        }
+        $decoded = json_decode($metadata, true);
+
+        return is_array($decoded) ? $decoded : null;
     }
 
     private function calculate(PedestrianRouteRequest $request, ?object $dataset): PedestrianRouteResult
@@ -145,7 +249,8 @@ final class LocalPedestrianGraphRouter implements PedestrianRouter
         $routingCapabilities = is_array($datasetMetadata) && is_array($datasetMetadata['routing_capabilities'] ?? null)
             ? $datasetMetadata['routing_capabilities']
             : [];
-        if ($isOfflineStaging && (($datasetMetadata['routing_ready'] ?? false) !== true
+        if ($isOfflineStaging && (($datasetMetadata['import_state'] ?? null) !== 'VALIDATED'
+            || ($datasetMetadata['routing_ready'] ?? false) !== true
             || ($routingCapabilities['complete_restriction_inventory'] ?? false) !== true
             || ($routingCapabilities['turn_restrictions_needed'] ?? true) !== false)) {
             $this->providerStatus = 'RESTRICTION_CAPABILITY_BLOCKED';
@@ -153,7 +258,7 @@ final class LocalPedestrianGraphRouter implements PedestrianRouter
             return $this->result(
                 PedestrianRouteStatus::UNAVAILABLE,
                 $request,
-                ['The installed offline graph has no verified, complete pedestrian restriction capability record; no walking path is claimed.'],
+                ['The installed offline graph is not in validated staging state or has no complete pedestrian restriction capability record; no walking path is claimed.'],
                 $dataset,
             );
         }
@@ -203,6 +308,8 @@ final class LocalPedestrianGraphRouter implements PedestrianRouter
                     : PedestrianAccessClassification::GRAPH_COVERAGE_GAP,
             );
         }
+        $originSnapNodeId = isset($startNodes[0]['osm_node_id']) ? (int) $startNodes[0]['osm_node_id'] : null;
+        $destinationSnapNodeId = isset($endNodes[0]['osm_node_id']) ? (int) $endNodes[0]['osm_node_id'] : null;
 
         $edges = $this->nearbyEdges($request, $dataset, $startNodes, $endNodes);
         if ($edges === null) {
@@ -213,6 +320,9 @@ final class LocalPedestrianGraphRouter implements PedestrianRouter
                 $request,
                 ['The bounded local graph search exceeded its configured edge limit.'],
                 $dataset,
+                reasonCode: 'resource_budget_exceeded',
+                originSnapNodeId: $originSnapNodeId,
+                destinationSnapNodeId: $destinationSnapNodeId,
             );
         }
 
@@ -266,6 +376,8 @@ final class LocalPedestrianGraphRouter implements PedestrianRouter
                     'network_distance' => $networkDistance,
                     'start_snap' => $startNode['snap_meters'],
                     'end_snap' => $endNode['snap_meters'],
+                    'start_osm_node_id' => $startNode['osm_node_id'] ?? null,
+                    'end_osm_node_id' => $endNode['osm_node_id'] ?? null,
                     'path' => $path,
                 ];
             }
@@ -292,6 +404,8 @@ final class LocalPedestrianGraphRouter implements PedestrianRouter
                 originSnapDistanceMeters: $best['start_snap'],
                 destinationSnapDistanceMeters: $best['end_snap'],
                 warnings: $warnings,
+                originSnapNodeId: $best['start_osm_node_id'],
+                destinationSnapNodeId: $best['end_osm_node_id'],
             );
         }
 
@@ -302,6 +416,9 @@ final class LocalPedestrianGraphRouter implements PedestrianRouter
                 $request,
                 ['The bounded pedestrian search reached its node limit; a path could not be determined.'],
                 $dataset,
+                reasonCode: 'resource_budget_exceeded',
+                originSnapNodeId: $originSnapNodeId,
+                destinationSnapNodeId: $destinationSnapNodeId,
             );
         }
         if ($distanceLimited) {
@@ -310,6 +427,8 @@ final class LocalPedestrianGraphRouter implements PedestrianRouter
                 $request,
                 ['A pedestrian route was not found within the configured walking-distance bound.'],
                 $dataset,
+                originSnapNodeId: $originSnapNodeId,
+                destinationSnapNodeId: $destinationSnapNodeId,
             );
         }
 
@@ -318,6 +437,8 @@ final class LocalPedestrianGraphRouter implements PedestrianRouter
             $request,
             ['No connection is mapped in the current OSM pedestrian extract; map coverage may be incomplete.'],
             $dataset,
+            originSnapNodeId: $originSnapNodeId,
+            destinationSnapNodeId: $destinationSnapNodeId,
         );
     }
 
@@ -331,7 +452,7 @@ final class LocalPedestrianGraphRouter implements PedestrianRouter
             ->where('is_walkable', true)
             ->whereBetween('latitude', [$point['lat'] - $latitudeDelta, $point['lat'] + $latitudeDelta])
             ->whereBetween('longitude', [$point['lng'] - $longitudeDelta, $point['lng'] + $longitudeDelta])
-            ->get(['id', 'latitude', 'longitude']);
+            ->get(['id', 'osm_node_id', 'latitude', 'longitude']);
 
         $nodes = [];
         foreach ($rows as $row) {
@@ -339,7 +460,7 @@ final class LocalPedestrianGraphRouter implements PedestrianRouter
             $longitude = (float) $row->longitude;
             $distance = Geo::distanceMeters($point['lat'], $point['lng'], $latitude, $longitude);
             if ($distance <= $maximumSnapMeters) {
-                $nodes[] = ['id' => (int) $row->id, 'lat' => $latitude, 'lng' => $longitude, 'snap_meters' => $distance];
+                $nodes[] = ['id' => (int) $row->id, 'osm_node_id' => (int) $row->osm_node_id, 'lat' => $latitude, 'lng' => $longitude, 'snap_meters' => $distance];
             }
         }
         usort($nodes, static fn (array $left, array $right): int => ($left['snap_meters'] <=> $right['snap_meters']) ?: ($left['id'] <=> $right['id']));
@@ -657,6 +778,9 @@ final class LocalPedestrianGraphRouter implements PedestrianRouter
         array $warnings,
         ?object $dataset,
         ?PedestrianAccessClassification $accessClassification = null,
+        ?string $reasonCode = null,
+        ?int $originSnapNodeId = null,
+        ?int $destinationSnapNodeId = null,
     ): PedestrianRouteResult {
         return new PedestrianRouteResult(
             status: $status,
@@ -669,6 +793,20 @@ final class LocalPedestrianGraphRouter implements PedestrianRouter
             source: $dataset === null ? null : 'OPENSTREETMAP',
             dataset: $dataset === null ? null : (string) $dataset->stable_id,
             warnings: $warnings,
+            reasonCode: $reasonCode ?? match ($status) {
+                PedestrianRouteStatus::NO_ROUTE, PedestrianRouteStatus::DISTANCE_LIMIT => 'path_unavailable',
+                PedestrianRouteStatus::OUT_OF_COVERAGE => 'endpoint_out_of_scope',
+                PedestrianRouteStatus::UNAVAILABLE => match ($this->providerStatus) {
+                    'INVALID_REQUEST' => 'invalid_endpoint',
+                    'SCHEMA_MISSING', 'NO_ACTIVE_DATASET' => 'graph_unavailable',
+                    'RESTRICTION_CAPABILITY_BLOCKED' => 'unsupported_routing_capability',
+                    'SEARCH_BOUND' => 'resource_budget_exceeded',
+                    default => 'snap_unavailable',
+                },
+                default => null,
+            },
+            originSnapNodeId: $originSnapNodeId,
+            destinationSnapNodeId: $destinationSnapNodeId,
         );
     }
 }

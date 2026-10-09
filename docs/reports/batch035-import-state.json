@@ -1,0 +1,34 @@
+{
+  "format": "biyahe-batch035-import-state-v1",
+  "database_queried": false,
+  "isolated_data_directory_verified": false,
+  "original_cluster_touched": false,
+  "state": "NOT_QUERIED",
+  "nodes": null,
+  "edges": null,
+  "checkpoint": {
+    "queried": false,
+    "status": "NOT_QUERIED",
+    "legacy_batch033_format_may_not_match_batch034_checkpoint_schema": true
+  },
+  "rollback": {
+    "status": "NOT_RUN"
+  },
+  "idempotency": {
+    "status": "NOT_RUN"
+  },
+  "conflict_rejection": {
+    "status": "NOT_RUN"
+  },
+  "route_parity": {
+    "status": "NOT_RUN"
+  },
+  "reason": "The three-sample preflight recorded SwapFree below the unchanged 131072 KiB floor in every sample and blocked command launch. No PostgreSQL server was started and no rows were queried.",
+  "prior_unverified_log_observation": {
+    "nodes": 30000,
+    "edges": 0,
+    "source": "Batch033 progress log only",
+    "trusted_as_current_state": false
+  },
+  "real_import_attempted_in_batch035": false
+}
