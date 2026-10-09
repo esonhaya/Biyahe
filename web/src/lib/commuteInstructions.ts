@@ -58,6 +58,7 @@ export type CommuteJourneySummary = {
     hasWalkingLeg: boolean;
     networkDistanceMeters: number;
     approximateConnectorDistanceMeters: number;
+    approximateTotalDistanceMeters: number;
     straightLineEstimateMeters: number;
     unavailableLegs: number;
     geometryUnavailableLegs: number;
@@ -197,19 +198,27 @@ function walkingDetail(leg: JourneyLeg): { detail: string; uncertainty: string |
   }
 
   if (leg.distance_type === "PEDESTRIAN_NETWORK_WITH_APPROXIMATE_CONNECTORS") {
+    const networkDistance = distanceLabel(leg.network_distance_meters ?? null);
+    const connectorDistance = distanceLabel(leg.approximate_connector_distance_meters ?? null);
+    const breakdown = networkDistance !== null && connectorDistance !== null;
+    const detail = breakdown
+      ? `Mapped graph path about ${networkDistance} plus approximate endpoint access about ${connectorDistance}${distance ? ` · total about ${distance}` : ""}`
+      : `${distance ? `About ${distance} total including approximate endpoint access` : "Approximate endpoint access; total distance unavailable"}; mapped path distance breakdown unavailable`;
     if (!leg.geometry) {
       return {
         detail: distance
-          ? `${distancePhrase} includes approximate endpoint access, but its route line is unavailable and is not drawn.`
+          ? `${detail}; the graph route line is unavailable and is not drawn.`
           : "The mapped path line and walking distance are unavailable; endpoint access would be approximate.",
         uncertainty: distance
-          ? "The graph distance includes approximate access and route geometry is missing."
+          ? "The total includes approximate endpoint access; the path distance breakdown or route geometry is missing."
           : "Endpoint access is approximate, and the response has no walking distance or route geometry to display.",
       };
     }
     return {
-      detail: `${distance ? `${distancePhrase} on the mapped pedestrian path` : distancePhrase}${duration ? ` · ${duration}` : ""}.`,
-      uncertainty: "The connection at one or both endpoints is approximate.",
+      detail: `${detail}${duration ? ` · ${duration}` : ""}.`,
+      uncertainty: breakdown
+        ? "The graph line covers mapped edges only; approximate endpoint access is not drawn."
+        : "The total includes approximate endpoint access, but its distance breakdown is unavailable; connectors are not drawn.",
     };
   }
 
@@ -255,10 +264,15 @@ export function walkingEvidenceLabels(evidence: CommuteJourneySummary["walkingEv
   const labels: string[] = [];
   if (!evidence.hasWalkingLeg) return ["No separate walking leg"];
   if (evidence.networkDistanceMeters > 0) {
-    labels.push(`Mapped path · ${summaryDistanceLabel(evidence.networkDistanceMeters)}`);
+    labels.push(`Mapped paths · ${summaryDistanceLabel(evidence.networkDistanceMeters)}`);
   }
   if (evidence.approximateConnectorDistanceMeters > 0) {
-    labels.push(`Mapped path + approximate access · ${summaryDistanceLabel(evidence.approximateConnectorDistanceMeters)}`);
+    labels.push(`Approximate endpoint access · ${summaryDistanceLabel(evidence.approximateConnectorDistanceMeters)}`);
+  }
+  if (evidence.approximateTotalDistanceMeters > 0) {
+    labels.push(evidence.approximateConnectorDistanceMeters > 0
+      ? `Affected walking legs · ${summaryDistanceLabel(evidence.approximateTotalDistanceMeters)} (includes approximate access)`
+      : `Walking legs with approximate access · ${summaryDistanceLabel(evidence.approximateTotalDistanceMeters)} (breakdown unavailable)`);
   }
   if (evidence.straightLineEstimateMeters > 0) {
     labels.push(`Straight-line estimate only · ${summaryDistanceLabel(evidence.straightLineEstimateMeters)}`);
@@ -290,11 +304,12 @@ function commonInstructionFields(leg: JourneyLeg, index: number, type: CommuteIn
 function makeWalkInstruction(journey: Journey, leg: JourneyLeg, index: number, type: "ACCESS_WALK" | "TRANSFER_WALK" | "FINAL_WALK"): CommuteInstruction {
   const destinationName = pointName(leg.destination, type === "FINAL_WALK" ? journey.destination.name : "the mapped boarding area");
   const walking = walkingDetail(leg);
-  const action = type === "ACCESS_WALK"
-    ? `Walk to ${destinationName}.`
+  const hasMappedPath = WALKING_NETWORK_TYPES.has(leg.distance_type ?? "") && Boolean(leg.geometry);
+  const action = !hasMappedPath
+    ? `No mapped walking path is available to ${destinationName}.`
     : type === "TRANSFER_WALK"
-      ? `Walk to the next boarding area near ${destinationName}.`
-      : `Walk to ${destinationName}.`;
+      ? `Follow the mapped path toward the next boarding area near ${destinationName}.`
+      : `Follow the mapped path toward ${destinationName}.`;
   const fields = commonInstructionFields(leg, index, type);
 
   return {
@@ -390,6 +405,7 @@ export function generateCommuteInstructions(journey: Journey): CommuteJourneyMod
     hasWalkingLeg: false,
     networkDistanceMeters: 0,
     approximateConnectorDistanceMeters: 0,
+    approximateTotalDistanceMeters: 0,
     straightLineEstimateMeters: 0,
     unavailableLegs: 0,
     geometryUnavailableLegs: 0,
@@ -410,7 +426,15 @@ export function generateCommuteInstructions(journey: Journey): CommuteJourneyMod
       walkingEvidence.networkDistanceMeters += distance;
       if (!leg.geometry) walkingEvidence.geometryUnavailableLegs += 1;
     } else if (leg.distance_type === "PEDESTRIAN_NETWORK_WITH_APPROXIMATE_CONNECTORS") {
-      walkingEvidence.approximateConnectorDistanceMeters += distance;
+      walkingEvidence.approximateTotalDistanceMeters += distance;
+      const networkDistance = leg.network_distance_meters;
+      const connectorDistance = leg.approximate_connector_distance_meters;
+      if (networkDistance !== null && networkDistance !== undefined && Number.isFinite(networkDistance) && networkDistance > 0) {
+        walkingEvidence.networkDistanceMeters += networkDistance;
+      }
+      if (connectorDistance !== null && connectorDistance !== undefined && Number.isFinite(connectorDistance) && connectorDistance > 0) {
+        walkingEvidence.approximateConnectorDistanceMeters += connectorDistance;
+      }
       if (!leg.geometry) walkingEvidence.geometryUnavailableLegs += 1;
     } else {
       walkingEvidence.straightLineEstimateMeters += distance;
@@ -484,6 +508,7 @@ export function generateCommuteInstructions(journey: Journey): CommuteJourneyMod
       transfers: journey.transfer_count,
       walkingDistanceMeters,
       walkingDistanceHasFallback: walkingEvidence.approximateConnectorDistanceMeters > 0
+        || walkingEvidence.approximateTotalDistanceMeters > 0
         || walkingEvidence.straightLineEstimateMeters > 0
         || walkingEvidence.unavailableLegs > 0
         || walkingEvidence.geometryUnavailableLegs > 0,

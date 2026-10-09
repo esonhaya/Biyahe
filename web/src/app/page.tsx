@@ -14,7 +14,7 @@ import RideMode from "@/components/RideMode";
 import NearbyRoutes from "@/components/NearbyRoutes";
 import FieldMode from "@/components/FieldMode";
 import type { CommuteInstruction } from "@/lib/commuteInstructions";
-import { hasActiveRideModeSession } from "@/lib/rideMode";
+import { hasActiveRideModeSession, offlineWalkingRequestIdentity } from "@/lib/rideMode";
 import type { RideModeMapOverlay } from "@/lib/rideMode";
 import { RequestGate, type RequestTicket } from "@/lib/requestGate";
 import { LatestPlaceSearch } from "@/lib/latestPlaceSearch";
@@ -319,6 +319,7 @@ export default function Home() {
   const [destinationSearchRetryToken, setDestinationSearchRetryToken] = useState(0);
   const [journeys, setJourneys] = useState<Journey[]>([]);
   const [selectedJourney, setSelectedJourney] = useState<Journey | null>(null);
+  const offlinePreviewBaselineRef = useRef<{ requestIdentity: string; journey: Journey } | null>(null);
   const [selectedPattern, setSelectedPattern] = useState<RoutePattern | null>(null);
   const [selectedStop, setSelectedStop] = useState<Stop | null>(null);
   const [status, setStatus] = useState("Choose two places to find a supported journey.");
@@ -844,12 +845,38 @@ export default function Home() {
   }
 
   function selectJourney(journey: Journey, offlineSnapshot = false) {
+    offlinePreviewBaselineRef.current = null;
     cancelPatternRequest();
     setSelectedPattern(null);
     setSelectedJourney(journey);
     setOfflineSavedJourneyId(offlineSnapshot ? journey.id : null);
     setInstructionFocus(null);
     setSaveMessage(null);
+  }
+
+  useEffect(() => {
+    const baseline = offlinePreviewBaselineRef.current;
+    if (baseline && selectedJourney && offlineWalkingRequestIdentity(selectedJourney) !== baseline.requestIdentity) {
+      offlinePreviewBaselineRef.current = null;
+    }
+  }, [selectedJourney]);
+
+  function applyOfflineWalkingPreview(previewJourney: Journey, requestIdentity: string) {
+    if (!selectedJourney || offlineWalkingRequestIdentity(selectedJourney) !== requestIdentity
+      || offlineWalkingRequestIdentity(previewJourney) !== requestIdentity) return;
+    if (!selectedJourney.offline_walking_preview) {
+      offlinePreviewBaselineRef.current = { requestIdentity, journey: selectedJourney };
+    }
+    setOfflineSavedJourneyId(null);
+    setSelectedJourney(previewJourney);
+  }
+
+  function clearOfflineWalkingPreview(requestIdentity: string) {
+    const baseline = offlinePreviewBaselineRef.current;
+    if (!baseline || baseline.requestIdentity !== requestIdentity || !selectedJourney
+      || offlineWalkingRequestIdentity(selectedJourney) !== requestIdentity) return;
+    offlinePreviewBaselineRef.current = null;
+    setSelectedJourney(baseline.journey);
   }
 
   function saveCurrentJourney() {
@@ -1036,6 +1063,8 @@ export default function Home() {
             isSaved={savedJourneys.some((saved) => saved.id === selectedJourney.id)}
             onInstructionFocus={(instruction) => focusInstructionOnMap(selectedJourney, instruction, offlineSavedJourneyId === selectedJourney.id)}
             onSave={saveCurrentJourney}
+            onOfflinePreview={applyOfflineWalkingPreview}
+            onClearOfflinePreview={clearOfflineWalkingPreview}
             onReplan={selectedJourney.disruptions?.some((impact) => impact.impact_level !== "INFORMATIONAL") ? () => { void requestReplan(selectedJourney); } : undefined}
           />
           {saveMessage && <p className={styles.status} role="status">{saveMessage}</p>}

@@ -3,13 +3,15 @@
 use App\Http\Controllers\Api\CanIRideController;
 use App\Http\Controllers\Api\CityController;
 use App\Http\Controllers\Api\CommuterReportController;
+use App\Http\Controllers\Api\DevelopmentOfflineWalkingPreviewController;
 use App\Http\Controllers\Api\DisruptionController;
-use App\Http\Controllers\Api\HealthController;
 use App\Http\Controllers\Api\FieldMissionController;
+use App\Http\Controllers\Api\HealthController;
 use App\Http\Controllers\Api\JourneyController;
 use App\Http\Controllers\Api\PlaceController;
 use App\Http\Controllers\Api\PlaceSearchController;
 use App\Http\Controllers\Api\PulseController;
+use App\Http\Controllers\Api\ReadinessController;
 use App\Http\Controllers\Api\RouteController;
 use App\Http\Controllers\Api\RoutePatternController;
 use App\Http\Controllers\Api\StopController;
@@ -17,7 +19,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function (): void {
     Route::get('health', HealthController::class);
-    Route::get('ready', \App\Http\Controllers\Api\ReadinessController::class);
+    Route::get('ready', ReadinessController::class);
     Route::get('cities', [CityController::class, 'index']);
     Route::get('cities/{city}', [CityController::class, 'show']);
 
@@ -32,6 +34,10 @@ Route::prefix('v1')->group(function (): void {
     Route::get('disruptions/{disruption}', [DisruptionController::class, 'show']);
     Route::get('pulse', PulseController::class);
     Route::post('commuter-reports', CommuterReportController::class)->middleware('throttle:commuter-reports');
+
+    if (app()->environment('local') && config('app.debug') && config('offline_walking_preview.enabled')) {
+        Route::post('dev/offline-walking-preview', DevelopmentOfflineWalkingPreviewController::class);
+    }
 
     Route::get('stops/nearby', [StopController::class, 'nearby']);
     Route::get('stops', [StopController::class, 'index']);

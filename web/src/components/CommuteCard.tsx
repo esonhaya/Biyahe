@@ -1,7 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import type { Journey } from "@/lib/api";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { canUseOfflineWalkingPreview, previewJourneyWalkingOffline, type Journey } from "@/lib/api";
 import DisruptionNotice from "@/components/DisruptionNotice";
 import {
   buildShareText,
@@ -11,6 +11,7 @@ import {
   type CommuteInstructionType,
 } from "@/lib/commuteInstructions";
 import { explainJourney } from "@/lib/journeyExplanation";
+import { offlineWalkingRequestIdentity } from "@/lib/rideMode";
 import { savedSnapshotAgeLabel } from "@/lib/savedJourneys";
 import styles from "@/app/page.module.css";
 
@@ -29,6 +30,8 @@ type CommuteCardProps = {
   onOpen?: () => void;
   onRefresh?: () => void;
   onReplan?: () => void;
+  onOfflinePreview?: (journey: Journey, requestIdentity: string) => void;
+  onClearOfflinePreview?: (requestIdentity: string) => void;
 };
 
 function typeLabel(type: CommuteInstructionType): string {
@@ -44,7 +47,8 @@ function typeLabel(type: CommuteInstructionType): string {
   }
 }
 
-function trustLabel(state: Journey["trust"]["state"]): string {
+function trustLabel(state: Journey["trust"]["state"], localWalkingPreview = false): string {
+  if (localWalkingPreview && state === "VERIFIED") return "Mapped transit details · walking not field checked";
   switch (state) {
     case "VERIFIED": return "Confirmed details";
     case "MIXED": return "Mapped, some details need checking";
@@ -85,10 +89,18 @@ export default function CommuteCard({
   onOpen,
   onRefresh,
   onReplan,
+  onOfflinePreview,
+  onClearOfflinePreview,
 }: CommuteCardProps) {
   const model = useMemo(() => generateCommuteInstructions(journey), [journey]);
   const explanation = useMemo(() => explainJourney(journey), [journey]);
   const [shareStatus, setShareStatus] = useState<string | null>(null);
+  const [offlinePreviewBusy, setOfflinePreviewBusy] = useState(false);
+  const [offlinePreviewMessage, setOfflinePreviewMessage] = useState<string | null>(null);
+  const offlinePreviewRequest = useRef<AbortController | null>(null);
+  const requestIdentity = useMemo(() => offlineWalkingRequestIdentity(journey), [journey]);
+  const currentRequestIdentity = useRef(requestIdentity);
+  currentRequestIdentity.current = requestIdentity;
   const compact = variant === "compact";
   const savedAge = savedAt ? savedSnapshotAgeLabel(savedAt) : null;
   const rideInstructions = model.instructions.filter((instruction) => instruction.type === "RIDE");
@@ -98,10 +110,50 @@ export default function CommuteCard({
     alight: model.instructions.find((instruction) => instruction.legIndex === ride.legIndex && instruction.type === "ALIGHT"),
   }));
   const routeCodes = Array.from(new Set(rideInstructions.map((instruction) => instruction.routeCode).filter((code): code is string => Boolean(code))));
+  const canPreviewOfflineWalking = canUseOfflineWalkingPreview()
+    && variant === "detail" && !offlineSnapshot && onOfflinePreview !== undefined;
+
+  useEffect(() => {
+    offlinePreviewRequest.current?.abort();
+    setOfflinePreviewBusy(false);
+    setOfflinePreviewMessage(null);
+    return () => {
+      offlinePreviewRequest.current?.abort();
+      offlinePreviewRequest.current = null;
+    };
+  }, [requestIdentity]);
+
+  async function previewOfflineWalking() {
+    offlinePreviewRequest.current?.abort();
+    const request = new AbortController();
+    offlinePreviewRequest.current = request;
+    setOfflinePreviewBusy(true);
+    setOfflinePreviewMessage(null);
+    try {
+      const result = await previewJourneyWalkingOffline(journey, request.signal);
+      if (request.signal.aborted || currentRequestIdentity.current !== requestIdentity) return;
+      onOfflinePreview?.(result.journey, requestIdentity);
+      setOfflinePreviewMessage(result.preview.status === "COMPLETE"
+        ? `Local preview routed ${result.preview.routes_found} walking leg${result.preview.routes_found === 1 ? "" : "s"}. Field access remains unverified.`
+        : result.preview.status === "PARTIAL"
+          ? `Local preview routed ${result.preview.routes_found} of ${result.preview.walking_legs} walking legs. Unavailable legs remain without a route line.`
+          : result.preview.status === "UNAVAILABLE"
+            ? "The local graph could not route these walking legs. Their reason codes are shown in the leg details."
+            : "This journey has no separate walking legs to preview.");
+    } catch (previewError) {
+      if (request.signal.aborted || currentRequestIdentity.current !== requestIdentity) return;
+      setOfflinePreviewMessage(previewError instanceof Error ? previewError.message : "The local graph preview could not be completed.");
+    } finally {
+      if (offlinePreviewRequest.current === request) setOfflinePreviewBusy(false);
+    }
+  }
 
   async function share() {
     const advisory = journey.disruptions?.find((impact) => impact.impact_level !== "INFORMATIONAL")?.warning;
-    const text = [buildShareText(model), advisory ? `Important: ${advisory}` : null].filter(Boolean).join("\n");
+    const preview = journey.offline_walking_preview
+      ? `Local development walking preview · OSM snapshot ${journey.offline_walking_preview.source_snapshot} · not field verified.`
+      : null;
+    const text = [buildShareText(model), preview, advisory ? `Important: ${advisory}` : null].filter(Boolean).join("\n");
     try {
       if (typeof navigator !== "undefined" && typeof navigator.share === "function") {
         await navigator.share({ title: `Biyahe: ${model.title}`, text });
@@ -119,7 +171,10 @@ export default function CommuteCard({
   async function copy() {
     try {
       const advisory = journey.disruptions?.find((impact) => impact.impact_level !== "INFORMATIONAL")?.warning;
-      await copyText([buildShareText(model), advisory ? `Important: ${advisory}` : null].filter(Boolean).join("\n"));
+      const preview = journey.offline_walking_preview
+        ? `Local development walking preview · OSM snapshot ${journey.offline_walking_preview.source_snapshot} · not field verified.`
+        : null;
+      await copyText([buildShareText(model), preview, advisory ? `Important: ${advisory}` : null].filter(Boolean).join("\n"));
       setShareStatus("Copied");
     } catch {
       setShareStatus("Copy is unavailable");
@@ -133,7 +188,7 @@ export default function CommuteCard({
           <p className={styles.cardKicker}>{recommended ? "RECOMMENDED" : variant === "saved" ? "SAVED SNAPSHOT" : "COMMUTE CARD"}</p>
           <h3>{model.title}</h3>
         </div>
-        <span className={styles.trustBadge}>{trustLabel(journey.trust.state)}</span>
+        <span className={styles.trustBadge}>{trustLabel(journey.trust.state, Boolean(journey.offline_walking_preview))}</span>
       </div>
 
       <div className={styles.commuteSummary} aria-label="Journey summary">
@@ -143,7 +198,7 @@ export default function CommuteCard({
         <span>{model.summary.fare}</span>
       </div>
       {!compact && routeCodes.length > 0 && <div className={styles.routePills} aria-label="Routes used"><strong>Ride:</strong>{routeCodes.map((code) => <span key={code}>{code}</span>)}</div>}
-      {explanation.plannerReasons.length > 0 && <p className={styles.rankingReasons}><strong>Why shown:</strong> {explanation.plannerReasons.slice(0, 2).join(" · ")}</p>}
+      {explanation.plannerReasons.length > 0 && <p className={styles.rankingReasons}><strong>Why this option:</strong> {explanation.plannerReasons.slice(0, 2).join(" · ")}</p>}
       <details className={styles.journeyEvidenceDetails}>
         <summary>Route evidence and limitations</summary>
         <p><strong>{explanation.structure}</strong></p>
@@ -164,6 +219,11 @@ export default function CommuteCard({
       {offlineSnapshot && (
         <p className={styles.snapshotNote}>
           Offline saved snapshot{savedAge ? ` · ${savedAge}` : ""}. Route and service details may have changed.
+        </p>
+      )}
+      {journey.offline_walking_preview && (
+        <p className={styles.warning} role="note" aria-label="Development-only offline walking preview">
+          Local graph preview · OSM snapshot {journey.offline_walking_preview.source_snapshot} · {journey.offline_walking_preview.graph_sha256.slice(0, 12)} · © OpenStreetMap contributors · not field-safety verification. This preview does not replace live directions.
         </p>
       )}
       {(journey.disruptions ?? []).filter((impact) => impact.affected_leg_index === null || impact.affected_leg_index === undefined).map((impact) => (
@@ -213,13 +273,17 @@ export default function CommuteCard({
       <div className={styles.commuteActions}>
         {onSelect && <button type="button" onClick={onSelect} className={styles.secondaryButton}>{compact ? "Open this journey" : "Show on map"}</button>}
         {onOpen && <button type="button" onClick={onOpen} className={styles.primaryButton}>Open saved journey</button>}
-        {onSave && !isSaved && <button type="button" onClick={onSave} className={styles.secondaryButton}>Save journey</button>}
+        {onSave && !isSaved && !journey.offline_walking_preview && <button type="button" onClick={onSave} className={styles.secondaryButton}>Save journey</button>}
+        {canPreviewOfflineWalking && <button type="button" onClick={() => { void previewOfflineWalking(); }} className={styles.secondaryButton} disabled={offlinePreviewBusy} aria-describedby="offline-walking-preview-note">{offlinePreviewBusy ? "Checking local walking graph…" : journey.offline_walking_preview ? "Refresh local walking preview" : "Preview walking from local graph"}</button>}
+        {canPreviewOfflineWalking && journey.offline_walking_preview && onClearOfflinePreview && <button type="button" onClick={() => onClearOfflinePreview(requestIdentity)} className={styles.secondaryButton}>Remove local preview</button>}
         {onRefresh && <button type="button" onClick={onRefresh} className={styles.secondaryButton}>Refresh journey online</button>}
         {onReplan && <button type="button" onClick={onReplan} className={styles.secondaryButton}>Find another way</button>}
         {onRemove && <button type="button" onClick={onRemove} className={styles.secondaryButton}>Remove saved</button>}
         {!compact && <button type="button" onClick={share} className={styles.secondaryButton}>Share</button>}
         {!compact && <button type="button" onClick={copy} className={styles.secondaryButton}>Copy</button>}
       </div>
+      {canPreviewOfflineWalking && <p id="offline-walking-preview-note" className={styles.status}>Development preview only. Uses the pinned 25 m graph snapshot; it does not change transit routing or ranking.</p>}
+      {canPreviewOfflineWalking && offlinePreviewMessage && <p className={styles.status} role="status">{offlinePreviewMessage}</p>}
       {isSaved && !onRemove && <p className={styles.savedState}>Saved on this device.</p>}
       {shareStatus && <p className={styles.status} role="status">{shareStatus}</p>}
     </article>

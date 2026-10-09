@@ -6,8 +6,10 @@ import {
   classifyLocation,
   createRideModeSession,
   evaluateRideModeLocation,
+  offlineWalkingRequestIdentity,
   serializeRideModeSession,
   parseRideModeSession,
+  replaceSessionJourney,
 } from "../src/lib/rideMode.ts";
 
 const verification = { state: "UNVERIFIED", is_demo: false, trusted: false };
@@ -176,6 +178,23 @@ for (const transfers of [0, 1, 2]) {
 }
 
 const direct = createRideModeSession(syntheticJourney(0), 10_000);
+const identityJourney = syntheticJourney(0);
+const identityBeforePreview = offlineWalkingRequestIdentity(identityJourney);
+const previewIdentityJourney = {
+  ...identityJourney,
+  offline_walking_preview: { mode: "DEVELOPMENT_ONLY", graph_sha256: "pinned-fixture", graph_fingerprint: "fingerprint-fixture" },
+  legs: identityJourney.legs.map((leg) => leg.type === "RIDE" ? leg : {
+    ...leg,
+    distance_meters: null,
+    distance_type: "UNAVAILABLE",
+    routing_source: "OPENSTREETMAP_OFFLINE_PREVIEW",
+    geometry: null,
+    offline_walking_preview: { reason_code: "component_disconnected" },
+    warnings: [...leg.warnings, "No local graph walking path was established; no substitute line or connector is shown."],
+  }),
+};
+assert.equal(offlineWalkingRequestIdentity(previewIdentityJourney), identityBeforePreview, "local preview output must not change the selected journey identity");
+assert.notEqual(offlineWalkingRequestIdentity({ ...identityJourney, fare: { ...identityJourney.fare, label: "Changed fare evidence" } }), identityBeforePreview, "changed fare evidence must invalidate an in-flight preview");
 const active = transition(direct, "ACTIVATE", 10_001);
 assert.equal(canReviewPreviousRideModeStep(active), false, "there is no prior step before a journey starts");
 let reviewSession = transition(active, "START_WALK", 10_002);
@@ -223,6 +242,14 @@ const restored = parseRideModeSession(serializeRideModeSession(active));
 assert.equal(restored?.sessionId, active.sessionId);
 assert.equal(Object.prototype.hasOwnProperty.call(JSON.parse(serializeRideModeSession(active)), "location"), false);
 assert.equal(parseRideModeSession(JSON.stringify({ ...active, currentLocation: { lat: 10.3, lng: 123.9 } })), null);
+assert.equal(parseRideModeSession(JSON.stringify({ ...active, currentLegState: "RIDING" })), null, "persisted progress must match the current walking leg");
+assert.equal(parseRideModeSession(JSON.stringify({ ...active, updatedAt: active.createdAt - 1 })), null, "timestamps cannot run backwards");
+const changedRoute = { ...active.journey, legs: active.journey.legs.map((leg, index) => index === 0
+  ? { ...leg, destination: { ...leg.destination, location: { lat: 10.35, lng: 123.91 } } } : leg) };
+assert.equal(replaceSessionJourney(active, changedRoute, 10_010), active, "a detail refresh cannot silently switch the active route endpoints");
+const unstartedFinalWalk = { ...active, currentLegIndex: active.journey.legs.length - 1, currentLegState: "NOT_STARTED" };
+assert.equal(applyRideModeAction(unstartedFinalWalk, "ARRIVED", 10_011).error?.includes("Start the final walking step"), true, "arrival requires a started final walk");
+assert.equal(parseRideModeSession(JSON.stringify({ ...runJourney(0), status: "COMPLETED" })) !== null, true, "valid completed sessions remain resumable for display");
 
 console.log("RIDE_MODE_HARNESS=PASS");
 console.log("DIRECT=PASS ONE_TRANSFER=PASS TWO_TRANSFER=PASS");

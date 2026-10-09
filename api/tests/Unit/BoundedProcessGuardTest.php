@@ -106,7 +106,8 @@ class BoundedProcessGuardTest extends TestCase
             $this->assertStringContainsString('sqlite_bytes=8', $process->getOutput());
             $this->assertStringContainsString('producer_consumer_progress=complete', $process->getOutput());
             $this->assertStringContainsString('process_tree_rss_kb=4000', $process->getOutput());
-            $this->assertStringContainsString('operation=complete worker_exit=0 peak_rss_kb=4000', $process->getOutput());
+            $this->assertStringContainsString('operation=complete worker_exit=0 worker_log=', $process->getOutput());
+            $this->assertStringContainsString('peak_rss_kb=4000', $process->getOutput());
             $this->assertFileDoesNotExist($fixture['log'].'.runner');
             $this->assertFileExists($fixture['log'].'.worker.log');
         } finally {
@@ -317,6 +318,7 @@ BASH;
     private function guardArguments(array $fixture, array $command): array
     {
         $script = dirname(__DIR__, 2).'/scripts/run-bounded-process.sh';
+
         return [
             'bash', $script,
             '--operation', 'test-worker',

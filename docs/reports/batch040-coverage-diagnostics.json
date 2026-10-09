@@ -1,0 +1,104 @@
+{
+  "format": "biyahe-batch040-coverage-diagnostics-v1",
+  "status": "CARRIED_FORWARD_NOT_RECOMPUTED",
+  "source_evidence": {
+    "report_path": "docs/reports/batch032-cebu-coverage.json",
+    "report_sha256": "6caf101177904bee6fda1b12cab9c5cda36ddaf7ecc08b0d9778c0517123c81b",
+    "graph_sha256": "29d7aaf9c45a596f4065c44d13f983f4a7edeec5ac2ea41b718b1c52ca865bf8",
+    "graph_fingerprint": "a0d9f1cb8289cf1f9bde3905d1ad8a57124ee41120153b4efc1f5b31e4c03ecd",
+    "source_pbf_sha256": "787cac20ecc586b754b1a464643a040566d486457c6a37bc0b11ce683bc66d4d",
+    "snapshot": "2026-10-07T01:00:21Z"
+  },
+  "analysis_execution": {
+    "coverage_summary_command": "BLOCKED_BEFORE_EXECUTION_BY_RESOURCE_GUARD",
+    "real_corpus_replay": "BLOCKED_BEFORE_EXECUTION_BY_RESOURCE_GUARD",
+    "graph_opened_by_batch040_diagnostics": false,
+    "pbf_rescanned": false,
+    "values_are_carried_forward": true
+  },
+  "graph": {
+    "nodes": 76685,
+    "edges": 78225,
+    "all_components": 2754,
+    "walkable_components": 432,
+    "restrictions": {
+      "pinned_coverage_report_total": 619,
+      "pinned_coverage_report_vehicle_only": 619,
+      "pinned_coverage_report_pedestrian_applicable": 0,
+      "pinned_coverage_report_ambiguous": 0,
+      "pinned_coverage_report_conditional": 5,
+      "pinned_coverage_report_via_node": 449,
+      "pinned_coverage_report_via_way": 166,
+      "pinned_coverage_report_malformed_vehicle_only": 4,
+      "pinned_coverage_report_missing_member_dependencies": 75,
+      "batch039_narrative_total_classified_vehicle_only": 648,
+      "state_aware_pedestrian_turn_search": false,
+      "conditional_restrictions_evaluated_for_walking": false,
+      "reconciliation": "UNRESOLVED; latest narrative and hash-pinned coverage report disagree on relation count"
+    },
+    "routing_capability": "READY_FOR_THIS_PINNED_SNAPSHOT_ONLY"
+  },
+  "snap_policy": {
+    "maximum_distance_meters": 25,
+    "virtual_edge_anchors": false
+  },
+  "stops": {
+    "total": 503,
+    "with_usable_coordinates": "NOT_RECOMPUTED",
+    "snappable": 436,
+    "unsnappable": 67,
+    "largest_walkable_component": 433,
+    "smaller_walkable_components": 3,
+    "unsnappable_record_ids": "SEE_HASH_PINNED_SOURCE_REPORT",
+    "current_replay": "NOT_RUN"
+  },
+  "places": {
+    "total": 37,
+    "with_usable_coordinates": "NOT_RECOMPUTED",
+    "snappable": 30,
+    "unsnappable": 7,
+    "component_distribution": "NOT_RECOMPUTED",
+    "current_replay": "NOT_RUN"
+  },
+  "transfers": {
+    "total": 2,
+    "graph_connected": 2,
+    "field_verified": 0,
+    "trust_state": "UNVERIFIED",
+    "physical_interchange_safety": "UNKNOWN"
+  },
+  "journey_corpus": {
+    "cases": 10,
+    "historical_expected_routes_found": 9,
+    "historical_expected_disconnected": 1,
+    "batch040_replay": "NOT_RUN",
+    "geometry_parity": "NOT_RECHECKED"
+  },
+  "quality_evidence": {
+    "long_edges_over_250m": 26,
+    "maximum_long_edge_meters": 867,
+    "boundary_nodes": 944,
+    "crossing_tagged_nodes": 1510,
+    "historical_quality_summary_conflict": {
+      "summary_counts": {
+        "long_edges_over_250m": 0,
+        "boundary_nodes": 0,
+        "crossing_tagged_nodes": 0
+      },
+      "detailed_evidence_counts": {
+        "long_edges_over_250m": 26,
+        "boundary_nodes": 944,
+        "crossing_tagged_nodes": 1510
+      },
+      "resolution": "UNRESOLVED; preserve both values and review source report"
+    },
+    "area_coverage": "NOT_COMPUTED; graph components and administrative IDs do not establish geographic or field coverage",
+    "field_review_required": true
+  },
+  "evidence_boundaries": {
+    "graph_geometry": "OSM_SOURCE_BACKED_NOT_FIELD_VERIFIED",
+    "fare_verification": "NOT_INCLUDED",
+    "field_safety": "UNKNOWN",
+    "graph_connectivity_proves_transfer_safety": false
+  }
+}

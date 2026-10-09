@@ -1,0 +1,145 @@
+{
+  "format": "biyahe-doctor-v40-evidence-v1",
+  "batch": 40,
+  "started_at_utc": "2026-10-09T15:30:19Z",
+  "expected_head": "6de4e7dbf2710eb6c587dca3a7697d6938e7a8b7",
+  "observed_head_before_changes": "6de4e7dbf2710eb6c587dca3a7697d6938e7a8b7",
+  "source_and_graph": {
+    "source_sha256": "787cac20ecc586b754b1a464643a040566d486457c6a37bc0b11ce683bc66d4d",
+    "source_snapshot": "2026-10-07T01:00:21Z",
+    "source_hash_this_batch": "NOT_RECOMPUTED",
+    "graph_sha256_expected": "29d7aaf9c45a596f4065c44d13f983f4a7edeec5ac2ea41b718b1c52ca865bf8",
+    "graph_sha256_observed_at_preflight": "29d7aaf9c45a596f4065c44d13f983f4a7edeec5ac2ea41b718b1c52ca865bf8",
+    "graph_hash_preflight": "VERIFIED",
+    "graph_hash_after_implementation": "NOT_RECHECKED",
+    "sqlite_integrity_check": "NOT_RUN_RESOURCE_GUARD",
+    "graph_writes": false,
+    "pbf_rescan": false,
+    "postgresql_contacted": false,
+    "production_activation": "NO"
+  },
+  "categories": [
+    {
+      "name": "architecture_and_recovery",
+      "implementation": "VERIFIED",
+      "validation": "VERIFIED",
+      "evidence": "Batch039 tracked and untracked work was compared with verified SD recovery copies; Batch040 recovery snapshot was created before edits; six historical Doctor reports and the Batch039 Doctor report remain preserved. Architecture map is in batch040-recovery-and-architecture.md."
+    },
+    {
+      "name": "offline_adapter_and_graph_identity",
+      "implementation": "IMPLEMENTED",
+      "validation": "BLOCKED",
+      "evidence": "The opt-in local adapter checks graph format/schema/counts/fingerprint/hash, pinned coverage report, capability flags, endpoint coordinates, route geometry and distance provenance. PHP lint passed before the final cooperative-deadline edit; final lint is recorded separately. The focused PHP adapter test did not complete after its fixture correction."
+    },
+    {
+      "name": "cooperative_route_deadline",
+      "implementation": "IMPLEMENTED",
+      "validation": "UNVERIFIED",
+      "evidence": "OfflinePedestrianGraphRouter now accepts an optional monotonic deadline and checks between SQLite phases and bounded PHP loops. PDO SQLite statements cannot be interrupted mid-statement; this is not a hard timeout. A zero-budget fixture was added but not executed."
+    },
+    {
+      "name": "journey_preview_integration",
+      "implementation": "IMPLEMENTED",
+      "validation": "BLOCKED",
+      "evidence": "Preview requests bind to selected-journey identity, abort on route changes and ignore stale responses. Preview removal restores the unmodified journey. The focused offline-preview frontend harness passed in the second guarded run; the full commute-card harness stopped at a stale distance-label fixture and was corrected but not rerun."
+    },
+    {
+      "name": "coverage_diagnostics",
+      "implementation": "IMPLEMENTED",
+      "validation": "UNVERIFIED",
+      "evidence": "A bounded Python summarizer, synthetic-only fixtures, comparator, and carried-forward JSON/Markdown report were added. The summary command and fixture suite were not reached after the resource guard stopped the worker. The report explicitly identifies itself as not recomputed."
+    },
+    {
+      "name": "offline_corpus_framework",
+      "implementation": "IMPLEMENTED",
+      "validation": "BLOCKED",
+      "evidence": "The replay command emits indexed cases, source endpoint IDs/trust labels, route reasons, snaps, edge identity and geometry continuity; the comparator now checks the exact indexed case identity and top-level PASS. Batch040 real replay and comparator execution were not reached."
+    },
+    {
+      "name": "ride_mode_and_saved_journeys",
+      "implementation": "IMPLEMENTED",
+      "validation": "UNVERIFIED",
+      "evidence": "Existing manual Ride Mode and v1 saved snapshots are reused; development preview data is rejected at save/parse boundaries. Related full regression harnesses did not run after the final code changes. No storage migration was added."
+    },
+    {
+      "name": "map_and_mobile",
+      "implementation": "IMPLEMENTED",
+      "validation": "UNVERIFIED",
+      "evidence": "Existing MapLibre geometry filtering and map/list selection are reused; preview endpoint connectors are not emitted as graph geometry. No browser, viewport, keyboard or screen-reader interaction ran."
+    },
+    {
+      "name": "validation_ledger_and_scheduler",
+      "implementation": "IMPLEMENTED",
+      "validation": "BLOCKED",
+      "evidence": "The validation-ledger harness passed in the first bounded run and checks source/config/tool/runtime/command fingerprints, evidence SHA, interrupted RUNNING precedence and BLOCKED/FAIL precedence. The broader second run was canceled by the resource guard. The scheduler recorded the resource stop and did not reuse a PASS."
+    },
+    {
+      "name": "portable_linux_kit",
+      "implementation": "IMPLEMENTED",
+      "validation": "UNVERIFIED",
+      "evidence": "Instructions, pinned artifact hashes, manifest and offline commands are present. Package SHA256SUMS, SD copy and clean-room verification remain to be completed; no external-host run is claimed."
+    },
+    {
+      "name": "resource_guard",
+      "implementation": "VERIFIED",
+      "validation": "BLOCKED",
+      "evidence": {
+        "swap_floor_kib": 131072,
+        "memavailable_floor_kib": 524288,
+        "second_gate_preflight_min_swapfree_kib": 174652,
+        "second_gate_preflight_min_memavailable_kib": 903400,
+        "worker_min_swapfree_kib": 99276,
+        "worker_min_memavailable_kib": 808092,
+        "worker_peak_tree_rss_kib": 61368,
+        "postgres_peak_rss_kib": 0,
+        "owned_worker_group_cancel": "COMPLETE",
+        "parent_survival": "VERIFIED",
+        "unrelated_process_survival": "NOT_INDEPENDENTLY_RETESTED_THIS_GATE",
+        "suite_result": "BLOCKED_AFTER_SWAP_FLOOR_BREACH"
+      }
+    },
+    {
+      "name": "real_postgresql_staging_and_live_graph_api",
+      "implementation": "NOT_IMPLEMENTED_IN_BATCH040_SCOPE",
+      "validation": "BLOCKED",
+      "evidence": "No PostgreSQL cluster was started or contacted. The SQLite adapter remains opt-in, local-only and separate from the production journey API."
+    },
+    {
+      "name": "field_transfer_safety_and_private_beta",
+      "implementation": "UNVERIFIED",
+      "validation": "BLOCKED",
+      "evidence": "Both transfer locations remain UNVERIFIED. Graph connectivity is not field evidence. No field observations, real database staging, staged route parity, or browser-level tests were produced. Private beta remains blocked."
+    }
+  ],
+  "executed_validation": {
+    "php_lint_before_deadline_change": "PASS",
+    "php_lint_after_deadline_change": "PASS_FINAL_STATIC_CHECK",
+    "pint": "NOT_RUN_AFTER_DEADLINE_CHANGE_RESOURCE_PRESSURE",
+    "javascript_syntax": "PASS_FINAL_STATIC_CHECK",
+    "bash_syntax": "PASS_FINAL_STATIC_CHECK",
+    "json_validation": "PASS_FINAL_STATIC_CHECK",
+    "git_diff_check": "PASS_FINAL_STATIC_CHECK",
+    "frontend_preview_harness": "PASS_SECOND_RUN_BEFORE_FINAL_IDENTITY_EDIT",
+    "validation_ledger_harness": "PASS_FIRST_RUN",
+    "commute_card_harness": "STALE_EXPECTATION_CORRECTED_NOT_RERUN_AFTER_SWAP_BREACH",
+    "ride_mode_harness": "MODULE_RESOLUTION_FAILURE_CORRECTED_NOT_RERUN_AFTER_SWAP_BREACH",
+    "coverage_fixtures": "FIXTURE_SETUP_FAILURE_CORRECTED_NOT_RERUN_AFTER_SWAP_BREACH",
+    "offline_adapter_phpunit": "FIXTURE_FAILURE_CORRECTED_NOT_RERUN_AFTER_SWAP_BREACH",
+    "owned_process_guard_phpunit": "LOG_ASSERTION_FAILURE_CORRECTED_NOT_RERUN_AFTER_SWAP_BREACH",
+    "real_cebu_corpus": "BLOCKED_NOT_REACHED",
+    "typescript_typecheck": "NOT_RUN",
+    "eslint": "NOT_RUN",
+    "browser": "NOT_RUN"
+  },
+  "release_gates": {
+    "offline_graph_artifact": "WARN_HASH_MATCHED_AT_PREFLIGHT_SQLITE_INTEGRITY_NOT_RERUN",
+    "local_graph_adapter": "BLOCKED_FUNCTIONAL_SUITE_NOT_COMPLETED",
+    "offline_experience": "IMPLEMENTED_WITH_PARTIAL_SYNTHETIC_HARNESS_EVIDENCE",
+    "live_api_integration": "BLOCKED_NOT_CONNECTED",
+    "postgresql_staging": "BLOCKED_NOT_ATTEMPTED",
+    "route_parity": "BLOCKED_NOT_REPLAYED",
+    "field_safety": "BLOCKED_NO_FIELD_EVIDENCE",
+    "private_beta": "BLOCKED",
+    "production_activation": "NO"
+  }
+}

@@ -167,11 +167,12 @@ const generationMs = performance.now() - started;
 
 assert.equal(models[0].instructions.find((instruction) => instruction.type === "BOARD")?.precision, "BOARDING_AREA");
 assert.equal(models[0].instructions.find((instruction) => instruction.type === "BOARD")?.driverInstruction, 'Tell the driver: "Central Terminal".');
-assert.equal(models[1].instructions.find((instruction) => instruction.type === "TRANSFER_WALK")?.uncertainty, "Walking path unavailable — distance shown is an estimate.");
+assert.equal(models[1].instructions.find((instruction) => instruction.type === "TRANSFER_WALK")?.uncertainty, "Walking path unavailable — the distance shown is an estimate.");
 const fallbackInstruction = models[1].instructions.find((instruction) => instruction.type === "TRANSFER_WALK");
 assert.equal(fallbackInstruction?.distanceType, "STRAIGHT_LINE_ESTIMATE");
 assert.equal(fallbackInstruction?.estimatedDurationSeconds, null);
 assert.equal(fallbackInstruction?.geometry, null);
+assert.match(fallbackInstruction?.primaryAction ?? "", /^No mapped walking path is available/);
 assert.match(fallbackInstruction?.secondaryDetail ?? "", /straight-line estimate/);
 assert.equal(models[1].summary.fare, "₱13");
 assert.equal(models[2].summary.fare, "Fare unavailable");
@@ -181,9 +182,28 @@ assert.equal(models[0].summary.walkingEvidence.networkDistanceMeters, 440);
 assert.equal(models[1].summary.walkingEvidence.networkDistanceMeters, 440);
 assert.equal(models[1].summary.walkingEvidence.straightLineEstimateMeters, 180);
 assert.deepEqual(walkingEvidenceLabels(models[1].summary.walkingEvidence), [
-  "Mapped path · 440 m",
+  "Mapped paths · 440 m",
   "Straight-line estimate only · 180 m",
 ]);
+
+const connectorJourney = syntheticJourney(0);
+Object.assign(connectorJourney.legs[0], {
+  distance_meters: 230,
+  network_distance_meters: 200,
+  approximate_connector_distance_meters: 30,
+  distance_type: "PEDESTRIAN_NETWORK_WITH_APPROXIMATE_CONNECTORS",
+  distance_is_estimate: true,
+});
+const connectorInstructions = generateCommuteInstructions(connectorJourney);
+assert.match(connectorInstructions.instructions.find((instruction) => instruction.type === "ACCESS_WALK")?.secondaryDetail ?? "", /Mapped graph path about 200 m plus approximate endpoint access about 30 m.*total about 230 m/);
+assert.deepEqual(walkingEvidenceLabels(connectorInstructions.summary.walkingEvidence), [
+  "Mapped paths · 420 m",
+  "Approximate endpoint access · 30 m",
+  "Affected walking legs · 230 m (includes approximate access)",
+]);
+const legacyConnectorJourney = syntheticJourney(0);
+Object.assign(legacyConnectorJourney.legs[0], { distance_meters: 230, distance_type: "PEDESTRIAN_NETWORK_WITH_APPROXIMATE_CONNECTORS", distance_is_estimate: true });
+assert.match(generateCommuteInstructions(legacyConnectorJourney).instructions[0]?.secondaryDetail ?? "", /total including approximate endpoint access; mapped path distance breakdown unavailable/);
 
 const missingGeometryJourney = syntheticJourney(0);
 missingGeometryJourney.legs[0].geometry = null;
@@ -191,6 +211,7 @@ const missingGeometryModel = generateCommuteInstructions(missingGeometryJourney)
 const missingGeometryStep = missingGeometryModel.instructions.find((instruction) => instruction.type === "ACCESS_WALK");
 assert.equal(missingGeometryModel.summary.walkingEvidence.geometryUnavailableLegs, 1);
 assert.equal(missingGeometryStep?.geometry, null);
+assert.match(missingGeometryStep?.primaryAction ?? "", /^No mapped walking path is available/);
 assert.match(missingGeometryStep?.secondaryDetail ?? "", /route line is unavailable and is not drawn/);
 assert.equal(journeyGeometryDisclosure(missingGeometryJourney).mappedWalkingLegsWithoutGeometry, 1);
 

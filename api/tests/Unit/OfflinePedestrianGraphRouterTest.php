@@ -105,6 +105,29 @@ final class OfflinePedestrianGraphRouterTest extends TestCase
         }
     }
 
+    public function test_expired_cooperative_route_deadline_returns_a_resource_reason_without_a_path(): void
+    {
+        $graph = $this->graph([
+            [1, 10.3, 123.8700, 1, null, null],
+            [2, 10.3, 123.8701, 1, null, null],
+        ], [[100, 0, 1, 2, 1, 11.0]]);
+
+        try {
+            $route = $this->router($graph['path'])->route(
+                ['lat' => 10.3, 'lng' => 123.87],
+                ['lat' => 10.3, 'lng' => 123.8701],
+                100,
+                maximumDurationMilliseconds: 0,
+            );
+
+            $this->assertSame('resource_budget_exceeded', $route['reason_code']);
+            $this->assertTrue($route['time_budget_exceeded']);
+            $this->assertNull($route['geometry']);
+        } finally {
+            $this->removeGraph($graph['path']);
+        }
+    }
+
     public function test_refuses_invalid_endpoints_zero_distance_routes_source_mismatch_and_unsupported_capability(): void
     {
         $graph = $this->graph([

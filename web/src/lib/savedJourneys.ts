@@ -75,12 +75,14 @@ export function isJourneySnapshot(value: unknown): value is Journey {
     || !Array.isArray(value.legs)
     || value.legs.length === 0
     || value.legs.length > 30
+    || value.offline_walking_preview !== undefined
     || containsForbiddenKey(value)) {
     return false;
   }
 
   return value.legs.every((leg: unknown) => {
-    if (!isRecord(leg) || typeof leg.type !== "string" || !LEG_TYPES.has(leg.type)) return false;
+    if (!isRecord(leg) || typeof leg.type !== "string" || !LEG_TYPES.has(leg.type)
+      || leg.offline_walking_preview !== undefined) return false;
     return isJourneyPoint(leg.origin) && isJourneyPoint(leg.destination);
   });
 }
@@ -110,6 +112,9 @@ function snapshotSize(value: SavedJourney): number {
 }
 
 export function createSavedJourney(journey: Journey, savedAt = new Date().toISOString()): SavedJourney {
+  if (journey.offline_walking_preview || journey.legs.some((leg) => leg.offline_walking_preview)) {
+    throw new Error("Remove the development-only local graph preview before saving this journey.");
+  }
   return {
     version: SAVED_JOURNEY_SCHEMA_VERSION,
     id: journey.id,

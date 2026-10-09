@@ -26,16 +26,17 @@ No Ride Mode storage migration is needed; the action does not change the persist
 
 ## Validation ledger
 
-The dependency-free tool in `web/scripts/validation-ledger.mjs` stores runtime state at `~/.cache/biyahe/validation-ledger/batch038.json` by default. Set `BIYAHE_VALIDATION_LEDGER_PATH` to choose another local path. Each entry binds the result to a check ID, source fingerprint, config/dependency fingerprint, and tool version. `PASS`, `FAIL`, `BLOCKED`, and `NOT_RUN` are distinct. A newer blocked or failed result for the same identity prevents reuse of an older pass. Writes use a same-directory temporary file and atomic rename. Corrupt or unsupported ledgers fail closed.
+The dependency-free tool in `web/scripts/validation-ledger.mjs` stores runtime state at `~/.cache/biyahe/validation-ledger/batch038.json` by default. Set `BIYAHE_VALIDATION_LEDGER_PATH` to choose another local path. The Batch040 extension binds a result to a check ID, source fingerprint, config/dependency fingerprint, tool version, runtime version, and exact command fingerprint. `PASS`, `FAIL`, `BLOCKED`, and `NOT_RUN` are distinct. A newer blocked, failed, or interrupted result for the same identity prevents reuse of an older pass. Writes use a same-directory lock, temporary file, file sync, and atomic rename. Corrupt or unsupported ledgers fail closed.
 
 Record and query examples:
 
 ```sh
 node web/scripts/validation-ledger.mjs record check-result.json
 node web/scripts/validation-ledger.mjs check check-identity.json
+node web/scripts/validation-ledger.mjs run guarded-check.json
 ```
 
-The input JSON for `record` includes `checkId`, `sourceFingerprint`, `configFingerprint`, `toolVersion`, `status`, `result`, and `resourceGuard`; `evidencePath` is optional. The `check` input uses the four identity fields. The tool does not execute a test and cannot turn `BLOCKED` into `PASS`.
+`record` requires the check/source/config/tool/runtime/command identity plus status, result, and resource outcome; PASS requires a file-backed evidence hash. `run` accepts a literal argv array and delegates execution to the owned process-group guard with fixed 512 MiB MemAvailable and 128 MiB SwapFree floors. See `docs/batch040-validation-scheduler.md`. A scheduled command still needs correct assertions; the ledger does not make a test PASS unless the command exits successfully and its evidence file is bound by SHA-256.
 
 ## Evidence and validation limits
 

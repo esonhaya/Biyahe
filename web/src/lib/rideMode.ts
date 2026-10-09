@@ -1,4 +1,4 @@
-import type { Journey, JourneyLeg, LocationPoint, RoutePatternStop } from "./api";
+import type { Journey, JourneyLeg, JourneyPoint, LocationPoint, RoutePatternStop } from "./api";
 
 /**
  * Ride Mode is deliberately a client-side, foreground-only state layer.
@@ -103,6 +103,66 @@ export type RideModeMapOverlay = {
 };
 
 const LEG_TYPES = new Set(["WALK_ACCESS", "RIDE", "TRANSFER_WALK", "WALK_EGRESS"]);
+
+function stableIdentityJson(value: unknown): string {
+  if (value === undefined) return "undefined";
+  if (value === null || typeof value !== "object") return JSON.stringify(value) ?? "undefined";
+  if (Array.isArray(value)) return `[${value.map(stableIdentityJson).join(",")}]`;
+  const record = value as Record<string, unknown>;
+  return `{${Object.keys(record).sort().map((key) => `${JSON.stringify(key)}:${stableIdentityJson(record[key])}`).join(",")}}`;
+}
+
+const LOCAL_PREVIEW_WARNINGS = new Set([
+  "Geometry follows source OSM pedestrian-accessible ways; it does not verify sidewalks, crossings, barriers missing from OSM, or current field conditions.",
+  "Endpoint connectors are approximate straight-line snaps and are not included in the displayed graph geometry.",
+  "Walking duration is an estimate using a fixed speed assumption, not a precise ETA.",
+  "No local graph walking path was established; no substitute line or connector is shown.",
+]);
+
+/** Stable across local preview output changes, but bound to the selected route and its source evidence. */
+export function offlineWalkingRequestIdentity(journey: Journey): string {
+  const identityLegs = journey.legs.map((leg) => {
+    if (leg.type === "RIDE") return leg;
+    return {
+      type: leg.type,
+      origin: leg.origin,
+      destination: leg.destination,
+      route: leg.route,
+      pattern: leg.pattern,
+      boarding_stop: leg.boarding_stop,
+      alighting_stop: leg.alighting_stop,
+      stop_count: leg.stop_count,
+      boarding_sequence: leg.boarding_sequence,
+      alighting_sequence: leg.alighting_sequence,
+      boarding_instruction: leg.boarding_instruction,
+      boarding_association: leg.boarding_association,
+      alighting_association: leg.alighting_association,
+      driver_instruction: leg.driver_instruction,
+      get_off_guidance: leg.get_off_guidance,
+      origin_precision: leg.origin_precision,
+      destination_precision: leg.destination_precision,
+      trust: leg.trust,
+      provenance: leg.provenance,
+      instruction: leg.instruction,
+      warnings: (leg.warnings ?? []).filter((warning) => !LOCAL_PREVIEW_WARNINGS.has(warning)),
+    };
+  });
+
+  return stableIdentityJson({
+    id: journey.id,
+    origin: journey.origin,
+    destination: journey.destination,
+    legs: identityLegs,
+    transfer_count: journey.transfer_count,
+    ranking: journey.ranking,
+    trust: journey.trust,
+    warnings: journey.warnings,
+    operational_impact: journey.operational_impact,
+    disruptions: journey.disruptions,
+    fare: journey.fare,
+    provenance: journey.provenance,
+  });
+}
 const PERSISTED_SESSION_KEYS = new Set([
   "version",
   "sessionId",
@@ -266,6 +326,9 @@ export function applyRideModeAction(
     if (!["WALK_ACCESS", "TRANSFER_WALK", "WALK_EGRESS"].includes(leg.type)) {
       return transitionError(session, "The current leg is not a walking leg.");
     }
+    if (session.currentLegState !== "NOT_STARTED") {
+      return transitionError(session, "This walking step has already started or advanced.");
+    }
     return {
       session: copyWithUpdate(session, { currentLegState: "WALKING" }, now),
       error: null,
@@ -307,6 +370,9 @@ export function applyRideModeAction(
     if (leg.type !== "WALK_EGRESS") {
       return transitionError(session, "Arrival can be confirmed only on the final walking leg.");
     }
+    if (session.currentLegState !== "WALKING") {
+      return transitionError(session, "Start the final walking step before confirming arrival.");
+    }
     return {
       session: copyWithUpdate(session, {
         status: "COMPLETED",
@@ -321,7 +387,8 @@ export function applyRideModeAction(
 
 /** Replace only the journey payload after a one-time pattern detail fetch. */
 export function replaceSessionJourney(session: RideModeSession, journey: Journey, now = Date.now()): RideModeSession {
-  if (session.journey.id !== journey.id || session.journey.legs.length !== journey.legs.length) {
+  if (session.journey.id !== journey.id || session.journey.legs.length !== journey.legs.length
+    || offlineWalkingRequestIdentity(session.journey) !== offlineWalkingRequestIdentity(journey)) {
     return session;
   }
 
@@ -366,9 +433,21 @@ export function parseRideModeSession(raw: string | null): RideModeSession | null
     if (!["NOT_STARTED", "WALKING", "WAITING_TO_BOARD", "RIDING", "ARRIVED"].includes(String(value.currentLegState))) {
       return null;
     }
-    if (typeof value.createdAt !== "number" || typeof value.updatedAt !== "number") {
+    if (typeof value.createdAt !== "number" || !Number.isFinite(value.createdAt)
+      || typeof value.updatedAt !== "number" || !Number.isFinite(value.updatedAt)
+      || value.updatedAt < value.createdAt || value.sessionId.trim() === "") {
       return null;
     }
+
+    const status = value.status as RideModeStatus;
+    const currentLeg = value.journey.legs[currentLegIndex];
+    const currentState = value.currentLegState as RideModeLegState;
+    if (status === "PLANNED" && (currentLegIndex !== 0 || currentState !== legInitialState(value.journey.legs[0]))) return null;
+    if (status === "COMPLETED" && (currentLegIndex !== value.journey.legs.length - 1
+      || currentLeg.type !== "WALK_EGRESS" || currentState !== "ARRIVED")) return null;
+    if (status !== "COMPLETED" && currentState === "ARRIVED") return null;
+    if (currentLeg.type === "RIDE" && !["WAITING_TO_BOARD", "RIDING"].includes(currentState)) return null;
+    if (currentLeg.type !== "RIDE" && !["NOT_STARTED", "WALKING"].includes(currentState)) return null;
 
     return value as unknown as RideModeSession;
   } catch {

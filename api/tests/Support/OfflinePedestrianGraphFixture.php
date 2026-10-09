@@ -21,9 +21,14 @@ final class OfflinePedestrianGraphFixture
         $sqlite->exec('CREATE TABLE graph_nodes (osm_node_id INTEGER PRIMARY KEY, latitude REAL NOT NULL, longitude REAL NOT NULL, in_scope INTEGER NOT NULL, walkable INTEGER NOT NULL, barrier TEXT NULL, crossing TEXT NULL)');
         $sqlite->exec('CREATE TABLE graph_edges (osm_way_id INTEGER NOT NULL, segment_index INTEGER NOT NULL, from_node_id INTEGER NOT NULL, to_node_id INTEGER NOT NULL, bidirectional INTEGER NOT NULL, length_meters REAL NOT NULL, highway TEXT NOT NULL, properties TEXT NOT NULL, geometry_wkt TEXT NOT NULL, PRIMARY KEY (osm_way_id,segment_index))');
         $metadata = [
+            'format' => 'biyahe-pedestrian-sqlite-v3',
+            'schema_version' => 3,
             'source_sha256' => self::SOURCE_SHA256,
             'state' => 'COMPLETE',
             'input_complete' => true,
+            'graph_nodes' => count($nodes),
+            'graph_edges' => count($edges),
+            'relation_restrictions' => 0,
             'source_bounds' => ['min_latitude' => 10.2, 'max_latitude' => 10.4, 'min_longitude' => 123.8, 'max_longitude' => 124.0],
             'graph_content_sha256' => str_repeat('c', 64),
         ];

@@ -26,6 +26,8 @@ final class OfflinePedestrianGraphRouter
 
     private bool $initialized = false;
 
+    private ?int $deadlineNanoseconds = null;
+
     public function __construct(
         private readonly string $graphPath,
         private readonly string $expectedSourceSha256,
@@ -180,10 +182,36 @@ final class OfflinePedestrianGraphRouter
     }
 
     /** @param array{lat: float|int, lng: float|int} $origin @param array{lat: float|int, lng: float|int} $destination @return array<string, mixed> */
-    public function route(array $origin, array $destination, float $maximumDistanceMeters = 2_000.0): array
+    public function route(
+        array $origin,
+        array $destination,
+        float $maximumDistanceMeters = 2_000.0,
+        ?int $maximumDurationMilliseconds = null,
+    ): array {
+        if ($maximumDurationMilliseconds !== null && ($maximumDurationMilliseconds < 0 || $maximumDurationMilliseconds > 60_000)) {
+            return $this->unavailable('invalid_endpoint', ['detail' => 'route_time_budget_out_of_range']);
+        }
+
+        $previousDeadline = $this->deadlineNanoseconds;
+        $this->deadlineNanoseconds = $maximumDurationMilliseconds === null
+            ? $previousDeadline
+            : hrtime(true) + ($maximumDurationMilliseconds * 1_000_000);
+
+        try {
+            return $this->routeWithinDeadline($origin, $destination, $maximumDistanceMeters);
+        } finally {
+            $this->deadlineNanoseconds = $previousDeadline;
+        }
+    }
+
+    /** @param array{lat: float|int} $origin @param array{lat: float|int} $destination @return array<string, mixed> */
+    private function routeWithinDeadline(array $origin, array $destination, float $maximumDistanceMeters): array
     {
         if ($this->blockedReason !== null) {
             return $this->unavailable($this->blockedReason);
+        }
+        if ($this->deadlineExceeded()) {
+            return $this->unavailable('resource_budget_exceeded', ['time_budget_exceeded' => true]);
         }
         if (! $this->validPoint($origin) || ! $this->validPoint($destination)
             || ! is_finite($maximumDistanceMeters) || $maximumDistanceMeters <= 0 || $maximumDistanceMeters > 10_000) {
@@ -194,10 +222,16 @@ final class OfflinePedestrianGraphRouter
         }
 
         $start = $this->snap($origin);
+        if ($this->deadlineExceeded()) {
+            return $this->unavailable('resource_budget_exceeded', ['time_budget_exceeded' => true, 'endpoint' => 'origin']);
+        }
         if (($start['status'] ?? null) !== 'SNAPPED') {
             return $this->unavailable((string) ($start['reason_code'] ?? 'snap_unavailable'), ['endpoint' => 'origin', 'snap' => $start]);
         }
         $end = $this->snap($destination);
+        if ($this->deadlineExceeded()) {
+            return $this->unavailable('resource_budget_exceeded', ['time_budget_exceeded' => true, 'endpoint' => 'destination']);
+        }
         if (($end['status'] ?? null) !== 'SNAPPED') {
             return $this->unavailable((string) ($end['reason_code'] ?? 'snap_unavailable'), ['endpoint' => 'destination', 'snap' => $end]);
         }
@@ -218,9 +252,16 @@ final class OfflinePedestrianGraphRouter
 
         $edges = $this->routeEdges($origin, $destination, $maximumDistanceMeters);
         if ($edges === null) {
-            return $this->unavailable('resource_budget_exceeded', ['edge_limit' => $this->maximumEdgesPerRoute]);
+            return $this->unavailable('resource_budget_exceeded', [
+                'edge_limit' => $this->maximumEdgesPerRoute,
+                'time_budget_exceeded' => $this->deadlineExceeded(),
+            ]);
         }
-        [$adjacency, $coordinates] = $this->adjacency($edges);
+        $routeGraph = $this->adjacency($edges);
+        if ($routeGraph === null) {
+            return $this->unavailable('resource_budget_exceeded', ['time_budget_exceeded' => true]);
+        }
+        [$adjacency, $coordinates] = $routeGraph;
         unset($edges);
         $search = $this->shortestPath((int) $start['node_id'], (int) $end['node_id'], $adjacency, $maximumDistanceMeters);
         unset($adjacency);
@@ -232,15 +273,29 @@ final class OfflinePedestrianGraphRouter
         }
 
         $pathCoordinates = [];
+        $pathCoordinateIndex = 0;
         foreach ($search['path'] as $nodeId) {
+            if ((++$pathCoordinateIndex % 128) === 0 && $this->deadlineExceeded()) {
+                return $this->unavailable('resource_budget_exceeded', ['time_budget_exceeded' => true]);
+            }
             $coordinate = $coordinates[$nodeId] ?? null;
             if ($coordinate === null || ! is_finite($coordinate[0]) || ! is_finite($coordinate[1])) {
                 return $this->unavailable('graph_unavailable', ['detail' => 'route_geometry_endpoint_missing']);
             }
             $pathCoordinates[] = [$coordinate[0], $coordinate[1]];
         }
-        if (count($pathCoordinates) < 2 || $this->hasDuplicateGeometryPoints($pathCoordinates)) {
+        if (count($pathCoordinates) < 2) {
             return $this->unavailable('path_unavailable', ['detail' => 'route_geometry_is_degenerate']);
+        }
+        if ($this->hasDuplicateGeometryPoints($pathCoordinates)) {
+            if ($this->deadlineExceeded()) {
+                return $this->unavailable('resource_budget_exceeded', ['time_budget_exceeded' => true]);
+            }
+
+            return $this->unavailable('path_unavailable', ['detail' => 'route_geometry_is_degenerate']);
+        }
+        if ($this->deadlineExceeded()) {
+            return $this->unavailable('resource_budget_exceeded', ['time_budget_exceeded' => true]);
         }
 
         $totalMeters = $search['network_distance'] + (float) $start['snap_distance_meters'] + (float) $end['snap_distance_meters'];
@@ -333,10 +388,25 @@ final class OfflinePedestrianGraphRouter
         if ($this->sqlite === null) {
             return false;
         }
+        if ($this->deadlineExceeded()) {
+            $this->blockedReason = 'resource_budget_exceeded';
+
+            return false;
+        }
 
         try {
             $this->sqlite->exec('CREATE VIRTUAL TABLE temp.route_nodes_rtree USING rtree(id, min_longitude, max_longitude, min_latitude, max_latitude)');
+            if ($this->deadlineExceeded()) {
+                $this->blockedReason = 'resource_budget_exceeded';
+
+                return false;
+            }
             $this->sqlite->exec('INSERT INTO temp.route_nodes_rtree SELECT osm_node_id, longitude, longitude, latitude, latitude FROM main.graph_nodes');
+            if ($this->deadlineExceeded()) {
+                $this->blockedReason = 'resource_budget_exceeded';
+
+                return false;
+            }
             $this->sqlite->exec('CREATE TEMP TABLE route_edge_map (id INTEGER PRIMARY KEY, way_id INTEGER NOT NULL, segment_index INTEGER NOT NULL, from_node_id INTEGER NOT NULL, to_node_id INTEGER NOT NULL, bidirectional INTEGER NOT NULL, length_meters REAL NOT NULL, from_latitude REAL NOT NULL, from_longitude REAL NOT NULL, to_latitude REAL NOT NULL, to_longitude REAL NOT NULL)');
             $this->sqlite->exec(
                 'INSERT INTO temp.route_edge_map (way_id, segment_index, from_node_id, to_node_id, bidirectional, length_meters, from_latitude, from_longitude, to_latitude, to_longitude) '
@@ -347,9 +417,18 @@ final class OfflinePedestrianGraphRouter
                 .'JOIN main.graph_nodes AS to_nodes ON to_nodes.osm_node_id=edges.to_node_id '
                 .'ORDER BY edges.osm_way_id, edges.segment_index'
             );
+            if ($this->deadlineExceeded()) {
+                $this->blockedReason = 'resource_budget_exceeded';
+
+                return false;
+            }
             $this->sqlite->exec('CREATE VIRTUAL TABLE temp.route_edges_rtree USING rtree(id, min_longitude, max_longitude, min_latitude, max_latitude)');
             $this->sqlite->exec('INSERT INTO temp.route_edges_rtree SELECT id, min(from_longitude,to_longitude), max(from_longitude,to_longitude), min(from_latitude,to_latitude), max(from_latitude,to_latitude) FROM temp.route_edge_map');
-            $this->buildComponents();
+            if ($this->deadlineExceeded() || ! $this->buildComponents()) {
+                $this->blockedReason = 'resource_budget_exceeded';
+
+                return false;
+            }
             $this->initialized = true;
 
             return true;
@@ -358,11 +437,19 @@ final class OfflinePedestrianGraphRouter
         }
     }
 
-    private function buildComponents(): void
+    private function buildComponents(): bool
     {
+        if ($this->deadlineExceeded()) {
+            return false;
+        }
+
         $parents = [];
         $ranks = [];
+        $processed = 0;
         foreach ($this->sqlite->query('SELECT osm_node_id FROM main.graph_nodes WHERE walkable=1 ORDER BY osm_node_id') as $row) {
+            if ((++$processed % 512) === 0 && $this->deadlineExceeded()) {
+                return false;
+            }
             $nodeId = (int) $row['osm_node_id'];
             $parents[$nodeId] = $nodeId;
             $ranks[$nodeId] = 0;
@@ -373,7 +460,13 @@ final class OfflinePedestrianGraphRouter
             .'JOIN main.graph_nodes AS to_nodes ON to_nodes.osm_node_id=edges.to_node_id AND to_nodes.walkable=1 '
             .'ORDER BY edges.osm_way_id, edges.segment_index'
         );
+        $processed = 0;
         while ($edge = $edges->fetch(PDO::FETCH_ASSOC)) {
+            if ((++$processed % 512) === 0 && $this->deadlineExceeded()) {
+                $edges->closeCursor();
+
+                return false;
+            }
             $left = $this->findRoot($parents, (int) $edge['from_node_id']);
             $right = $this->findRoot($parents, (int) $edge['to_node_id']);
             if ($left === $right) {
@@ -390,12 +483,20 @@ final class OfflinePedestrianGraphRouter
 
         $minimumByRoot = [];
         $sizeByRoot = [];
+        $processed = 0;
         foreach (array_keys($parents) as $nodeId) {
+            if ((++$processed % 512) === 0 && $this->deadlineExceeded()) {
+                return false;
+            }
             $root = $this->findRoot($parents, $nodeId);
             $minimumByRoot[$root] = min($minimumByRoot[$root] ?? $nodeId, $nodeId);
             $sizeByRoot[$root] = ($sizeByRoot[$root] ?? 0) + 1;
         }
+        $processed = 0;
         foreach (array_keys($parents) as $nodeId) {
+            if ((++$processed % 512) === 0 && $this->deadlineExceeded()) {
+                return false;
+            }
             $root = $this->findRoot($parents, $nodeId);
             $componentId = $minimumByRoot[$root];
             $this->componentByNode[$nodeId] = $componentId;
@@ -409,6 +510,8 @@ final class OfflinePedestrianGraphRouter
                 $this->largestComponentId = $componentId;
             }
         }
+
+        return ! $this->deadlineExceeded();
     }
 
     /** @param array<int, int> $parents */
@@ -487,21 +590,30 @@ final class OfflinePedestrianGraphRouter
             .'ORDER BY edge.way_id, edge.segment_index LIMIT ?'
         );
         $statement->execute([$minimumLongitude, $maximumLongitude, $minimumLatitude, $maximumLatitude, $this->maximumEdgesPerRoute + 1]);
-        $rows = $statement->fetchAll(PDO::FETCH_ASSOC);
-        $statement->closeCursor();
-        if (count($rows) > $this->maximumEdgesPerRoute) {
-            return null;
+        $rows = [];
+        while ($row = $statement->fetch(PDO::FETCH_ASSOC)) {
+            if ($this->deadlineExceeded() || count($rows) >= $this->maximumEdgesPerRoute) {
+                $statement->closeCursor();
+
+                return null;
+            }
+            $rows[] = $row;
         }
+        $statement->closeCursor();
 
         return $rows;
     }
 
-    /** @return array{array<int, list<array<string, int|float>>>, array<int, array{0: float, 1: float}>} */
-    private function adjacency(array $edges): array
+    /** @return array{array<int, list<array<string, int|float>>>, array<int, array{0: float, 1: float}>}|null */
+    private function adjacency(array $edges): ?array
     {
         $adjacency = [];
         $coordinates = [];
+        $processed = 0;
         foreach ($edges as $edge) {
+            if ((++$processed % 128) === 0 && $this->deadlineExceeded()) {
+                return null;
+            }
             $from = (int) $edge['from_node_id'];
             $to = (int) $edge['to_node_id'];
             $length = (float) $edge['length_meters'];
@@ -523,6 +635,11 @@ final class OfflinePedestrianGraphRouter
             }
         }
         foreach ($adjacency as &$neighbors) {
+            if ($this->deadlineExceeded()) {
+                unset($neighbors);
+
+                return null;
+            }
             usort($neighbors, static fn (array $left, array $right): int => ($left['to'] <=> $right['to'])
                 ?: (($left['way_id'] <=> $right['way_id']) ?: ($left['segment_index'] <=> $right['segment_index'])));
         }
@@ -544,6 +661,9 @@ final class OfflinePedestrianGraphRouter
         $distanceBoundReached = false;
 
         while (! $queue->isEmpty()) {
+            if (($visited % 32) === 0 && $this->deadlineExceeded()) {
+                return ['path' => [], 'edges' => [], 'network_distance' => 0.0, 'maximum_edge_meters' => 0.0, 'limited' => true, 'distance_bound_reached' => $distanceBoundReached];
+            }
             $item = $queue->extract();
             $nodeId = (int) $item['data'];
             $distance = $distances[$nodeId] ?? INF;
@@ -556,7 +676,11 @@ final class OfflinePedestrianGraphRouter
             if ($nodeId === $destination) {
                 break;
             }
+            $processedEdges = 0;
             foreach ($adjacency[$nodeId] ?? [] as $edge) {
+                if ((++$processedEdges % 128) === 0 && $this->deadlineExceeded()) {
+                    return ['path' => [], 'edges' => [], 'network_distance' => 0.0, 'maximum_edge_meters' => 0.0, 'limited' => true, 'distance_bound_reached' => $distanceBoundReached];
+                }
                 $nextDistance = $distance + (float) $edge['length'];
                 if ($nextDistance > $maximumDistanceMeters) {
                     $distanceBoundReached = true;
@@ -584,6 +708,9 @@ final class OfflinePedestrianGraphRouter
         $edges = [];
         $current = $destination;
         while ($current !== $start) {
+            if ((count($path) % 128) === 0 && $this->deadlineExceeded()) {
+                return ['path' => [], 'edges' => [], 'network_distance' => 0.0, 'maximum_edge_meters' => 0.0, 'limited' => true, 'distance_bound_reached' => $distanceBoundReached];
+            }
             if (! isset($parents[$current], $parentEdges[$current]) || count($path) > $this->maximumVisitedNodesPerRoute) {
                 return ['path' => [], 'edges' => [], 'network_distance' => 0.0, 'maximum_edge_meters' => 0.0, 'limited' => true, 'distance_bound_reached' => $distanceBoundReached];
             }
@@ -598,7 +725,11 @@ final class OfflinePedestrianGraphRouter
         $path = array_reverse($path);
         $edges = array_reverse($edges);
         $maximumEdgeMeters = 0.0;
+        $edgeIndex = 0;
         foreach ($edges as $edge) {
+            if ((++$edgeIndex % 128) === 0 && $this->deadlineExceeded()) {
+                return ['path' => [], 'edges' => [], 'network_distance' => 0.0, 'maximum_edge_meters' => 0.0, 'limited' => true, 'distance_bound_reached' => $distanceBoundReached];
+            }
             $maximumEdgeMeters = max($maximumEdgeMeters, (float) $edge['length_meters']);
         }
 
@@ -621,6 +752,11 @@ final class OfflinePedestrianGraphRouter
             && (float) $point['lat'] <= (float) $bounds['max_latitude']
             && (float) $point['lng'] >= (float) $bounds['min_longitude']
             && (float) $point['lng'] <= (float) $bounds['max_longitude'];
+    }
+
+    private function deadlineExceeded(): bool
+    {
+        return $this->deadlineNanoseconds !== null && hrtime(true) > $this->deadlineNanoseconds;
     }
 
     private function validPoint(array $point): bool

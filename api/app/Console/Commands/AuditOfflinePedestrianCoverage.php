@@ -59,6 +59,15 @@ final class AuditOfflinePedestrianCoverage extends Command
             $router = new OfflinePedestrianGraphRouter($graphPath, $expectedSourceHash, $graphValidation);
             $audit = (new OfflinePedestrianCoverageAudit($router))->audit($transportData, hash('sha256', $transportContents));
             $audit['quality_evidence'] = (new OfflinePedestrianGraphEvidenceAudit)->audit($graphPath, $router->componentSummary());
+            $qualityCounts = $audit['quality_evidence']['counts'] ?? [];
+            $audit['quality_summary'] = [
+                'walkable_components' => (int) ($qualityCounts['walkable_components'] ?? 0),
+                'largest_walkable_component_nodes' => (int) ($qualityCounts['largest_walkable_component_nodes'] ?? 0),
+                'long_edges_over_250m' => (int) ($qualityCounts['long_edges_over_250m'] ?? 0),
+                'boundary_nodes_within_0_0005_degrees' => (int) ($qualityCounts['boundary_nodes'] ?? 0),
+                'crossing_tagged_nodes' => (int) ($qualityCounts['crossing_tagged_nodes'] ?? 0),
+                'field_review_required' => true,
+            ];
             $audit['graph_validation'] = [
                 'artifact_ready' => true,
                 'routing_ready' => true,

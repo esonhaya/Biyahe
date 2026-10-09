@@ -73,6 +73,23 @@ export function explainJourney(journey: Journey): JourneyExplanation {
     if (walking.some((leg) => leg.distance_type === "PEDESTRIAN_NETWORK" && !hasDrawableGeometry(leg))) {
       limitations.push("Missing walking geometry is not replaced with a straight-line connector.");
     }
+    const offlineFailures = walking.flatMap((leg) => {
+      const reason = leg.offline_walking_preview?.reason_code;
+      if (!reason) return [];
+      const explanation = reason === "component_disconnected"
+        ? "The local graph places these walking endpoints in disconnected components."
+        : reason === "snap_unavailable"
+          ? "An endpoint could not be safely snapped to a nearby walkable graph node."
+          : reason === "endpoint_out_of_scope"
+            ? "An endpoint is outside the verified local graph area."
+            : reason === "resource_budget_exceeded"
+              ? "The local graph route exceeded its bounded search budget."
+              : reason === "invalid_endpoint"
+                ? "A walking endpoint is missing valid coordinates."
+                : "The local pedestrian graph could not establish this walking path.";
+      return [`${explanation} (reason: ${reason})`];
+    });
+    limitations.push(...offlineFailures);
   }
 
   const missingRideGeometry = rides.filter((leg) => !hasDrawableGeometry(leg)).length;

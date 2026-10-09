@@ -20,6 +20,7 @@ import {
   evaluateRideModeLocation,
   isUsableLocationQuality,
   journeyPatternIds,
+  offlineWalkingRequestIdentity,
   parseRideModeSession,
   replaceSessionJourney,
   RIDE_MODE_STORAGE_KEY,
@@ -68,6 +69,18 @@ function phaseLabel(phase: RideModeGuidancePhase | null): string {
     case "GET_OFF_AREA": return "GET-OFF AREA — your mapped get-off area is nearby.";
     default: return "RIDING — follow the selected route and direction.";
   }
+}
+
+function journeyVersionKey(journey: Journey | null): string | null {
+  if (!journey) return null;
+  const walkingPreview = journey.offline_walking_preview;
+  const requestIdentity = offlineWalkingRequestIdentity(journey);
+  if (!walkingPreview) return `${requestIdentity}:NO_LOCAL_PREVIEW`;
+  const walkingEvidence = journey.legs
+    .filter((leg) => leg.type !== "RIDE")
+    .map((leg) => [leg.type, leg.distance_type, leg.routing_status, leg.offline_walking_preview?.reason_code, leg.geometry?.coordinates]);
+
+  return `${requestIdentity}:LOCAL_PREVIEW:${walkingPreview.graph_sha256}:${walkingPreview.graph_fingerprint}:${JSON.stringify(walkingEvidence)}`;
 }
 
 function nextLegAfter(journey: Journey, index: number): JourneyLeg | null {
@@ -402,7 +415,8 @@ export default function RideMode({ selectedJourney, offlineSnapshot = false, all
   }
 
   const currentLeg = session ? currentRideModeLeg(session) : null;
-  const journeyChanged = Boolean(session && selectedJourney && session.journey.id !== selectedJourney.id);
+  const journeyChanged = Boolean(session && selectedJourney
+    && journeyVersionKey(session.journey) !== journeyVersionKey(selectedJourney));
   const currentInstruction = session && currentLeg && instructionModel
     ? instructionForRideMode(instructionModel, session.currentLegIndex, currentLeg.type, session.currentLegState)
     : null;
@@ -457,9 +471,10 @@ export default function RideMode({ selectedJourney, offlineSnapshot = false, all
       {session && (
         <div className={styles.rideModeCard}>
           <p className={styles.snapshotNote}>Local Ride Mode progress last updated {savedSnapshotAgeLabel(new Date(session.updatedAt).toISOString())}. This guide does not confirm current service; check advisories when connected.</p>
+          {session.journey.offline_walking_preview && <p className={styles.osmNote}>This guide includes a development-only OSM walking preview for the pinned graph snapshot. Manual progress does not verify endpoint access or field safety.</p>}
           {journeyChanged && session.status === "ACTIVE" && (
             <div className={styles.rideNotice} role="alert">
-              <strong>A different journey is selected.</strong>
+              <strong>A different journey version is selected.</strong>
               <span>Ride Mode stays on the active journey until you intentionally switch.</span>
               <button type="button" className={styles.secondaryButton} onClick={switchToSelectedJourney}>Switch Ride Mode journey</button>
             </div>

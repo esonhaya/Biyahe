@@ -196,6 +196,11 @@ export type JourneyLeg = {
   origin: JourneyPoint;
   destination: JourneyPoint;
   distance_meters: number | null;
+  network_distance_meters?: number | null;
+  approximate_connector_distance_meters?: number | null;
+  distance_provenance?: "OSM_NETWORK_PLUS_APPROXIMATE_ENDPOINT_CONNECTORS" | "OSM_NETWORK_WITHIN_SNAP_TOLERANCE" | "UNAVAILABLE" | null;
+  geometry_provenance?: "OPENSTREETMAP_GRAPH_EDGE_COORDINATES" | "UNAVAILABLE" | null;
+  walking_source_snapshot?: string | null;
   distance_is_estimate: boolean;
   distance_type: "PEDESTRIAN_NETWORK" | "PEDESTRIAN_NETWORK_WITH_APPROXIMATE_CONNECTORS" | "STRAIGHT_LINE_ESTIMATE" | "NOT_REQUIRED" | "UNAVAILABLE" | null;
   routing_status: string | null;
@@ -222,6 +227,18 @@ export type JourneyLeg = {
   trust: JourneyTrustState | null;
   provenance: Provenance[];
   geometry: RoutePattern["geometry"] | { type: "LineString"; coordinates: number[][] } | null;
+  offline_walking_preview?: {
+    status: "ROUTE_FOUND" | "ROUTE_UNAVAILABLE";
+    reason_code: string | null;
+    source: "OPENSTREETMAP";
+    graph_sha256: string;
+    graph_fingerprint: string;
+    component_id: number | null;
+    origin_snap_distance_meters: number | null;
+    destination_snap_distance_meters: number | null;
+    duration_label: "estimate_only" | null;
+    field_safety_verified: false;
+  };
 };
 
 export type Journey = {
@@ -237,6 +254,34 @@ export type Journey = {
   disruptions?: JourneyDisruptionImpact[];
   fare: { status: "UNAVAILABLE" | "AVAILABLE"; label: string; amount: number | null; currency: string | null };
   provenance: Provenance[];
+  offline_walking_preview?: {
+    mode: "DEVELOPMENT_ONLY";
+    status: "COMPLETE" | "PARTIAL" | "UNAVAILABLE" | "NO_WALKING_LEGS";
+    walking_legs: number;
+    routes_found: number;
+    source: "OPENSTREETMAP";
+    source_sha256: string;
+    source_snapshot: string;
+    graph_sha256: string;
+    graph_fingerprint: string;
+    graph_format: "biyahe-pedestrian-sqlite-v3";
+    graph_schema_version: 3;
+    maximum_snap_distance_meters: 25;
+    restriction_inventory: {
+      complete: true;
+      source_relation_count: number;
+      pedestrian_applicable: number;
+      ambiguous: number;
+      unsupported_applicable: number;
+      conditional_relations: number;
+      conditional_semantics_evaluated: boolean;
+      state_aware_turn_search: boolean;
+      policy: string;
+    };
+    resource_preflight: { samples: 3; minimum_memavailable_kib: number; minimum_swapfree_kib: number } | null;
+    field_safety_verified: false;
+    notice: string;
+  };
 };
 
 export type JourneyResponse = {
@@ -387,6 +432,16 @@ type ApiPage<T> = {
 
 const apiUrl = (process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:8000/api/v1").replace(/\/$/, "");
 
+export function canUseOfflineWalkingPreview(): boolean {
+  if (process.env.NODE_ENV !== "development" || process.env.NEXT_PUBLIC_OFFLINE_WALKING_PREVIEW !== "true") return false;
+  try {
+    const hostname = new URL(apiUrl).hostname.toLowerCase();
+    return hostname === "localhost" || hostname === "127.0.0.1" || hostname === "::1" || hostname === "[::1]";
+  } catch {
+    return false;
+  }
+}
+
 async function getJson<T>(path: string, signal?: AbortSignal): Promise<T> {
   const response = await fetch(apiUrl + path, {
     headers: { Accept: "application/json" },
@@ -496,6 +551,30 @@ export async function planJourney(
   });
 
   return getJson<JourneyResponse>("/journeys?" + params.toString(), signal);
+}
+
+export async function previewJourneyWalkingOffline(
+  journey: Journey,
+  signal?: AbortSignal,
+): Promise<{ journey: Journey; preview: NonNullable<Journey["offline_walking_preview"]> }> {
+  if (!canUseOfflineWalkingPreview()) {
+    throw new Error("unsafe_preview_target: Offline graph preview is enabled only against a local development API.");
+  }
+  const response = await fetch(apiUrl + "/dev/offline-walking-preview", {
+    method: "POST",
+    headers: { Accept: "application/json", "Content-Type": "application/json" },
+    body: JSON.stringify({ journey }),
+    signal,
+    cache: "no-store",
+  });
+  const body = await response.json().catch(() => null) as { data?: { journey?: Journey; preview?: Journey["offline_walking_preview"] }; error?: { code?: string; message?: string } } | null;
+  if (!response.ok || !body?.data?.journey || !body.data.preview) {
+    const code = body?.error?.code ?? `http_${response.status}`;
+    const message = body?.error?.message ?? "The local graph preview is unavailable.";
+    throw new Error(`${code}: ${message}`);
+  }
+
+  return { journey: body.data.journey, preview: body.data.preview as NonNullable<Journey["offline_walking_preview"]> };
 }
 
 export async function replanJourney(
