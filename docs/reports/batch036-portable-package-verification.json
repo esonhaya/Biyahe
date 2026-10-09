@@ -1,0 +1,35 @@
+{
+  "format": "biyahe-portable-package-verification-v1",
+  "status": "PASS",
+  "package_version": 1,
+  "package_directory": "20261009T110322Z",
+  "files_verified": 17,
+  "manifest_sha256": "8c6c10c50271c76627cd5b85ab5e93896fe32da61b32e2d6ef8b5bf73486d69a",
+  "repository_core_commit": "8fc554f5b1de21157217c02ce09015d6300b486f",
+  "artifact_hashes": {
+    "source": "787cac20ecc586b754b1a464643a040566d486457c6a37bc0b11ce683bc66d4d",
+    "graph": "29d7aaf9c45a596f4065c44d13f983f4a7edeec5ac2ea41b718b1c52ca865bf8",
+    "backup": "e55af400fde88d0a3434b194e0625e204eb0a2726374eabb8286c152b11a4a92"
+  },
+  "restriction_inventory": {
+    "audit_filename": "evidence/batch030-cebu-restriction-audit.json",
+    "audit_sha256": "14671f5cfed2c816dff7986b251d85acb2fae6e816670f9925b67b58cf3a7e6c",
+    "source_scan_complete": true,
+    "producer_exit_code": 0,
+    "source_relations": 648,
+    "stored_relations": 619,
+    "omitted_relations": 29,
+    "vehicle_only": 648,
+    "pedestrian_applicable": 0,
+    "pedestrian_exempt": 0,
+    "ambiguous": 0,
+    "unsupported_applicable": 0,
+    "conditional": 33,
+    "via_node": 449,
+    "via_way": 166,
+    "malformed_or_complex": 4,
+    "unresolved_member_references": 75
+  },
+  "real_staging_executed": false,
+  "production_activation": "NO"
+}

@@ -1,0 +1,18 @@
+{
+  "format": "biyahe-batch036-validation-v1",
+  "php_lint": "PASS",
+  "bash_syntax": "PASS",
+  "json_validation": "PASS",
+  "fixture_tests": "BLOCKED",
+  "importer_code_present": true,
+  "fixture_test_blocker": {
+    "reason": "The existing resource preflight stopped before launching PHPUnit because its first SwapFree sample was below the configured 131072 KiB floor.",
+    "first_swapfree_kib": 75796,
+    "minimum_swapfree_kib": 131072,
+    "worker_launched": false,
+    "retry_performed": false
+  },
+  "postgresql_started": false,
+  "real_import_attempted": false,
+  "source_rescan_performed": false
+}
