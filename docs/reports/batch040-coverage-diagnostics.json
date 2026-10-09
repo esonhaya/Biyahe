@@ -1,104 +1,929 @@
 {
-  "format": "biyahe-batch040-coverage-diagnostics-v1",
-  "status": "CARRIED_FORWARD_NOT_RECOMPUTED",
-  "source_evidence": {
-    "report_path": "docs/reports/batch032-cebu-coverage.json",
-    "report_sha256": "6caf101177904bee6fda1b12cab9c5cda36ddaf7ecc08b0d9778c0517123c81b",
-    "graph_sha256": "29d7aaf9c45a596f4065c44d13f983f4a7edeec5ac2ea41b718b1c52ca865bf8",
-    "graph_fingerprint": "a0d9f1cb8289cf1f9bde3905d1ad8a57124ee41120153b4efc1f5b31e4c03ecd",
-    "source_pbf_sha256": "787cac20ecc586b754b1a464643a040566d486457c6a37bc0b11ce683bc66d4d",
-    "snapshot": "2026-10-07T01:00:21Z"
+  "analysis_checkpoint": {
+    "complete": true,
+    "maximum_input_bytes": 5000000,
+    "phase": "PINNED_EVIDENCE_SUMMARY",
+    "restart_policy": "RESTART_FROM_IMMUTABLE_INPUT_ON_INTERRUPTION"
   },
   "analysis_execution": {
-    "coverage_summary_command": "BLOCKED_BEFORE_EXECUTION_BY_RESOURCE_GUARD",
-    "real_corpus_replay": "BLOCKED_BEFORE_EXECUTION_BY_RESOURCE_GUARD",
-    "graph_opened_by_batch040_diagnostics": false,
+    "all_values_are_carried_forward": true,
+    "coordinate_usability": "VALIDATED_FROM_HASH_PINNED_STORED_COORDINATE_FIELDS",
+    "coverage_summary_command": "PASS_CARRIED_FORWARD_PINNED_REPORT_ONLY",
+    "graph_opened": false,
     "pbf_rescanned": false,
-    "values_are_carried_forward": true
-  },
-  "graph": {
-    "nodes": 76685,
-    "edges": 78225,
-    "all_components": 2754,
-    "walkable_components": 432,
-    "restrictions": {
-      "pinned_coverage_report_total": 619,
-      "pinned_coverage_report_vehicle_only": 619,
-      "pinned_coverage_report_pedestrian_applicable": 0,
-      "pinned_coverage_report_ambiguous": 0,
-      "pinned_coverage_report_conditional": 5,
-      "pinned_coverage_report_via_node": 449,
-      "pinned_coverage_report_via_way": 166,
-      "pinned_coverage_report_malformed_vehicle_only": 4,
-      "pinned_coverage_report_missing_member_dependencies": 75,
-      "batch039_narrative_total_classified_vehicle_only": 648,
-      "state_aware_pedestrian_turn_search": false,
-      "conditional_restrictions_evaluated_for_walking": false,
-      "reconciliation": "UNRESOLVED; latest narrative and hash-pinned coverage report disagree on relation count"
-    },
-    "routing_capability": "READY_FOR_THIS_PINNED_SNAPSHOT_ONLY"
-  },
-  "snap_policy": {
-    "maximum_distance_meters": 25,
-    "virtual_edge_anchors": false
-  },
-  "stops": {
-    "total": 503,
-    "with_usable_coordinates": "NOT_RECOMPUTED",
-    "snappable": 436,
-    "unsnappable": 67,
-    "largest_walkable_component": 433,
-    "smaller_walkable_components": 3,
-    "unsnappable_record_ids": "SEE_HASH_PINNED_SOURCE_REPORT",
-    "current_replay": "NOT_RUN"
-  },
-  "places": {
-    "total": 37,
-    "with_usable_coordinates": "NOT_RECOMPUTED",
-    "snappable": 30,
-    "unsnappable": 7,
-    "component_distribution": "NOT_RECOMPUTED",
-    "current_replay": "NOT_RUN"
-  },
-  "transfers": {
-    "total": 2,
-    "graph_connected": 2,
-    "field_verified": 0,
-    "trust_state": "UNVERIFIED",
-    "physical_interchange_safety": "UNKNOWN"
-  },
-  "journey_corpus": {
-    "cases": 10,
-    "historical_expected_routes_found": 9,
-    "historical_expected_disconnected": 1,
-    "batch040_replay": "NOT_RUN",
-    "geometry_parity": "NOT_RECHECKED"
-  },
-  "quality_evidence": {
-    "long_edges_over_250m": 26,
-    "maximum_long_edge_meters": 867,
-    "boundary_nodes": 944,
-    "crossing_tagged_nodes": 1510,
-    "historical_quality_summary_conflict": {
-      "summary_counts": {
-        "long_edges_over_250m": 0,
-        "boundary_nodes": 0,
-        "crossing_tagged_nodes": 0
-      },
-      "detailed_evidence_counts": {
-        "long_edges_over_250m": 26,
-        "boundary_nodes": 944,
-        "crossing_tagged_nodes": 1510
-      },
-      "resolution": "UNRESOLVED; preserve both values and review source report"
-    },
-    "area_coverage": "NOT_COMPUTED; graph components and administrative IDs do not establish geographic or field coverage",
-    "field_review_required": true
+    "real_corpus_replay": "BLOCKED_BY_RESOURCE_GUARD_NOT_RUN",
+    "unaugmented_summary_sha256": "9d7e27f046940b6db5b3887c4f08def0f4b48f1c33f901c146ab6081cc231294"
   },
   "evidence_boundaries": {
-    "graph_geometry": "OSM_SOURCE_BACKED_NOT_FIELD_VERIFIED",
-    "fare_verification": "NOT_INCLUDED",
+    "fare_verification": "NOT_INCLUDED_IN_COVERAGE_EVIDENCE",
     "field_safety": "UNKNOWN",
-    "graph_connectivity_proves_transfer_safety": false
+    "graph_connectivity_proves_physical_transfer_safety": false,
+    "source_mismatch_detected": false
+  },
+  "format": "biyahe-batch040-coverage-diagnostics-v1",
+  "graph_inventory_baseline": {
+    "edges": 78225,
+    "evidence": "Batch030 baseline carried forward; graph was not opened or recomputed during Batch040.",
+    "identity_sha256": "29d7aaf9c45a596f4065c44d13f983f4a7edeec5ac2ea41b718b1c52ca865bf8",
+    "nodes": 76685,
+    "total_components": 2754,
+    "walkable_components": 432
+  },
+  "graph_quality": {
+    "counts_source": "quality_evidence.counts",
+    "detailed_evidence_counts": {
+      "artificial_connectors_added": false,
+      "boundary_nodes": 944,
+      "clipped_ways": 171,
+      "crossing_tagged_nodes": 1510,
+      "duplicate_way_segment_identities": 0,
+      "edges_touching_blocked_nodes": 0,
+      "largest_walkable_component_nodes": 70401,
+      "long_edges_over_250m": 26,
+      "outside_scope_required_nodes": 1740,
+      "suspicious_long_edges": 0,
+      "walkable_components": 432
+    },
+    "field_review_required": true,
+    "summary_discrepancies": [
+      {
+        "detailed_evidence_field": "long_edges_over_250m",
+        "detailed_evidence_value": 26,
+        "summary_field": "long_edges_over_250m",
+        "summary_value": 0
+      },
+      {
+        "detailed_evidence_field": "boundary_nodes",
+        "detailed_evidence_value": 944,
+        "summary_field": "boundary_nodes_within_0_0005_degrees",
+        "summary_value": 0
+      },
+      {
+        "detailed_evidence_field": "crossing_tagged_nodes",
+        "detailed_evidence_value": 1510,
+        "summary_field": "crossing_tagged_nodes",
+        "summary_value": 0
+      }
+    ]
+  },
+  "journey_corpus": {
+    "cases": [
+      {
+        "case_id": "nearby_stop_to_stop",
+        "case_index": 0,
+        "component_id": 280324085,
+        "destination_trust": "VERIFIED_RECORD",
+        "destination_type_id": [
+          "stop",
+          272
+        ],
+        "distance_meters": 422.54,
+        "edge_count": 26,
+        "geometry_edge_count_continuous": true,
+        "geometry_points": 27,
+        "origin_trust": "VERIFIED_RECORD",
+        "origin_type_id": [
+          "stop",
+          265
+        ],
+        "reason_code": null,
+        "source_geometry_is_field_safety_evidence": false,
+        "status": "ROUTE_FOUND"
+      },
+      {
+        "case_id": "origin_to_boarding_stop",
+        "case_index": 1,
+        "component_id": 280324085,
+        "destination_trust": "VERIFIED_RECORD",
+        "destination_type_id": [
+          "stop",
+          268
+        ],
+        "distance_meters": 103.58,
+        "edge_count": 11,
+        "geometry_edge_count_continuous": true,
+        "geometry_points": 12,
+        "origin_trust": "VERIFIED_RECORD",
+        "origin_type_id": [
+          "place",
+          132
+        ],
+        "reason_code": null,
+        "source_geometry_is_field_safety_evidence": false,
+        "status": "ROUTE_FOUND"
+      },
+      {
+        "case_id": "alighting_stop_to_destination",
+        "case_index": 2,
+        "component_id": 280324085,
+        "destination_trust": "VERIFIED_RECORD",
+        "destination_type_id": [
+          "place",
+          132
+        ],
+        "distance_meters": 103.58,
+        "edge_count": 11,
+        "geometry_edge_count_continuous": true,
+        "geometry_points": 12,
+        "origin_trust": "VERIFIED_RECORD",
+        "origin_type_id": [
+          "stop",
+          268
+        ],
+        "reason_code": null,
+        "source_geometry_is_field_safety_evidence": false,
+        "status": "ROUTE_FOUND"
+      },
+      {
+        "case_id": "transfer_stop_to_stop",
+        "case_index": 3,
+        "component_id": 280324085,
+        "destination_trust": "VERIFIED_RECORD",
+        "destination_type_id": [
+          "stop",
+          268
+        ],
+        "distance_meters": 401.82,
+        "edge_count": 23,
+        "geometry_edge_count_continuous": true,
+        "geometry_points": 24,
+        "origin_trust": "VERIFIED_RECORD",
+        "origin_type_id": [
+          "stop",
+          266
+        ],
+        "reason_code": null,
+        "source_geometry_is_field_safety_evidence": false,
+        "status": "ROUTE_FOUND"
+      },
+      {
+        "case_id": "transfer_stop_to_stop",
+        "case_index": 4,
+        "component_id": 280324085,
+        "destination_trust": "VERIFIED_RECORD",
+        "destination_type_id": [
+          "stop",
+          266
+        ],
+        "distance_meters": 401.82,
+        "edge_count": 23,
+        "geometry_edge_count_continuous": true,
+        "geometry_points": 24,
+        "origin_trust": "VERIFIED_RECORD",
+        "origin_type_id": [
+          "stop",
+          268
+        ],
+        "reason_code": null,
+        "source_geometry_is_field_safety_evidence": false,
+        "status": "ROUTE_FOUND"
+      },
+      {
+        "case_id": "same_component_journey",
+        "case_index": 5,
+        "component_id": 280324085,
+        "destination_trust": "VERIFIED_RECORD",
+        "destination_type_id": [
+          "place",
+          132
+        ],
+        "distance_meters": 103.58,
+        "edge_count": 11,
+        "geometry_edge_count_continuous": true,
+        "geometry_points": 12,
+        "origin_trust": "VERIFIED_RECORD",
+        "origin_type_id": [
+          "stop",
+          268
+        ],
+        "reason_code": null,
+        "source_geometry_is_field_safety_evidence": false,
+        "status": "ROUTE_FOUND"
+      },
+      {
+        "case_id": "disconnected_component_journey",
+        "case_index": 6,
+        "component_id": null,
+        "destination_trust": "VERIFIED_RECORD",
+        "destination_type_id": [
+          "place",
+          140
+        ],
+        "distance_meters": null,
+        "edge_count": 0,
+        "geometry_edge_count_continuous": true,
+        "geometry_points": 0,
+        "origin_trust": "VERIFIED_RECORD",
+        "origin_type_id": [
+          "place",
+          136
+        ],
+        "reason_code": "component_disconnected",
+        "source_geometry_is_field_safety_evidence": false,
+        "status": "ROUTE_UNAVAILABLE"
+      },
+      {
+        "case_id": "boundary_area_journey",
+        "case_index": 7,
+        "component_id": 280324085,
+        "destination_trust": "VERIFIED_RECORD",
+        "destination_type_id": [
+          "place",
+          153
+        ],
+        "distance_meters": 531.24,
+        "edge_count": 19,
+        "geometry_edge_count_continuous": true,
+        "geometry_points": 20,
+        "origin_trust": "UNVERIFIED_RECORD",
+        "origin_type_id": [
+          "stop",
+          360
+        ],
+        "reason_code": null,
+        "source_geometry_is_field_safety_evidence": false,
+        "status": "ROUTE_FOUND"
+      },
+      {
+        "case_id": "crossing_tagged_area_journey",
+        "case_index": 8,
+        "component_id": 280324085,
+        "destination_trust": "UNVERIFIED_RECORD",
+        "destination_type_id": [
+          "stop",
+          287
+        ],
+        "distance_meters": 567.89,
+        "edge_count": 15,
+        "geometry_edge_count_continuous": true,
+        "geometry_points": 16,
+        "origin_trust": "VERIFIED_RECORD",
+        "origin_type_id": [
+          "place",
+          147
+        ],
+        "reason_code": null,
+        "source_geometry_is_field_safety_evidence": false,
+        "status": "ROUTE_FOUND"
+      },
+      {
+        "case_id": "long_edge_review_journey",
+        "case_index": 9,
+        "component_id": 280324085,
+        "destination_trust": "UNVERIFIED_RECORD",
+        "destination_type_id": [
+          "stop",
+          287
+        ],
+        "distance_meters": 788.06,
+        "edge_count": 22,
+        "geometry_edge_count_continuous": true,
+        "geometry_points": 23,
+        "origin_trust": "UNVERIFIED_RECORD",
+        "origin_type_id": [
+          "stop",
+          452
+        ],
+        "reason_code": null,
+        "source_geometry_is_field_safety_evidence": false,
+        "status": "ROUTE_FOUND"
+      }
+    ],
+    "cases_total": 10,
+    "component_disconnected_cases": [
+      {
+        "case_id": "disconnected_component_journey",
+        "case_index": 6,
+        "component_id": null,
+        "destination_trust": "VERIFIED_RECORD",
+        "destination_type_id": [
+          "place",
+          140
+        ],
+        "distance_meters": null,
+        "edge_count": 0,
+        "geometry_edge_count_continuous": true,
+        "geometry_points": 0,
+        "origin_trust": "VERIFIED_RECORD",
+        "origin_type_id": [
+          "place",
+          136
+        ],
+        "reason_code": "component_disconnected",
+        "source_geometry_is_field_safety_evidence": false,
+        "status": "ROUTE_UNAVAILABLE"
+      }
+    ],
+    "missing_geometry_case_indexes": [],
+    "routes_found": 9,
+    "routes_unavailable": 1
+  },
+  "mode": "CARRIED_FORWARD_FROM_PINNED_EVIDENCE",
+  "places": {
+    "administrative_city_id_coverage": {
+      "6": {
+        "snappable_fraction": 0.810811,
+        "snapped": 30,
+        "total": 37,
+        "unsnapped": 7
+      }
+    },
+    "administrative_grouping_is_geographic_proof": false,
+    "administrative_groups_below_half_snappable": [],
+    "invalid_or_missing_coordinate_ids": [],
+    "snappable_within_pinned_policy": 30,
+    "source_type_counts": {
+      "COMMUNITY_OPEN_DATA": 34,
+      "DEMO_FIXTURE": 3
+    },
+    "total": 37,
+    "trust_status_counts": {
+      "DRAFT_DEMO": 3,
+      "VERIFIED_RECORD": 34
+    },
+    "unsnappable_ids_and_reasons": [
+      {
+        "coordinate_status": "STORED_COORDINATES",
+        "id": 128,
+        "reason_code": "snap_unavailable",
+        "trust_status": "DRAFT_DEMO"
+      },
+      {
+        "coordinate_status": "STORED_COORDINATES",
+        "id": 129,
+        "reason_code": "snap_unavailable",
+        "trust_status": "VERIFIED_RECORD"
+      },
+      {
+        "coordinate_status": "STORED_COORDINATES",
+        "id": 142,
+        "reason_code": "snap_unavailable",
+        "trust_status": "VERIFIED_RECORD"
+      },
+      {
+        "coordinate_status": "STORED_COORDINATES",
+        "id": 144,
+        "reason_code": "snap_unavailable",
+        "trust_status": "VERIFIED_RECORD"
+      },
+      {
+        "coordinate_status": "STORED_COORDINATES",
+        "id": 148,
+        "reason_code": "snap_unavailable",
+        "trust_status": "VERIFIED_RECORD"
+      },
+      {
+        "coordinate_status": "STORED_COORDINATES",
+        "id": 149,
+        "reason_code": "snap_unavailable",
+        "trust_status": "VERIFIED_RECORD"
+      },
+      {
+        "coordinate_status": "STORED_COORDINATES",
+        "id": 154,
+        "reason_code": "snap_unavailable",
+        "trust_status": "VERIFIED_RECORD"
+      }
+    ],
+    "unsnappable_reason_counts": {
+      "snap_unavailable": 7
+    },
+    "verification_state_counts": {
+      "DRAFT": 3,
+      "VERIFIED": 34
+    },
+    "walkable_component_distribution": {
+      "280324085": {
+        "largest_component": 29,
+        "total": 29
+      },
+      "4792746159": {
+        "largest_component": 0,
+        "total": 1
+      }
+    },
+    "with_usable_coordinates": 37
+  },
+  "recomputed_from_graph": false,
+  "routing_capability": {
+    "capabilities": {
+      "complete_restriction_inventory": true,
+      "conditional_turn_restrictions_evaluated": false,
+      "routing_ready": true,
+      "state_aware_search": false,
+      "turn_restrictions_needed": false,
+      "via_node_enforced": false,
+      "via_way_enforced": false
+    },
+    "count_reconciliation": {
+      "batch039_narrative_reported_count": 648,
+      "counts_match": false,
+      "pinned_coverage_report_count": 619,
+      "reconciled": false
+    },
+    "restriction_counts": {
+      "ambiguous": 0,
+      "conditional": 5,
+      "malformed": 4,
+      "missing_member_dependencies": 75,
+      "mixed_via": 0,
+      "nested_complex": 0,
+      "pedestrian_applicable": 0,
+      "pedestrian_conditional": 0,
+      "pedestrian_exempt": 0,
+      "relations_with_missing_member_dependencies": 75,
+      "total": 619,
+      "unsupported_applicable": 0,
+      "vehicle_only": 619,
+      "via_node": 449,
+      "via_way": 166
+    },
+    "restriction_inventory_complete": true,
+    "routing_ready_for_pinned_snapshot": true
+  },
+  "snap_policy": {
+    "barrier_rule": "reject the approximate endpoint connector if it passes within 1.5 m of a mapped blocked barrier node",
+    "candidate_count": 1,
+    "candidate_selection": "nearest walkable OSM node; distance then OSM node ID tie-break",
+    "connector_geometry_included_in_network_geometry": false,
+    "maximum_distance_meters": 25,
+    "unknown_unmapped_barriers": "not detected; field access remains unverified",
+    "virtual_edge_anchors": false
+  },
+  "source": {
+    "coverage_report_sha256": "6caf101177904bee6fda1b12cab9c5cda36ddaf7ecc08b0d9778c0517123c81b",
+    "graph_fingerprint": "a0d9f1cb8289cf1f9bde3905d1ad8a57124ee41120153b4efc1f5b31e4c03ecd",
+    "graph_sha256": "29d7aaf9c45a596f4065c44d13f983f4a7edeec5ac2ea41b718b1c52ca865bf8",
+    "source_pbf_sha256": "787cac20ecc586b754b1a464643a040566d486457c6a37bc0b11ce683bc66d4d",
+    "transport_backup_sha256": "e55af400fde88d0a3434b194e0625e204eb0a2726374eabb8286c152b11a4a92"
+  },
+  "stops": {
+    "administrative_city_id_coverage": {
+      "6": {
+        "snappable_fraction": 0.866799,
+        "snapped": 436,
+        "total": 503,
+        "unsnapped": 67
+      }
+    },
+    "administrative_grouping_is_geographic_proof": false,
+    "administrative_groups_below_half_snappable": [],
+    "invalid_or_missing_coordinate_ids": [],
+    "snappable_within_pinned_policy": 436,
+    "source_type_counts": {
+      "COMMUNITY_OPEN_DATA": 499,
+      "DEMO_FIXTURE": 4
+    },
+    "total": 503,
+    "trust_status_counts": {
+      "DRAFT_DEMO": 4,
+      "UNVERIFIED_RECORD": 486,
+      "VERIFIED_RECORD": 13
+    },
+    "unsnappable_ids_and_reasons": [
+      {
+        "coordinate_status": "STORED_COORDINATES",
+        "id": 262,
+        "reason_code": "snap_unavailable",
+        "trust_status": "DRAFT_DEMO"
+      },
+      {
+        "coordinate_status": "STORED_COORDINATES",
+        "id": 263,
+        "reason_code": "snap_unavailable",
+        "trust_status": "DRAFT_DEMO"
+      },
+      {
+        "coordinate_status": "STORED_COORDINATES",
+        "id": 282,
+        "reason_code": "snap_unavailable",
+        "trust_status": "UNVERIFIED_RECORD"
+      },
+      {
+        "coordinate_status": "STORED_COORDINATES",
+        "id": 283,
+        "reason_code": "snap_unavailable",
+        "trust_status": "UNVERIFIED_RECORD"
+      },
+      {
+        "coordinate_status": "STORED_COORDINATES",
+        "id": 284,
+        "reason_code": "snap_unavailable",
+        "trust_status": "UNVERIFIED_RECORD"
+      },
+      {
+        "coordinate_status": "STORED_COORDINATES",
+        "id": 295,
+        "reason_code": "snap_unavailable",
+        "trust_status": "UNVERIFIED_RECORD"
+      },
+      {
+        "coordinate_status": "STORED_COORDINATES",
+        "id": 297,
+        "reason_code": "snap_unavailable",
+        "trust_status": "UNVERIFIED_RECORD"
+      },
+      {
+        "coordinate_status": "STORED_COORDINATES",
+        "id": 300,
+        "reason_code": "snap_unavailable",
+        "trust_status": "UNVERIFIED_RECORD"
+      },
+      {
+        "coordinate_status": "STORED_COORDINATES",
+        "id": 307,
+        "reason_code": "snap_unavailable",
+        "trust_status": "UNVERIFIED_RECORD"
+      },
+      {
+        "coordinate_status": "STORED_COORDINATES",
+        "id": 313,
+        "reason_code": "snap_unavailable",
+        "trust_status": "UNVERIFIED_RECORD"
+      },
+      {
+        "coordinate_status": "STORED_COORDINATES",
+        "id": 320,
+        "reason_code": "snap_unavailable",
+        "trust_status": "UNVERIFIED_RECORD"
+      },
+      {
+        "coordinate_status": "STORED_COORDINATES",
+        "id": 330,
+        "reason_code": "snap_unavailable",
+        "trust_status": "UNVERIFIED_RECORD"
+      },
+      {
+        "coordinate_status": "STORED_COORDINATES",
+        "id": 341,
+        "reason_code": "snap_unavailable",
+        "trust_status": "UNVERIFIED_RECORD"
+      },
+      {
+        "coordinate_status": "STORED_COORDINATES",
+        "id": 346,
+        "reason_code": "snap_unavailable",
+        "trust_status": "UNVERIFIED_RECORD"
+      },
+      {
+        "coordinate_status": "STORED_COORDINATES",
+        "id": 351,
+        "reason_code": "snap_unavailable",
+        "trust_status": "UNVERIFIED_RECORD"
+      },
+      {
+        "coordinate_status": "STORED_COORDINATES",
+        "id": 355,
+        "reason_code": "snap_unavailable",
+        "trust_status": "UNVERIFIED_RECORD"
+      },
+      {
+        "coordinate_status": "STORED_COORDINATES",
+        "id": 362,
+        "reason_code": "snap_unavailable",
+        "trust_status": "UNVERIFIED_RECORD"
+      },
+      {
+        "coordinate_status": "STORED_COORDINATES",
+        "id": 367,
+        "reason_code": "snap_unavailable",
+        "trust_status": "UNVERIFIED_RECORD"
+      },
+      {
+        "coordinate_status": "STORED_COORDINATES",
+        "id": 382,
+        "reason_code": "snap_unavailable",
+        "trust_status": "UNVERIFIED_RECORD"
+      },
+      {
+        "coordinate_status": "STORED_COORDINATES",
+        "id": 387,
+        "reason_code": "snap_unavailable",
+        "trust_status": "UNVERIFIED_RECORD"
+      },
+      {
+        "coordinate_status": "STORED_COORDINATES",
+        "id": 389,
+        "reason_code": "snap_unavailable",
+        "trust_status": "UNVERIFIED_RECORD"
+      },
+      {
+        "coordinate_status": "STORED_COORDINATES",
+        "id": 390,
+        "reason_code": "snap_unavailable",
+        "trust_status": "UNVERIFIED_RECORD"
+      },
+      {
+        "coordinate_status": "STORED_COORDINATES",
+        "id": 403,
+        "reason_code": "snap_unavailable",
+        "trust_status": "UNVERIFIED_RECORD"
+      },
+      {
+        "coordinate_status": "STORED_COORDINATES",
+        "id": 414,
+        "reason_code": "snap_unavailable",
+        "trust_status": "UNVERIFIED_RECORD"
+      },
+      {
+        "coordinate_status": "STORED_COORDINATES",
+        "id": 446,
+        "reason_code": "snap_unavailable",
+        "trust_status": "UNVERIFIED_RECORD"
+      },
+      {
+        "coordinate_status": "STORED_COORDINATES",
+        "id": 464,
+        "reason_code": "snap_unavailable",
+        "trust_status": "UNVERIFIED_RECORD"
+      },
+      {
+        "coordinate_status": "STORED_COORDINATES",
+        "id": 467,
+        "reason_code": "snap_unavailable",
+        "trust_status": "UNVERIFIED_RECORD"
+      },
+      {
+        "coordinate_status": "STORED_COORDINATES",
+        "id": 470,
+        "reason_code": "snap_unavailable",
+        "trust_status": "UNVERIFIED_RECORD"
+      },
+      {
+        "coordinate_status": "STORED_COORDINATES",
+        "id": 471,
+        "reason_code": "snap_unavailable",
+        "trust_status": "UNVERIFIED_RECORD"
+      },
+      {
+        "coordinate_status": "STORED_COORDINATES",
+        "id": 483,
+        "reason_code": "snap_unavailable",
+        "trust_status": "UNVERIFIED_RECORD"
+      },
+      {
+        "coordinate_status": "STORED_COORDINATES",
+        "id": 490,
+        "reason_code": "snap_unavailable",
+        "trust_status": "UNVERIFIED_RECORD"
+      },
+      {
+        "coordinate_status": "STORED_COORDINATES",
+        "id": 497,
+        "reason_code": "snap_unavailable",
+        "trust_status": "UNVERIFIED_RECORD"
+      },
+      {
+        "coordinate_status": "STORED_COORDINATES",
+        "id": 500,
+        "reason_code": "snap_unavailable",
+        "trust_status": "UNVERIFIED_RECORD"
+      },
+      {
+        "coordinate_status": "STORED_COORDINATES",
+        "id": 504,
+        "reason_code": "snap_unavailable",
+        "trust_status": "UNVERIFIED_RECORD"
+      },
+      {
+        "coordinate_status": "STORED_COORDINATES",
+        "id": 510,
+        "reason_code": "snap_unavailable",
+        "trust_status": "UNVERIFIED_RECORD"
+      },
+      {
+        "coordinate_status": "STORED_COORDINATES",
+        "id": 529,
+        "reason_code": "snap_unavailable",
+        "trust_status": "UNVERIFIED_RECORD"
+      },
+      {
+        "coordinate_status": "STORED_COORDINATES",
+        "id": 531,
+        "reason_code": "snap_unavailable",
+        "trust_status": "UNVERIFIED_RECORD"
+      },
+      {
+        "coordinate_status": "STORED_COORDINATES",
+        "id": 532,
+        "reason_code": "snap_unavailable",
+        "trust_status": "UNVERIFIED_RECORD"
+      },
+      {
+        "coordinate_status": "STORED_COORDINATES",
+        "id": 534,
+        "reason_code": "snap_unavailable",
+        "trust_status": "UNVERIFIED_RECORD"
+      },
+      {
+        "coordinate_status": "STORED_COORDINATES",
+        "id": 539,
+        "reason_code": "snap_unavailable",
+        "trust_status": "UNVERIFIED_RECORD"
+      },
+      {
+        "coordinate_status": "STORED_COORDINATES",
+        "id": 542,
+        "reason_code": "snap_unavailable",
+        "trust_status": "UNVERIFIED_RECORD"
+      },
+      {
+        "coordinate_status": "STORED_COORDINATES",
+        "id": 561,
+        "reason_code": "snap_unavailable",
+        "trust_status": "UNVERIFIED_RECORD"
+      },
+      {
+        "coordinate_status": "STORED_COORDINATES",
+        "id": 565,
+        "reason_code": "snap_unavailable",
+        "trust_status": "UNVERIFIED_RECORD"
+      },
+      {
+        "coordinate_status": "STORED_COORDINATES",
+        "id": 571,
+        "reason_code": "snap_unavailable",
+        "trust_status": "UNVERIFIED_RECORD"
+      },
+      {
+        "coordinate_status": "STORED_COORDINATES",
+        "id": 575,
+        "reason_code": "snap_unavailable",
+        "trust_status": "UNVERIFIED_RECORD"
+      },
+      {
+        "coordinate_status": "STORED_COORDINATES",
+        "id": 580,
+        "reason_code": "snap_unavailable",
+        "trust_status": "UNVERIFIED_RECORD"
+      },
+      {
+        "coordinate_status": "STORED_COORDINATES",
+        "id": 607,
+        "reason_code": "snap_unavailable",
+        "trust_status": "UNVERIFIED_RECORD"
+      },
+      {
+        "coordinate_status": "STORED_COORDINATES",
+        "id": 610,
+        "reason_code": "snap_unavailable",
+        "trust_status": "UNVERIFIED_RECORD"
+      },
+      {
+        "coordinate_status": "STORED_COORDINATES",
+        "id": 626,
+        "reason_code": "snap_unavailable",
+        "trust_status": "UNVERIFIED_RECORD"
+      },
+      {
+        "coordinate_status": "STORED_COORDINATES",
+        "id": 643,
+        "reason_code": "snap_unavailable",
+        "trust_status": "UNVERIFIED_RECORD"
+      },
+      {
+        "coordinate_status": "STORED_COORDINATES",
+        "id": 646,
+        "reason_code": "snap_unavailable",
+        "trust_status": "UNVERIFIED_RECORD"
+      },
+      {
+        "coordinate_status": "STORED_COORDINATES",
+        "id": 648,
+        "reason_code": "snap_unavailable",
+        "trust_status": "UNVERIFIED_RECORD"
+      },
+      {
+        "coordinate_status": "STORED_COORDINATES",
+        "id": 654,
+        "reason_code": "snap_unavailable",
+        "trust_status": "UNVERIFIED_RECORD"
+      },
+      {
+        "coordinate_status": "STORED_COORDINATES",
+        "id": 664,
+        "reason_code": "snap_unavailable",
+        "trust_status": "UNVERIFIED_RECORD"
+      },
+      {
+        "coordinate_status": "STORED_COORDINATES",
+        "id": 669,
+        "reason_code": "snap_unavailable",
+        "trust_status": "UNVERIFIED_RECORD"
+      },
+      {
+        "coordinate_status": "STORED_COORDINATES",
+        "id": 674,
+        "reason_code": "snap_unavailable",
+        "trust_status": "UNVERIFIED_RECORD"
+      },
+      {
+        "coordinate_status": "STORED_COORDINATES",
+        "id": 681,
+        "reason_code": "snap_unavailable",
+        "trust_status": "UNVERIFIED_RECORD"
+      },
+      {
+        "coordinate_status": "STORED_COORDINATES",
+        "id": 685,
+        "reason_code": "snap_unavailable",
+        "trust_status": "UNVERIFIED_RECORD"
+      },
+      {
+        "coordinate_status": "STORED_COORDINATES",
+        "id": 687,
+        "reason_code": "snap_unavailable",
+        "trust_status": "UNVERIFIED_RECORD"
+      },
+      {
+        "coordinate_status": "STORED_COORDINATES",
+        "id": 704,
+        "reason_code": "snap_unavailable",
+        "trust_status": "UNVERIFIED_RECORD"
+      },
+      {
+        "coordinate_status": "STORED_COORDINATES",
+        "id": 705,
+        "reason_code": "snap_unavailable",
+        "trust_status": "UNVERIFIED_RECORD"
+      },
+      {
+        "coordinate_status": "STORED_COORDINATES",
+        "id": 706,
+        "reason_code": "snap_unavailable",
+        "trust_status": "UNVERIFIED_RECORD"
+      },
+      {
+        "coordinate_status": "STORED_COORDINATES",
+        "id": 707,
+        "reason_code": "snap_unavailable",
+        "trust_status": "UNVERIFIED_RECORD"
+      },
+      {
+        "coordinate_status": "STORED_COORDINATES",
+        "id": 735,
+        "reason_code": "snap_unavailable",
+        "trust_status": "UNVERIFIED_RECORD"
+      },
+      {
+        "coordinate_status": "STORED_COORDINATES",
+        "id": 760,
+        "reason_code": "snap_unavailable",
+        "trust_status": "UNVERIFIED_RECORD"
+      },
+      {
+        "coordinate_status": "STORED_COORDINATES",
+        "id": 761,
+        "reason_code": "snap_unavailable",
+        "trust_status": "UNVERIFIED_RECORD"
+      },
+      {
+        "coordinate_status": "STORED_COORDINATES",
+        "id": 763,
+        "reason_code": "snap_unavailable",
+        "trust_status": "UNVERIFIED_RECORD"
+      }
+    ],
+    "unsnappable_reason_counts": {
+      "snap_unavailable": 67
+    },
+    "verification_state_counts": {
+      "DRAFT": 4,
+      "UNVERIFIED": 486,
+      "VERIFIED": 13
+    },
+    "walkable_component_distribution": {
+      "280324085": {
+        "largest_component": 433,
+        "total": 433
+      },
+      "6822000500": {
+        "largest_component": 0,
+        "total": 1
+      },
+      "8315066871": {
+        "largest_component": 0,
+        "total": 1
+      },
+      "8317880605": {
+        "largest_component": 0,
+        "total": 1
+      }
+    },
+    "with_usable_coordinates": 503
+  },
+  "transfers": {
+    "field_verification": "NOT_ESTABLISHED_BY_GRAPH_CONNECTIVITY",
+    "graph_route_connected": 2,
+    "graph_route_unavailable": 0,
+    "graph_unavailable_transfer_pairs": [],
+    "total": 2,
+    "unverified_transfer_ids": [
+      11,
+      12
+    ],
+    "verification_state_counts": {
+      "UNVERIFIED_RECORD": 2
+    }
   }
 }

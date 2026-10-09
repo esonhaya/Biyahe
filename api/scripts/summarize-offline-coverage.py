@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import math
 import os
 from pathlib import Path
 import shutil
@@ -43,7 +44,19 @@ def records_for(document, key):
     return records
 
 
+def valid_coordinates(row):
+    coordinates = row.get("coordinates")
+    if not isinstance(coordinates, dict):
+        return False
+    latitude, longitude = coordinates.get("lat"), coordinates.get("lng")
+    if any(isinstance(value, bool) or not isinstance(value, (int, float)) for value in (latitude, longitude)):
+        return False
+    return math.isfinite(latitude) and math.isfinite(longitude) and -90 <= latitude <= 90 and -180 <= longitude <= 180
+
+
 def summarize_points(records):
+    if any(not isinstance(row, dict) for row in records):
+        raise EvidenceError("coverage point records must be objects")
     snapped = [row for row in records if isinstance(row.get("snap"), dict) and row["snap"].get("status") == "SNAPPED"]
     unsnapped = [row for row in records if row not in snapped]
     components = defaultdict(lambda: {"total": 0, "largest_component": 0})
@@ -59,7 +72,11 @@ def summarize_points(records):
         city[city_id]["snapped" if snap.get("status") == "SNAPPED" else "unsnapped"] += 1
     return {
         "total": len(records),
-        "with_usable_coordinates": sum(row.get("coordinate_status") == "STORED_COORDINATES" for row in records),
+        "with_usable_coordinates": sum(valid_coordinates(row) for row in records),
+        "invalid_or_missing_coordinate_ids": [
+            {"id": row.get("id"), "reported_status": row.get("coordinate_status")}
+            for row in records if not valid_coordinates(row)
+        ],
         "snappable_within_pinned_policy": len(snapped),
         "unsnappable_ids_and_reasons": [
             {"id": row.get("id"), "reason_code": (row.get("snap") or {}).get("reason_code"),
@@ -167,7 +184,7 @@ def build_summary(document, report_sha256):
     stops = records_for(document, "stops")
     places = records_for(document, "places")
     transfers = document.get("coverage", {}).get("transfers") or {}
-    if not isinstance(transfers.get("records"), list):
+    if not isinstance(transfers.get("records"), list) or any(not isinstance(row, dict) for row in transfers["records"]):
         raise EvidenceError("coverage.transfers.records is missing")
     quality = document.get("quality_evidence") or {}
     if quality.get("source_sha256") != EXPECTED_SOURCE_SHA256 or quality.get("graph_fingerprint") != EXPECTED_GRAPH_FINGERPRINT:
@@ -232,6 +249,24 @@ def build_summary(document, report_sha256):
 def render_markdown(summary):
     stops, places, transfers, corpus = summary["stops"], summary["places"], summary["transfers"], summary["journey_corpus"]
     discrepancy_rows = summary["graph_quality"]["summary_discrepancies"]
+    administrative_lines = [
+        "## Administrative city-ID grouping (not geographic proof)", "",
+        "The pinned source report groups records by `city_id`; it does not provide evidence that the ID corresponds to current boundaries or pedestrian access.", "",
+        "| Record type | City ID | Snappable | Total | Fraction |", "|---|---:|---:|---:|---:|",
+    ]
+    for record_type, points in (("Stops", stops), ("Places", places)):
+        for city_id, counts in points["administrative_city_id_coverage"].items():
+            administrative_lines.append(
+                f"| {record_type} | {city_id} | {counts['snapped']} | {counts['total']} | {counts['snappable_fraction']:.1%} |"
+            )
+    component_lines = ["", "Snapped stop records by stored walkable component:", ""]
+    if stops["walkable_component_distribution"]:
+        component_lines.extend(
+            f"- Component {component_id}: {counts['total']} snapped stop record(s); {counts['largest_component']} marked as in the largest component."
+            for component_id, counts in stops["walkable_component_distribution"].items()
+        )
+    else:
+        component_lines.append("- No snapped stop records are available in the pinned evidence.")
     lines = [
         "# Cebu offline graph coverage diagnostics", "",
         "Mode: `CARRIED_FORWARD_FROM_PINNED_EVIDENCE`. This report summarizes the hash-pinned Batch032 report; it does not reopen or recompute the SQLite graph.", "",
@@ -243,6 +278,7 @@ def render_markdown(summary):
         f"- Restriction count: the pinned coverage report stores {summary['routing_capability']['count_reconciliation']['pinned_coverage_report_count']}; the Batch039 narrative reports {summary['routing_capability']['count_reconciliation']['batch039_narrative_reported_count']}. Reconciliation was not performed.",
         "", "## Coverage and confidence", "",
         "Snapping and component membership describe graph coverage only. Trust/source counts are preserved separately. Administrative city-ID groupings do not establish geographic coverage or field access.", "",
+        *administrative_lines, *component_lines, "",
         "## Graph quality evidence discrepancies", "",
     ]
     if discrepancy_rows:

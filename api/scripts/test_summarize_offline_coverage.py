@@ -41,8 +41,8 @@ def synthetic_document():
                              "routing_capabilities": {"routing_ready": True}},
         "coverage": {
             "stops": {"records": [
-                {"id": 1, "snap": snapped, "city_id": 4, "trust_status": "UNVERIFIED_RECORD", "verification_state": "UNVERIFIED", "coordinate_status": "STORED_COORDINATES", "source": {"source_type": "COMMUNITY_OPEN_DATA"}},
-                {"id": 2, "snap": miss, "city_id": 4, "trust_status": "DRAFT_DEMO", "verification_state": "DRAFT", "coordinate_status": "STORED_COORDINATES", "source": {"source_type": "DEMO_FIXTURE"}},
+                {"id": 1, "coordinates": {"lat": 10.3, "lng": 123.8}, "snap": snapped, "city_id": 4, "trust_status": "UNVERIFIED_RECORD", "verification_state": "UNVERIFIED", "coordinate_status": "STORED_COORDINATES", "source": {"source_type": "COMMUNITY_OPEN_DATA"}},
+                {"id": 2, "coordinates": {"lat": 91, "lng": 123.8}, "snap": miss, "city_id": 4, "trust_status": "DRAFT_DEMO", "verification_state": "DRAFT", "coordinate_status": "STORED_COORDINATES", "source": {"source_type": "DEMO_FIXTURE"}},
             ]},
             "places": {"records": [{"id": 8, "snap": snapped, "city_id": 5, "trust_status": "UNVERIFIED_RECORD", "verification_state": "UNVERIFIED", "coordinate_status": "STORED_COORDINATES", "source": {"source_type": "COMMUNITY_OPEN_DATA"}}]},
             "transfers": {"records": [{"id": 3, "trust_status": "UNVERIFIED_RECORD", "graph_route_status": "ROUTE_FOUND"}]},
@@ -61,6 +61,8 @@ class CoverageSummaryTests(unittest.TestCase):
         self.assertEqual(result["mode"], "CARRIED_FORWARD_FROM_PINNED_EVIDENCE")
         self.assertFalse(result["recomputed_from_graph"])
         self.assertEqual(result["stops"]["snappable_within_pinned_policy"], 1)
+        self.assertEqual(result["stops"]["with_usable_coordinates"], 1)
+        self.assertEqual(result["stops"]["invalid_or_missing_coordinate_ids"][0]["id"], 2)
         self.assertEqual(result["stops"]["unsnappable_ids_and_reasons"][0]["id"], 2)
         self.assertEqual(result["transfers"]["unverified_transfer_ids"], [3])
         self.assertEqual(result["journey_corpus"]["cases_total"], 10)
