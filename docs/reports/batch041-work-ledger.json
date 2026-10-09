@@ -131,7 +131,7 @@
         "api/scripts/package-batch041-verification-kit.py",
         "docs/portable-verification-v2"
       ],
-      "evidence": "Generated 58-file source-pinned package at revision 3ec11b5. SHA256SUMS, byte-identical checkout snapshot, and no-database static smoke verified at 2026-10-09T18:41:42Z; graph replay/PG/external host remain unrun."
+      "evidence": "58-file portable v2 package pinned to 3ec11b5; source snapshot and SHA256SUMS verified; static no-database smoke passed; SD copy checksums pass. External host, graph replay, and PostgreSQL remain unrun."
     },
     {
       "id": "D1",
@@ -175,8 +175,12 @@
         "T1"
       ],
       "status": "IN_PROGRESS",
-      "files_changed": [],
-      "evidence": "Evidence/core commit 122a717 created. Doctor/test-plan/package-builder commit and final portable kit, bundle, report remain."
+      "files_changed": [
+        "docs/portable-verification-v2",
+        "docs/reports/batch041-doctor-v41.json",
+        "docs/reports/batch041-work-ledger.json"
+      ],
+      "evidence": "Three coherent commits are present. Batch041-Delivery/20261009T184249Z contains a verified c3 bundle and v2 kit; source/destination bundle SHA256 matched and git bundle verify passed. Final report and clipboard operation remain."
     }
   ],
   "queues": {
@@ -202,7 +206,7 @@
       "walking safety, crossing and accessibility observations"
     ]
   },
-  "next_safe_action": "Run Doctor validator and diff checks, commit the verified portable package/update, then copy kit and final Git bundle to a new SD delivery directory.",
+  "next_safe_action": "Finalize Batch041 report and clipboard verification; no further functional rerun unless resources sustainably exceed both floors.",
   "commits": [
     {
       "hash": "122a717fd9ccf603d31718144ce4c7e567581fc5",
@@ -211,7 +215,11 @@
     {
       "hash": "3ec11b5ed3bab4a1bd5ed880f144bbd43ee4fca4",
       "subject": "docs(doctor): add evidence-gated Batch041 readiness report"
+    },
+    {
+      "hash": "ef9ce2268d68cb75d307a44d6a00103dade4aab8",
+      "subject": "build(portable): add Batch041 offline verification kit"
     }
   ],
-  "last_safe_checkpoint": "3ec11b5ed3bab4a1bd5ed880f144bbd43ee4fca4 plus verified docs/portable-verification-v2; pending commit of package and final Doctor update."
+  "last_safe_checkpoint": "ef9ce2268d68cb75d307a44d6a00103dade4aab8; portable v2 and c3 bundle verified on SD at Batch041-Delivery/20261009T184249Z."
 }

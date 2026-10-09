@@ -156,6 +156,11 @@
       "real_graph_replay": "NOT_RUN",
       "external_host_execution": "NOT_RUN",
       "postgresql": "NOT_RUN"
+    },
+    "doctor_contract_fixtures": {
+      "status": "VERIFIED",
+      "passed": 4,
+      "failed": 0
     }
   },
   "release_gates": {

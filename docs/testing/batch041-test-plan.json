@@ -94,6 +94,22 @@
       "status": "BLOCKED",
       "result": "not run",
       "reason": "OSM graph continuity is not field evidence; both transfer records remain unverified."
+    },
+    {
+      "id": "doctor-v41-contract-fixtures",
+      "cost": "LIGHT",
+      "command": "python3 api/scripts/validate-batch041-doctor.py && python3 api/scripts/test_validate_batch041_doctor.py",
+      "status": "VERIFIED",
+      "result": "CLI static contract passed; 4 fail-closed tests passed",
+      "reason": "Checks category/status vocabulary, graph and provenance identity binding, and blocked beta/activation gates."
+    },
+    {
+      "id": "portable-kit-static-verifier",
+      "cost": "LIGHT",
+      "command": "bash docs/portable-verification-v2/verify-kit.sh --repo-root \"$CHECKOUT_AT_MANIFEST_REVISION\"",
+      "status": "VERIFIED",
+      "result": "58 package files hash-checked; byte identity matched source revision 3ec11b5; no-database smoke passed",
+      "reason": "The checkout must be at the exact package source revision. The smoke does not open the graph or contact a database."
     }
   ],
   "policy": {
