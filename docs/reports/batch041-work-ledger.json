@@ -77,7 +77,7 @@
         "api/app/Services/Routing/OfflineJourneyWalkingPreview.php",
         "api/tests/Unit/OfflinePedestrianRouteGeometryContractTest.php"
       ],
-      "evidence": "Reusable source-bound geometry/direction/distance contract added; PHP syntax passes. PHPUnit functional execution blocked by sustained SwapFree floor failure."
+      "evidence": "Reusable source-bound geometry/direction/distance contract added; PHP syntax passes. PHPUnit functional execution blocked by sustained SwapFree floor failure. Standalone pure-PHP contract smoke passes 7 cases; full router/preview PHPUnit remains blocked."
     },
     {
       "id": "C2",
@@ -91,6 +91,19 @@
         "api/scripts/test_compare_offline_corpus.py"
       ],
       "evidence": "Four synthetic report-contract tests pass: exact ten case keys, source identity, directed edge continuity, and no geometry on disconnected failures. No route was executed."
+    },
+    {
+      "id": "A2",
+      "scope": "pure PHP route geometry contract smoke",
+      "dependencies": [
+        "A1"
+      ],
+      "status": "VERIFIED",
+      "files_changed": [
+        "api/scripts/test_offline_route_geometry_contract.php",
+        "docs/testing/batch041-test-plan.json"
+      ],
+      "evidence": "Seven lightweight valid/rejected geometry cases passed without Laravel, SQLite, or graph access; integrated router PHPUnit remains resource-blocked."
     },
     {
       "id": "J1",
@@ -165,7 +178,7 @@
       "files_changed": [
         "docs/testing/batch041-test-plan.json"
       ],
-      "evidence": "Four Python fixture groups passed (6+11+2+4), five PHP lint checks passed, Doctor fixtures pass (4). Moderate PHP/Node tests and real corpus replay are blocked after two of three spaced SwapFree samples fell below 131072 KiB."
+      "evidence": "Four Python fixture groups passed (6+11+2+4), five PHP lint checks passed, Doctor fixtures pass (4). Moderate PHP/Node tests and real corpus replay are blocked after two of three spaced SwapFree samples fell below 131072 KiB. After the failed gate, one pure-PHP contract smoke ran as a lightweight check (7 cases, no Laravel or graph); it did not bypass the gate for moderate/heavy suites."
     },
     {
       "id": "G1",
@@ -180,7 +193,7 @@
         "docs/reports/batch041-doctor-v41.json",
         "docs/reports/batch041-work-ledger.json"
       ],
-      "evidence": "Three coherent commits are present. Batch041-Delivery/20261009T184249Z contains a verified c3 bundle and v2 kit; source/destination bundle SHA256 matched and git bundle verify passed. Final report and clipboard operation remain."
+      "evidence": "Three coherent commits are present. Batch041-Delivery/20261009T184249Z contains a verified c3 bundle and v2 kit; source/destination bundle SHA256 matched and git bundle verify passed. Final report and clipboard operation remain. A standalone PHP geometry contract smoke was added and passed; the final bundle/report must be refreshed for this commit."
     }
   ],
   "queues": {
@@ -206,7 +219,7 @@
       "walking safety, crossing and accessibility observations"
     ]
   },
-  "next_safe_action": "Finalize Batch041 report and clipboard verification; no further functional rerun unless resources sustainably exceed both floors.",
+  "next_safe_action": "Commit the pure PHP geometry smoke and its evidence update; create a fresh final-HEAD SD bundle, then refresh the report and clipboard status.",
   "commits": [
     {
       "hash": "122a717fd9ccf603d31718144ce4c7e567581fc5",

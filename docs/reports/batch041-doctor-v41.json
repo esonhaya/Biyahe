@@ -36,8 +36,8 @@
     {
       "name": "offline_adapter_contract",
       "implementation": "IMPLEMENTED_UNTESTED",
-      "validation": "BLOCKED",
-      "evidence": "Added shared source-bound route geometry assertions for snap distance, endpoint nodes, directed edge continuity, graph coordinates, edge-distance sum, connector distance and estimate labels. Five changed PHP files pass php -l. PHPUnit did not launch because sustained SwapFree preflight failed."
+      "validation": "IMPLEMENTED_UNTESTED",
+      "evidence": "Added shared source-bound route geometry assertions for snap distance, endpoint nodes, directed edge continuity, graph coordinates, edge-distance sum, connector distance and estimate labels. A standalone PHP smoke (no Laravel bootstrap or graph access) passed seven valid/rejected cases. Five adapter/model PHP syntax checks plus the smoke script syntax passed; PHPUnit router/preview integration remained blocked by the sustained SwapFree gate."
     },
     {
       "name": "ten_case_corpus",
@@ -118,7 +118,7 @@
     },
     "changed_php_syntax": {
       "status": "VERIFIED",
-      "files_passed": 5
+      "files_passed": 6
     },
     "python_ast_json_and_diff_checks": "VERIFIED",
     "provenance_cli": "VERIFIED_6_SOURCES_13_CLAIMS_0_UNRESOLVED",
@@ -161,6 +161,22 @@
       "status": "VERIFIED",
       "passed": 4,
       "failed": 0
+    },
+    "php_geometry_contract_smoke": {
+      "status": "VERIFIED",
+      "passed": 7,
+      "failed": 0,
+      "graph_read": false,
+      "laravel_bootstrap": false,
+      "cases": [
+        "valid directed route",
+        "reversed edge rejected",
+        "virtual connector rejected",
+        "source mismatch rejected",
+        "distance mismatch rejected",
+        "disconnected no-path accepted",
+        "failure geometry rejected"
+      ]
     }
   },
   "release_gates": {

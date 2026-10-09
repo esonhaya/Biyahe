@@ -7,3 +7,5 @@ The four Python fixture groups use standard-library JSON/report checks. They do 
 The PHP adapter tests and frontend Node harnesses are moderate on this device and require the sustained resource preflight. Corpus replay is heavy because it opens the graph and initializes route indexes. Browser interaction checks are heavy and require an available browser. PostgreSQL staging and field verification are external and field-dependent gates, respectively.
 
 Batch041 measured SwapFree at 137,020, 129,792, and 130,244 KiB, five seconds apart. Two readings were below the unchanged floor, so the PHP/Node harnesses and real corpus replay were not launched. No resource guard was lowered and no repeat was attempted. Exact commands and results are in [the machine-readable plan](testing/batch041-test-plan.json).
+
+The pure route-geometry contract also has a dependency-free PHP smoke command: `php api/scripts/test_offline_route_geometry_contract.php`. Its seven valid/rejected fixtures passed without Laravel bootstrap or graph access. This does not replace the blocked router/preview PHPUnit integration suite.

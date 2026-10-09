@@ -44,7 +44,7 @@
       "cost": "LIGHT",
       "command": "php -l <each changed PHP file>",
       "status": "VERIFIED",
-      "result": "5 files passed",
+      "result": "6 files passed, including standalone smoke runner",
       "reason": "Syntax checks only; no PHPUnit or application bootstrap."
     },
     {
@@ -110,6 +110,14 @@
       "status": "VERIFIED",
       "result": "58 package files hash-checked; byte identity matched source revision 3ec11b5; no-database smoke passed",
       "reason": "The checkout must be at the exact package source revision. The smoke does not open the graph or contact a database."
+    },
+    {
+      "id": "pure-php-route-geometry-smoke",
+      "cost": "LIGHT",
+      "command": "php api/scripts/test_offline_route_geometry_contract.php",
+      "status": "VERIFIED",
+      "result": "7 cases passed; no graph read and no Laravel bootstrap",
+      "reason": "Exercises the pure geometry contract without the resource cost of PHPUnit or SQLite graph initialization."
     }
   ],
   "policy": {
