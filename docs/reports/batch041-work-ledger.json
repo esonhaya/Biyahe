@@ -47,7 +47,7 @@
         "api/scripts/validate-batch041-provenance.py",
         "api/scripts/test_evidence_provenance.py"
       ],
-      "evidence": "Six source reports and 13 metric claims are SHA-bound. 648 = 619 stored + 29 source-only; legacy quality zeros are unmeasured defaults, while graph audit reports 26/944/1510. Validator and 6 focused tests pass."
+      "evidence": "Six source reports and 13 metric claims are SHA-bound. 648 = 619 stored + 29 source-only; legacy quality zeros are unmeasured defaults, while graph audit reports 26/944/1510. Validator and 6 focused tests pass. Reconciliation uses source report SHA256 and commit-time provenance."
     },
     {
       "id": "C1",
@@ -128,10 +128,10 @@
       ],
       "status": "IMPLEMENTED_UNTESTED",
       "files_changed": [
-        "api/scripts/offline-evidence-smoke.py",
-        "api/scripts/test_offline_evidence_smoke.py"
+        "api/scripts/package-batch041-verification-kit.py",
+        "docs/batch041-test-and-resource-plan.md"
       ],
-      "evidence": "No-database carried-forward evidence smoke command and two fixtures pass. Batch041 portable v2 source package and manifest still to be built."
+      "evidence": "Versioned no-database kit builder and portable instructions implemented. Package generation and static verifier have not run yet."
     },
     {
       "id": "D1",
@@ -144,9 +144,13 @@
         "V1",
         "P1"
       ],
-      "status": "NOT_STARTED",
-      "files_changed": [],
-      "evidence": "Generate Doctor V41 after final evidence and test statuses are known."
+      "status": "VERIFIED",
+      "files_changed": [
+        "docs/reports/batch041-doctor-v41.json",
+        "api/scripts/validate-batch041-doctor.py",
+        "api/scripts/test_validate_batch041_doctor.py"
+      ],
+      "evidence": "Thirteen category static Doctor validated against the provenance registry. CLI validation and four fail-closed fixtures pass; private beta, staging, field safety, and production activation remain blocked."
     },
     {
       "id": "T1",
@@ -159,9 +163,9 @@
       ],
       "status": "BLOCKED",
       "files_changed": [
-        "docs/reports/batch041-work-ledger.json"
+        "docs/testing/batch041-test-plan.json"
       ],
-      "evidence": "Three spaced samples: MemAvailable 936048/979420/923316 KiB; SwapFree 137020/129792/130244 KiB. Swap floor 131072 KiB failed in samples 2 and 3; no Node/PHP functional test or graph replay launched."
+      "evidence": "Four Python fixture groups passed (6+11+2+4), five PHP lint checks passed, Doctor fixtures pass (4). Moderate PHP/Node tests and real corpus replay are blocked after two of three spaced SwapFree samples fell below 131072 KiB."
     },
     {
       "id": "G1",
@@ -170,22 +174,21 @@
         "D1",
         "T1"
       ],
-      "status": "NOT_STARTED",
+      "status": "IN_PROGRESS",
       "files_changed": [],
-      "evidence": "After final delivery: commit coherent verified changes, bundle final HEAD on SD, and write final report/clipboard status."
+      "evidence": "Evidence/core commit 122a717 created. Doctor/test-plan/package-builder commit and final portable kit, bundle, report remain."
     }
   ],
   "queues": {
     "A_resource_independent": [
-      "D1",
-      "P1 package completion",
-      "portable verification v2",
-      "final review"
+      "P1 package generation and static verifier",
+      "update Doctor after package verification",
+      "final ledger/report review"
     ],
     "B_lightweight_validation": [
-      "evidence registry and summary fixtures PASS",
-      "comparator fixtures PASS",
-      "static syntax and diff checks PASS"
+      "evidence/coverage/comparator/Doctor Python fixtures PASS",
+      "PHP syntax and static JSON checks PASS",
+      "portable kit checksum and no-database smoke pending"
     ],
     "C_resource_gated_execution": [
       "Node/PHP harnesses BLOCKED by three-sample SwapFree preflight (2 below 131072 KiB)",
@@ -199,5 +202,5 @@
       "walking safety, crossing and accessibility observations"
     ]
   },
-  "next_safe_action": "Create Doctor V41 and a source-pinned no-database portable verification v2 package; then repeat static checks and commit."
+  "next_safe_action": "Commit Doctor V41, resource plan, and package builder; then build and verify portable v2 at the pinned source revision."
 }
