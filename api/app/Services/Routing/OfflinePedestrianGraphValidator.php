@@ -200,6 +200,7 @@ final class OfflinePedestrianGraphValidator
             'nodes' => $nodes,
             'edges' => $edges,
             'components' => $components,
+            'graph_fingerprint' => $graphFingerprint,
             'relation_restrictions' => (int) ($metadata['relation_restrictions'] ?? 0),
             'restriction_counts' => $restrictionAudit['counts'],
             'restriction_inventory_complete' => $restrictionInventory['complete'],
