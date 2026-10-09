@@ -48,7 +48,7 @@ final class PrepareOfflinePedestrianGraph extends Command
             $this->line($key.': '.(is_bool($value) ? ($value ? 'yes' : 'no') : $value));
         }
         if (($result['status'] ?? null) === 'WARN') {
-            $this->warn('Artifact integrity passed; unsupported pedestrian restriction relations make it unsafe for routing import.');
+            $this->warn('Artifact integrity passed; incomplete restriction inventory or unenforced pedestrian semantics keep it unsafe for routing import.');
         }
 
         return self::SUCCESS;

@@ -264,6 +264,8 @@ final class OfflinePedestrianGraphStager
             'state' => 'INGESTING', 'input_complete' => false,
             'way_index_complete' => false, 'references_complete' => false,
             'routing_complete' => false,
+            'restriction_inventory_complete' => false,
+            'restriction_inventory_policy_version' => OfflinePedestrianRestrictionAudit::INVENTORY_VERSION,
         ] as $key => $value) {
             $this->setMeta($sqlite, $key, $value);
         }
@@ -304,6 +306,8 @@ final class OfflinePedestrianGraphStager
         $this->setMeta($sqlite, 'input_complete', false);
         $this->setMeta($sqlite, 'way_index_complete', false);
         $this->setMeta($sqlite, 'references_complete', false);
+        $this->setMeta($sqlite, 'restriction_inventory_complete', false);
+        $this->setMeta($sqlite, 'restriction_inventory_policy_version', OfflinePedestrianRestrictionAudit::INVENTORY_VERSION);
         foreach ($source as $key => $value) {
             $this->setMeta($sqlite, 'source_identity_'.$key, $value);
             if ($key !== 'timestamp' || $value !== null) {
@@ -424,7 +428,7 @@ final class OfflinePedestrianGraphStager
                     if ($relationCount > 10_000_000) {
                         throw new InvalidArgumentException('OSM source exceeds the supported relation count.');
                     }
-                    if (self::isPedestrianRestriction($relation['tags'])) {
+                    if (self::isTurnRestrictionRelation($relation['tags'])) {
                         $restrictedRelations++;
                     }
                 }
@@ -487,6 +491,7 @@ final class OfflinePedestrianGraphStager
         foreach (['resolved_nodes', 'indexed_source_nodes'] as $key) {
             $sqlite->exec('DELETE FROM metadata WHERE key='.$sqlite->quote($key));
         }
+        $this->setMeta($sqlite, 'restriction_inventory_complete', false);
         $this->setMeta($sqlite, 'references_complete', false);
         $this->setMeta($sqlite, 'input_complete', false);
         $this->setMeta($sqlite, 'state', 'WAY_INDEX_COMPLETE');
@@ -634,6 +639,21 @@ final class OfflinePedestrianGraphStager
             if ($resolved !== $expected) {
                 throw new InvalidArgumentException('A candidate way references a node missing from the source stream.');
             }
+            if ($captureRestrictionDependencies) {
+                $capturedRestrictions = (int) $sqlite->query('SELECT COUNT(*) FROM source_restrictions')->fetchColumn();
+                if ($capturedRestrictions !== (int) $this->meta($sqlite, 'relation_restrictions')) {
+                    throw new InvalidArgumentException('The complete source pass did not preserve every restriction relation and member.');
+                }
+                $this->setMeta($sqlite, 'restriction_inventory_complete', true);
+                $this->setMeta($sqlite, 'restriction_inventory_policy_version', OfflinePedestrianRestrictionAudit::INVENTORY_VERSION);
+            } elseif ((int) $this->meta($sqlite, 'relation_restrictions') === 0) {
+                // The complete way-index pass also proves there were no tagged
+                // restriction relations when a nodes-only resolution pass is used.
+                $this->setMeta($sqlite, 'restriction_inventory_complete', true);
+                $this->setMeta($sqlite, 'restriction_inventory_policy_version', OfflinePedestrianRestrictionAudit::INVENTORY_VERSION);
+            } else {
+                $this->setMeta($sqlite, 'restriction_inventory_complete', false);
+            }
             $this->setMeta($sqlite, 'resolved_nodes', $resolved);
             $this->setMeta($sqlite, 'indexed_source_nodes', (int) $sqlite->query('SELECT COUNT(*) FROM source_nodes')->fetchColumn());
             $this->setMeta($sqlite, 'resolution_xml_complete', true);
@@ -772,11 +792,15 @@ final class OfflinePedestrianGraphStager
         }
         $components = OfflinePedestrianGraphTopology::componentCount($sqlite);
         $contentHash = OfflinePedestrianGraphTopology::contentHash($sqlite);
+        $restrictionCounts = (new OfflinePedestrianRestrictionPolicy)->audit($sqlite)['counts'];
+        $restrictionRoutingReady = (bool) $this->meta($sqlite, 'restriction_inventory_complete')
+            && (int) $restrictionCounts['unsupported_applicable'] === 0
+            && (int) $restrictionCounts['ambiguous'] === 0;
         foreach ([
             'state' => 'COMPLETE', 'graph_nodes' => $nodeCount, 'graph_edges' => $edgeCount,
             'accepted_ways' => $acceptedWays, 'restricted_ways' => $restrictedWays,
             'component_count' => $components, 'graph_content_sha256' => $contentHash,
-            'routing_complete' => (int) $this->meta($sqlite, 'relation_restrictions') === 0,
+            'routing_complete' => $restrictionRoutingReady,
             'crs' => 'EPSG:4326',
         ] as $key => $value) {
             $this->setMeta($sqlite, $key, $value);
@@ -879,7 +903,7 @@ final class OfflinePedestrianGraphStager
             }
         });
 
-        if (! self::isPedestrianRestriction($tags)) {
+        if (! self::isTurnRestrictionRelation($tags)) {
             $spoolClear->execute([$id]);
 
             return;
@@ -900,11 +924,19 @@ final class OfflinePedestrianGraphStager
     }
 
     /** @param array<string, string> $tags */
-    private static function isPedestrianRestriction(array $tags): bool
+    private static function isTurnRestrictionRelation(array $tags): bool
     {
-        return ($tags['type'] ?? null) === 'restriction'
-            && (isset($tags['restriction:foot'])
-                || (isset($tags['restriction']) && ! in_array('foot', array_map('trim', explode(';', $tags['except'] ?? '')), true)));
+        if (in_array($tags['type'] ?? null, ['restriction', 'restriction:foot', 'restriction:pedestrian'], true)) {
+            return true;
+        }
+
+        foreach (array_keys($tags) as $key) {
+            if (str_starts_with($key, 'restriction:') || $key === 'restriction') {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private function readChildren(XMLReader $reader, callable $consume): void
@@ -997,7 +1029,14 @@ final class OfflinePedestrianGraphStager
         }
         $owned = fstat($reservation);
         fclose($reservation);
-        if (! is_array($owned) || ! rename($workPath, $outputPath)) {
+        clearstatcache(true, $outputPath);
+        $current = @lstat($outputPath);
+        if (! is_array($owned) || ! is_array($current)
+            || $owned['dev'] !== $current['dev'] || $owned['ino'] !== $current['ino']) {
+            throw new RuntimeException('Output reservation changed before atomic graph publication.');
+        }
+        if (! rename($workPath, $outputPath)) {
+            clearstatcache(true, $outputPath);
             $current = @lstat($outputPath);
             if (is_array($owned) && is_array($current) && $owned['dev'] === $current['dev'] && $owned['ino'] === $current['ino']) {
                 @unlink($outputPath);

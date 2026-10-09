@@ -140,6 +140,24 @@ final class LocalPedestrianGraphRouter implements PedestrianRouter
             );
         }
 
+        $datasetMetadata = json_decode((string) ($dataset->metadata ?? ''), true);
+        $isOfflineStaging = is_array($datasetMetadata) && ($datasetMetadata['offline_staging'] ?? false) === true;
+        $routingCapabilities = is_array($datasetMetadata) && is_array($datasetMetadata['routing_capabilities'] ?? null)
+            ? $datasetMetadata['routing_capabilities']
+            : [];
+        if ($isOfflineStaging && (($datasetMetadata['routing_ready'] ?? false) !== true
+            || ($routingCapabilities['complete_restriction_inventory'] ?? false) !== true
+            || ($routingCapabilities['turn_restrictions_needed'] ?? true) !== false)) {
+            $this->providerStatus = 'RESTRICTION_CAPABILITY_BLOCKED';
+
+            return $this->result(
+                PedestrianRouteStatus::UNAVAILABLE,
+                $request,
+                ['The installed offline graph has no verified, complete pedestrian restriction capability record; no walking path is claimed.'],
+                $dataset,
+            );
+        }
+
         if (! $this->validPoint($request->origin) || ! $this->validPoint($request->destination)
             || ! is_finite($request->maximumDistanceMeters) || $request->maximumDistanceMeters <= 0) {
             $this->providerStatus = 'INVALID_REQUEST';

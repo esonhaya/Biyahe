@@ -59,7 +59,7 @@ class BiyaheDoctor extends Command
     public function handle(): int
     {
         $this->report = new DoctorReport;
-        $this->info($this->option('static') ? 'BIYAHE DOCTOR V30 STATIC' : 'BIYAHE DOCTOR V30');
+        $this->info($this->option('static') ? 'BIYAHE DOCTOR V31 STATIC' : 'BIYAHE DOCTOR V31');
         $this->check('application', 'PASS', 'Laravel booted and configuration loaded.');
         $this->runOsmiumRuntimeCheck();
         $this->runOfflineCheckpointCheck();
@@ -2155,21 +2155,74 @@ class BiyaheDoctor extends Command
         $sourcePath = trim((string) $this->option('source-path'));
         if ($graphPath === '' && $sourcePath === '') {
             $this->check('offline graph artifact', 'WARN', 'No offline SQLite artifact was supplied; PostgreSQL is not required to prepare or validate one.');
+            $this->check('offline restriction inventory', 'BLOCKED', 'No completed SQLite graph and matching source restriction audit were supplied.');
+            $this->check('pedestrian routing capability', 'BLOCKED', 'No graph is available for restriction-aware readiness validation.');
+            $this->check('offline graph quality', 'BLOCKED', 'No offline graph quality data was supplied.');
+            $this->check('offline importer compatibility', 'BLOCKED', 'No validated graph is available for isolated inactive staging.');
+            $this->check('pedestrian staging readiness', 'BLOCKED', 'Database staging was not attempted; validate the graph and review its capabilities first.');
+            $this->check('production graph activation', 'BLOCKED', 'Offline validation never activates a production graph.');
+            $this->check('private beta pedestrian readiness', 'BLOCKED', 'No graph readiness evidence or activated staging review is available.');
 
             return;
         }
         if ($graphPath === '' || $sourcePath === '') {
             $this->check('offline graph artifact', 'BLOCKED', 'Both --offline-graph and --source-path are required to verify an artifact fingerprint.');
+            $this->check('offline restriction inventory', 'BLOCKED', 'A graph and its exact source PBF are both required to verify restriction inventory provenance.');
+            $this->check('pedestrian routing capability', 'BLOCKED', 'Restriction semantics cannot be proven without both artifact and source.');
+            $this->check('offline graph quality', 'BLOCKED', 'No complete artifact is available for topology and clipping diagnostics.');
+            $this->check('offline importer compatibility', 'BLOCKED', 'The offline importer requires a source-verified restriction audit.');
+            $this->check('pedestrian staging readiness', 'BLOCKED', 'No database staging was attempted.');
+            $this->check('production graph activation', 'BLOCKED', 'Offline validation never activates a production graph.');
+            $this->check('private beta pedestrian readiness', 'BLOCKED', 'Restriction and staging readiness are not established.');
 
             return;
         }
         try {
             $result = app(OfflinePedestrianGraphValidator::class)->validate($graphPath, $sourcePath);
             $this->check('offline graph artifact', (string) $result['status'], $result['routing_ready']
-                ? 'GRAPH_VALIDATED; ROUTING_READY. '.$result['nodes'].' nodes, '.$result['edges'].' edges, '.$result['components'].' weak components; source fingerprint and SQLite integrity verified.'
-                : 'GRAPH_VALIDATED; ROUTING_READY=false. '.$result['nodes'].' nodes and '.$result['edges'].' edges are structurally valid, but '.$result['relation_restrictions'].' pedestrian restriction relation(s) are unsupported.');
+                ? 'GRAPH_VALIDATED; STRUCTURALLY_COMPLETE. '.$result['nodes'].' nodes, '.$result['edges'].' edges, '.$result['components'].' weak components; source fingerprint and SQLite integrity verified.'
+                : 'GRAPH_VALIDATED; STRUCTURALLY_COMPLETE. '.$result['nodes'].' nodes and '.$result['edges'].' edges; routing remains blocked by restriction inventory or semantics.');
+            $this->check('offline restriction inventory', $result['restriction_inventory_status'],
+                'stored='.$result['restriction_counts']['total']
+                .' vehicle_only='.$result['restriction_counts']['vehicle_only']
+                .' pedestrian_applicable='.$result['restriction_counts']['pedestrian_applicable']
+                .' pedestrian_exempt='.$result['restriction_counts']['pedestrian_exempt']
+                .' conditional='.$result['restriction_counts']['conditional']
+                .' via_node='.$result['restriction_counts']['via_node']
+                .' via_way='.$result['restriction_counts']['via_way']
+                .' ambiguous='.$result['ambiguous_restrictions']
+                .' malformed='.$result['restriction_counts']['malformed']
+                .' missing_member_dependencies='.$result['restriction_counts']['missing_member_dependencies']
+                .' unsupported_applicable='.$result['unsupported_applicable_restrictions']
+                .'; '.$result['restriction_inventory_reason']);
+            $this->check('pedestrian routing capability', $result['routing_ready'] ? 'PASS' : 'BLOCKED', $result['routing_ready_reason']);
+            $quality = $result['quality_review'];
+            $this->check('offline graph quality', $quality['field_review_required'] ? 'WARN' : 'PASS',
+                'walkable_components='.$quality['walkable_components']
+                .' largest_walkable_component_nodes='.$quality['largest_walkable_component_nodes']
+                .' long_edges_over_250m='.$quality['long_edges_over_250m']
+                .' max_long_edge_m='.$quality['maximum_edge_meters_over_250m']
+                .' crossing_nodes='.$quality['crossing_tagged_nodes']
+                .' boundary_nodes='.$quality['boundary_nodes_within_0_0005_degrees']
+                .' isolated_blocked_nodes='.$quality['isolated_blocked_nodes']
+                .' outside_scope_required_nodes='.$quality['outside_scope_required_nodes']
+                .' clipped_ways='.$quality['ways_with_inside_and_outside_references']
+                .($quality['field_review_required'] ? '; long segments, disconnected components, or clipping effects need map/field review; no connectors were invented.' : '; no configured review signal was detected.'));
+            $this->check('offline importer compatibility', $result['routing_ready'] ? 'PASS' : 'BLOCKED', $result['routing_ready']
+                ? 'The validator accepts the source-bound restriction policy; an offline import would remain inactive and require an exact isolated staging database.'
+                : 'The importer rejects incomplete restriction inventory, mode ambiguity, and unenforced pedestrian restrictions.');
+            $this->check('pedestrian staging readiness', 'WARN', 'No PostgreSQL staging was attempted. A validated artifact may be offered only to an isolated test/staging database and remains inactive.');
+            $this->check('production graph activation', 'BLOCKED', 'The offline validator and stager do not activate production graphs.');
+            $this->check('private beta pedestrian readiness', 'BLOCKED', 'No graph has been staged or activated, and source connectivity/sidewalk safety still requires scoped review.');
         } catch (Throwable $exception) {
             $this->check('offline graph artifact', 'FAIL', 'Offline graph validation failed: '.$exception->getMessage());
+            $this->check('offline restriction inventory', 'FAIL', 'The restriction report could not be matched to the complete source and graph fingerprints.');
+            $this->check('pedestrian routing capability', 'BLOCKED', 'Restriction semantics are not validated.');
+            $this->check('offline graph quality', 'FAIL', 'The graph quality pass did not complete.');
+            $this->check('offline importer compatibility', 'BLOCKED', 'Invalid offline artifacts are rejected before database writes.');
+            $this->check('pedestrian staging readiness', 'BLOCKED', 'No database staging was attempted.');
+            $this->check('production graph activation', 'BLOCKED', 'No activation occurred.');
+            $this->check('private beta pedestrian readiness', 'BLOCKED', 'Offline graph validation failed.');
         }
     }
 

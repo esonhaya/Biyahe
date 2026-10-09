@@ -22,10 +22,13 @@ final class ValidateOfflinePedestrianGraph extends Command
             return self::FAILURE;
         }
         foreach ($result as $key => $value) {
-            $this->line($key.': '.(is_bool($value) ? ($value ? 'yes' : 'no') : $value));
+            $display = is_bool($value) ? ($value ? 'yes' : 'no') : (is_array($value)
+                ? json_encode($value, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)
+                : (string) $value);
+            $this->line($key.': '.$display);
         }
         if (! $result['routing_ready']) {
-            $this->warn('Artifact is structurally complete, but unsupported pedestrian restrictions prevent routing import.');
+            $this->warn('Artifact is structurally complete, but restriction inventory or semantics prevent routing import: '.$result['routing_ready_reason']);
         }
 
         return self::SUCCESS;

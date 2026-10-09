@@ -4,11 +4,39 @@ namespace Tests\Feature;
 
 use App\Services\Routing\OfflinePedestrianGraphStager;
 use App\Services\Routing\OfflinePedestrianGraphValidator;
+use App\Services\Routing\OfflinePedestrianGraphCheckpoint;
+use App\Services\Routing\OfflinePedestrianRestrictionAudit;
+use App\Services\Routing\OfflinePedestrianRestrictionPolicy;
 use PDO;
 use Tests\TestCase;
 
 final class OfflinePedestrianGraphTest extends TestCase
 {
+    public function test_graph_publication_refuses_to_clobber_an_existing_destination(): void
+    {
+        $files = $this->fixtureFiles();
+        file_put_contents($files['xml'], $this->xml([
+            '<node id="1" lat="10.3000" lon="123.8700"/>',
+            '<node id="2" lat="10.3001" lon="123.8700"/>',
+            '<way id="100"><nd ref="1"/><nd ref="2"/><tag k="highway" v="footway"/></way>',
+        ]));
+        file_put_contents($files['output'], 'preserve-existing-destination');
+
+        try {
+            try {
+                $this->build($files);
+                $this->fail('A completed output path must never be overwritten.');
+            } catch (\InvalidArgumentException $exception) {
+                $this->assertStringContainsString('Output must be a new file', $exception->getMessage());
+            }
+
+            $this->assertSame('preserve-existing-destination', file_get_contents($files['output']));
+            $this->assertFileDoesNotExist($files['output'].'.building');
+        } finally {
+            $this->removeFixtureFiles($files);
+        }
+    }
+
     public function test_offline_graph_preserves_way_order_access_and_disconnected_components(): void
     {
         $files = $this->fixtureFiles();
@@ -33,6 +61,9 @@ final class OfflinePedestrianGraphTest extends TestCase
             $this->assertSame('PASS', $result['status']);
             $this->assertSame(2, $result['components']);
             $this->assertSame(3, $result['edges']);
+            $this->assertSame(1, $result['quality_review']['walkable_components']);
+            $this->assertSame(1, $result['quality_review']['isolated_blocked_nodes']);
+            $this->assertFalse($result['quality_review']['artificial_connectors_added']);
             $sqlite = new PDO('sqlite:'.$files['output']);
             $edges = $sqlite->query('SELECT osm_way_id, segment_index, from_node_id, to_node_id, bidirectional FROM graph_edges ORDER BY osm_way_id, segment_index')->fetchAll(PDO::FETCH_ASSOC);
             $this->assertSame([
@@ -456,7 +487,7 @@ final class OfflinePedestrianGraphTest extends TestCase
         }
     }
 
-    public function test_source_hash_mismatch_invalid_coordinates_and_restriction_relations_are_not_misreported_as_ready(): void
+    public function test_source_hash_mismatch_and_generic_vehicle_restrictions_are_classified_without_false_pedestrian_blocking(): void
     {
         $files = $this->fixtureFiles();
         file_put_contents($files['xml'], $this->xml([
@@ -476,9 +507,11 @@ final class OfflinePedestrianGraphTest extends TestCase
                 $this->assertStringContainsString('does not match the expected SHA-256', $exception->getMessage());
             }
             $result = $this->build($files);
-            $this->assertSame('WARN', $result['status']);
-            $this->assertFalse($result['routing_ready']);
+            $this->assertSame('PASS', $result['status']);
+            $this->assertTrue($result['routing_ready']);
             $this->assertSame(1, $result['relation_restrictions']);
+            $this->assertSame(1, $result['restriction_counts']['vehicle_only']);
+            $this->assertSame(0, $result['unsupported_applicable_restrictions']);
             $sqlite = new PDO('sqlite:'.$files['output']);
             $restriction = $sqlite->query('SELECT relation_id, member_count, members_sha256 FROM source_restrictions')->fetch(PDO::FETCH_ASSOC);
             $this->assertSame(500, (int) $restriction['relation_id']);
@@ -487,6 +520,8 @@ final class OfflinePedestrianGraphTest extends TestCase
             $this->assertSame([
                 ['relation_id' => 500, 'sequence_index' => 0, 'member_type' => 'way', 'member_ref' => 100, 'role' => 'from'],
             ], $sqlite->query('SELECT relation_id, sequence_index, member_type, member_ref, role FROM source_restriction_members')->fetchAll(PDO::FETCH_ASSOC));
+            $this->assertSame('osm-turn-restriction-inventory-v1', json_decode((string) $sqlite->query("SELECT value FROM metadata WHERE key='restriction_inventory_policy_version'")->fetchColumn(), true));
+            $this->assertSame(true, json_decode((string) $sqlite->query("SELECT value FROM metadata WHERE key='restriction_inventory_complete'")->fetchColumn(), true));
             try {
                 app(OfflinePedestrianGraphValidator::class)->validate($files['output'], $files['source'], str_repeat('0', 64));
                 $this->fail('A graph must reject validation against a different source checksum.');
@@ -502,6 +537,133 @@ final class OfflinePedestrianGraphTest extends TestCase
             }
         } finally {
             $this->removeFixtureFiles($files);
+        }
+    }
+
+    public function test_explicit_foot_restriction_is_retained_but_never_claimed_routing_ready(): void
+    {
+        $files = $this->fixtureFiles();
+        file_put_contents($files['xml'], $this->xml([
+            '<node id="1" lat="10.3000" lon="123.8700"/>',
+            '<node id="2" lat="10.3001" lon="123.8700"/>',
+            '<way id="100"><nd ref="1"/><nd ref="2"/><tag k="highway" v="footway"/></way>',
+            '<relation id="501"><member type="way" ref="100" role="from"/><member type="node" ref="1" role="via"/><member type="way" ref="100" role="to"/><tag k="type" v="restriction"/><tag k="restriction:foot" v="no_u_turn"/></relation>',
+        ]));
+
+        try {
+            $result = $this->build($files);
+            $this->assertSame('WARN', $result['status']);
+            $this->assertFalse($result['routing_ready']);
+            $this->assertSame(1, $result['restriction_counts']['pedestrian_applicable']);
+            $this->assertSame(1, $result['unsupported_applicable_restrictions']);
+            $this->assertSame(1, $result['restriction_counts']['via_node']);
+        } finally {
+            $this->removeFixtureFiles($files);
+        }
+    }
+
+    public function test_missing_vehicle_restriction_member_dependency_is_reported_without_blocking_pedestrian_routing(): void
+    {
+        $files = $this->fixtureFiles();
+        file_put_contents($files['xml'], $this->xml([
+            '<node id="1" lat="10.3000" lon="123.8700"/>',
+            '<node id="2" lat="10.3001" lon="123.8700"/>',
+            '<way id="100"><nd ref="1"/><nd ref="2"/><tag k="highway" v="footway"/></way>',
+            '<relation id="501"><member type="way" ref="100" role="from"/><member type="node" ref="999" role="via"/><member type="way" ref="100" role="to"/><tag k="type" v="restriction"/><tag k="restriction" v="no_left_turn"/></relation>',
+        ]));
+
+        try {
+            $result = $this->build($files);
+            $this->assertTrue($result['routing_ready']);
+            $this->assertSame(1, $result['restriction_counts']['relations_with_missing_member_dependencies']);
+            $this->assertSame(1, $result['restriction_counts']['missing_member_dependencies']);
+            $this->assertSame(0, $result['restriction_counts']['unsupported_applicable']);
+        } finally {
+            $this->removeFixtureFiles($files);
+        }
+    }
+
+    public function test_quality_audit_counts_nodes_near_the_clipping_boundary(): void
+    {
+        $files = $this->fixtureFiles();
+        file_put_contents($files['xml'], $this->xml([
+            '<node id="1" lat="10.2500" lon="123.8700"/>',
+            '<node id="2" lat="10.2506" lon="123.8700"/>',
+            '<way id="100"><nd ref="1"/><nd ref="2"/><tag k="highway" v="footway"/></way>',
+        ]));
+
+        try {
+            $result = $this->build($files);
+            $this->assertSame(1, $result['quality_review']['boundary_nodes_within_0_0005_degrees'], json_encode($result['quality_review'], JSON_THROW_ON_ERROR));
+            $this->assertSame(0.0005, $result['quality_review']['boundary_review_margin_degrees']);
+            $this->assertTrue($result['quality_review']['field_review_required']);
+        } finally {
+            $this->removeFixtureFiles($files);
+        }
+    }
+
+    public function test_legacy_restriction_sidecar_is_bound_to_source_graph_and_member_fingerprint(): void
+    {
+        $files = $this->fixtureFiles();
+        file_put_contents($files['xml'], $this->xml([
+            '<node id="1" lat="10.3000" lon="123.8700"/>',
+            '<node id="2" lat="10.3001" lon="123.8700"/>',
+            '<way id="100"><nd ref="1"/><nd ref="2"/><tag k="highway" v="footway"/></way>',
+        ]));
+
+        try {
+            $this->build($files);
+            $sqlite = new PDO('sqlite:'.$files['output'], null, null, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
+            $sqlite->exec("DELETE FROM metadata WHERE key IN ('restriction_inventory_complete','restriction_inventory_policy_version')");
+            $sourceIdentity = [
+                'url' => 'https://synthetic.invalid/central_visayas.osm.pbf',
+                'file' => basename($files['source']),
+                'sha256' => hash_file('sha256', $files['source']),
+                'md5' => hash_file('md5', $files['source']),
+                'timestamp' => (new \DateTimeImmutable('2026-10-07T01:00:21Z'))->format(DATE_ATOM),
+                'osmium_version' => '1.19.1',
+                'bounds' => config('biyahe.pedestrian.coverage'),
+            ];
+            $checkpoints = new OfflinePedestrianGraphCheckpoint;
+            $checkpoints->record($sqlite, $sourceIdentity, 'reference_resolution');
+            $checkpoints->record($sqlite, $sourceIdentity, 'graph_build');
+
+            $sourceScan = [
+                'format' => 'biyahe-osm-restriction-source-scan-v1',
+                'source_sha256' => $sourceIdentity['sha256'],
+                'source_snapshot' => '2026-10-07T01:00:21Z',
+                'complete' => true,
+                'producer_exit_code' => 0,
+                'stored_relation_count' => 0,
+                'matching_relation_count' => 0,
+                'omitted_relation_count' => 0,
+                'type_values' => [],
+                'tag_key_counts' => ['restriction:conditional' => 0],
+                'pedestrian_specific_tag_counts' => [
+                    'restriction:foot' => 0,
+                    'restriction:pedestrian' => 0,
+                    'restriction:foot:conditional' => 0,
+                    'restriction:pedestrian:conditional' => 0,
+                ],
+                'omitted_relations' => [],
+            ];
+            $report = app(OfflinePedestrianRestrictionAudit::class)->build($sqlite, $sourceScan);
+            $sidecar = $files['output'].'.restriction-audit.json';
+            file_put_contents($sidecar, json_encode($report, JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES));
+
+            $validation = app(OfflinePedestrianGraphValidator::class)->validate($files['output'], $files['source']);
+            $this->assertTrue($validation['routing_ready']);
+            $this->assertSame(0, $validation['restriction_source_omitted_count']);
+
+            $report['source']['sha256'] = str_repeat('0', 64);
+            file_put_contents($sidecar, json_encode($report, JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES));
+            $tampered = app(OfflinePedestrianGraphValidator::class)->validate($files['output'], $files['source']);
+            $this->assertSame('WARN', $tampered['status']);
+            $this->assertFalse($tampered['routing_ready']);
+            $this->assertSame('FAIL', $tampered['restriction_inventory_status']);
+        } finally {
+            $this->removeFixtureFiles($files);
+            @unlink($files['output'].'.restriction-audit.json');
         }
     }
 

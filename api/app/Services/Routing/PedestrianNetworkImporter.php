@@ -69,6 +69,9 @@ final class PedestrianNetworkImporter
             'imported_edges' => count($edges),
             'rejected_elements' => $rejectedElements,
             'restricted_elements' => $restrictedElements,
+            'restriction_relations_observed' => $parseMetrics['restriction_relations'],
+            'vehicle_only_turn_restrictions' => $parseMetrics['vehicle_only_restrictions'],
+            'pedestrian_exempt_turn_restrictions' => $parseMetrics['pedestrian_exempt_restrictions'],
             ...$mergeMetadata,
         ];
         $datasetMetadata = [
@@ -210,7 +213,7 @@ final class PedestrianNetworkImporter
         $this->assertOfflineStagingDatabase($stagingDatabase);
         $validation = (new OfflinePedestrianGraphValidator)->validate($path, $sourcePath);
         if (! $validation['routing_ready']) {
-            throw new InvalidArgumentException('Offline graph has unsupported pedestrian restriction relations and is not importable.');
+            throw new InvalidArgumentException('Offline graph restriction inventory is incomplete, ambiguous, or contains unenforced pedestrian restrictions; it is not importable.');
         }
 
         $sqlite = new \PDO('sqlite:'.$path, null, null, [\PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION]);
@@ -249,6 +252,17 @@ final class PedestrianNetworkImporter
                 'restricted_ways' => (int) ($metadata['restricted_ways'] ?? 0),
                 'connected_components' => (int) $validation['components'],
             ],
+            'restriction_audit' => [
+                'policy_version' => OfflinePedestrianRestrictionPolicy::VERSION,
+                'inventory_complete' => (bool) $validation['restriction_inventory_complete'],
+                'source_relation_count' => (int) $validation['restriction_source_relation_count'],
+                'stored_relation_count' => (int) $validation['restriction_counts']['total'],
+                'counts' => $validation['restriction_counts'],
+                'unsupported_applicable' => (int) $validation['unsupported_applicable_restrictions'],
+                'ambiguous' => (int) $validation['ambiguous_restrictions'],
+            ],
+            'routing_capabilities' => $validation['routing_capabilities'],
+            'routing_ready' => true,
             'offline_staging' => true,
             'activation' => 'NOT_ACTIVATED',
         ];
@@ -256,6 +270,24 @@ final class PedestrianNetworkImporter
         return DB::transaction(function () use ($sqlite, $startedAt, $stableId, $sourceUrl, $sourceTimestamp, $contentHash, $bounds, $datasetMetadata, $nodesExpected, $edgesExpected, $sourceElements, $metadata): PedestrianNetworkImportResult {
             $existing = DB::table('pedestrian_network_datasets')->where('content_hash', $contentHash)->first();
             if ($existing !== null) {
+                $existingMetadata = json_decode((string) $existing->metadata, true);
+                $existingCapabilities = is_array($existingMetadata) && is_array($existingMetadata['routing_capabilities'] ?? null)
+                    ? $existingMetadata['routing_capabilities']
+                    : [];
+                $existingRestrictionAudit = is_array($existingMetadata) && is_array($existingMetadata['restriction_audit'] ?? null)
+                    ? $existingMetadata['restriction_audit']
+                    : [];
+                if ((bool) $existing->is_active
+                    || ! is_array($existingMetadata)
+                    || ($existingMetadata['offline_staging'] ?? false) !== true
+                    || ($existingMetadata['routing_ready'] ?? false) !== true
+                    || ($existingMetadata['activation'] ?? null) !== 'NOT_ACTIVATED'
+                    || ($existingCapabilities['complete_restriction_inventory'] ?? false) !== true
+                    || ($existingCapabilities['routing_ready'] ?? false) !== true
+                    || ($existingCapabilities['turn_restrictions_needed'] ?? true) !== false
+                    || ($existingRestrictionAudit['inventory_complete'] ?? false) !== true) {
+                    throw new RuntimeException('An existing dataset with this fingerprint lacks safe inactive restriction-audit staging metadata.');
+                }
                 $this->validateDatasetGraph((int) $existing->id, $nodesExpected, $edgesExpected);
 
                 return new PedestrianNetworkImportResult(
@@ -617,14 +649,21 @@ final class PedestrianNetworkImporter
         }
     }
 
-    /** @return array{array<int, array{lat: float, lng: float, walkable: bool, barrier: ?string, crossing: ?string}>, array<int, array{nodes: list<int>, tags: array<string, string>}>, array{input_nodes: int, input_ways: int, restricted_nodes: int}} */
+    /** @return array{array<int, array{lat: float, lng: float, walkable: bool, barrier: ?string, crossing: ?string}>, array<int, array{nodes: list<int>, tags: array<string, string>}>, array{input_nodes: int, input_ways: int, restricted_nodes: int, restriction_relations: int, vehicle_only_restrictions: int, pedestrian_exempt_restrictions: int}} */
     private function parseElements(array $elements): array
     {
         $maxNodes = max(1, (int) config('biyahe.pedestrian.maximum_input_nodes', 50000));
         $maxWays = max(1, (int) config('biyahe.pedestrian.maximum_input_ways', 25000));
         $nodes = [];
         $ways = [];
-        $metrics = ['input_nodes' => 0, 'input_ways' => 0, 'restricted_nodes' => 0];
+        $metrics = [
+            'input_nodes' => 0,
+            'input_ways' => 0,
+            'restricted_nodes' => 0,
+            'restriction_relations' => 0,
+            'vehicle_only_restrictions' => 0,
+            'pedestrian_exempt_restrictions' => 0,
+        ];
         foreach ($elements as $element) {
             if (! is_array($element) || ! is_int($element['id'] ?? null) || $element['id'] <= 0) {
                 throw new InvalidArgumentException('Every OSM element must have a positive integer ID.');
@@ -668,6 +707,36 @@ final class PedestrianNetworkImporter
                     throw new InvalidArgumentException('OSM ways require at least two positive node references.');
                 }
                 $ways[$element['id']] = ['nodes' => array_values($refs), 'tags' => $this->tags($element['tags'] ?? [])];
+            } elseif (($element['type'] ?? null) === 'relation') {
+                $tags = $this->tags($element['tags'] ?? []);
+                $isRestriction = ($tags['type'] ?? null) === 'restriction';
+                foreach (array_keys($tags) as $key) {
+                    $isRestriction = $isRestriction || $key === 'restriction' || str_starts_with($key, 'restriction:');
+                }
+                if (! $isRestriction) {
+                    continue;
+                }
+                $members = [];
+                foreach (is_array($element['members'] ?? null) ? $element['members'] : [] as $member) {
+                    if (! is_array($member)) {
+                        continue;
+                    }
+                    $members[] = [
+                        'member_type' => (string) ($member['type'] ?? ''),
+                        'member_ref' => is_numeric($member['ref'] ?? null) ? (int) $member['ref'] : 0,
+                        'role' => (string) ($member['role'] ?? ''),
+                    ];
+                }
+                $classification = OfflinePedestrianRestrictionPolicy::classify($tags, $members);
+                if ($classification['unsupported_for_routing']) {
+                    throw new InvalidArgumentException('Input contains a pedestrian-applicable or mode-ambiguous turn restriction (relation '.$element['id'].'); routing import is blocked.');
+                }
+                $metrics['restriction_relations']++;
+                if ($classification['mode_applicability'] === 'vehicle_only') {
+                    $metrics['vehicle_only_restrictions']++;
+                } elseif ($classification['mode_applicability'] === 'pedestrian_exempt') {
+                    $metrics['pedestrian_exempt_restrictions']++;
+                }
             }
         }
 

@@ -24,7 +24,7 @@ class BiyaheDoctorTest extends TestCase
         $this->seed();
 
         $artisan = $this->artisan('biyahe:doctor')
-            ->expectsOutputToContain('BIYAHE DOCTOR V30')
+            ->expectsOutputToContain('BIYAHE DOCTOR V31')
             ->expectsOutputToContain('Batch 022 importer database boundary')
             ->expectsOutputToContain('postgis');
 
@@ -47,7 +47,7 @@ class BiyaheDoctorTest extends TestCase
         $output = Artisan::output();
 
         $this->assertSame(2, $exitCode, $output);
-        $this->assertStringContainsString('BIYAHE DOCTOR V30 STATIC', $output);
+        $this->assertStringContainsString('BIYAHE DOCTOR V31 STATIC', $output);
         $this->assertMatchesRegularExpression('/database\s+BLOCKED/', $output);
         $this->assertMatchesRegularExpression('/postgis\s+BLOCKED/', $output);
         $this->assertStringContainsString('frontend contract health', $output);
@@ -106,7 +106,12 @@ class BiyaheDoctorTest extends TestCase
             $this->assertMatchesRegularExpression('/offline phase checkpoints\s+PASS/', $output);
             $this->assertMatchesRegularExpression('/offline source checksum\s+PASS/', $output);
             $this->assertStringContainsString('source fingerprint and SQLite integrity verified', $output);
-            $this->assertStringContainsString('GRAPH_VALIDATED; ROUTING_READY.', $output);
+            $this->assertMatchesRegularExpression('/offline restriction inventory\s+PASS/', $output);
+            $this->assertMatchesRegularExpression('/pedestrian routing capability\s+PASS/', $output);
+            $this->assertMatchesRegularExpression('/offline importer compatibility\s+PASS/', $output);
+            $this->assertMatchesRegularExpression('/offline graph quality\s+PASS/', $output);
+            $this->assertMatchesRegularExpression('/production graph activation\s+BLOCKED/', $output);
+            $this->assertMatchesRegularExpression('/private beta pedestrian readiness\s+BLOCKED/', $output);
         } finally {
             foreach (glob($directory.'/*') ?: [] as $path) {
                 @unlink($path);

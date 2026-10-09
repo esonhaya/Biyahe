@@ -254,6 +254,10 @@ final class OfflinePedestrianGraphCheckpoint
             'restriction_relations' => $this->count($sqlite, 'SELECT COUNT(*) FROM source_restrictions'),
             'restriction_members' => $this->count($sqlite, 'SELECT COUNT(*) FROM source_restriction_members'),
         ];
+        if (array_key_exists('restriction_inventory_complete', $metadata)) {
+            $counts['restriction_inventory_complete'] = ($metadata['restriction_inventory_complete'] ?? false) === true;
+            $counts['restriction_inventory_policy_version'] = (string) ($metadata['restriction_inventory_policy_version'] ?? '');
+        }
         if ($requiredNodes === 0 || $resolvedNodes !== $requiredNodes
             || $resolvedNodes !== (int) ($metadata['resolved_nodes'] ?? -1)
             || $indexedNodes !== (int) ($metadata['indexed_source_nodes'] ?? -1)
@@ -300,6 +304,11 @@ final class OfflinePedestrianGraphCheckpoint
             'accepted_ways' => (int) ($metadata['accepted_ways'] ?? -1),
             'restricted_ways' => (int) ($metadata['restricted_ways'] ?? -1),
         ];
+        if (array_key_exists('restriction_inventory_complete', $metadata)) {
+            $counts['restriction_inventory_complete'] = ($metadata['restriction_inventory_complete'] ?? false) === true;
+            $counts['restriction_inventory_policy_version'] = (string) ($metadata['restriction_inventory_policy_version'] ?? '');
+            $counts['routing_complete'] = ($metadata['routing_complete'] ?? false) === true;
+        }
         if ($counts['graph_nodes'] < 1 || $counts['graph_edges'] < 1 || $counts['components'] < 1
             || $counts['graph_nodes'] !== (int) ($metadata['graph_nodes'] ?? -1)
             || $counts['graph_edges'] !== (int) ($metadata['graph_edges'] ?? -1)) {
@@ -331,6 +340,15 @@ final class OfflinePedestrianGraphCheckpoint
                 'SELECT relation_id, sequence_index, member_type, member_ref, role FROM source_restriction_members ORDER BY relation_id, sequence_index',
             ];
         $hash = hash_init('sha256');
+        if ($phase === 'reference_resolution') {
+            $metadata = $this->metadata($sqlite);
+            if (array_key_exists('restriction_inventory_policy_version', $metadata)) {
+                hash_update($hash, "POLICY\0".json_encode([
+                    'version' => $metadata['restriction_inventory_policy_version'],
+                    'complete' => $metadata['restriction_inventory_complete'] ?? false,
+                ], JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES)."\n");
+            }
+        }
         foreach ($queries as $index => $query) {
             hash_update($hash, "TABLE\0".$index."\0");
             foreach ($sqlite->query($query, PDO::FETCH_NUM) as $row) {

@@ -20,6 +20,38 @@ final class PedestrianRoutingTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_generic_importer_rejects_an_explicit_pedestrian_turn_restriction_before_writes(): void
+    {
+        $path = tempnam(sys_get_temp_dir(), 'synthetic-foot-restriction-');
+        if ($path === false) {
+            $this->fail('Could not create a temporary pedestrian restriction fixture.');
+        }
+        file_put_contents($path, json_encode(['elements' => [
+            ['type' => 'node', 'id' => 1, 'lat' => 10.3, 'lon' => 123.87, 'tags' => []],
+            ['type' => 'node', 'id' => 2, 'lat' => 10.3001, 'lon' => 123.87, 'tags' => []],
+            ['type' => 'way', 'id' => 100, 'nodes' => [1, 2], 'tags' => ['highway' => 'footway']],
+            ['type' => 'relation', 'id' => 500, 'tags' => ['type' => 'restriction', 'restriction:foot' => 'no_u_turn'], 'members' => [
+                ['type' => 'way', 'ref' => 100, 'role' => 'from'],
+                ['type' => 'node', 'ref' => 1, 'role' => 'via'],
+                ['type' => 'way', 'ref' => 100, 'role' => 'to'],
+            ]],
+        ]], JSON_THROW_ON_ERROR));
+
+        try {
+            try {
+                app(PedestrianNetworkImporter::class)->import($path, 'https://synthetic.invalid/foot-restriction.json');
+                $this->fail('A pedestrian-applicable turn restriction must block graph import.');
+            } catch (InvalidArgumentException $exception) {
+                $this->assertStringContainsString('pedestrian-applicable or mode-ambiguous turn restriction', $exception->getMessage());
+            }
+            $this->assertSame(0, DB::table('pedestrian_network_datasets')->count());
+            $this->assertSame(0, DB::table('pedestrian_network_nodes')->count());
+            $this->assertSame(0, DB::table('pedestrian_network_edges')->count());
+        } finally {
+            @unlink($path);
+        }
+    }
+
     public function test_synthetic_osm_graph_routes_on_network_and_keeps_disconnected_components_separate(): void
     {
         $path = $this->writeSyntheticExtract();

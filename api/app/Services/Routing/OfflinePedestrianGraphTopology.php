@@ -8,11 +8,18 @@ use RuntimeException;
 /** Disk-backed weak-component and deterministic-content checks for offline artifacts. */
 final class OfflinePedestrianGraphTopology
 {
-    public static function componentCount(PDO $sqlite): int
+    public static function componentCount(PDO $sqlite, bool $walkableOnly = false): int
+    {
+        return self::componentStats($sqlite, $walkableOnly)['components'];
+    }
+
+    /** @return array{components: int, largest_component_nodes: int} */
+    public static function componentStats(PDO $sqlite, bool $walkableOnly = false): array
     {
         $sqlite->exec('DROP TABLE IF EXISTS temp.validation_parent');
         $sqlite->exec('CREATE TEMP TABLE validation_parent (node_id INTEGER PRIMARY KEY, parent_id INTEGER NOT NULL, rank INTEGER NOT NULL)');
-        $sqlite->exec('INSERT INTO validation_parent (node_id, parent_id, rank) SELECT osm_node_id, osm_node_id, 0 FROM graph_nodes');
+        $nodeFilter = $walkableOnly ? ' WHERE walkable=1' : '';
+        $sqlite->exec('INSERT INTO validation_parent (node_id, parent_id, rank) SELECT osm_node_id, osm_node_id, 0 FROM graph_nodes'.$nodeFilter);
         $findParent = $sqlite->prepare('SELECT parent_id FROM validation_parent WHERE node_id = ?');
         $getRank = $sqlite->prepare('SELECT rank FROM validation_parent WHERE node_id = ?');
         $setParent = $sqlite->prepare('UPDATE validation_parent SET parent_id = ? WHERE node_id = ?');
@@ -60,7 +67,9 @@ final class OfflinePedestrianGraphTopology
             $compress->execute([$root($nodeId), $nodeId]);
         }
 
-        return (int) $sqlite->query('SELECT COUNT(*) FROM validation_parent WHERE parent_id = node_id')->fetchColumn();
+        $stats = $sqlite->query('SELECT COUNT(*), COALESCE(MAX(component_size), 0) FROM (SELECT COUNT(*) AS component_size FROM validation_parent GROUP BY parent_id)')->fetch(PDO::FETCH_NUM);
+
+        return ['components' => (int) ($stats[0] ?? 0), 'largest_component_nodes' => (int) ($stats[1] ?? 0)];
     }
 
     public static function contentHash(PDO $sqlite): string

@@ -49,6 +49,29 @@ final class OfflinePedestrianGraphImportTest extends TestCase
         }
     }
 
+    public function test_idempotent_reuse_rejects_existing_dataset_with_unsafe_turn_capabilities(): void
+    {
+        $files = $this->graphFixture();
+        try {
+            $importer = app(PedestrianNetworkImporter::class);
+            $importer->importOfflineSqlite($files['output'], $files['source'], DB::connection()->getDatabaseName());
+            $metadata = json_decode((string) DB::table('pedestrian_network_datasets')->value('metadata'), true, 32, JSON_THROW_ON_ERROR);
+            $metadata['routing_capabilities']['turn_restrictions_needed'] = true;
+            DB::table('pedestrian_network_datasets')->update(['metadata' => json_encode($metadata, JSON_THROW_ON_ERROR)]);
+
+            try {
+                $importer->importOfflineSqlite($files['output'], $files['source'], DB::connection()->getDatabaseName());
+                $this->fail('An existing dataset with unsafe turn capability metadata must not be reused.');
+            } catch (\RuntimeException $exception) {
+                $this->assertStringContainsString('safe inactive restriction-audit staging metadata', $exception->getMessage());
+            }
+
+            $this->assertSame(0, DB::table('pedestrian_network_datasets')->where('is_active', true)->count());
+        } finally {
+            $this->cleanup($files);
+        }
+    }
+
     public function test_failed_offline_database_batch_rolls_back_every_staged_row(): void
     {
         if (DB::connection()->getDriverName() !== 'sqlite') {
@@ -100,6 +123,37 @@ final class OfflinePedestrianGraphImportTest extends TestCase
                 $this->fail('An incomplete .building graph must be rejected by the offline importer.');
             } catch (\RuntimeException $exception) {
                 $this->assertStringContainsString('incomplete or uses an unsupported format', $exception->getMessage());
+            }
+            $this->assertSame(0, DB::table('pedestrian_network_datasets')->count());
+            $this->assertSame(0, DB::table('pedestrian_network_nodes')->count());
+            $this->assertSame(0, DB::table('pedestrian_network_edges')->count());
+        } finally {
+            $this->cleanup($files);
+        }
+    }
+
+    public function test_applicable_foot_turn_restriction_is_rejected_before_database_staging(): void
+    {
+        $files = $this->graphFixture();
+        $files['xml'] = $files['directory'].'/restricted.osm';
+        $files['output'] = $files['directory'].'/restricted.sqlite';
+        file_put_contents($files['xml'], '<?xml version="1.0"?><osm version="0.6" timestamp="2026-10-07T01:00:21Z">'
+            .'<node id="1" lat="10.3000" lon="123.8700"/><node id="2" lat="10.3001" lon="123.8700"/>'
+            .'<way id="100"><nd ref="1"/><nd ref="2"/><tag k="highway" v="footway"/></way>'
+            .'<relation id="501"><member type="way" ref="100" role="from"/><member type="node" ref="1" role="via"/><member type="way" ref="100" role="to"/><tag k="type" v="restriction"/><tag k="restriction:foot" v="no_u_turn"/></relation></osm>');
+        app(OfflinePedestrianGraphStager::class)->build($files['xml'], $files['output'], $files['source'], [
+            'url' => 'https://synthetic.invalid/central_visayas.osm.pbf',
+            'sha256' => hash_file('sha256', $files['source']),
+            'timestamp' => '2026-10-07T01:00:21Z',
+            'osmium_version' => '1.19.1',
+        ]);
+
+        try {
+            try {
+                app(PedestrianNetworkImporter::class)->importOfflineSqlite($files['output'], $files['source'], DB::connection()->getDatabaseName());
+                $this->fail('An unsupported explicit pedestrian restriction must not be staged.');
+            } catch (\InvalidArgumentException $exception) {
+                $this->assertStringContainsString('restriction inventory is incomplete', $exception->getMessage());
             }
             $this->assertSame(0, DB::table('pedestrian_network_datasets')->count());
             $this->assertSame(0, DB::table('pedestrian_network_nodes')->count());

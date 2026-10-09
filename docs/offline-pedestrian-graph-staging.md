@@ -87,14 +87,24 @@ coverage boundary retains its outside references, but only consecutive
 in-scope, walkable node pairs become edges; no replacement edge is drawn at the
 boundary.
 
-Turn-restriction relations are stored with their tags and ordered member
-dependencies. The current graph schema and router do not enforce turn
-restrictions, nested relation semantics, or conditional restrictions. If any
-pedestrian-relevant turn restriction exists in the source, validation returns
-`WARN`, sets `routing_ready=false`, and the importer rejects the graph. A
-structurally complete graph with that warning is not routing-ready. Component
-counts are weak connectivity only; they do not prove that every directed
-journey is routable.
+Turn-restriction relations are classified by mode before they affect walking
+readiness. OSM's generic `type=restriction` turn rules do not apply to
+pedestrians unless the relation uses the foot-specific restriction form;
+`except=foot` is also recorded as an explicit exemption. A generic vehicle
+conditional remains vehicle-only. Foot/pedestrian conditionals, unknown mode
+keys, or conflicting mode/exemption tags block routing because schedules and
+turn transitions are not evaluated. Via-node, via-way, nested, and malformed
+member shapes are reported independently from mode applicability.
+
+New source passes retain every relation with a restriction tag and checkpoint
+the inventory-policy version. The Batch030 v3 artifact predates that complete
+capture policy, so validation requires its source-scan audit sidecar before it
+can be considered routing-ready. Its source-bound report is in
+`docs/reports/batch031-cebu-restriction-audit.json`; the sidecar travels beside
+the SQLite graph. The v3 artifact itself is unchanged. If a future source has
+an applicable or ambiguous pedestrian restriction, the importer rejects it;
+the node-based router does not claim to enforce relation transitions. Weak
+component counts still do not prove that every directed journey is routable.
 
 ## Termux setup and source verification
 
@@ -194,12 +204,25 @@ a new output path.
 ## Validate and transfer an artifact
 
 An artifact is valid only when the independent command reports
-`artifact_ready=yes`. `WARN` means the SQLite and source provenance checks
-passed but restriction limitations make the graph unsafe for routing import.
+`artifact_ready=yes`. `WARN` means structural checks passed but restriction
+inventory or semantics still block routing import.
+
+For the legacy Batch030 v3 file, create its artifact-adjacent sidecar once if
+it is missing, using the committed source-scan evidence. The output path must
+be new; keep the committed report as the reviewed evidence and write any
+regenerated report under the cache:
 
 ```sh
-php artisan biyahe:pedestrian:validate-offline "$OUTPUT" --source-path="$PBF"
-sha256sum "$OUTPUT"
+php artisan biyahe:pedestrian:audit-restrictions \
+  --graph="$HOME/.cache/biyahe/batch030/cebu-walk-central-visayas-20261007-v3.sqlite" \
+  --source-path="$PBF" \
+  --source-scan-evidence=../docs/reports/batch031-cebu-restriction-source-scan.json \
+  --output="$HOME/.cache/biyahe/batch030/cebu-restriction-audit-generated.json" \
+  --sidecar="$HOME/.cache/biyahe/batch030/cebu-walk-central-visayas-20261007-v3.sqlite.restriction-audit.json"
+php artisan biyahe:pedestrian:validate-offline \
+  "$HOME/.cache/biyahe/batch030/cebu-walk-central-visayas-20261007-v3.sqlite" \
+  --source-path="$PBF"
+sha256sum "$HOME/.cache/biyahe/batch030/cebu-walk-central-visayas-20261007-v3.sqlite"
 ```
 
 The SQLite file uses the v3 schema, ordinary SQLite tables, WGS84 numeric

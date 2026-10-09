@@ -10,8 +10,8 @@ use RuntimeException;
 /** Validates offline artifacts before anyone offers them to a database importer. */
 final class OfflinePedestrianGraphValidator
 {
-    /** @return array<string, int|string|bool> */
-    public function validate(string $path, string $sourcePath, ?string $expectedSha256 = null): array
+    /** @return array<string, mixed> */
+    public function validate(string $path, string $sourcePath, ?string $expectedSha256 = null, ?string $restrictionAuditPath = null): array
     {
         if (! is_file($path) || ! is_readable($path) || ! is_file($sourcePath) || ! is_readable($sourcePath)) {
             throw new InvalidArgumentException('Offline graph and its local source PBF must both be readable files.');
@@ -120,7 +120,9 @@ final class OfflinePedestrianGraphValidator
         }
         $invalidNodes = $sqlite->prepare('SELECT COUNT(*) FROM graph_nodes WHERE latitude < -90 OR latitude > 90 OR longitude < -180 OR longitude > 180 OR in_scope <> 1 OR latitude < ? OR latitude > ? OR longitude < ? OR longitude > ?');
         $invalidNodes->execute([(float) $scope['min_latitude'], (float) $scope['max_latitude'], (float) $scope['min_longitude'], (float) $scope['max_longitude']]);
-        if ((int) $invalidNodes->fetchColumn() !== 0) {
+        $invalidNodeCount = (int) $invalidNodes->fetchColumn();
+        $invalidNodes->closeCursor();
+        if ($invalidNodeCount !== 0) {
             throw new RuntimeException('Offline graph has invalid or out-of-scope node coordinates.');
         }
 
@@ -141,6 +143,7 @@ final class OfflinePedestrianGraphValidator
             $segment = (int) $edge['segment_index'];
             $references->execute([(int) $edge['osm_way_id'], $segment, $segment + 1]);
             $ordered = array_map('intval', $references->fetchAll(PDO::FETCH_COLUMN));
+            $references->closeCursor();
             if (count($ordered) !== 2) {
                 throw new RuntimeException('Offline graph edge does not match its source way references.');
             }
@@ -157,20 +160,37 @@ final class OfflinePedestrianGraphValidator
                 throw new RuntimeException('Offline graph geometry does not match its edge endpoints in EPSG:4326.');
             }
         }
+        $edgeRows->closeCursor();
 
         $components = OfflinePedestrianGraphTopology::componentCount($sqlite);
         if ($components !== (int) ($metadata['component_count'] ?? -1)) {
             throw new RuntimeException('Offline graph connected-component count does not match its checkpoint.');
         }
-        if (! hash_equals((string) ($metadata['graph_content_sha256'] ?? ''), OfflinePedestrianGraphTopology::contentHash($sqlite))) {
+        $graphFingerprint = OfflinePedestrianGraphTopology::contentHash($sqlite);
+        if (! hash_equals((string) ($metadata['graph_content_sha256'] ?? ''), $graphFingerprint)) {
             throw new RuntimeException('Offline graph content fingerprint does not match its rows.');
         }
 
-        $routingReady = (bool) ($metadata['routing_complete'] ?? false)
-            && (int) ($metadata['relation_restrictions'] ?? 0) === 0;
-        if ((bool) ($metadata['routing_complete'] ?? false) !== ((int) ($metadata['relation_restrictions'] ?? 0) === 0)) {
-            throw new RuntimeException('Offline graph routing completeness marker conflicts with source restriction relations.');
+        $restrictionAudit = (new OfflinePedestrianRestrictionPolicy)->audit($sqlite);
+        if ((int) $restrictionAudit['counts']['total'] !== (int) ($metadata['relation_restrictions'] ?? -1)) {
+            throw new RuntimeException('Offline restriction audit count does not match the source phase checkpoint.');
         }
+        $auditPath = $restrictionAuditPath ?? $path.'.restriction-audit.json';
+        $restrictionInventory = (new OfflinePedestrianRestrictionAudit)->verify($sqlite, $metadata, $restrictionAudit, $auditPath);
+        $unsupportedApplicable = (int) $restrictionAudit['counts']['unsupported_applicable'];
+        $ambiguousRestrictions = (int) $restrictionAudit['counts']['ambiguous'];
+        $routingReady = $restrictionInventory['complete'] && $unsupportedApplicable === 0 && $ambiguousRestrictions === 0;
+        if (($metadata['restriction_inventory_complete'] ?? false) === true
+            && ($metadata['restriction_inventory_policy_version'] ?? null) === OfflinePedestrianRestrictionAudit::INVENTORY_VERSION
+            && (($metadata['routing_complete'] ?? false) !== $routingReady)) {
+            throw new RuntimeException('Offline routing capability metadata conflicts with the verified pedestrian restriction classification.');
+        }
+        $routingReason = $routingReady
+            ? 'The complete source restriction inventory contains no pedestrian-applicable or mode-ambiguous turn restrictions; generic vehicle restrictions do not constrain walking.'
+            : ($unsupportedApplicable > 0 || $ambiguousRestrictions > 0
+                ? 'Pedestrian-applicable or ambiguous turn restrictions are present and are not enforced by the node-based router.'
+                : $restrictionInventory['reason']);
+        $qualityReview = (new OfflinePedestrianGraphQualityAudit)->audit($sqlite, $scope);
 
         return [
             'status' => $routingReady ? 'PASS' : 'WARN',
@@ -181,6 +201,25 @@ final class OfflinePedestrianGraphValidator
             'edges' => $edges,
             'components' => $components,
             'relation_restrictions' => (int) ($metadata['relation_restrictions'] ?? 0),
+            'restriction_counts' => $restrictionAudit['counts'],
+            'restriction_inventory_complete' => $restrictionInventory['complete'],
+            'restriction_inventory_status' => $restrictionInventory['status'],
+            'restriction_inventory_reason' => $restrictionInventory['reason'],
+            'restriction_source_relation_count' => $restrictionInventory['source_relation_count'],
+            'restriction_source_omitted_count' => $restrictionInventory['omitted_relation_count'],
+            'unsupported_applicable_restrictions' => $unsupportedApplicable,
+            'ambiguous_restrictions' => $ambiguousRestrictions,
+            'routing_ready_reason' => $routingReason,
+            'routing_capabilities' => [
+                'complete_restriction_inventory' => $restrictionInventory['complete'],
+                'turn_restrictions_needed' => $unsupportedApplicable > 0 || $ambiguousRestrictions > 0,
+                'routing_ready' => $routingReady,
+                'state_aware_search' => false,
+                'via_node_enforced' => false,
+                'via_way_enforced' => false,
+                'conditional_turn_restrictions_evaluated' => false,
+            ],
+            'quality_review' => $qualityReview,
         ];
     }
 
