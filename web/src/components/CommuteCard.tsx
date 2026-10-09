@@ -6,6 +6,7 @@ import DisruptionNotice from "@/components/DisruptionNotice";
 import {
   buildShareText,
   generateCommuteInstructions,
+  walkingEvidenceLabels,
   type CommuteInstruction,
   type CommuteInstructionType,
 } from "@/lib/commuteInstructions";
@@ -16,6 +17,7 @@ type CommuteCardProps = {
   journey: Journey;
   variant?: "compact" | "detail" | "saved";
   recommended?: boolean;
+  selected?: boolean;
   offlineSnapshot?: boolean;
   savedAt?: string | null;
   isSaved?: boolean;
@@ -49,11 +51,6 @@ function trustLabel(state: Journey["trust"]["state"]): string {
   }
 }
 
-function walkingLabel(meters: number): string {
-  if (!Number.isFinite(meters) || meters <= 0) return "Walking distance unavailable";
-  return meters >= 1000 ? `${(meters / 1000).toFixed(1)} km walking` : `${Math.round(meters)} m walking`;
-}
-
 async function copyText(value: string): Promise<void> {
   if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
     await navigator.clipboard.writeText(value);
@@ -76,6 +73,7 @@ export default function CommuteCard({
   journey,
   variant = "detail",
   recommended = false,
+  selected = false,
   offlineSnapshot = false,
   savedAt = null,
   isSaved = false,
@@ -92,6 +90,11 @@ export default function CommuteCard({
   const compact = variant === "compact";
   const savedAge = savedAt ? savedSnapshotAgeLabel(savedAt) : null;
   const rideInstructions = model.instructions.filter((instruction) => instruction.type === "RIDE");
+  const compactRideRows = rideInstructions.map((ride) => ({
+    ride,
+    board: model.instructions.find((instruction) => instruction.legIndex === ride.legIndex && (instruction.type === "BOARD" || instruction.type === "TRANSFER_BOARD")),
+    alight: model.instructions.find((instruction) => instruction.legIndex === ride.legIndex && instruction.type === "ALIGHT"),
+  }));
   const routeCodes = Array.from(new Set(rideInstructions.map((instruction) => instruction.routeCode).filter((code): code is string => Boolean(code))));
 
   async function share() {
@@ -122,7 +125,7 @@ export default function CommuteCard({
   }
 
   return (
-    <article className={`${styles.commuteCard} ${compact ? styles.commuteCardCompact : ""}`} aria-label={`${model.originName} to ${model.destinationName} journey`}>
+    <article className={`${styles.commuteCard} ${compact ? styles.commuteCardCompact : ""}`} aria-label={`${model.originName} to ${model.destinationName} journey`} aria-current={selected ? "true" : undefined}>
       <div className={styles.journeyCardHeader}>
         <div>
           <p className={styles.cardKicker}>{recommended ? "RECOMMENDED" : variant === "saved" ? "SAVED SNAPSHOT" : "COMMUTE CARD"}</p>
@@ -134,12 +137,22 @@ export default function CommuteCard({
       <div className={styles.commuteSummary} aria-label="Journey summary">
         <span>{model.summary.rides} ride{model.summary.rides === 1 ? "" : "s"}</span>
         <span>{model.summary.transfers} transfer{model.summary.transfers === 1 ? "" : "s"}</span>
-        <span>{walkingLabel(model.summary.walkingDistanceMeters)}</span>
+        {walkingEvidenceLabels(model.summary.walkingEvidence).map((label, index) => <span key={`${index}-${label}`} data-walking-evidence>{label}</span>)}
         <span>{model.summary.fare}</span>
       </div>
-      {routeCodes.length > 0 && <div className={styles.routePills} aria-label="Routes used"><strong>Ride:</strong>{routeCodes.map((code) => <span key={code}>{code}</span>)}</div>}
+      {!compact && routeCodes.length > 0 && <div className={styles.routePills} aria-label="Routes used"><strong>Ride:</strong>{routeCodes.map((code) => <span key={code}>{code}</span>)}</div>}
       {journey.ranking.reasons.length > 0 && <p className={styles.rankingReasons}><strong>Why this option:</strong> {journey.ranking.reasons.slice(0, 2).join(" · ")}</p>}
-      {model.summary.walkingDistanceHasFallback && <p className={styles.warning}>Walking includes an estimate; Biyahe is not claiming a mapped street path for every walking leg.</p>}
+      {model.summary.walkingDistanceHasFallback && <p className={styles.warning}>Walking evidence varies by leg. Estimates, approximate access, and missing route lines are labeled separately.</p>}
+      {compact && compactRideRows.length > 0 && <ol className={styles.compactRideList} aria-label="Ride and stop sequence">
+        {compactRideRows.map(({ ride, board, alight }) => (
+          <li key={ride.id}>
+            <strong>{ride.routeCode ?? "Mapped route"}{ride.direction ? ` · toward ${ride.direction}` : " · direction unavailable"}</strong>
+            <span><b>Board near:</b> {board?.locationName ?? "Location not recorded"}{board?.precision === "EXACT_BOARDING_POINT" ? " · mapped point; confirm local conditions" : " · exact point not verified"}</span>
+            <span><b>Get off near:</b> {alight?.locationName ?? "Area not recorded"} · exact side not verified</span>
+          </li>
+        ))}
+      </ol>}
+      {compact && journey.transfer_count > 0 && <p className={styles.transferCaution}>Mapped transfer connections do not confirm a safe physical interchange.</p>}
       {offlineSnapshot && (
         <p className={styles.snapshotNote}>
           Offline saved snapshot{savedAge ? ` · ${savedAge}` : ""}. Route and service details may have changed.
@@ -149,7 +162,7 @@ export default function CommuteCard({
         <DisruptionNotice key={impact.advisory.stable_id} impact={impact} staleSnapshot={offlineSnapshot} />
       ))}
 
-      <ol className={styles.instructionList}>
+      {!compact && <ol className={styles.instructionList}>
         {model.instructions.map((instruction) => {
           const legDisruptions = (journey.disruptions ?? []).filter((impact) => {
             if (impact.affected_leg_index === instruction.legIndex) return true;
@@ -184,7 +197,7 @@ export default function CommuteCard({
             </li>
           );
         })}
-      </ol>
+      </ol>}
 
       {model.warnings.map((warning) => <p className={styles.warning} key={warning}>{warning}</p>)}
       <p className={styles.commuteTrustNote}>{model.summary.trust}</p>
@@ -196,8 +209,8 @@ export default function CommuteCard({
         {onRefresh && <button type="button" onClick={onRefresh} className={styles.secondaryButton}>Refresh journey online</button>}
         {onReplan && <button type="button" onClick={onReplan} className={styles.secondaryButton}>Find another way</button>}
         {onRemove && <button type="button" onClick={onRemove} className={styles.secondaryButton}>Remove saved</button>}
-        <button type="button" onClick={share} className={styles.secondaryButton}>Share</button>
-        <button type="button" onClick={copy} className={styles.secondaryButton}>Copy</button>
+        {!compact && <button type="button" onClick={share} className={styles.secondaryButton}>Share</button>}
+        {!compact && <button type="button" onClick={copy} className={styles.secondaryButton}>Copy</button>}
       </div>
       {isSaved && !onRemove && <p className={styles.savedState}>Saved on this device.</p>}
       {shareStatus && <p className={styles.status} role="status">{shareStatus}</p>}

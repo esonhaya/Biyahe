@@ -19,6 +19,7 @@ import type { RideModeMapOverlay } from "@/lib/rideMode";
 import { RequestGate, type RequestTicket } from "@/lib/requestGate";
 import { LatestPlaceSearch } from "@/lib/latestPlaceSearch";
 import { moveSuggestionSelection, selectedSuggestionIndex } from "@/lib/searchKeyboard";
+import { journeyGeometryDisclosure } from "@/lib/journeyMapPresentation";
 import { loadRecentCommutes, persistRecentCommutes, recordRecentCommute } from "@/lib/commuterTools";
 import {
   loadSavedJourneys,
@@ -84,7 +85,7 @@ function SearchField({ id, label, value, selectedPlace, onChange, options, onPic
           value={value}
           onChange={(event) => { onChange(event.target.value); setActiveIndex(0); }}
           onKeyDown={handleKeyDown}
-          placeholder={label === "To" ? "Where are you going?" : "Starting place (optional)"}
+          placeholder={label === "From" ? "Your starting place" : "Where are you going?"}
           autoComplete="off"
           role="combobox"
           aria-autocomplete="list"
@@ -221,18 +222,20 @@ function canIRideReasonLabel(reasonCode: string): string {
   }
 }
 
-function JourneyCard({ journey, recommended, onSelect, onInstructionFocus }: {
+function JourneyCard({ journey, recommended, selected, onSelect, onInstructionFocus }: {
   journey: Journey;
   recommended: boolean;
+  selected: boolean;
   onSelect: () => void;
   onInstructionFocus: (instruction: CommuteInstruction) => void;
 }) {
   return (
-    <div className={`${styles.journeyCard} ${recommended ? styles.recommended : ""}`}>
+    <div className={`${styles.journeyCard} ${recommended ? styles.recommended : ""} ${selected ? styles.journeyCardSelected : ""}`}>
       <CommuteCard
         journey={journey}
         variant="compact"
         recommended={recommended}
+        selected={selected}
         onSelect={onSelect}
         onInstructionFocus={onInstructionFocus}
       />
@@ -929,6 +932,7 @@ export default function Home() {
     const query = routeQuery.trim().toLowerCase();
     return !query || route.code.toLowerCase().includes(query) || route.name.toLowerCase().includes(query);
   });
+  const selectedGeometryDisclosure = selectedJourney ? journeyGeometryDisclosure(selectedJourney) : null;
 
   return (
     <main className={styles.page}>
@@ -955,9 +959,9 @@ export default function Home() {
         </div>
         <form className={styles.searchCard} id="planning" onSubmit={(event) => { event.preventDefault(); void findRoute(); }}>
           <div className={styles.searchInputsRow}>
-            <SearchField id="destination-search" label="To" value={destinationText} selectedPlace={destination} onChange={changeDestination} options={destinationOptions} onPick={chooseDestination} onClear={clearDestination} onSubmit={() => { void findRoute(); }} onRetrySearch={retryDestinationSearch} loading={destinationSearching} searchError={destinationSearchError} />
-            <button type="button" className={styles.swapButton} onClick={swapPlaces} disabled={!origin && !destination} aria-label="Swap origin and destination">⇄</button>
             <SearchField id="origin-search" label="From" value={originText} selectedPlace={origin} onChange={changeOrigin} options={originOptions} onPick={chooseOrigin} onClear={clearOrigin} onSubmit={() => { void findRoute(); }} onRetrySearch={retryOriginSearch} loading={originSearching} searchError={originSearchError} />
+            <button type="button" className={styles.swapButton} onClick={swapPlaces} disabled={!origin && !destination} aria-label="Swap origin and destination">⇄</button>
+            <SearchField id="destination-search" label="To" value={destinationText} selectedPlace={destination} onChange={changeDestination} options={destinationOptions} onPick={chooseDestination} onClear={clearDestination} onSubmit={() => { void findRoute(); }} onRetrySearch={retryDestinationSearch} loading={destinationSearching} searchError={destinationSearchError} />
           </div>
           <div className={styles.searchFormActions}>
             <button className={styles.primaryButton} type="submit" disabled={loadingJourney || loadingNetwork || !online}>
@@ -994,7 +998,7 @@ export default function Home() {
           <div className={styles.compareBar} role="group" aria-label="Filter journey options">
             <span>Compare by rides</span>
             {(["ALL", "DIRECT", "ONE_TRANSFER", "TWO_TRANSFER"] as const).map((filter) => (
-              <button key={filter} type="button" className={journeyFilter === filter ? styles.compareActive : styles.secondaryButton} onClick={() => setJourneyFilter(filter)}>
+              <button key={filter} type="button" aria-pressed={journeyFilter === filter} className={journeyFilter === filter ? styles.compareActive : styles.secondaryButton} onClick={() => setJourneyFilter(filter)}>
                 {filter === "ALL" ? "All" : filter === "DIRECT" ? "Direct" : filter === "ONE_TRANSFER" ? "1 transfer" : "2 transfers"}
               </button>
             ))}
@@ -1010,6 +1014,7 @@ export default function Home() {
               key={journey.id}
               journey={journey}
               recommended={index === 0}
+              selected={selectedJourney?.id === journey.id}
               onSelect={() => selectJourney(journey)}
               onInstructionFocus={(instruction) => focusInstructionOnMap(journey, instruction)}
             />)}
@@ -1135,14 +1140,17 @@ export default function Home() {
 
       <section className={styles.exploration} id="map" aria-labelledby="map-heading">
         <div className={styles.sectionHeading}>
-          <div><p className={styles.eyebrow}>Journey map</p><h2 id="map-heading">See the boarding points</h2></div>
+          <div><p className={styles.eyebrow}>Journey map</p><h2 id="map-heading">See locations and available paths</h2></div>
         </div>
         <p className={styles.sectionCopy}>Transit and computed pedestrian paths are shown separately. If a walking path is unavailable, Biyahe labels straight-line estimates and does not draw a street route.</p>
-        <div className={styles.mapTextAlternative} role="note"><strong>Map reading guide:</strong> the text instructions below are the accessible alternative. A pin marked as a boarding area is not an exact waiting point unless the data says so.</div>
+        <div className={styles.mapTextAlternative} role="note"><strong>Map reading guide:</strong> text steps are the accessible alternative. Boarding-area pins are not exact waiting points, transfer markers do not verify a safe interchange, and estimate-only walking legs have no route line.</div>
         <div className={styles.mapPanel}>
           <MapView places={places} stops={stops} journey={selectedJourney} selectedPattern={selectedPattern} disruptions={activeAdvisories} onDisruptionSelect={setSelectedDisruption} onStopSelect={setSelectedStop} rideMode={rideMapState} instructionFocus={instructionFocus} />
-          <div className={styles.mapLegend}><span><i className={styles.placeDot} /> places</span><span><i className={styles.stopDot} /> stops</span><span><i className={styles.routeDot} /> transit route</span><span><i className={styles.walkingDot} /> walking path</span><span><i className={styles.transferDot} /> transfer</span></div>
+        <div className={styles.mapLegend}><span><i className={styles.placeDot} /> places</span><span><i className={styles.stopDot} /> stops</span><span><i className={styles.routeDot} /> transit route</span><span><i className={styles.walkingDot} /> mapped walking path</span><span><i className={styles.transferDot} /> transfer · unverified</span></div>
         </div>
+        {selectedGeometryDisclosure && selectedGeometryDisclosure.rideLegsWithoutGeometry > 0 && <p className={styles.mapTextAlternative} role="status">Transit line geometry is unavailable for {selectedGeometryDisclosure.rideLegsWithoutGeometry} ride leg{selectedGeometryDisclosure.rideLegsWithoutGeometry === 1 ? "" : "s"}; no line is drawn for {selectedGeometryDisclosure.rideLegsWithoutGeometry === 1 ? "that leg" : "those legs"}.</p>}
+        {selectedGeometryDisclosure && selectedGeometryDisclosure.mappedWalkingLegsWithoutGeometry > 0 && <p className={styles.mapTextAlternative} role="status">A mapped walking distance is available for {selectedGeometryDisclosure.mappedWalkingLegsWithoutGeometry} leg{selectedGeometryDisclosure.mappedWalkingLegsWithoutGeometry === 1 ? "" : "s"}, but its route line is missing and is not drawn.</p>}
+        {selectedGeometryDisclosure && selectedGeometryDisclosure.estimateOnlyWalkingLegs > 0 && <p className={styles.mapTextAlternative} role="status">{selectedGeometryDisclosure.estimateOnlyWalkingLegs} walking leg{selectedGeometryDisclosure.estimateOnlyWalkingLegs === 1 ? " has" : "s have"} no mapped pedestrian path; any distance estimate stays separate and no walking route line is drawn.</p>}
         {selectedDisruption && <DisruptionNotice advisory={selectedDisruption} onSelect={() => setSelectedDisruption(null)} />}
         <p className={styles.mapAttribution}>Computed pedestrian paths follow mapped OpenStreetMap ways (© OpenStreetMap contributors); they do not verify transit boarding or current ground conditions.</p>
         {selectedStop && (

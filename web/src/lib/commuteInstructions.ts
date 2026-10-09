@@ -51,8 +51,17 @@ export type CommuteInstruction = {
 export type CommuteJourneySummary = {
   rides: number;
   transfers: number;
+  /** Legacy aggregate retained for local consumers; UI should use walkingEvidence. */
   walkingDistanceMeters: number;
   walkingDistanceHasFallback: boolean;
+  walkingEvidence: {
+    hasWalkingLeg: boolean;
+    networkDistanceMeters: number;
+    approximateConnectorDistanceMeters: number;
+    straightLineEstimateMeters: number;
+    unavailableLegs: number;
+    geometryUnavailableLegs: number;
+  };
   routeCodes: string[];
   fare: string;
   trust: string;
@@ -166,47 +175,101 @@ function walkingDetail(leg: JourneyLeg): { detail: string; uncertainty: string |
 
   const distance = distanceLabel(leg.distance_meters);
   const duration = durationLabel(leg.estimated_duration_seconds);
-  const distancePhrase = distance ? `Walk about ${distance}` : "Follow the mapped walking leg";
+  const distancePhrase = distance
+    ? `Walk about ${distance}`
+    : leg.geometry ? "Follow the mapped walking path" : "Walking distance unavailable";
 
   if (leg.distance_type === "PEDESTRIAN_NETWORK") {
+    if (!leg.geometry) {
+      return {
+        detail: distance
+          ? `${distancePhrase} on the mapped pedestrian network, but its route line is unavailable and is not drawn.`
+          : "The mapped path line and walking distance are unavailable, so no route line is drawn.",
+        uncertainty: distance
+          ? "The graph distance is available, but route geometry is missing."
+          : "The response has no walking distance or route geometry to display.",
+      };
+    }
     return {
-      detail: `${distancePhrase} on the mapped pedestrian path${duration ? ` · ${duration}` : ""}.`,
+      detail: `${distance ? `${distancePhrase} on the mapped pedestrian path` : distancePhrase}${duration ? ` · ${duration}` : ""}.`,
       uncertainty: null,
     };
   }
 
   if (leg.distance_type === "PEDESTRIAN_NETWORK_WITH_APPROXIMATE_CONNECTORS") {
+    if (!leg.geometry) {
+      return {
+        detail: distance
+          ? `${distancePhrase} includes approximate endpoint access, but its route line is unavailable and is not drawn.`
+          : "The mapped path line and walking distance are unavailable; endpoint access would be approximate.",
+        uncertainty: distance
+          ? "The graph distance includes approximate access and route geometry is missing."
+          : "Endpoint access is approximate, and the response has no walking distance or route geometry to display.",
+      };
+    }
     return {
-      detail: `${distancePhrase} on the mapped pedestrian path${duration ? ` · ${duration}` : ""}.`,
+      detail: `${distance ? `${distancePhrase} on the mapped pedestrian path` : distancePhrase}${duration ? ` · ${duration}` : ""}.`,
       uncertainty: "The connection at one or both endpoints is approximate.",
     };
   }
 
+  const fallbackDistance = distance
+    ? `${distancePhrase} is a straight-line estimate`
+    : "No walking distance estimate is available";
+  const fallbackUncertainty = distance
+    ? "Walking path unavailable — the distance shown is an estimate."
+    : "Walking path and distance estimate unavailable.";
+
   if (leg.access_classification === "GRAPH_COVERAGE_GAP") {
     return {
-      detail: `${distancePhrase} is a straight-line estimate; walking access could not be confirmed from available map data.`,
-      uncertainty: "Walking path unavailable — distance shown is an estimate.",
+      detail: `${fallbackDistance}; walking access could not be confirmed from available map data.`,
+      uncertainty: fallbackUncertainty,
     };
   }
 
   if (leg.access_classification === "NO_WALKABLE_ACCESS") {
     return {
-      detail: `${distancePhrase} is a straight-line estimate; mapped access is unresolved.`,
-      uncertainty: "Walking path unavailable — distance shown is an estimate.",
+      detail: `${fallbackDistance}; mapped access is unresolved.`,
+      uncertainty: fallbackUncertainty,
     };
   }
 
   if (leg.access_classification === "ROUTING_UNAVAILABLE" || leg.routing_status === "NO_ROUTE") {
     return {
-      detail: `${distancePhrase} is a straight-line estimate; a pedestrian path is not available right now.`,
-      uncertainty: "Walking path unavailable — distance shown is an estimate.",
+      detail: `${fallbackDistance}; a pedestrian path is not available right now.`,
+      uncertainty: fallbackUncertainty,
     };
   }
 
   return {
-    detail: `${distancePhrase} is an estimate; no pedestrian route is shown.`,
-    uncertainty: "Walking path unavailable — distance shown is an estimate.",
+    detail: `${fallbackDistance}; no pedestrian route is shown.`,
+    uncertainty: fallbackUncertainty,
   };
+}
+
+function summaryDistanceLabel(meters: number): string {
+  return meters >= 1000 ? `${(meters / 1000).toFixed(1)} km` : `${Math.round(meters)} m`;
+}
+
+export function walkingEvidenceLabels(evidence: CommuteJourneySummary["walkingEvidence"]): string[] {
+  const labels: string[] = [];
+  if (!evidence.hasWalkingLeg) return ["No separate walking leg"];
+  if (evidence.networkDistanceMeters > 0) {
+    labels.push(`Mapped path · ${summaryDistanceLabel(evidence.networkDistanceMeters)}`);
+  }
+  if (evidence.approximateConnectorDistanceMeters > 0) {
+    labels.push(`Mapped path + approximate access · ${summaryDistanceLabel(evidence.approximateConnectorDistanceMeters)}`);
+  }
+  if (evidence.straightLineEstimateMeters > 0) {
+    labels.push(`Straight-line estimate only · ${summaryDistanceLabel(evidence.straightLineEstimateMeters)}`);
+  }
+  if (evidence.unavailableLegs > 0) {
+    labels.push(`${evidence.unavailableLegs} walking leg${evidence.unavailableLegs === 1 ? "" : "s"} without a route distance`);
+  }
+  if (evidence.geometryUnavailableLegs > 0) {
+    labels.push(`${evidence.geometryUnavailableLegs} mapped path line${evidence.geometryUnavailableLegs === 1 ? "" : "s"} unavailable`);
+  }
+  return labels.length > 0 ? labels : ["Walking distance unavailable"];
 }
 
 function commonInstructionFields(leg: JourneyLeg, index: number, type: CommuteInstructionType): Pick<CommuteInstruction, "legIndex" | "distanceMeters" | "distanceType" | "estimatedDurationSeconds" | "routeCode" | "routeName" | "direction" | "trust" | "warnings" | "geometry"> {
@@ -323,31 +386,56 @@ export function generateCommuteInstructions(journey: Journey): CommuteJourneyMod
   const instructions: CommuteInstruction[] = [];
   const routeCodes: string[] = [];
   let walkingDistanceMeters = 0;
-  let walkingDistanceHasFallback = false;
+  const walkingEvidence = {
+    hasWalkingLeg: false,
+    networkDistanceMeters: 0,
+    approximateConnectorDistanceMeters: 0,
+    straightLineEstimateMeters: 0,
+    unavailableLegs: 0,
+    geometryUnavailableLegs: 0,
+  };
   let rides = 0;
+
+  function collectWalkingEvidence(leg: JourneyLeg) {
+    if (leg.distance_type === "NOT_REQUIRED") return;
+    walkingEvidence.hasWalkingLeg = true;
+    const distance = leg.distance_meters;
+    if (distance === null || !Number.isFinite(distance) || distance <= 0 || leg.distance_type === "UNAVAILABLE") {
+      walkingEvidence.unavailableLegs += 1;
+      return;
+    }
+
+    walkingDistanceMeters += distance;
+    if (leg.distance_type === "PEDESTRIAN_NETWORK") {
+      walkingEvidence.networkDistanceMeters += distance;
+      if (!leg.geometry) walkingEvidence.geometryUnavailableLegs += 1;
+    } else if (leg.distance_type === "PEDESTRIAN_NETWORK_WITH_APPROXIMATE_CONNECTORS") {
+      walkingEvidence.approximateConnectorDistanceMeters += distance;
+      if (!leg.geometry) walkingEvidence.geometryUnavailableLegs += 1;
+    } else {
+      walkingEvidence.straightLineEstimateMeters += distance;
+    }
+  }
 
   journey.legs.forEach((leg, index) => {
     if (leg.type === "WALK_ACCESS") {
       const instruction = makeWalkInstruction(journey, leg, index, "ACCESS_WALK");
       instructions.push(instruction);
-      if (leg.distance_meters !== null && leg.distance_type !== "NOT_REQUIRED") walkingDistanceMeters += Math.max(0, leg.distance_meters);
-      if (leg.distance_type !== "NOT_REQUIRED" && !WALKING_NETWORK_TYPES.has(leg.distance_type ?? "")) walkingDistanceHasFallback = true;
+      collectWalkingEvidence(leg);
       return;
     }
 
     if (leg.type === "TRANSFER_WALK") {
       const instruction = makeWalkInstruction(journey, leg, index, "TRANSFER_WALK");
       instructions.push(instruction);
-      if (leg.distance_meters !== null && leg.distance_type !== "NOT_REQUIRED") walkingDistanceMeters += Math.max(0, leg.distance_meters);
-      if (leg.distance_type !== "NOT_REQUIRED" && !WALKING_NETWORK_TYPES.has(leg.distance_type ?? "")) walkingDistanceHasFallback = true;
+      collectWalkingEvidence(leg);
       return;
     }
 
     if (leg.type === "WALK_EGRESS") {
       const instruction = makeWalkInstruction(journey, leg, index, "FINAL_WALK");
       instructions.push(instruction);
-      if (leg.distance_meters !== null && leg.distance_type !== "NOT_REQUIRED") walkingDistanceMeters += Math.max(0, leg.distance_meters);
-      if (leg.distance_type !== "NOT_REQUIRED" && !WALKING_NETWORK_TYPES.has(leg.distance_type ?? "")) walkingDistanceHasFallback = true;
+      collectWalkingEvidence(leg);
       return;
     }
 
@@ -395,7 +483,11 @@ export function generateCommuteInstructions(journey: Journey): CommuteJourneyMod
       rides,
       transfers: journey.transfer_count,
       walkingDistanceMeters,
-      walkingDistanceHasFallback,
+      walkingDistanceHasFallback: walkingEvidence.approximateConnectorDistanceMeters > 0
+        || walkingEvidence.straightLineEstimateMeters > 0
+        || walkingEvidence.unavailableLegs > 0
+        || walkingEvidence.geometryUnavailableLegs > 0,
+      walkingEvidence,
       routeCodes,
       fare: fareLabel(journey),
       trust: trustGuidance(journey.trust.state) ?? "Route details are supported by the current journey data.",

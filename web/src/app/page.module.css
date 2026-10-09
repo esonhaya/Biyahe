@@ -36,11 +36,18 @@
 .journeyGrid { display: grid; gap: 14px; margin-top: 18px; }
 .journeyCard { border: 1px solid #dfded7; border-radius: 18px; padding: 18px; background: #fff; box-shadow: 0 10px 28px rgba(21, 59, 69, .05); }
 .journeyCard.recommended { border-color: #e07a5f; box-shadow: 0 14px 36px rgba(224, 122, 95, .12); }
+.journeyCardSelected { outline: 3px solid rgba(23, 107, 135, .22); outline-offset: 2px; }
 .commuteCard { border: 1px solid #dfded7; border-radius: 18px; padding: 18px; background: #fff; box-shadow: 0 10px 28px rgba(21, 59, 69, .05); }
 .commuteCardCompact { border: 0; padding: 0; box-shadow: none; }
 .commuteCard h3 { margin: 4px 0 0; font-size: 1.22rem; }
 .commuteSummary { display: flex; flex-wrap: wrap; gap: 7px; margin: 14px 0 2px; color: #5d777e; font-size: .76rem; }
 .commuteSummary span { border: 1px solid #e1e6e1; border-radius: 999px; padding: 5px 8px; background: #fbfcfa; }
+.compactRideList { display: grid; gap: 7px; margin: 12px 0 0; padding: 0; list-style: none; }
+.compactRideList li { display: grid; gap: 4px; min-width: 0; border-left: 3px solid #d3624d; border-radius: 8px; padding: 9px 11px; background: #fbfcfa; }
+.compactRideList li > strong { color: #153b45; font-size: .83rem; line-height: 1.35; overflow-wrap: anywhere; }
+.compactRideList li > span { color: #5d777e; font-size: .75rem; line-height: 1.4; overflow-wrap: anywhere; }
+.compactRideList b { color: #153b45; }
+.transferCaution { margin: 10px 0 0; color: #8b5a31; font-size: .74rem; line-height: 1.4; }
 .snapshotNote { margin: 12px 0 0; color: #8b5a31; font-size: .78rem; line-height: 1.45; }
 .instructionList { display: grid; gap: 0; margin: 16px 0 0; padding: 0; list-style: none; }
 .instructionItem { border-top: 1px solid #edf0ec; }
@@ -198,8 +205,8 @@
 .onboarding h2 { margin: 4px 0 0; font-size: 1.05rem; }.onboarding p:not(.cardKicker) { margin: 5px 0 0; color: #5d777e; font-size: .8rem; line-height: 1.45; }
 .onboarding ol { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 0; padding: 0; list-style: none; counter-reset: onboarding; }
 .onboarding li { display: grid; gap: 3px; border-left: 2px solid #e07a5f; padding-left: 9px; color: #5d777e; font-size: .75rem; line-height: 1.35; }.onboarding li strong { color: #153b45; }
-.compareBar { display: flex; align-items: center; flex-wrap: wrap; gap: 7px; margin-top: 16px; color: #5d777e; font-size: .78rem; }.compareBar span { margin-right: 3px; font-weight: 700; }.compareBar button { min-height: 38px; }
-.compareActive { min-height: 38px; border: 1px solid #176b87; border-radius: 9px; padding: 8px 10px; color: #fff; background: #176b87; cursor: pointer; font-size: .78rem; font-weight: 800; }
+.compareBar { display: flex; align-items: center; flex-wrap: wrap; gap: 7px; margin-top: 16px; color: #5d777e; font-size: .78rem; }.compareBar span { margin-right: 3px; font-weight: 700; }.compareBar button { min-height: 44px; }
+.compareActive { min-height: 44px; border: 1px solid #176b87; border-radius: 9px; padding: 8px 10px; color: #fff; background: #176b87; cursor: pointer; font-size: .78rem; font-weight: 800; }
 .mapTextAlternative { margin: 12px 0; border-left: 3px solid #176b87; padding: 10px 12px; color: #4f6d74; background: #eef5f3; font-size: .8rem; line-height: 1.5; }
 .routeSearch { display: grid; max-width: 420px; gap: 6px; margin-top: 14px; color: #658087; font-size: .75rem; font-weight: 800; letter-spacing: .04em; }.routeSearch input { width: 100%; border: 1px solid #d4dcd9; border-radius: 9px; padding: 11px 12px; color: #153b45; background: #fbfcfa; font: inherit; font-weight: 400; }
 .routeSearch input:focus, .smallInput:focus, .decisionForm select:focus, .reportForm input:focus, .reportForm textarea:focus { outline: 3px solid rgba(23, 107, 135, .18); border-color: #176b87; }

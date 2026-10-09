@@ -9,6 +9,7 @@ const files = {
   placeSearchHarness: await readFile(new URL("./place-search-harness.mjs", import.meta.url), "utf8"),
   searchKeyboardHarness: await readFile(new URL("./search-keyboard-harness.mjs", import.meta.url), "utf8"),
   map: await readFile(new URL("../src/components/MapView.tsx", import.meta.url), "utf8"),
+  journeyMapPresentation: await readFile(new URL("../src/lib/journeyMapPresentation.ts", import.meta.url), "utf8"),
   nearby: await readFile(new URL("../src/components/NearbyRoutes.tsx", import.meta.url), "utf8"),
   nearbyLookup: await readFile(new URL("../src/lib/nearbyLookup.ts", import.meta.url), "utf8"),
   nearbyHarness: await readFile(new URL("./nearby-harness.mjs", import.meta.url), "utf8"),
@@ -24,7 +25,8 @@ const files = {
 };
 
 const checks = [
-  ["destination-first planning anchor", files.page.includes('id="planning"')],
+  ["origin-first planning fields", files.page.indexOf('id="origin-search"') < files.page.indexOf('id="destination-search"')],
+  ["required origin is not described as optional", files.page.includes("Your starting place") && !files.page.includes("Starting place (optional)")],
   ["accessible search combobox", files.page.includes('role="combobox"') && files.page.includes('aria-autocomplete="list"')],
   ["keyboard suggestion navigation", files.page.includes("moveSuggestionSelection") && files.searchKeyboard.includes('key !== "ArrowDown"') && files.page.includes('event.key === "Escape"')],
   ["selected place context closes suggestions", files.page.includes("selectedPlace === null") && files.page.includes("aria-describedby={selectedPlace ? selectionContextId : undefined}")],
@@ -37,6 +39,11 @@ const checks = [
   ["short and superseded place searches cannot restore stale suggestions", files.latestPlaceSearch.includes("normalized.length < 2") && files.placeSearchHarness.includes("SHORT_QUERY_INVALIDATION=PASS") && files.placeSearchHarness.includes("OUT_OF_ORDER_RESPONSE=PASS")],
   ["plain-language trust labels", files.page.includes("Mapped, some details need checking") && files.card.includes("Confirmed details")],
   ["factual journey explanation", files.card.includes("Why this option") && files.card.includes("walkingDistanceHasFallback")],
+  ["compact result gives way to a separate ordered detail card", files.page.includes('variant="compact"') && files.card.includes("!compact && <ol className={styles.instructionList}") && files.page.includes('id="journey-detail"')],
+  ["selected journey is announced accessibly", files.card.includes('aria-current={selected ? "true" : undefined}') && files.page.includes("journeyCardSelected")],
+  ["comparison filters expose selection and mobile touch targets", files.page.includes("aria-pressed={journeyFilter === filter}") && files.pageStyles.includes(".compareActive { min-height: 44px")],
+  ["map labels unverified boarding and transfer locations", files.journeyMapPresentation.includes("Boarding area · exact point unverified") && files.journeyMapPresentation.includes("Transfer · unverified")],
+  ["estimate-only walking legs never draw a map route", files.journeyMapPresentation.includes("Only source geometry is drawn") && files.journeyMapPresentation.includes("ROUTED_WALK_TYPES") && files.map.includes('"text-field": ["get", "label"]')],
   ["text map alternative", files.page.includes("Map reading guide") && files.map.includes("role=\"img\"" )],
   ["foreground location boundary", files.page.includes("foreground") || files.map.includes("Current device location")],
   ["reduced-motion support", files.globals.includes("prefers-reduced-motion")],

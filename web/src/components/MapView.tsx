@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import type { DisruptionSummary, Journey, Place, RoutePattern, Stop } from "@/lib/api";
 import type { CommuteInstruction } from "@/lib/commuteInstructions";
 import type { RideModeMapOverlay } from "@/lib/rideMode";
+import { journeyPointFeatures, journeyRouteFeatures } from "@/lib/journeyMapPresentation";
 
 type MapViewProps = {
   places: Place[];
@@ -44,43 +45,6 @@ function pointFeature(id: string | number, name: string, location: { lat: number
     properties: { name, ...properties },
     geometry: { type: "Point" as const, coordinates: [location.lng, location.lat] },
   };
-}
-
-function journeyPointFeatures(journey: Journey) {
-  const points = [
-    journey.origin.location ? pointFeature(`origin-${journey.origin.id}`, journey.origin.name, journey.origin.location, { kind: "origin" }) : null,
-    journey.destination.location ? pointFeature(`destination-${journey.destination.id}`, journey.destination.name, journey.destination.location, { kind: "destination" }) : null,
-  ];
-
-  journey.legs.forEach((leg, index) => {
-    if (leg.type === "RIDE" && leg.boarding_stop?.location) {
-      points.push(pointFeature(`boarding-${index}-${leg.boarding_stop.id}`, leg.boarding_stop.name, leg.boarding_stop.location, { kind: "boarding" }));
-    }
-    if (leg.type === "RIDE" && leg.alighting_stop?.location) {
-      points.push(pointFeature(`alighting-${index}-${leg.alighting_stop.id}`, leg.alighting_stop.name, leg.alighting_stop.location, { kind: "alighting" }));
-    }
-    if (leg.type === "TRANSFER_WALK") {
-      if (leg.origin.location) {
-        points.push(pointFeature(`transfer-from-${index}-${leg.origin.id}`, leg.origin.name, leg.origin.location, { kind: "transfer" }));
-      }
-      if (leg.destination.location) {
-        points.push(pointFeature(`transfer-to-${index}-${leg.destination.id}`, leg.destination.name, leg.destination.location, { kind: "transfer" }));
-      }
-    }
-  });
-
-  return points.filter((point): point is NonNullable<typeof point> => point !== null);
-}
-
-function journeyRouteFeatures(journey: Journey) {
-  return journey.legs
-    .map((leg, index) => leg.geometry ? {
-      type: "Feature" as const,
-      id: `leg-${index}`,
-      properties: { kind: leg.type, route: leg.route?.code ?? "route" },
-      geometry: leg.geometry,
-    } : null)
-    .filter((feature): feature is NonNullable<typeof feature> => feature !== null);
 }
 
 function disruptionFeatures(disruptions: DisruptionSummary[]): GeoJSON.Feature[] {
@@ -228,7 +192,7 @@ export default function MapView({ places, stops, journey, selectedPattern, disru
         id: "journey-point-labels",
         type: "symbol",
         source: "journey-points",
-        layout: { "text-field": ["get", "name"], "text-size": 11, "text-offset": [0, 1.2], "text-anchor": "top" },
+        layout: { "text-field": ["get", "label"], "text-size": 11, "text-offset": [0, 1.2], "text-anchor": "top" },
         paint: { "text-color": "#153b45", "text-halo-color": "#fff", "text-halo-width": 1 },
       });
       map.addSource("journey-routes", { type: "geojson", data: { type: "FeatureCollection", features: [] } });

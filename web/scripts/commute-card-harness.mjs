@@ -3,7 +3,9 @@ import { performance } from "node:perf_hooks";
 import {
   buildShareText,
   generateCommuteInstructions,
+  walkingEvidenceLabels,
 } from "../src/lib/commuteInstructions.ts";
+import { journeyGeometryDisclosure, journeyPointFeatures, journeyRouteFeatures } from "../src/lib/journeyMapPresentation.ts";
 import {
   isJourneySnapshot,
   parseSavedJourneys,
@@ -162,6 +164,45 @@ assert.equal(models[1].summary.fare, "₱13");
 assert.equal(models[2].summary.fare, "Fare unavailable");
 assert.equal(models[0].instructions.filter((instruction) => instruction.type === "BOARD")[0].driverInstruction !== null, true);
 assert.equal(models[0].instructions.find((instruction) => instruction.type === "TRANSFER_BOARD"), undefined);
+assert.equal(models[0].summary.walkingEvidence.networkDistanceMeters, 440);
+assert.equal(models[1].summary.walkingEvidence.networkDistanceMeters, 440);
+assert.equal(models[1].summary.walkingEvidence.straightLineEstimateMeters, 180);
+assert.deepEqual(walkingEvidenceLabels(models[1].summary.walkingEvidence), [
+  "Mapped path · 440 m",
+  "Straight-line estimate only · 180 m",
+]);
+
+const missingGeometryJourney = syntheticJourney(0);
+missingGeometryJourney.legs[0].geometry = null;
+const missingGeometryModel = generateCommuteInstructions(missingGeometryJourney);
+const missingGeometryStep = missingGeometryModel.instructions.find((instruction) => instruction.type === "ACCESS_WALK");
+assert.equal(missingGeometryModel.summary.walkingEvidence.geometryUnavailableLegs, 1);
+assert.equal(missingGeometryStep?.geometry, null);
+assert.match(missingGeometryStep?.secondaryDetail ?? "", /route line is unavailable and is not drawn/);
+assert.equal(journeyGeometryDisclosure(missingGeometryJourney).mappedWalkingLegsWithoutGeometry, 1);
+
+const unavailableWalkJourney = syntheticJourney(0);
+Object.assign(unavailableWalkJourney.legs[0], { distance_meters: null, distance_type: "UNAVAILABLE", routing_status: "NO_ROUTE", geometry: null });
+const unavailableWalkModel = generateCommuteInstructions(unavailableWalkJourney);
+assert.equal(unavailableWalkModel.summary.walkingEvidence.unavailableLegs, 1);
+assert.ok(walkingEvidenceLabels(unavailableWalkModel.summary.walkingEvidence).includes("1 walking leg without a route distance"));
+
+const mapJourney = syntheticJourney(1);
+const estimatedWalkIndex = mapJourney.legs.findIndex((leg) => leg.type === "TRANSFER_WALK");
+mapJourney.legs[estimatedWalkIndex].geometry = { type: "LineString", coordinates: [[123.8, 10.3], [123.9, 10.3]] };
+const routeFeatures = journeyRouteFeatures(mapJourney);
+assert.equal(routeFeatures.filter((feature) => feature.properties.kind === "RIDE").length, 2);
+assert.equal(routeFeatures.some((feature) => feature.id === `leg-${estimatedWalkIndex}`), false, "an estimate-only leg must never draw a walking route");
+assert.equal(routeFeatures.filter((feature) => feature.properties.kind !== "RIDE").length, 2);
+assert.equal(journeyGeometryDisclosure(mapJourney).estimateOnlyWalkingLegs, 1);
+const mapPoints = journeyPointFeatures(mapJourney);
+assert.ok(mapPoints.filter((feature) => feature.properties.kind === "transfer").every((feature) => feature.properties.label.startsWith("Transfer · unverified · ")));
+assert.ok(mapPoints.filter((feature) => feature.properties.kind === "boarding").every((feature) => feature.properties.label.includes("Boarding area · exact point unverified")));
+assert.ok(mapPoints.filter((feature) => feature.properties.kind === "alighting").every((feature) => feature.properties.label.includes("Get-off area · exact side unverified")));
+const missingTransitLineJourney = syntheticJourney(0);
+missingTransitLineJourney.legs.find((leg) => leg.type === "RIDE").geometry = null;
+assert.equal(journeyGeometryDisclosure(missingTransitLineJourney).rideLegsWithoutGeometry, 1);
+assert.equal(journeyRouteFeatures(missingTransitLineJourney).filter((feature) => feature.properties.kind === "RIDE").length, 0);
 
 const saved = upsertSavedJourney([], syntheticJourney(2), "2026-10-07T00:00:00.000Z");
 assert.equal(savedSnapshotAgeLabel("2026-10-08T09:30:00.000Z", Date.parse("2026-10-08T10:00:00.000Z")), "saved less than an hour ago");
@@ -198,4 +239,7 @@ console.log("DIRECT=PASS ONE_TRANSFER=PASS TWO_TRANSFER=PASS");
 console.log(`JOURNEYS_TRANSFORMED=${transformed} INSTRUCTIONS_GENERATED=${generated} INSTRUCTION_GENERATION_TIME_MS=${generationMs.toFixed(2)}`);
 console.log("PRECISION_TRUST_FARE=PASS FALLBACK_TRANSFER=PASS DRIVER_PHRASE_ONLY_WHEN_SUPPORTED=PASS");
 console.log("SNAPSHOT_VALIDATION=PASS OFFLINE_CORE_BACKEND_REQUESTS=0 GPS_PERSISTENCE=0");
+console.log("WALKING_EVIDENCE_LABELS=PASS ESTIMATE_NOT_PRESENTED_AS_PATH=PASS MISSING_GEOMETRY=PASS");
+console.log("MAP_GEOMETRY_FAIL_CLOSED=PASS ESTIMATE_ONLY_CONNECTOR_NOT_DRAWN=PASS");
+console.log("MAP_BOARDING_AND_TRANSFER_UNCERTAINTY_LABELS=PASS");
 console.log("SHARE_TEXT=PASS NO_COORDINATES=PASS NO_INTERNAL_IDS=PASS");

@@ -1,0 +1,106 @@
+{
+  "format": "biyahe-doctor-v37-static-v1",
+  "overall_release_gate": "BLOCKED",
+  "postgresql_contacted": false,
+  "production_activation": "NO",
+  "source_and_graph_evidence": {
+    "source_sha256": "787cac20ecc586b754b1a464643a040566d486457c6a37bc0b11ce683bc66d4d",
+    "source_snapshot": "2026-10-07T01:00:21Z",
+    "graph_sha256": "29d7aaf9c45a596f4065c44d13f983f4a7edeec5ac2ea41b718b1c52ca865bf8",
+    "graph_counts": {
+      "nodes": 76685,
+      "edges": 78225,
+      "walkable_components": 432
+    },
+    "evidence_scope": "Carried forward from Batch036 static Doctor; artifact hashes were not recomputed in Batch037."
+  },
+  "readiness_levels": [
+    {
+      "name": "offline_graph_artifact_integrity",
+      "implementation": "BASELINE_REUSED",
+      "validation": "NOT_TESTED_THIS_BATCH",
+      "status": "WARN",
+      "evidence": "Batch036 Doctor records the verified source and graph identities; Batch037 did not modify graph artifacts."
+    },
+    {
+      "name": "offline_route_engine_correctness",
+      "implementation": "BASELINE_REUSED",
+      "validation": "REAL_CORPUS_NOT_RERUN",
+      "status": "WARN",
+      "evidence": {
+        "baseline_corpus_cases": 10,
+        "baseline_routes_found": 9,
+        "baseline_disconnected": 1,
+        "snap_radius_meters": 25
+      }
+    },
+    {
+      "name": "journey_contract_and_step_details",
+      "implementation": "EXISTING_REUSED",
+      "validation": "FOCUSED_HARNESS_PASS_WITH_FINAL_COPY_EDIT_NOT_RERUN",
+      "status": "WARN",
+      "evidence": "Harness covered direct, one-transfer, and two-transfer ordered instructions and uncertainty model fixtures; no browser interaction test ran."
+    },
+    {
+      "name": "result_cards_and_route_comparison",
+      "implementation": "IMPLEMENTED",
+      "validation": "NOT_TESTED_IN_BROWSER",
+      "status": "WARN",
+      "evidence": "Cards separate network paths, approximate access, straight-line estimates, unavailable distances, and fare availability; comparison filters expose aria-pressed and 44px touch targets."
+    },
+    {
+      "name": "walking_guidance_and_map_geometry",
+      "implementation": "IMPLEMENTED",
+      "validation": "FOCUSED_HELPER_HARNESS_PASS_WITH_FINAL_COPY_EDIT_NOT_RERUN",
+      "status": "WARN",
+      "evidence": "Fixtures verified estimate-only route suppression, missing-geometry disclosure data, and uncertainty labels for boarding, alighting, and transfers. MapLibre rendering was not browser-tested."
+    },
+    {
+      "name": "mobile_usability",
+      "implementation": "IMPLEMENTED",
+      "validation": "BROWSER_RENDERING_NOT_RUN",
+      "status": "WARN",
+      "evidence": "Origin-first field order, narrow-screen stacking, selected-result state, and minimum comparison touch targets are present in source."
+    },
+    {
+      "name": "saved_journey_provenance",
+      "implementation": "EXISTING_REUSED",
+      "validation": "FOCUSED_HARNESS_PASS",
+      "status": "PASS",
+      "evidence": "Saved snapshot shape and deterministic age labels were exercised by the focused harness; persisted formats were not changed."
+    },
+    {
+      "name": "real_postgresql_staging",
+      "implementation": "PORTABLE_PACKAGE_FROM_BATCH036",
+      "validation": "NOT_RUN_BY_BATCH037_SCOPE",
+      "status": "BLOCKED",
+      "evidence": "No PostgreSQL cluster was started or contacted."
+    },
+    {
+      "name": "field_verification",
+      "implementation": "NO_NEW_FIELD_EVIDENCE",
+      "validation": "BLOCKED",
+      "status": "BLOCKED",
+      "evidence": "No new field observations were collected; graph-derived connectivity is not physical transfer or safety verification."
+    },
+    {
+      "name": "private_beta_readiness",
+      "implementation": "RELEASE_GATE_RETAINED",
+      "validation": "BLOCKED",
+      "status": "BLOCKED",
+      "evidence": "Browser interaction, real staging, route parity, and field verification remain open."
+    }
+  ],
+  "resource_guard": {
+    "swap_floor_kib": 131072,
+    "observed_swap_free_kib_after_focused_harness": 42016,
+    "decision": "Further JavaScript tests, typecheck, lint, browser work, and builds were stopped."
+  },
+  "test_summary": {
+    "commute_card_harness": "PASS before final wording-only adjustment; not rerun below swap floor",
+    "ux_contract_harness": "NOT_RUN",
+    "typecheck": "NOT_RUN",
+    "lint": "NOT_RUN",
+    "browser_rendering": "NOT_RUN"
+  }
+}
