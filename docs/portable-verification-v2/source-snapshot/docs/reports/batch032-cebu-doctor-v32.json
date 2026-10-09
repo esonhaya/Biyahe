@@ -1,0 +1,248 @@
+{
+    "format": "biyahe-doctor-v32-static-v1",
+    "status": "BLOCKED",
+    "postgresql_contacted": false,
+    "checks": [
+        {
+            "name": "source verification",
+            "status": "PASS",
+            "evidence": {
+                "source_sha256": "787cac20ecc586b754b1a464643a040566d486457c6a37bc0b11ce683bc66d4d"
+            }
+        },
+        {
+            "name": "graph structural integrity",
+            "status": "PASS",
+            "evidence": {
+                "graph_sha256": "29d7aaf9c45a596f4065c44d13f983f4a7edeec5ac2ea41b718b1c52ca865bf8",
+                "nodes": 76685,
+                "edges": 78225,
+                "components": 2754
+            }
+        },
+        {
+            "name": "restriction inventory",
+            "status": "PASS",
+            "evidence": {
+                "source_relation_count": 648,
+                "source_omitted_relation_count": 29,
+                "source_classification_counts": {
+                    "total_turn_restrictions": 648,
+                    "vehicle_only": 648,
+                    "pedestrian_applicable": 0,
+                    "pedestrian_exempt": 0,
+                    "ambiguous": 0,
+                    "conditional": 33,
+                    "via_node": 449,
+                    "via_way": 166,
+                    "malformed_or_complex_members": 4,
+                    "unsupported_applicable": 0
+                },
+                "stored_relation_counts": {
+                    "total": 619,
+                    "vehicle_only": 619,
+                    "pedestrian_applicable": 0,
+                    "pedestrian_exempt": 0,
+                    "ambiguous": 0,
+                    "conditional": 5,
+                    "pedestrian_conditional": 0,
+                    "via_node": 449,
+                    "via_way": 166,
+                    "mixed_via": 0,
+                    "nested_complex": 0,
+                    "malformed": 4,
+                    "relations_with_missing_member_dependencies": 75,
+                    "missing_member_dependencies": 75,
+                    "unsupported_applicable": 0
+                },
+                "audit_sha256": "14671f5cfed2c816dff7986b251d85acb2fae6e816670f9925b67b58cf3a7e6c",
+                "unsupported_applicable": 0,
+                "ambiguous": 0
+            }
+        },
+        {
+            "name": "snapshot routing capability",
+            "status": "PASS",
+            "evidence": {
+                "complete_restriction_inventory": true,
+                "turn_restrictions_needed": false,
+                "routing_ready": true,
+                "state_aware_search": false,
+                "via_node_enforced": false,
+                "via_way_enforced": false,
+                "conditional_turn_restrictions_evaluated": false
+            }
+        },
+        {
+            "name": "coverage report identity",
+            "status": "PASS",
+            "evidence": {
+                "records_sha256": "5e26b9bf5d8c3f483fd6381a3bd32798af781fc885aa03c0e768138a852af26f",
+                "backup_sha256": "e55af400fde88d0a3434b194e0625e204eb0a2726374eabb8286c152b11a4a92"
+            }
+        },
+        {
+            "name": "stop coverage",
+            "status": "WARN",
+            "evidence": {
+                "total": 503,
+                "with_usable_coordinates": 503,
+                "within_snap_policy": 436,
+                "connected_to_largest_component": 433,
+                "snapped_to_smaller_components": 3,
+                "out_of_scope": 0,
+                "blocked_by_mapped_barrier": 0,
+                "unreachable_or_unsnappable": 70
+            }
+        },
+        {
+            "name": "place coverage",
+            "status": "WARN",
+            "evidence": {
+                "total": 37,
+                "with_usable_coordinates": 37,
+                "within_snap_policy": 30,
+                "connected_to_largest_component": 29,
+                "snapped_to_smaller_components": 1,
+                "out_of_scope": 0,
+                "blocked_by_mapped_barrier": 0,
+                "unreachable_or_unsnappable": 8
+            }
+        },
+        {
+            "name": "transfer coverage and trust",
+            "status": "WARN",
+            "evidence": {
+                "total": 2,
+                "records_marked_verified": 0,
+                "graph_route_connected": 2,
+                "graph_route_unavailable": 0
+            }
+        },
+        {
+            "name": "real journey corpus",
+            "status": "PASS",
+            "evidence": {
+                "cases": 10,
+                "routes_found": 9,
+                "routes_unavailable": 1,
+                "latency_milliseconds": {
+                    "p50": 61,
+                    "p95": 482.013,
+                    "samples": 10
+                }
+            }
+        },
+        {
+            "name": "graph quality review",
+            "status": "WARN",
+            "evidence": {
+                "long_edges_over_250m": 26,
+                "suspicious_long_edges": 0,
+                "duplicate_way_segment_identities": 0,
+                "edges_touching_blocked_nodes": 0,
+                "boundary_nodes": 944,
+                "crossing_tagged_nodes": 1510,
+                "clipped_ways": 171,
+                "outside_scope_required_nodes": 1740,
+                "walkable_components": 432,
+                "field_review_required": true
+            }
+        },
+        {
+            "name": "staging evidence identity",
+            "status": "PASS",
+            "evidence": {
+                "source_matches": true,
+                "graph_matches": true,
+                "fingerprint_matches": true,
+                "backup_matches": true,
+                "isolated_cluster": true,
+                "existing_cluster_touched": false
+            }
+        },
+        {
+            "name": "isolated PostgreSQL staging",
+            "status": "BLOCKED",
+            "evidence": {
+                "status": "BLOCKED",
+                "imported_nodes": 0,
+                "imported_edges": 0,
+                "reason": "The guarded importer process was stopped when free swap fell below 16 MiB. No graph rows were visible in the isolated database afterward. The unchanged import was not retried."
+            }
+        },
+        {
+            "name": "importer real-artifact compatibility",
+            "status": "BLOCKED",
+            "evidence": {
+                "real_artifact_import": "BLOCKED",
+                "transactional": "NOT_VERIFIED_FOR_REAL_GRAPH",
+                "explicit_rollback_test": "NOT_RUN",
+                "idempotency_test": "NOT_RUN",
+                "no_clobber": false,
+                "inactive_only": true
+            }
+        },
+        {
+            "name": "offline/staged route parity",
+            "status": "BLOCKED",
+            "evidence": {
+                "status": "NOT_RUN"
+            }
+        },
+        {
+            "name": "commuter-facing failure states",
+            "status": "PASS",
+            "evidence": {
+                "honest_unavailable_state": true,
+                "status": "PASS",
+                "postgresql_contacted": false,
+                "checks": {
+                    "backend_graph_unavailable_is_not_a_route": true,
+                    "client_labels_unavailable_distance_as_estimate": true,
+                    "client_omits_geometry_for_estimate": true,
+                    "harness_asserts_null_fallback_duration_and_geometry": true
+                },
+                "sources": [
+                    "api/app/Services/Routing/LocalPedestrianGraphRouter.php",
+                    "api/app/Services/Routing/PedestrianRouteResult.php",
+                    "web/src/lib/commuteInstructions.ts",
+                    "web/scripts/commute-card-harness.mjs"
+                ]
+            }
+        },
+        {
+            "name": "field verification",
+            "status": "WARN",
+            "evidence": {
+                "complete": false,
+                "gaps": [
+                    "No field observations establish sidewalk continuity, legal/safe crossings, gate status, accessibility, or current conditions.",
+                    "Transport stop/place verification state is reported as stored and is not upgraded by graph proximity.",
+                    "OSM geometry may be roadway centerline geometry; crossing tags do not independently establish a safe crossing."
+                ]
+            }
+        },
+        {
+            "name": "production activation",
+            "status": "BLOCKED",
+            "evidence": {
+                "activation": "NO",
+                "reason": "Batch032 does not activate pedestrian routing in production."
+            }
+        },
+        {
+            "name": "private beta readiness",
+            "status": "BLOCKED",
+            "evidence": {
+                "staging_complete": false,
+                "real_routes_found": 9,
+                "field_verification_complete": false,
+                "suspicious_long_edges": 0
+            }
+        }
+    ],
+    "source_sha256": "787cac20ecc586b754b1a464643a040566d486457c6a37bc0b11ce683bc66d4d",
+    "graph_sha256": "29d7aaf9c45a596f4065c44d13f983f4a7edeec5ac2ea41b718b1c52ca865bf8",
+    "graph_fingerprint": "a0d9f1cb8289cf1f9bde3905d1ad8a57124ee41120153b4efc1f5b31e4c03ecd"
+}

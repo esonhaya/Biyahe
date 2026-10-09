@@ -1,7 +1,7 @@
 {
   "format": "biyahe-doctor-v41-evidence-v1",
   "batch": 41,
-  "assessed_revision": "122a717fd9ccf603d31718144ce4c7e567581fc5",
+  "assessed_revision": "3ec11b5ed3bab4a1bd5ed880f144bbd43ee4fca4",
   "source_and_graph": {
     "source_snapshot": "2026-10-07T01:00:21Z",
     "source_pbf_sha256": "787cac20ecc586b754b1a464643a040566d486457c6a37bc0b11ce683bc66d4d",
@@ -77,9 +77,9 @@
     },
     {
       "name": "portable_verification",
-      "implementation": "IMPLEMENTED_UNTESTED",
-      "validation": "BLOCKED",
-      "evidence": "Batch040 v1 kit is preserved. Batch041 v2 package is not yet included in this assessed revision; no external host execution is claimed."
+      "implementation": "VERIFIED",
+      "validation": "VERIFIED",
+      "evidence": "docs/portable-verification-v2 contains 58 checksummed files pinned to source revision 3ec11b5ed3bab4a1bd5ed880f144bbd43ee4fca4. verify-kit.sh passed byte-identity/checksum checks and the static no-database smoke at 2026-10-09T18:41:42Z. Package manifest SHA256 1c6ecf5568599a3ca36ec91f701151cb024c06b0dac843c2ea0c08d0ee1b56fb; SHA256SUMS SHA256 cdfb101c65a01e14965b2cf0312831308b059ee7d56c8c00a846f66ea2c93201. External host execution remains NOT_RUN."
     },
     {
       "name": "postgresql_staging",
@@ -95,18 +95,46 @@
     }
   ],
   "execution_evidence": {
-    "provenance_fixtures": {"status": "VERIFIED", "passed": 6, "failed": 0},
-    "coverage_fixtures": {"status": "VERIFIED", "passed": 11, "failed": 0},
-    "static_evidence_smoke_fixtures": {"status": "VERIFIED", "passed": 2, "failed": 0},
-    "corpus_comparator_contract_fixtures": {"status": "VERIFIED", "passed": 4, "failed": 0, "synthetic_only": true},
-    "changed_php_syntax": {"status": "VERIFIED", "files_passed": 5},
+    "provenance_fixtures": {
+      "status": "VERIFIED",
+      "passed": 6,
+      "failed": 0
+    },
+    "coverage_fixtures": {
+      "status": "VERIFIED",
+      "passed": 11,
+      "failed": 0
+    },
+    "static_evidence_smoke_fixtures": {
+      "status": "VERIFIED",
+      "passed": 2,
+      "failed": 0
+    },
+    "corpus_comparator_contract_fixtures": {
+      "status": "VERIFIED",
+      "passed": 4,
+      "failed": 0,
+      "synthetic_only": true
+    },
+    "changed_php_syntax": {
+      "status": "VERIFIED",
+      "files_passed": 5
+    },
     "python_ast_json_and_diff_checks": "VERIFIED",
     "provenance_cli": "VERIFIED_6_SOURCES_13_CLAIMS_0_UNRESOLVED",
     "offline_coverage_summary": "VERIFIED_PINNED_REPORT_ONLY",
     "resource_samples_kib": {
       "sample_spacing_seconds": 5,
-      "memavailable": [936048, 979420, 923316],
-      "swapfree": [137020, 129792, 130244],
+      "memavailable": [
+        936048,
+        979420,
+        923316
+      ],
+      "swapfree": [
+        137020,
+        129792,
+        130244
+      ],
       "required_memavailable_minimum": 524288,
       "required_swapfree_minimum": 131072,
       "resource_gate": "BLOCKED_SWAP_FLOOR_MISSED"
@@ -117,7 +145,18 @@
     "sqlite_integrity_check": "NOT_RUN",
     "browser_tests": "NOT_RUN",
     "postgresql": "NOT_CONTACTED",
-    "field_verification": "NOT_RUN"
+    "field_verification": "NOT_RUN",
+    "portable_kit": {
+      "status": "VERIFIED_STATIC_ONLY",
+      "source_revision": "3ec11b5ed3bab4a1bd5ed880f144bbd43ee4fca4",
+      "files": 58,
+      "verified_at_utc": "2026-10-09T18:41:42Z",
+      "manifest_sha256": "1c6ecf5568599a3ca36ec91f701151cb024c06b0dac843c2ea0c08d0ee1b56fb",
+      "checksums_sha256": "cdfb101c65a01e14965b2cf0312831308b059ee7d56c8c00a846f66ea2c93201",
+      "real_graph_replay": "NOT_RUN",
+      "external_host_execution": "NOT_RUN",
+      "postgresql": "NOT_RUN"
+    }
   },
   "release_gates": {
     "local_walking_adapter": "IMPLEMENTED_UNTESTED",

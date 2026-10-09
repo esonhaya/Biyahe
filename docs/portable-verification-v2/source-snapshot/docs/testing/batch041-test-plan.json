@@ -1,0 +1,106 @@
+{
+  "format": "biyahe-batch041-test-plan-v1",
+  "resource_floors_kib": {
+    "memavailable_minimum": 524288,
+    "swapfree_minimum": 131072,
+    "sustained_samples": 3,
+    "sample_spacing_seconds": 5
+  },
+  "checks": [
+    {
+      "id": "provenance-python-fixtures",
+      "cost": "LIGHT",
+      "command": "python3 api/scripts/test_evidence_provenance.py",
+      "status": "VERIFIED",
+      "result": "6 passed",
+      "reason": "Standard-library-only validation of report identity, hashes, metric definitions, and reconciliation rules."
+    },
+    {
+      "id": "coverage-python-fixtures",
+      "cost": "LIGHT",
+      "command": "python3 api/scripts/test_summarize_offline_coverage.py",
+      "status": "VERIFIED",
+      "result": "11 passed",
+      "reason": "Deterministic bounded JSON fixtures; no SQLite or PBF access."
+    },
+    {
+      "id": "static-evidence-smoke-fixtures",
+      "cost": "LIGHT",
+      "command": "python3 api/scripts/test_offline_evidence_smoke.py",
+      "status": "VERIFIED",
+      "result": "2 passed",
+      "reason": "Pinned JSON evidence only; explicitly does not open the graph, PBF, or PostgreSQL."
+    },
+    {
+      "id": "corpus-comparator-contract-fixtures",
+      "cost": "LIGHT",
+      "command": "python3 api/scripts/test_compare_offline_corpus.py",
+      "status": "VERIFIED",
+      "result": "4 passed; synthetic report-contract data only",
+      "reason": "Checks schema, source identity, directed continuity, and rejection of geometry on failure. Does not execute a real route."
+    },
+    {
+      "id": "changed-php-syntax",
+      "cost": "LIGHT",
+      "command": "php -l <each changed PHP file>",
+      "status": "VERIFIED",
+      "result": "5 files passed",
+      "reason": "Syntax checks only; no PHPUnit or application bootstrap."
+    },
+    {
+      "id": "offline-adapter-phpunit",
+      "cost": "MODERATE",
+      "command": "cd api && php artisan test --filter='OfflinePedestrianRouteGeometryContractTest|OfflinePedestrianGraphRouterTest|OfflineJourneyWalkingPreviewTest'",
+      "status": "BLOCKED",
+      "result": "not launched",
+      "reason": "Three spaced resource samples had SwapFree 137020, 129792, and 130244 KiB; two were below the unchanged 131072 KiB floor."
+    },
+    {
+      "id": "frontend-node-harnesses",
+      "cost": "MODERATE",
+      "command": "node --experimental-strip-types web/scripts/offline-walking-preview-harness.mjs; node --experimental-strip-types web/scripts/ride-mode-harness.mjs",
+      "status": "BLOCKED",
+      "result": "not launched",
+      "reason": "The sustained SwapFree preflight failed; no repeated retry was made."
+    },
+    {
+      "id": "real-ten-case-graph-replay",
+      "cost": "HEAVY",
+      "command": "cd api && php artisan biyahe:pedestrian:verify-offline-corpus --output=<new-private-report>",
+      "status": "BLOCKED",
+      "result": "not attempted",
+      "reason": "The graph router initializes disk-backed SQLite indexes and has a bounded route workload; swap headroom did not meet policy."
+    },
+    {
+      "id": "browser-viewport-and-accessibility",
+      "cost": "HEAVY",
+      "command": "repository-supported browser suite at 320/360/390 px",
+      "status": "BLOCKED",
+      "result": "not run",
+      "reason": "No supported browser-level run was available after the resource gate failed."
+    },
+    {
+      "id": "postgresql-staging",
+      "cost": "EXTERNAL_HOST",
+      "command": "portable isolated Linux staging procedure",
+      "status": "BLOCKED",
+      "result": "not run on Termux by policy",
+      "reason": "Batch041 prohibits PostgreSQL startup/import; staging requires a separate disposable Linux host."
+    },
+    {
+      "id": "field-transfer-and-sidewalk-verification",
+      "cost": "FIELD_DEPENDENT",
+      "command": "independent in-person evidence collection",
+      "status": "BLOCKED",
+      "result": "not run",
+      "reason": "OSM graph continuity is not field evidence; both transfer records remain unverified."
+    }
+  ],
+  "policy": {
+    "one_resource_intensive_process_at_a_time": true,
+    "never_lower_floors": true,
+    "do_not_repeat_without_changed_conditions": true,
+    "blocked_is_not_pass": true,
+    "synthetic_comparator_fixtures_are_not_route_evidence": true
+  }
+}

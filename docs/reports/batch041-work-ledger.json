@@ -126,12 +126,12 @@
       "dependencies": [
         "R1"
       ],
-      "status": "IMPLEMENTED_UNTESTED",
+      "status": "VERIFIED",
       "files_changed": [
         "api/scripts/package-batch041-verification-kit.py",
-        "docs/batch041-test-and-resource-plan.md"
+        "docs/portable-verification-v2"
       ],
-      "evidence": "Versioned no-database kit builder and portable instructions implemented. Package generation and static verifier have not run yet."
+      "evidence": "Generated 58-file source-pinned package at revision 3ec11b5. SHA256SUMS, byte-identical checkout snapshot, and no-database static smoke verified at 2026-10-09T18:41:42Z; graph replay/PG/external host remain unrun."
     },
     {
       "id": "D1",
@@ -150,7 +150,7 @@
         "api/scripts/validate-batch041-doctor.py",
         "api/scripts/test_validate_batch041_doctor.py"
       ],
-      "evidence": "Thirteen category static Doctor validated against the provenance registry. CLI validation and four fail-closed fixtures pass; private beta, staging, field safety, and production activation remain blocked."
+      "evidence": "Thirteen categories validated against the provenance registry; four fail-closed fixtures pass. Portable v2 static verification recorded; beta, staging, field safety, and activation remain blocked."
     },
     {
       "id": "T1",
@@ -202,5 +202,16 @@
       "walking safety, crossing and accessibility observations"
     ]
   },
-  "next_safe_action": "Commit Doctor V41, resource plan, and package builder; then build and verify portable v2 at the pinned source revision."
+  "next_safe_action": "Run Doctor validator and diff checks, commit the verified portable package/update, then copy kit and final Git bundle to a new SD delivery directory.",
+  "commits": [
+    {
+      "hash": "122a717fd9ccf603d31718144ce4c7e567581fc5",
+      "subject": "feat(offline-routing): reconcile evidence and validate route geometry"
+    },
+    {
+      "hash": "3ec11b5ed3bab4a1bd5ed880f144bbd43ee4fca4",
+      "subject": "docs(doctor): add evidence-gated Batch041 readiness report"
+    }
+  ],
+  "last_safe_checkpoint": "3ec11b5ed3bab4a1bd5ed880f144bbd43ee4fca4 plus verified docs/portable-verification-v2; pending commit of package and final Doctor update."
 }

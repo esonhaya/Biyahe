@@ -1,0 +1,131 @@
+{
+  "format": "biyahe-doctor-v41-evidence-v1",
+  "batch": 41,
+  "assessed_revision": "122a717fd9ccf603d31718144ce4c7e567581fc5",
+  "source_and_graph": {
+    "source_snapshot": "2026-10-07T01:00:21Z",
+    "source_pbf_sha256": "787cac20ecc586b754b1a464643a040566d486457c6a37bc0b11ce683bc66d4d",
+    "graph_sha256": "29d7aaf9c45a596f4065c44d13f983f4a7edeec5ac2ea41b718b1c52ca865bf8",
+    "graph_fingerprint": "a0d9f1cb8289cf1f9bde3905d1ad8a57124ee41120153b4efc1f5b31e4c03ecd",
+    "graph_hash_observed_at_utc": "2026-10-09T18:38:21Z",
+    "graph_hash_status": "VERIFIED",
+    "sqlite_integrity_check": "NOT_RUN",
+    "provenance_registry_sha256": "882fd1ae2c7ab8f2e1edab87c9122911f62c4568513bbe6c8875263958dc1bb6",
+    "pbf_opened": false,
+    "graph_modified": false
+  },
+  "categories": [
+    {
+      "name": "evidence_reconciliation",
+      "implementation": "VERIFIED",
+      "validation": "VERIFIED",
+      "evidence": "batch041-evidence-provenance.json SHA256 882fd1ae2c7ab8f2e1edab87c9122911f62c4568513bbe6c8875263958dc1bb6; six reports and thirteen metric claims validated. 648 = 619 stored + 29 omitted; legacy quality zeros are unmeasured defaults; measured graph diagnostics are 26 long edges, 944 boundary nodes, 1510 crossing-tag nodes."
+    },
+    {
+      "name": "coverage_diagnostics",
+      "implementation": "VERIFIED",
+      "validation": "VERIFIED",
+      "evidence": "Pinned Batch032 report is validated as stored-record coverage only: 503 stops / 436 snappable; 37 places / 30 snappable. Coordinates, unique IDs, snap status/radius, transfer verification and historical route evidence are checked. No geographic, sidewalk, population or field coverage is claimed."
+    },
+    {
+      "name": "graph_identity",
+      "implementation": "VERIFIED",
+      "validation": "VERIFIED",
+      "evidence": "The external SQLite artifact SHA256 matched at 2026-10-09T18:38:21Z. This is an identity check only; SQLite integrity_check and real route replay were not run."
+    },
+    {
+      "name": "offline_adapter_contract",
+      "implementation": "IMPLEMENTED_UNTESTED",
+      "validation": "BLOCKED",
+      "evidence": "Added shared source-bound route geometry assertions for snap distance, endpoint nodes, directed edge continuity, graph coordinates, edge-distance sum, connector distance and estimate labels. Five changed PHP files pass php -l. PHPUnit did not launch because sustained SwapFree preflight failed."
+    },
+    {
+      "name": "ten_case_corpus",
+      "implementation": "VERIFIED",
+      "validation": "BLOCKED",
+      "evidence": "Four synthetic comparator-contract tests pass, including source mismatch, directed discontinuity, and geometry on a failed route. They are not graph routes. The pinned historical corpus remains 9 found / 1 disconnected; current replay was not run."
+    },
+    {
+      "name": "journey_preview",
+      "implementation": "IMPLEMENTED_UNTESTED",
+      "validation": "BLOCKED",
+      "evidence": "Static review found the existing local preview is opt-in, local-environment/debug gated, checks Host and REMOTE_ADDR loopback, binds responses to selected journey identity, rejects stale responses and excludes previews from saved snapshots. Frontend functional harness was blocked by resource preflight."
+    },
+    {
+      "name": "ride_mode",
+      "implementation": "IMPLEMENTED_UNTESTED",
+      "validation": "BLOCKED",
+      "evidence": "Existing manual step controls and preview version disclosures were reviewed in source. No Ride Mode functional harness was run in Batch041."
+    },
+    {
+      "name": "saved_journeys",
+      "implementation": "IMPLEMENTED_UNTESTED",
+      "validation": "BLOCKED",
+      "evidence": "Existing snapshot-v1 parser, stale provenance display, and preview save prohibition were reviewed. No saved-journey functional harness was run in Batch041."
+    },
+    {
+      "name": "map_and_mobile",
+      "implementation": "IMPLEMENTED_UNTESTED",
+      "validation": "BLOCKED",
+      "evidence": "Existing map/list selection and graph geometry filtering were reviewed. No browser, viewport, keyboard, or screen-reader check ran."
+    },
+    {
+      "name": "validation_ledger",
+      "implementation": "IMPLEMENTED_UNTESTED",
+      "validation": "BLOCKED",
+      "evidence": "Static review confirms source/config/tool/runtime/command/evidence fingerprints, atomic writes, interrupted RUNNING precedence and owned-worker scheduling. Batch041 did not rerun its Node harness after the SwapFree preflight failed."
+    },
+    {
+      "name": "portable_verification",
+      "implementation": "IMPLEMENTED_UNTESTED",
+      "validation": "BLOCKED",
+      "evidence": "Batch040 v1 kit is preserved. Batch041 v2 package is not yet included in this assessed revision; no external host execution is claimed."
+    },
+    {
+      "name": "postgresql_staging",
+      "implementation": "UNRESOLVED",
+      "validation": "BLOCKED",
+      "evidence": "No PostgreSQL server or database was started or contacted. Real import and route parity remain unverified and outside this device batch."
+    },
+    {
+      "name": "transfer_field_evidence",
+      "implementation": "UNRESOLVED",
+      "validation": "BLOCKED",
+      "evidence": "Both historical graph-connected transfer records remain UNVERIFIED. Graph connectivity is not field evidence for safe access or interchange."
+    }
+  ],
+  "execution_evidence": {
+    "provenance_fixtures": {"status": "VERIFIED", "passed": 6, "failed": 0},
+    "coverage_fixtures": {"status": "VERIFIED", "passed": 11, "failed": 0},
+    "static_evidence_smoke_fixtures": {"status": "VERIFIED", "passed": 2, "failed": 0},
+    "corpus_comparator_contract_fixtures": {"status": "VERIFIED", "passed": 4, "failed": 0, "synthetic_only": true},
+    "changed_php_syntax": {"status": "VERIFIED", "files_passed": 5},
+    "python_ast_json_and_diff_checks": "VERIFIED",
+    "provenance_cli": "VERIFIED_6_SOURCES_13_CLAIMS_0_UNRESOLVED",
+    "offline_coverage_summary": "VERIFIED_PINNED_REPORT_ONLY",
+    "resource_samples_kib": {
+      "sample_spacing_seconds": 5,
+      "memavailable": [936048, 979420, 923316],
+      "swapfree": [137020, 129792, 130244],
+      "required_memavailable_minimum": 524288,
+      "required_swapfree_minimum": 131072,
+      "resource_gate": "BLOCKED_SWAP_FLOOR_MISSED"
+    },
+    "phpunit": "BLOCKED_NOT_LAUNCHED",
+    "frontend_node_harnesses": "BLOCKED_NOT_LAUNCHED",
+    "real_graph_replay": "BLOCKED_NOT_RUN",
+    "sqlite_integrity_check": "NOT_RUN",
+    "browser_tests": "NOT_RUN",
+    "postgresql": "NOT_CONTACTED",
+    "field_verification": "NOT_RUN"
+  },
+  "release_gates": {
+    "local_walking_adapter": "IMPLEMENTED_UNTESTED",
+    "live_api_integration": "BLOCKED_NOT_CONNECTED",
+    "postgresql_staging": "BLOCKED_NOT_RUN",
+    "route_parity": "BLOCKED_NOT_RUN",
+    "field_safety": "BLOCKED_NO_FIELD_EVIDENCE",
+    "private_beta": "BLOCKED",
+    "production_activation": "NO"
+  }
+}
