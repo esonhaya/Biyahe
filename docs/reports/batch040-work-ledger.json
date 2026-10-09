@@ -1,37 +1,325 @@
 {
   "format": "biyahe-batch040-work-ledger-v1",
   "started_at_utc": "2026-10-09T15:30:19Z",
-  "last_updated_at_utc": "2026-10-09T16:05:55Z",
+  "last_updated_at_utc": "2026-10-09T16:22:40Z",
   "expected_head": "6de4e7dbf2710eb6c587dca3a7697d6938e7a8b7",
   "actual_head_at_start": "6de4e7dbf2710eb6c587dca3a7697d6938e7a8b7",
-  "resource_floors_kib": {"swap_free": 131072, "mem_available": 524288},
+  "resource_floors_kib": {
+    "swap_free": 131072,
+    "mem_available": 524288
+  },
   "queues": {
     "A_resource_independent_engineering": [
-      {"id":"W1_RECOVERY_ARCHITECTURE","scope":"Recover Batch039 state and map actual integration points","dependencies":[],"status":"VERIFIED","files_changed":["docs/reports/batch040-recovery-and-architecture.md","docs/reports/batch040-work-ledger.json"],"evidence":"Batch039 and Batch040 recovery snapshots verified before edits; repository HEAD and source/graph provenance inspected; six historic reports and the Batch039 Doctor report preserved.","blockers":[],"follow_up":"None; include the final review outcome in the report."},
-      {"id":"W2_ADAPTER","scope":"Harden source-bound local walking adapter and existing router limits","dependencies":["W1_RECOVERY_ARCHITECTURE"],"status":"IMPLEMENTED_UNTESTED","files_changed":["api/config/offline_walking_preview.php","api/app/Http/Controllers/Api/DevelopmentOfflineWalkingPreviewController.php","api/app/Services/Routing/OfflineJourneyWalkingPreview.php","api/app/Services/Routing/OfflineWalkingPreviewException.php","api/app/Services/Routing/OfflinePedestrianGraphRouter.php","api/tests/Unit/OfflineJourneyWalkingPreviewTest.php","api/tests/Unit/OfflinePedestrianGraphRouterTest.php"],"evidence":"Pinned schema/source/graph/coverage checks, request bounds, route provenance and a cooperative router deadline added. Static PHP lint passed before the final deadline edit; focused unit tests did not complete after their fixtures were corrected.","blockers":["PHPUnit adapter/router tests were not rerun after the resource guard stopped the worker."],"follow_up":"External Linux verification; disclose that PDO SQLite cannot be interrupted mid-statement."},
-      {"id":"W3_PREVIEW_UI","scope":"Bind local preview UI to selected journey and prevent stale or saved preview data","dependencies":["W1_RECOVERY_ARCHITECTURE"],"status":"IMPLEMENTED_UNTESTED","files_changed":["web/src/app/page.tsx","web/src/components/CommuteCard.tsx","web/src/lib/api.ts","web/src/lib/savedJourneys.ts","web/src/lib/commuteInstructions.ts","web/scripts/offline-walking-preview-harness.mjs","web/scripts/commute-card-harness.mjs"],"evidence":"Preview helper harness passed during the second run. Commute-card harness reached an obsolete expected aggregate distance (expected 200 m; actual aggregate network portions were 420 m); labels and assertion were corrected, not rerun.","blockers":["Full selected-card regression harness was canceled after SwapFree fell below the fixed floor."],"follow_up":"Retest behind the resource guard on a Linux host."},
-      {"id":"W4_COVERAGE","scope":"Create bounded coverage diagnostics using only pinned report evidence","dependencies":["W1_RECOVERY_ARCHITECTURE"],"status":"IMPLEMENTED_UNTESTED","files_changed":["api/scripts/summarize-offline-coverage.py","api/scripts/test_summarize_offline_coverage.py","docs/reports/batch040-coverage-diagnostics.json","docs/reports/batch040-coverage-diagnostics.md"],"evidence":"The summarizer validates pinned report identity and emits carried-forward diagnostics without opening SQLite/PBF; the written report marks counts as not recomputed and surfaces the 619/648 restriction-count and quality-summary conflicts.","blockers":["The Python fixtures and actual summarizer command were not reached by the guarded run."],"follow_up":"Run summarizer and synthetic-only tests on the external host."},
-      {"id":"W5_CORPUS","scope":"Pin and compare the ten existing real Cebu corpus cases","dependencies":["W2_ADAPTER","W4_COVERAGE"],"status":"IMPLEMENTED_UNTESTED","files_changed":["api/app/Console/Commands/VerifyOfflineWalkingCorpus.php","api/scripts/compare-offline-corpus.py","api/scripts/run-batch040-regressions.sh","api/scripts/test_summarize_offline_coverage.py"],"evidence":"Replay and comparator are bounded, hash-bound and deterministic; comparator validates indexed case identity, status/reason/distance, geometry, direction, edges and snap endpoints. Real replay was not reached.","blockers":["Real ten-case replay and comparison remain unexecuted."],"follow_up":"Replay on a guarded Linux host; do not call this route parity."},
-      {"id":"W6_RIDE_MODE","scope":"Review manual Ride Mode transition and preview-version consistency","dependencies":["W3_PREVIEW_UI"],"status":"IMPLEMENTED_UNTESTED","files_changed":["web/src/lib/rideMode.ts","web/src/components/RideMode.tsx","web/scripts/ride-mode-harness.mjs","docs/ride-mode-transition-table.md"],"evidence":"Batch039 transition checks and Batch040 route identity helper are retained; a first runner found a module resolution error, corrected by moving the helper into rideMode.ts. Updated harness was not reached in the second run.","blockers":["No final Ride Mode harness execution after the fix."],"follow_up":"Run Ride Mode harness on external Linux."},
-      {"id":"W7_SAVED_JOURNEYS","scope":"Protect snapshot v1 and exclude preview data","dependencies":["W3_PREVIEW_UI"],"status":"IMPLEMENTED_UNTESTED","files_changed":["web/src/lib/savedJourneys.ts","web/scripts/commute-card-harness.mjs"],"evidence":"Existing v1 storage remains; preview-bearing journey input is rejected. The full saved-journey harness did not reach completion.","blockers":["End-to-end save/reopen regression not completed after final edits."],"follow_up":"Verify v1 compatibility in the external harness."},
-      {"id":"W8_MAP_MOBILE","scope":"Review map/list source geometry and mobile behavior","dependencies":["W3_PREVIEW_UI"],"status":"UNVERIFIED","files_changed":["web/src/app/page.tsx","web/src/components/CommuteCard.tsx","web/scripts/commute-card-harness.mjs"],"evidence":"Existing MapLibre route feature filtering is reused; selected journey carries only graph path geometry and preview state. Browser/mobile viewport checks were not run.","blockers":["No browser harness available or executed."],"follow_up":"Check 320/360/390 px, keyboard focus and map/list coordination in a browser."},
-      {"id":"W9_LEDGER_SCHEDULER","scope":"Bind validation reuse to source/config/runtime/command/evidence and use the owned process guard","dependencies":["W1_RECOVERY_ARCHITECTURE"],"status":"IMPLEMENTED_UNTESTED","files_changed":["web/scripts/validation-ledger.mjs","web/scripts/validation-ledger-harness.mjs","api/scripts/run-bounded-process.sh","api/tests/Unit/BoundedProcessGuardTest.php","docs/batch040-validation-scheduler.md"],"evidence":"Validation-ledger harness passed in the first guarded run. The second run recorded RUNNING then BLOCKED and the owned process group reported cancellation COMPLETE at SwapFree 99,276 KiB. The PHP process-guard suite had one stale log assertion in the first run and was corrected but not rerun.","blockers":["No final process-guard PHPUnit rerun; unrelated-process survival was not independently rechecked in this run."],"follow_up":"Verify cancellation suite on external Linux with isolated workers."},
-      {"id":"W10_PORTABLE_KIT","scope":"Prepare a script-and-manifest offline verification package","dependencies":["W2_ADAPTER","W5_CORPUS"],"status":"IN_PROGRESS","files_changed":["docs/portable-verification-v1/README.md","docs/portable-verification-v1/manifest.json","docs/portable-verification-v1/verify-kit.sh"],"evidence":"Pinned graph/source/backup/report identities and clean-room instructions are present; large graph and database assets are intentionally not duplicated in the kit.","blockers":["Script copies, final revision binding, SHA256SUMS, SD copy and verification remain."],"follow_up":"Finish and checksum the kit after the code commit."},
-      {"id":"W12_DOCTOR_V40","scope":"Produce evidence-separated Doctor V40","dependencies":["W1_RECOVERY_ARCHITECTURE","W4_COVERAGE","W9_LEDGER_SCHEDULER"],"status":"IMPLEMENTED_UNTESTED","files_changed":["docs/reports/batch040-doctor-v40.json"],"evidence":"Statuses separate implementation from executed evidence; resource stop, partial harness results, graph hash preflight, unresolved counts and all release blockers are recorded.","blockers":["Final JSON parse and final HEAD/revision fields pending."],"follow_up":"Validate JSON and update end/commit evidence before final report."},
-      {"id":"W13_REVIEW","scope":"Consolidated code review, static safety and unrelated-work preservation","dependencies":["W2_ADAPTER","W3_PREVIEW_UI","W9_LEDGER_SCHEDULER"],"status":"IN_PROGRESS","files_changed":["docs/reports/batch040-recovery-and-architecture.md","docs/reports/batch040-coverage-diagnostics.json"],"evidence":"No production API graph activation, database startup, PBF rescan, graph rebuild or push occurred. Cooperative deadline limitation is documented.","blockers":[],"follow_up":"Run final low-cost syntax/JSON/diff checks and inspect complete staged diff."},
-      {"id":"W14_DELIVERY","scope":"Commit verified Batch039/040 work and create a new SD bundle/recovery archive","dependencies":["W13_REVIEW"],"status":"NOT_STARTED","files_changed":[],"evidence":"No Batch040 commit yet; pre-edit recovery copy exists.","blockers":[],"follow_up":"Commit coherent work with functional validation gaps labeled; archive remaining untracked Doctor reports separately."}
+      {
+        "id": "W1_RECOVERY_ARCHITECTURE",
+        "scope": "Recover Batch039 state and map actual integration points",
+        "dependencies": [],
+        "status": "VERIFIED",
+        "files_changed": [
+          "docs/reports/batch040-recovery-and-architecture.md",
+          "docs/reports/batch040-work-ledger.json"
+        ],
+        "evidence": "Batch039 and Batch040 recovery snapshots verified before edits; repository HEAD and source/graph provenance inspected; six historic reports and the Batch039 Doctor report preserved.",
+        "blockers": [],
+        "follow_up": "None; include the final review outcome in the report."
+      },
+      {
+        "id": "W2_ADAPTER",
+        "scope": "Harden source-bound local walking adapter and existing router limits",
+        "dependencies": [
+          "W1_RECOVERY_ARCHITECTURE"
+        ],
+        "status": "IMPLEMENTED_UNTESTED",
+        "files_changed": [
+          "api/config/offline_walking_preview.php",
+          "api/app/Http/Controllers/Api/DevelopmentOfflineWalkingPreviewController.php",
+          "api/app/Services/Routing/OfflineJourneyWalkingPreview.php",
+          "api/app/Services/Routing/OfflineWalkingPreviewException.php",
+          "api/app/Services/Routing/OfflinePedestrianGraphRouter.php",
+          "api/tests/Unit/OfflineJourneyWalkingPreviewTest.php",
+          "api/tests/Unit/OfflinePedestrianGraphRouterTest.php"
+        ],
+        "evidence": "Pinned schema/source/graph/coverage checks, request bounds, route provenance and a cooperative router deadline added. Static PHP lint passed before the final deadline edit; focused unit tests did not complete after their fixtures were corrected.",
+        "blockers": [
+          "PHPUnit adapter/router tests were not rerun after the resource guard stopped the worker."
+        ],
+        "follow_up": "External Linux verification; disclose that PDO SQLite cannot be interrupted mid-statement."
+      },
+      {
+        "id": "W3_PREVIEW_UI",
+        "scope": "Bind local preview UI to selected journey and prevent stale or saved preview data",
+        "dependencies": [
+          "W1_RECOVERY_ARCHITECTURE"
+        ],
+        "status": "IMPLEMENTED_UNTESTED",
+        "files_changed": [
+          "web/src/app/page.tsx",
+          "web/src/components/CommuteCard.tsx",
+          "web/src/lib/api.ts",
+          "web/src/lib/savedJourneys.ts",
+          "web/src/lib/commuteInstructions.ts",
+          "web/scripts/offline-walking-preview-harness.mjs",
+          "web/scripts/commute-card-harness.mjs"
+        ],
+        "evidence": "Preview helper harness passed during the second run. Commute-card harness reached an obsolete expected aggregate distance (expected 200 m; actual aggregate network portions were 420 m); labels and assertion were corrected, not rerun.",
+        "blockers": [
+          "Full selected-card regression harness was canceled after SwapFree fell below the fixed floor."
+        ],
+        "follow_up": "Retest behind the resource guard on a Linux host."
+      },
+      {
+        "id": "W4_COVERAGE",
+        "scope": "Create bounded coverage diagnostics using only pinned report evidence",
+        "dependencies": [
+          "W1_RECOVERY_ARCHITECTURE"
+        ],
+        "status": "VERIFIED",
+        "files_changed": [
+          "api/scripts/summarize-offline-coverage.py",
+          "api/scripts/test_summarize_offline_coverage.py",
+          "docs/reports/batch040-coverage-diagnostics.json",
+          "docs/reports/batch040-coverage-diagnostics.md"
+        ],
+        "evidence": "The carried-forward report generator ran against pinned Batch032 JSON (input SHA 6caf101177904bee6fda1b12cab9c5cda36ddaf7ecc08b0d9778c0517123c81b). It validates all stored stop/place coordinates (503/503 and 37/37), reports 49/17 coordinate cells, zero low-snap candidate cells under the declared threshold, per-component snapped stop counts, confidence/source categories, both historical discrepancy sets, and UNVERIFIED transfers. Graph/PBF not opened; current route corpus not replayed.",
+        "blockers": [
+          "Synthetic fixture suite was not run after the resource guard stopped the functional group.",
+          "Graph-derived/current route replay remains blocked."
+        ],
+        "follow_up": "Run the synthetic fixtures and real graph replay on a stable Linux host."
+      },
+      {
+        "id": "W5_CORPUS",
+        "scope": "Pin and compare the ten existing real Cebu corpus cases",
+        "dependencies": [
+          "W2_ADAPTER",
+          "W4_COVERAGE"
+        ],
+        "status": "IMPLEMENTED_UNTESTED",
+        "files_changed": [
+          "api/app/Console/Commands/VerifyOfflineWalkingCorpus.php",
+          "api/scripts/compare-offline-corpus.py",
+          "api/scripts/run-batch040-regressions.sh",
+          "api/scripts/test_summarize_offline_coverage.py"
+        ],
+        "evidence": "Replay and comparator are bounded, hash-bound and deterministic; comparator validates indexed case identity, status/reason/distance, geometry, direction, edges and snap endpoints. Real replay was not reached.",
+        "blockers": [
+          "Real ten-case replay and comparison remain unexecuted."
+        ],
+        "follow_up": "Replay on a guarded Linux host; do not call this route parity."
+      },
+      {
+        "id": "W6_RIDE_MODE",
+        "scope": "Review manual Ride Mode transition and preview-version consistency",
+        "dependencies": [
+          "W3_PREVIEW_UI"
+        ],
+        "status": "IMPLEMENTED_UNTESTED",
+        "files_changed": [
+          "web/src/lib/rideMode.ts",
+          "web/src/components/RideMode.tsx",
+          "web/scripts/ride-mode-harness.mjs",
+          "docs/ride-mode-transition-table.md"
+        ],
+        "evidence": "Batch039 transition checks and Batch040 route identity helper are retained; a first runner found a module resolution error, corrected by moving the helper into rideMode.ts. Updated harness was not reached in the second run.",
+        "blockers": [
+          "No final Ride Mode harness execution after the fix."
+        ],
+        "follow_up": "Run Ride Mode harness on external Linux."
+      },
+      {
+        "id": "W7_SAVED_JOURNEYS",
+        "scope": "Protect snapshot v1 and exclude preview data",
+        "dependencies": [
+          "W3_PREVIEW_UI"
+        ],
+        "status": "IMPLEMENTED_UNTESTED",
+        "files_changed": [
+          "web/src/lib/savedJourneys.ts",
+          "web/scripts/commute-card-harness.mjs"
+        ],
+        "evidence": "Existing v1 storage remains; preview-bearing journey input is rejected. The full saved-journey harness did not reach completion.",
+        "blockers": [
+          "End-to-end save/reopen regression not completed after final edits."
+        ],
+        "follow_up": "Verify v1 compatibility in the external harness."
+      },
+      {
+        "id": "W8_MAP_MOBILE",
+        "scope": "Review map/list source geometry and mobile behavior",
+        "dependencies": [
+          "W3_PREVIEW_UI"
+        ],
+        "status": "UNVERIFIED",
+        "files_changed": [
+          "web/src/app/page.tsx",
+          "web/src/components/CommuteCard.tsx",
+          "web/scripts/commute-card-harness.mjs"
+        ],
+        "evidence": "Existing MapLibre route feature filtering is reused; selected journey carries only graph path geometry and preview state. Browser/mobile viewport checks were not run.",
+        "blockers": [
+          "No browser harness available or executed."
+        ],
+        "follow_up": "Check 320/360/390 px, keyboard focus and map/list coordination in a browser."
+      },
+      {
+        "id": "W9_LEDGER_SCHEDULER",
+        "scope": "Bind validation reuse to source/config/runtime/command/evidence and use the owned process guard",
+        "dependencies": [
+          "W1_RECOVERY_ARCHITECTURE"
+        ],
+        "status": "IMPLEMENTED_UNTESTED",
+        "files_changed": [
+          "web/scripts/validation-ledger.mjs",
+          "web/scripts/validation-ledger-harness.mjs",
+          "api/scripts/run-bounded-process.sh",
+          "api/tests/Unit/BoundedProcessGuardTest.php",
+          "docs/batch040-validation-scheduler.md"
+        ],
+        "evidence": "Validation-ledger harness passed in the first guarded run. The second run recorded RUNNING then BLOCKED and the owned process group reported cancellation COMPLETE at SwapFree 99,276 KiB. The PHP process-guard suite had one stale log assertion in the first run and was corrected but not rerun.",
+        "blockers": [
+          "No final process-guard PHPUnit rerun; unrelated-process survival was not independently rechecked in this run."
+        ],
+        "follow_up": "Verify cancellation suite on external Linux with isolated workers."
+      },
+      {
+        "id": "W10_PORTABLE_KIT",
+        "scope": "Prepare a script-and-manifest offline verification package",
+        "dependencies": [
+          "W2_ADAPTER",
+          "W5_CORPUS"
+        ],
+        "status": "VERIFIED",
+        "files_changed": [
+          "docs/portable-verification-v1/README.md",
+          "docs/portable-verification-v1/manifest.json",
+          "docs/portable-verification-v1/verify-kit.sh",
+          "docs/portable-verification-v1/SHA256SUMS",
+          "docs/portable-verification-v1/source-snapshot/"
+        ],
+        "evidence": "The portable kit contains 35 source snapshot files and pins repository revision b723f78653d76e1796f2980e7a414b29782ae01b. verify-kit.sh passed checksum inventory, manifest, exact checkout revision and byte comparison.",
+        "blockers": [],
+        "follow_up": "Run the graph replay and optional disposable database workflow on the external Linux host; do not infer execution from package integrity."
+      },
+      {
+        "id": "W12_DOCTOR_V40",
+        "scope": "Produce evidence-separated Doctor V40",
+        "dependencies": [
+          "W1_RECOVERY_ARCHITECTURE",
+          "W4_COVERAGE",
+          "W9_LEDGER_SCHEDULER"
+        ],
+        "status": "IMPLEMENTED_UNTESTED",
+        "files_changed": [
+          "docs/reports/batch040-doctor-v40.json"
+        ],
+        "evidence": "Statuses separate implementation from executed evidence; resource stop, partial harness results, graph hash preflight, unresolved counts and all release blockers are recorded.",
+        "blockers": [
+          "Final JSON parse and final HEAD/revision fields pending."
+        ],
+        "follow_up": "Validate JSON and update end/commit evidence before final report."
+      },
+      {
+        "id": "W13_REVIEW",
+        "scope": "Consolidated code review, static safety and unrelated-work preservation",
+        "dependencies": [
+          "W2_ADAPTER",
+          "W3_PREVIEW_UI",
+          "W9_LEDGER_SCHEDULER"
+        ],
+        "status": "VERIFIED",
+        "files_changed": [
+          "docs/reports/batch040-recovery-and-architecture.md",
+          "docs/reports/batch040-coverage-diagnostics.json"
+        ],
+        "evidence": "Final staged review found only Batch039/040 implementation and report changes. Six historical reports and the Batch039 Doctor report remain untracked and preserved. No graph, PBF, PostgreSQL, production or unrelated project was modified.",
+        "blockers": [],
+        "follow_up": "Finish final delivery archive and report."
+      },
+      {
+        "id": "W14_DELIVERY",
+        "scope": "Commit verified Batch039/040 work and create a new SD bundle/recovery archive",
+        "dependencies": [
+          "W13_REVIEW"
+        ],
+        "status": "IN_PROGRESS",
+        "files_changed": [
+          "2d1641d",
+          "422a17d",
+          "ca0ee8f",
+          "90ca1d7",
+          "b723f78",
+          "portable-verification-v1 pending commit"
+        ],
+        "evidence": "Five coherent code/diagnostic commits are present. The portable package and final ledger/Doctor update are prepared; the SD bundle and preservation archive are pending.",
+        "blockers": [],
+        "follow_up": "Commit the portable package and final evidence, then create and verify the new SD bundle and report archive."
+      }
     ],
     "B_lightweight_validation": [
-      {"id":"W11_STATIC_VALIDATION","scope":"PHP/JS/Bash syntax, Python syntax, JSON and whitespace checks","dependencies":[],"status":"IN_PROGRESS","files_changed":[],"evidence":"PHP lint, Bash syntax, Node module syntax, Python AST parsing, JSON parsing and git diff --check passed before the latest router deadline and coverage comparator edits.","blockers":[],"follow_up":"Repeat only the lightweight static checks after final code changes; Pint remains subject to resource safety."}
+      {
+        "id": "W11_STATIC_VALIDATION",
+        "scope": "PHP/JS/Bash syntax, Python syntax, JSON and whitespace checks",
+        "dependencies": [],
+        "status": "VERIFIED",
+        "files_changed": [],
+        "evidence": "Final PHP lint, JavaScript syntax, Bash syntax, Python AST, JSON parsing, git diff --check, and portable kit self-check passed after the last source edit. Pint, TypeScript, ESLint, browser and functional suites were not completed.",
+        "blockers": [
+          "Pint, TypeScript, ESLint, browser, PHPUnit, and route corpus replay remain unverified or resource-blocked."
+        ],
+        "follow_up": "Complete functional and type/lint checks on a stable external Linux host."
+      }
     ],
     "C_resource_gated_functional_validation": [
-      {"id":"W11_FUNCTIONAL_VALIDATION","scope":"Execute focused harnesses, PHP fixtures, pinned coverage report and real ten-case replay","dependencies":["W2_ADAPTER","W3_PREVIEW_UI","W4_COVERAGE","W5_CORPUS","W6_RIDE_MODE","W7_SAVED_JOURNEYS","W9_LEDGER_SCHEDULER"],"status":"BLOCKED","files_changed":[],"evidence":"Second gate preflight passed with min SwapFree 174,652 KiB; during the first frontend harness SwapFree reached 99,276 KiB while MemAvailable stayed above 808,092 KiB. Peak owned process-tree RSS was 61,368 KiB and PostgreSQL RSS was 0. Resource guard canceled the owned group; no retry planned.","blockers":["SwapFree below the fixed 131,072 KiB floor stopped the suite before remaining tests."],"follow_up":"Run one resource-gated suite on external Linux; do not retry on this phone in Batch040."}
+      {
+        "id": "W11_FUNCTIONAL_VALIDATION",
+        "scope": "Execute focused harnesses, PHP fixtures, pinned coverage report and real ten-case replay",
+        "dependencies": [
+          "W2_ADAPTER",
+          "W3_PREVIEW_UI",
+          "W4_COVERAGE",
+          "W5_CORPUS",
+          "W6_RIDE_MODE",
+          "W7_SAVED_JOURNEYS",
+          "W9_LEDGER_SCHEDULER"
+        ],
+        "status": "BLOCKED",
+        "files_changed": [],
+        "evidence": "Second gate preflight passed with min SwapFree 174,652 KiB; during the first frontend harness SwapFree reached 99,276 KiB while MemAvailable stayed above 808,092 KiB. Peak owned process-tree RSS was 61,368 KiB and PostgreSQL RSS was 0. Resource guard canceled the owned group; no retry planned.",
+        "blockers": [
+          "SwapFree below the fixed 131,072 KiB floor stopped the suite before remaining tests."
+        ],
+        "follow_up": "Run one resource-gated suite on external Linux; do not retry on this phone in Batch040."
+      }
     ],
     "D_external_host_verification": [
-      {"id":"W10_EXTERNAL_EXECUTION","scope":"Run portable verification on an independent Linux host","dependencies":["W10_PORTABLE_KIT"],"status":"BLOCKED","files_changed":[],"evidence":"No separate Linux host is available in this session.","blockers":["External host required."],"follow_up":"Run the checksum-verified kit on a Linux host and retain environment/output evidence."}
+      {
+        "id": "W10_EXTERNAL_EXECUTION",
+        "scope": "Run portable verification on an independent Linux host",
+        "dependencies": [
+          "W10_PORTABLE_KIT"
+        ],
+        "status": "BLOCKED",
+        "files_changed": [],
+        "evidence": "No separate Linux host is available in this session.",
+        "blockers": [
+          "External host required."
+        ],
+        "follow_up": "Run the checksum-verified kit on a Linux host and retain environment/output evidence."
+      }
     ],
     "E_field_dependent_work": [
-      {"id":"W8_FIELD_SAFETY","scope":"Verify transfers, crossings, boarding and pedestrian access in the field","dependencies":[],"status":"BLOCKED","files_changed":[],"evidence":"No new field observations were supplied; both graph-connected transfers remain UNVERIFIED.","blockers":["Physical field evidence required."],"follow_up":"Keep field safety and private beta blocked until independently verified."}
+      {
+        "id": "W8_FIELD_SAFETY",
+        "scope": "Verify transfers, crossings, boarding and pedestrian access in the field",
+        "dependencies": [],
+        "status": "BLOCKED",
+        "files_changed": [],
+        "evidence": "No new field observations were supplied; both graph-connected transfers remain UNVERIFIED.",
+        "blockers": [
+          "Physical field evidence required."
+        ],
+        "follow_up": "Keep field safety and private beta blocked until independently verified."
+      }
     ]
   },
   "notes": [

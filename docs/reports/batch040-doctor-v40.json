@@ -46,8 +46,8 @@
     {
       "name": "coverage_diagnostics",
       "implementation": "IMPLEMENTED",
-      "validation": "UNVERIFIED",
-      "evidence": "A bounded Python summarizer, synthetic-only fixtures, comparator, and carried-forward JSON/Markdown report were added. The summary command and fixture suite were not reached after the resource guard stopped the worker. The report explicitly identifies itself as not recomputed."
+      "validation": "VERIFIED",
+      "evidence": "The carried-forward summarizer completed against the SHA-pinned Batch032 report (SHA-256 6caf101177904bee6fda1b12cab9c5cda36ddaf7ecc08b0d9778c0517123c81b). It validates stored coordinate ranges: 503/503 stops and 37/37 places; reports 49 stop cells and 17 place cells on a 0.01-degree record grid, with zero cells meeting the stated 3-record/<50%-snapped review threshold; separates graph component, trust, city-ID and transfer evidence. It did not open SQLite or PBF and did not replay routes. Synthetic fixtures remain unrun."
     },
     {
       "name": "offline_corpus_framework",
@@ -76,8 +76,8 @@
     {
       "name": "portable_linux_kit",
       "implementation": "IMPLEMENTED",
-      "validation": "UNVERIFIED",
-      "evidence": "Instructions, pinned artifact hashes, manifest and offline commands are present. Package SHA256SUMS, SD copy and clean-room verification remain to be completed; no external-host run is claimed."
+      "validation": "VERIFIED",
+      "evidence": "The package contains 35 source snapshot files, required external artifacts and version constraints. verify-kit.sh passed all 38 SHA256SUMS entries, manifest validation, exact checkout revision b723f78653d76e1796f2980e7a414b29782ae01b, and byte identity of packaged source copies on Termux. This is package integrity only; external host execution remains NOT_RUN."
     },
     {
       "name": "resource_guard",
@@ -129,7 +129,11 @@
     "real_cebu_corpus": "BLOCKED_NOT_REACHED",
     "typescript_typecheck": "NOT_RUN",
     "eslint": "NOT_RUN",
-    "browser": "NOT_RUN"
+    "browser": "NOT_RUN",
+    "portable_kit_self_check": "PASS_ON_TERMUX_STATIC_PACKAGE_CHECK",
+    "coverage_summary_command": "PASS_CARRIED_FORWARD_PINNED_EVIDENCE",
+    "coordinate_grid_analysis": "PASS_CARRIED_FORWARD_EVIDENCE_ONLY_49_STOP_CELLS_17_PLACE_CELLS_ZERO_LOW_SNAP_CANDIDATES",
+    "coverage_synthetic_fixtures": "NOT_RUN_AFTER_RESOURCE_GATE"
   },
   "release_gates": {
     "offline_graph_artifact": "WARN_HASH_MATCHED_AT_PREFLIGHT_SQLITE_INTEGRITY_NOT_RERUN",
@@ -140,6 +144,9 @@
     "route_parity": "BLOCKED_NOT_REPLAYED",
     "field_safety": "BLOCKED_NO_FIELD_EVIDENCE",
     "private_beta": "BLOCKED",
-    "production_activation": "NO"
+    "production_activation": "NO",
+    "portable_package": "PASS_STATIC_PACKAGE_INTEGRITY_ONLY_EXTERNAL_EXECUTION_NOT_RUN",
+    "external_host_execution": "NOT_RUN",
+    "coverage_diagnostics": "PASS_CARRIED_FORWARD_EVIDENCE_ONLY_NO_GRAPH_REPLAY"
   }
 }

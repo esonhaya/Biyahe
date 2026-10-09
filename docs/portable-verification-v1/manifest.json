@@ -1,0 +1,164 @@
+{
+  "format": "biyahe-portable-verification-kit-v1",
+  "batch": 40,
+  "artifacts_included": false,
+  "external_host_execution": "NOT_RUN",
+  "production_activation": "NO",
+  "source_snapshot": "2026-10-07T01:00:21Z",
+  "required_artifacts": [
+    {
+      "name": "cebu-walk-central-visayas-20261007-v3.sqlite",
+      "sha256": "29d7aaf9c45a596f4065c44d13f983f4a7edeec5ac2ea41b718b1c52ca865bf8",
+      "purpose": "immutable offline pedestrian graph"
+    },
+    {
+      "name": "central_visayas-20261007.osm.pbf",
+      "sha256": "787cac20ecc586b754b1a464643a040566d486457c6a37bc0b11ce683bc66d4d",
+      "purpose": "source provenance reference; not read by offline corpus replay"
+    },
+    {
+      "name": "biyahe-batch024-20261008.dump",
+      "sha256": "e55af400fde88d0a3434b194e0625e204eb0a2726374eabb8286c152b11a4a92",
+      "purpose": "separate disposable PostgreSQL staging only"
+    },
+    {
+      "name": "batch032-cebu-coverage.json",
+      "repository_path": "docs/reports/batch032-cebu-coverage.json",
+      "sha256": "6caf101177904bee6fda1b12cab9c5cda36ddaf7ecc08b0d9778c0517123c81b",
+      "purpose": "pinned graph, coverage, restriction and journey-corpus evidence"
+    }
+  ],
+  "graph": {
+    "format": "biyahe-pedestrian-sqlite-v3",
+    "schema_version": 3,
+    "nodes": 76685,
+    "edges": 78225,
+    "walkable_components": 432,
+    "graph_fingerprint": "a0d9f1cb8289cf1f9bde3905d1ad8a57124ee41120153b4efc1f5b31e4c03ecd",
+    "restriction_relations": 619,
+    "pedestrian_applicable_restrictions": 0,
+    "ambiguous_restrictions": 0
+  },
+  "runtime_requirements": {
+    "php": "repository api/composer.json",
+    "sqlite": "PDO SQLite support",
+    "node": "supports --experimental-strip-types",
+    "python": "3 standard library",
+    "bash": "required for owned process guard",
+    "postgresql_postgis_for_separate_staging": "PostgreSQL 18 and PostGIS 3.6, or repository-verified compatible versions",
+    "git": "required to compare checkout HEAD with repository_revision",
+    "sha256sum": "required for package/artifact checksum verification",
+    "laravel_dependencies": "install from repository lockfiles on the external host; not embedded in the kit"
+  },
+  "verification_commands": [
+    "python3 api/scripts/summarize-offline-coverage.py --output-dir=$RUN_ROOT/coverage-diagnostics",
+    "cd api && php artisan biyahe:pedestrian:verify-offline-corpus --output=$RUN_ROOT/offline-corpus.json",
+    "python3 api/scripts/compare-offline-corpus.py --actual=$RUN_ROOT/offline-corpus.json --output=$RUN_ROOT/corpus-comparison.json",
+    "bash api/scripts/run-batch040-regressions.sh"
+  ],
+  "limits": {
+    "snap_radius_meters": 25,
+    "maximum_walking_legs_per_preview": 5,
+    "maximum_route_distance_meters": 2000,
+    "resource_floor_memavailable_kib": 524288,
+    "resource_floor_swapfree_kib": 131072,
+    "real_postgresql_staging": "separate external disposable host only",
+    "field_safety": "not established by graph connectivity"
+  },
+  "repository_revision": "b723f78653d76e1796f2980e7a414b29782ae01b",
+  "verification_revision_scope": "Code revision pinned below; the kit package itself may be delivered as an adjacent commit or archive.",
+  "required_checkout_paths": [
+    "api/app/Console/Commands/VerifyOfflineWalkingCorpus.php",
+    "api/app/Services/Routing/OfflineJourneyWalkingPreview.php",
+    "api/app/Services/Routing/OfflinePedestrianGraphRouter.php",
+    "api/config/offline_walking_preview.php",
+    "api/scripts/compare-offline-corpus.py",
+    "api/scripts/run-batch040-regressions.sh",
+    "api/scripts/summarize-offline-coverage.py",
+    "api/scripts/run-bounded-process.sh",
+    "web/scripts/validation-ledger.mjs",
+    "web/scripts/offline-walking-preview-harness.mjs",
+    "docs/reports/batch032-cebu-coverage.json"
+  ],
+  "included_files": [
+    "source-snapshot/api/.env.example",
+    "source-snapshot/api/app/Console/Commands/VerifyOfflineWalkingCorpus.php",
+    "source-snapshot/api/app/Http/Controllers/Api/DevelopmentOfflineWalkingPreviewController.php",
+    "source-snapshot/api/app/Services/Routing/OfflineJourneyWalkingPreview.php",
+    "source-snapshot/api/app/Services/Routing/OfflinePedestrianGraphRouter.php",
+    "source-snapshot/api/app/Services/Routing/OfflineWalkingPreviewException.php",
+    "source-snapshot/api/config/offline_walking_preview.php",
+    "source-snapshot/api/routes/api.php",
+    "source-snapshot/api/scripts/compare-offline-corpus.py",
+    "source-snapshot/api/scripts/run-batch040-regressions.sh",
+    "source-snapshot/api/scripts/run-bounded-process.sh",
+    "source-snapshot/api/scripts/summarize-offline-coverage.py",
+    "source-snapshot/api/scripts/test_summarize_offline_coverage.py",
+    "source-snapshot/api/tests/Support/OfflinePedestrianGraphFixture.php",
+    "source-snapshot/api/tests/Unit/BoundedProcessGuardTest.php",
+    "source-snapshot/api/tests/Unit/OfflineJourneyWalkingPreviewTest.php",
+    "source-snapshot/api/tests/Unit/OfflinePedestrianGraphRouterTest.php",
+    "source-snapshot/docs/batch040-validation-scheduler.md",
+    "source-snapshot/docs/offline-walking-preview-development.md",
+    "source-snapshot/docs/reports/batch032-cebu-coverage.json",
+    "source-snapshot/web/package.json",
+    "source-snapshot/web/scripts/commute-card-harness.mjs",
+    "source-snapshot/web/scripts/offline-walking-preview-harness.mjs",
+    "source-snapshot/web/scripts/ride-mode-harness.mjs",
+    "source-snapshot/web/scripts/ux-contract-harness.mjs",
+    "source-snapshot/web/scripts/validation-ledger-harness.mjs",
+    "source-snapshot/web/scripts/validation-ledger.mjs",
+    "source-snapshot/web/src/app/page.tsx",
+    "source-snapshot/web/src/components/CommuteCard.tsx",
+    "source-snapshot/web/src/components/RideMode.tsx",
+    "source-snapshot/web/src/lib/api.ts",
+    "source-snapshot/web/src/lib/commuteInstructions.ts",
+    "source-snapshot/web/src/lib/journeyExplanation.ts",
+    "source-snapshot/web/src/lib/rideMode.ts",
+    "source-snapshot/web/src/lib/savedJourneys.ts"
+  ],
+  "package_checks": {
+    "command": "bash docs/portable-verification-v1/verify-kit.sh --repo-root \"$CHECKOUT\"",
+    "verifies": [
+      "SHA256SUMS inventory and hashes",
+      "manifest JSON",
+      "exact checkout HEAD",
+      "packaged source snapshot byte identity"
+    ],
+    "does_not_run": [
+      "SQLite graph replay",
+      "PostgreSQL",
+      "production activation",
+      "field verification"
+    ]
+  },
+  "offline_validation_commands": [
+    "(cd api && php artisan test --filter=OfflineJourneyWalkingPreviewTest)",
+    "(cd api && php artisan test --filter=OfflinePedestrianGraphRouterTest)",
+    "node --experimental-strip-types web/scripts/offline-walking-preview-harness.mjs",
+    "node --experimental-strip-types web/scripts/commute-card-harness.mjs",
+    "node --experimental-strip-types web/scripts/ride-mode-harness.mjs",
+    "node --experimental-strip-types web/scripts/validation-ledger-harness.mjs",
+    "python3 api/scripts/summarize-offline-coverage.py --output-dir=\"$RUN_ROOT/coverage-diagnostics\"",
+    "(cd api && php artisan biyahe:pedestrian:verify-offline-corpus --output=\"$RUN_ROOT/offline-corpus.json\")",
+    "python3 api/scripts/compare-offline-corpus.py --actual=\"$RUN_ROOT/offline-corpus.json\" --output=\"$RUN_ROOT/corpus-comparison.json\""
+  ],
+  "evidence_policy": {
+    "new_outputs": "use a new private output directory; never overwrite pinned inputs",
+    "source_snapshot_hash": "inherited from committed hash-pinned Batch032 evidence; this kit does not read the PBF",
+    "route_replay": "must be executed on the pinned graph; static package verification is not route evidence",
+    "field_safety": "not established by this kit"
+  },
+  "execution_evidence": {
+    "portable_kit_self_check": "PASS_ON_TERMUX_STATIC_ONLY",
+    "php_static_lint": "PASS_FOR_MODIFIED_ADAPTER_FILES",
+    "graph_replay": "NOT_RUN_RESOURCE_GATE",
+    "functional_phpunit": "BLOCKED_AFTER_SWAP_FLOOR_BREACH",
+    "external_linux_host": "NOT_RUN",
+    "postgresql_staging": "NOT_RUN",
+    "field_verification": "NOT_RUN",
+    "coverage_summary_command": "PASS_CARRIED_FORWARD_PINNED_REPORT_ONLY",
+    "coordinate_grid": "49 stop cells, 17 place cells; zero met the declared low-snap candidate threshold",
+    "functional_fixture_tests": "NOT_RUN_AFTER_RESOURCE_GATE"
+  }
+}
