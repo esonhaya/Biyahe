@@ -174,7 +174,15 @@ source_files = {
 for relative, path in source_files.items():
     if not path.is_file():
         raise SystemExit(f"PACKAGE_ABORT required repository file is missing: {path}")
-included_paths = [str(path.relative_to(repo)) for path in source_files.values()]
+# The restriction audit is intentionally external to the repository: it is
+# generated from the verified Batch030 source scan and is bound to the graph
+# and PBF hashes above. Only repository-owned package code/evidence belongs in
+# the Git cleanliness check.
+included_paths = [
+    str(path.relative_to(repo))
+    for path in source_files.values()
+    if path == repo or repo in path.parents
+]
 package_source_status = subprocess.run(
     ["git", "status", "--porcelain", "--", *included_paths],
     cwd=repo, check=True, stdout=subprocess.PIPE, text=True,
