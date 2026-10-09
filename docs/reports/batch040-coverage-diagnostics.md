@@ -10,8 +10,6 @@ Mode: `CARRIED_FORWARD_FROM_PINNED_EVIDENCE`. This report summarizes the hash-pi
 - Stored route corpus: 9 found, 1 unavailable, 1 explicitly component-disconnected.
 - Restriction count: the pinned coverage report stores 619; the Batch039 narrative reports 648. Reconciliation was not performed.
 
-Supplemental graph-level inventory from the Batch030 baseline, bound to the same graph SHA-256: 76,685 nodes, 78,225 edges, 2,754 total components, and 432 walkable components. These counts were carried forward for context and not recomputed by this summary.
-
 ## Coverage and confidence
 
 Snapping and component membership describe graph coverage only. Trust/source counts are preserved separately. Administrative city-ID groupings do not establish geographic coverage or field access.
@@ -31,6 +29,11 @@ Snapped stop records by stored walkable component:
 - Component 6822000500: 1 snapped stop record(s); 0 marked as in the largest component.
 - Component 8315066871: 1 snapped stop record(s); 0 marked as in the largest component.
 - Component 8317880605: 1 snapped stop record(s); 0 marked as in the largest component.
+
+Observed-record grid cells (0.01 degree; candidate means at least three records and under 50% snapped):
+
+- No candidate cell met the stated threshold in the stored stop records.
+- This is a queue for data review, not a statement about empty cells, population, sidewalks, or the whole geographic area.
 
 ## Graph quality evidence discrepancies
 
@@ -130,4 +133,4 @@ The discrepancy is surfaced without editing the historical input. Detailed `qual
 
 This stored evidence contains no field-safety verification and no fare verification. A graph path does not prove sidewalk continuity, crossing safety, legal access, current conditions, or a safe transfer. The ten stored Cebu cases are carried forward, not replayed by this command.
 
-The stored coordinate fields contain usable latitude/longitude values for 503/503 stops and 37/37 places. This validates coordinate syntax and range only; it does not verify those locations in the field.
+Coordinate-grid summary: 49 stop cells and 17 place cells contain records. No cell met the conservative low-snap candidate rule (at least three records and under 50% snapped). This does not imply that empty cells are covered or that these bins represent population or field access.

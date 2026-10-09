@@ -20,6 +20,8 @@ EXPECTED_BACKUP_SHA256 = "e55af400fde88d0a3434b194e0625e204eb0a2726374eabb8286c1
 EXPECTED_GRAPH_FINGERPRINT = "a0d9f1cb8289cf1f9bde3905d1ad8a57124ee41120153b4efc1f5b31e4c03ecd"
 BATCH039_NARRATIVE_REPORTED_RESTRICTIONS = 648
 MAX_INPUT_BYTES = 5_000_000
+COORDINATE_GRID_DEGREES = 0.01
+LOW_SNAP_CELL_MINIMUM_RECORDS = 3
 
 
 class EvidenceError(ValueError):
@@ -52,6 +54,40 @@ def valid_coordinates(row):
     if any(isinstance(value, bool) or not isinstance(value, (int, float)) for value in (latitude, longitude)):
         return False
     return math.isfinite(latitude) and math.isfinite(longitude) and -90 <= latitude <= 90 and -180 <= longitude <= 180
+
+
+def coordinate_grid_coverage(records):
+    cells = defaultdict(lambda: {"total": 0, "snapped": 0, "unsnapped": 0, "record_ids": []})
+    for row in records:
+        if not valid_coordinates(row):
+            continue
+        coordinates = row["coordinates"]
+        latitude_cell = math.floor(coordinates["lat"] / COORDINATE_GRID_DEGREES)
+        longitude_cell = math.floor(coordinates["lng"] / COORDINATE_GRID_DEGREES)
+        key = (latitude_cell, longitude_cell)
+        entry = cells[key]
+        entry["total"] += 1
+        snapped = isinstance(row.get("snap"), dict) and row["snap"].get("status") == "SNAPPED"
+        entry["snapped" if snapped else "unsnapped"] += 1
+        entry["record_ids"].append(row.get("id"))
+
+    results = []
+    for (latitude_cell, longitude_cell), counts in sorted(cells.items()):
+        fraction = round(counts["snapped"] / counts["total"], 6) if counts["total"] else 0
+        results.append({
+            "latitude_min_degrees": round(latitude_cell * COORDINATE_GRID_DEGREES, 2),
+            "longitude_min_degrees": round(longitude_cell * COORDINATE_GRID_DEGREES, 2),
+            **counts,
+            "snappable_fraction": fraction,
+            "low_snap_candidate": counts["total"] >= LOW_SNAP_CELL_MINIMUM_RECORDS and fraction < 0.5,
+        })
+    return {
+        "cell_size_degrees": COORDINATE_GRID_DEGREES,
+        "minimum_records_for_low_snap_candidate": LOW_SNAP_CELL_MINIMUM_RECORDS,
+        "interpretation": "Stored transit records grouped by coordinate cell; empty cells, population coverage, pedestrian access, and geographic service coverage are not measured.",
+        "cells_with_records": results,
+        "low_snap_candidate_cells": [cell for cell in results if cell["low_snap_candidate"]],
+    }
 
 
 def summarize_points(records):
@@ -98,6 +134,7 @@ def summarize_points(records):
             if value["total"] and value["snapped"] / value["total"] < 0.5
         ],
         "administrative_grouping_is_geographic_proof": False,
+        "coordinate_grid_coverage": coordinate_grid_coverage(records),
     }
 
 
@@ -267,6 +304,16 @@ def render_markdown(summary):
         )
     else:
         component_lines.append("- No snapped stop records are available in the pinned evidence.")
+    grid_lines = ["", "Observed-record grid cells (0.01 degree; candidate means at least three records and under 50% snapped):", ""]
+    candidates = stops["coordinate_grid_coverage"]["low_snap_candidate_cells"]
+    if candidates:
+        grid_lines.extend(
+            f"- Stops in cell ({cell['latitude_min_degrees']:.2f}, {cell['longitude_min_degrees']:.2f}): {cell['snapped']}/{cell['total']} snapped; record IDs {cell['record_ids']}."
+            for cell in candidates
+        )
+    else:
+        grid_lines.append("- No candidate cell met the stated threshold in the stored stop records.")
+    grid_lines.append("- This is a queue for data review, not a statement about empty cells, population, sidewalks, or the whole geographic area.")
     lines = [
         "# Cebu offline graph coverage diagnostics", "",
         "Mode: `CARRIED_FORWARD_FROM_PINNED_EVIDENCE`. This report summarizes the hash-pinned Batch032 report; it does not reopen or recompute the SQLite graph.", "",
@@ -278,7 +325,7 @@ def render_markdown(summary):
         f"- Restriction count: the pinned coverage report stores {summary['routing_capability']['count_reconciliation']['pinned_coverage_report_count']}; the Batch039 narrative reports {summary['routing_capability']['count_reconciliation']['batch039_narrative_reported_count']}. Reconciliation was not performed.",
         "", "## Coverage and confidence", "",
         "Snapping and component membership describe graph coverage only. Trust/source counts are preserved separately. Administrative city-ID groupings do not establish geographic coverage or field access.", "",
-        *administrative_lines, *component_lines, "",
+        *administrative_lines, *component_lines, *grid_lines, "",
         "## Graph quality evidence discrepancies", "",
     ]
     if discrepancy_rows:

@@ -84,6 +84,20 @@ class CoverageSummaryTests(unittest.TestCase):
         with self.assertRaisesRegex(MODULE.EvidenceError, "exactly ten"):
             MODULE.build_summary(document, "a" * 64)
 
+    def test_synthetic_coordinate_grid_flags_only_low_snap_record_cells(self):
+        records = [
+            {"id": 1, "coordinates": {"lat": 10.301, "lng": 123.801}, "snap": {"status": "ROUTE_UNAVAILABLE"}},
+            {"id": 2, "coordinates": {"lat": 10.302, "lng": 123.802}, "snap": {"status": "ROUTE_UNAVAILABLE"}},
+            {"id": 3, "coordinates": {"lat": 10.303, "lng": 123.803}, "snap": {"status": "ROUTE_UNAVAILABLE"}},
+            {"id": 4, "coordinates": {"lat": 10.304, "lng": 123.804}, "snap": {"status": "SNAPPED"}},
+            {"id": 5, "coordinates": {"lat": 100, "lng": 123.8}, "snap": {"status": "SNAPPED"}},
+        ]
+        result = MODULE.coordinate_grid_coverage(records)
+        self.assertEqual(len(result["cells_with_records"]), 1)
+        self.assertEqual(result["low_snap_candidate_cells"][0]["record_ids"], [1, 2, 3, 4])
+        self.assertEqual(result["low_snap_candidate_cells"][0]["snappable_fraction"], 0.25)
+        self.assertIn("population coverage", result["interpretation"])
+
     def test_synthetic_corpus_comparator_requires_pinned_identity_and_parity(self):
         expected = synthetic_document()
         actual = {
