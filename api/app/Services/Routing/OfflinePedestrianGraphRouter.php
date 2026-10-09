@@ -623,13 +623,13 @@ final class OfflinePedestrianGraphRouter
             $coordinates[$from] = [(float) $edge['from_longitude'], (float) $edge['from_latitude']];
             $coordinates[$to] = [(float) $edge['to_longitude'], (float) $edge['to_latitude']];
             $forward = [
-                'to' => $to, 'length' => $length, 'way_id' => (int) $edge['way_id'],
+                'from' => $from, 'to' => $to, 'length' => $length, 'way_id' => (int) $edge['way_id'],
                 'segment_index' => (int) $edge['segment_index'],
             ];
             $adjacency[$from][] = $forward;
             if ((int) $edge['bidirectional'] === 1) {
                 $adjacency[$to][] = [
-                    'to' => $from, 'length' => $length, 'way_id' => (int) $edge['way_id'],
+                    'from' => $to, 'to' => $from, 'length' => $length, 'way_id' => (int) $edge['way_id'],
                     'segment_index' => (int) $edge['segment_index'],
                 ];
             }
@@ -715,6 +715,8 @@ final class OfflinePedestrianGraphRouter
                 return ['path' => [], 'edges' => [], 'network_distance' => 0.0, 'maximum_edge_meters' => 0.0, 'limited' => true, 'distance_bound_reached' => $distanceBoundReached];
             }
             $edges[] = [
+                'from_node_id' => (int) $parentEdges[$current]['from'],
+                'to_node_id' => (int) $parentEdges[$current]['to'],
                 'way_id' => (int) $parentEdges[$current]['way_id'],
                 'segment_index' => (int) $parentEdges[$current]['segment_index'],
                 'length_meters' => (float) $parentEdges[$current]['length'],

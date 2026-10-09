@@ -15,19 +15,24 @@ COMPARE_SPEC.loader.exec_module(COMPARE)
 
 
 def synthetic_document():
-    snapped = {"status": "SNAPPED", "component_id": 7, "largest_component": True, "field_access_verified": False}
+    snapped = {"status": "SNAPPED", "component_id": 7, "node_id": 70, "snap_distance_meters": 2.0,
+               "largest_component": True, "field_access_verified": False}
     miss = {"status": "ROUTE_UNAVAILABLE", "reason_code": "snap_unavailable"}
     route_cases = []
     for index in range(10):
         found = index == 0
         route_cases.append({
-            "case_id": "synthetic_case" if index < 2 else f"synthetic_case_{index}",
+            "case_id": f"synthetic_case_{index}",
             "source_records": {"origin": {"type": "stop", "id": index + 1, "trust_status": "UNVERIFIED_RECORD"},
                                "destination": {"type": "stop", "id": index + 2, "trust_status": "UNVERIFIED_RECORD"}},
             "route": {"status": "ROUTE_FOUND" if found else "ROUTE_UNAVAILABLE",
                       "reason_code": None if found else "component_disconnected",
                       "geometry": {"type": "LineString", "coordinates": [[123.8, 10.3], [123.81, 10.31]]} if found else None,
-                      "edges": [{"way_id": 1}] if found else [], "distance_meters": 12 if found else None},
+                      "node_ids": [1, 2] if found else [],
+                      "origin_snap": {"status": "SNAPPED", "node_id": 1, "node_longitude": 123.8, "node_latitude": 10.3, "snap_distance_meters": 0.5} if found else None,
+                      "destination_snap": {"status": "SNAPPED", "node_id": 2, "node_longitude": 123.81, "node_latitude": 10.31, "snap_distance_meters": 0.5} if found else None,
+                      "edges": [{"way_id": 1, "segment_index": 0, "length_meters": 12}] if found else [],
+                      "distance_meters": 12 if found else None},
         })
     return {
         "format": "biyahe-cebu-offline-coverage-v1", "complete": True,
@@ -44,7 +49,7 @@ def synthetic_document():
                 {"id": 1, "coordinates": {"lat": 10.3, "lng": 123.8}, "snap": snapped, "city_id": 4, "trust_status": "UNVERIFIED_RECORD", "verification_state": "UNVERIFIED", "coordinate_status": "STORED_COORDINATES", "source": {"source_type": "COMMUNITY_OPEN_DATA"}},
                 {"id": 2, "coordinates": {"lat": 91, "lng": 123.8}, "snap": miss, "city_id": 4, "trust_status": "DRAFT_DEMO", "verification_state": "DRAFT", "coordinate_status": "STORED_COORDINATES", "source": {"source_type": "DEMO_FIXTURE"}},
             ]},
-            "places": {"records": [{"id": 8, "snap": snapped, "city_id": 5, "trust_status": "UNVERIFIED_RECORD", "verification_state": "UNVERIFIED", "coordinate_status": "STORED_COORDINATES", "source": {"source_type": "COMMUNITY_OPEN_DATA"}}]},
+            "places": {"records": [{"id": 8, "coordinates": {"lat": 10.31, "lng": 123.81}, "snap": snapped, "city_id": 5, "trust_status": "UNVERIFIED_RECORD", "verification_state": "UNVERIFIED", "coordinate_status": "STORED_COORDINATES", "source": {"source_type": "COMMUNITY_OPEN_DATA"}}]},
             "transfers": {"records": [{"id": 3, "trust_status": "UNVERIFIED_RECORD", "graph_route_status": "ROUTE_FOUND"}]},
         },
         "journey_corpus": {"cases": route_cases},
@@ -67,10 +72,41 @@ class CoverageSummaryTests(unittest.TestCase):
         self.assertEqual(result["transfers"]["unverified_transfer_ids"], [3])
         self.assertEqual(result["journey_corpus"]["cases_total"], 10)
         self.assertEqual(len(result["graph_quality"]["summary_discrepancies"]), 3)
-        self.assertEqual(result["routing_capability"]["count_reconciliation"]["pinned_coverage_report_count"], 619)
-        self.assertEqual(result["routing_capability"]["count_reconciliation"]["batch039_narrative_reported_count"], 648)
-        self.assertFalse(result["routing_capability"]["count_reconciliation"]["reconciled"])
+        self.assertEqual(result["routing_capability"]["count_reconciliation"]["status"], "BLOCKED_PROVENANCE_REGISTRY_NOT_VALIDATED")
+        self.assertEqual(result["stops"]["measurement_scope"], "STORED_TRANSIT_RECORDS_ONLY")
+        self.assertFalse(result["stops"]["geographic_sidewalk_population_and_field_coverage_measured"])
         self.assertFalse(result["evidence_boundaries"]["graph_connectivity_proves_physical_transfer_safety"])
+
+    def test_duplicate_point_ids_are_rejected(self):
+        records = synthetic_document()["coverage"]["stops"]["records"]
+        with self.assertRaisesRegex(MODULE.EvidenceError, "duplicate record id"):
+            MODULE.summarize_points([records[0], dict(records[0])], 25)
+
+    def test_snapped_record_with_invalid_coordinates_is_rejected(self):
+        records = synthetic_document()["coverage"]["stops"]["records"]
+        invalid = dict(records[0], id=9, coordinates={"lat": 91, "lng": 123.8})
+        with self.assertRaisesRegex(MODULE.EvidenceError, "SNAPPED with invalid coordinates"):
+            MODULE.summarize_points([invalid], 25)
+
+    def test_snap_distance_cannot_exceed_pinned_radius(self):
+        records = synthetic_document()["coverage"]["stops"]["records"]
+        invalid = dict(records[0], id=9, snap={**records[0]["snap"], "snap_distance_meters": 25.1})
+        with self.assertRaisesRegex(MODULE.EvidenceError, "exceeds the pinned snap radius"):
+            MODULE.summarize_points([invalid], 25)
+
+    def test_missing_coverage_section_has_clear_error(self):
+        document = synthetic_document()
+        del document["coverage"]["places"]
+        with self.assertRaisesRegex(MODULE.EvidenceError, "coverage.places.records is missing"):
+            MODULE.build_summary(document, "a" * 64)
+
+    def test_repeated_corpus_descriptive_id_is_disambiguated_by_ordered_key(self):
+        corpus = synthetic_document()["journey_corpus"]
+        corpus["cases"][1]["case_id"] = corpus["cases"][0]["case_id"]
+        result = MODULE.summarize_corpus(corpus)
+        self.assertEqual(result["repeated_descriptive_case_ids"]["synthetic_case_0"], [0, 1])
+        self.assertEqual(result["cases"][0]["case_key"], "00:synthetic_case_0")
+        self.assertEqual(result["cases"][1]["case_key"], "01:synthetic_case_0")
 
     def test_source_mismatch_fails_closed(self):
         document = synthetic_document()
@@ -108,18 +144,32 @@ class CoverageSummaryTests(unittest.TestCase):
             "graph_fingerprint": MODULE.EXPECTED_GRAPH_FINGERPRINT,
             "graph_format": "biyahe-pedestrian-sqlite-v3",
             "graph_schema_version": 3,
+            "cases_total": 10,
+            "maximum_snap_distance_meters": 25,
+            "routes_found": 1,
+            "routes_unavailable": 9,
             "cases": [],
         }
         for index, expected_case in enumerate(expected["journey_corpus"]["cases"]):
             route = expected_case["route"]
+            found = route["status"] == "ROUTE_FOUND"
+            origin_snap = route.get("origin_snap") or {}
+            destination_snap = route.get("destination_snap") or {}
+            edges = [dict(edge, from_node_id=1, to_node_id=2) for edge in route.get("edges", [])] if found else []
             actual["cases"].append({
                 "case_index": index, "case_id": expected_case["case_id"], "case_key": f"{index:02d}:{expected_case['case_id']}",
                 "actual_status": route["status"], "actual_reason_code": route["reason_code"],
                 "distance_meters": route["distance_meters"], "component_id": route.get("component_id"),
                 "geometry_matches_stored_route": True,
                 "geometry_direction_matches": True, "edge_identity_matches": True,
-                "geometry_continuous": True, "origin_snap_node_id": None,
-                "destination_snap_node_id": None,
+                "geometry_continuous": True, "origin_snap_node_id": origin_snap.get("node_id"),
+                "destination_snap_node_id": destination_snap.get("node_id"),
+                "origin_snap_distance_meters": origin_snap.get("snap_distance_meters"),
+                "destination_snap_distance_meters": destination_snap.get("snap_distance_meters"),
+                "origin_snap_coordinate": [origin_snap["node_longitude"], origin_snap["node_latitude"]] if found else None,
+                "destination_snap_coordinate": [destination_snap["node_longitude"], destination_snap["node_latitude"]] if found else None,
+                "geometry": route["geometry"], "node_ids": route["node_ids"], "edges": edges,
+                "failure_has_no_path_geometry": not found,
             })
         result = COMPARE.compare(expected, actual, "a" * 64, "b" * 64)
         self.assertEqual(result["status"], "PASS")
@@ -148,18 +198,18 @@ class CoverageSummaryTests(unittest.TestCase):
             self.assertEqual(target.read_text(encoding="utf-8"), "existing output")
 
             race_target = Path(directory) / "race.json"
-            original_link = COMPARE.os.link
+            original_publish = COMPARE.publish_no_clobber
 
             def create_competing_destination(source, destination):
                 Path(destination).write_text("concurrent output", encoding="utf-8")
                 raise FileExistsError(destination)
 
-            COMPARE.os.link = create_competing_destination
+            COMPARE.publish_no_clobber = create_competing_destination
             try:
                 with self.assertRaises(FileExistsError):
                     COMPARE.write_new(race_target, {"status": "PASS"})
             finally:
-                COMPARE.os.link = original_link
+                COMPARE.publish_no_clobber = original_publish
             self.assertEqual(race_target.read_text(encoding="utf-8"), "concurrent output")
             self.assertFalse(race_target.with_name(race_target.name + ".building").exists())
 

@@ -63,7 +63,11 @@ python3 api/scripts/summarize-offline-coverage.py \
   --output-dir="$HOME/.cache/biyahe/batch040/coverage-diagnostics"
 ```
 
-The command pins and checks the stored report before emitting machine-readable and Markdown summaries. It reports an existing mismatch between the old `quality_summary` zeros and detailed source-bound counts; it does not silently revise the historical report.
+The command pins and checks the stored report before emitting machine-readable and Markdown summaries. Batch041 provenance validation now distinguishes these legacy default values from measured graph counts without rewriting the historical report.
+
+The carried-forward coverage summary verifies the Batch041 metric provenance registry before emitting reconciled counts. The historical `quality_summary` zeros are retained as default values, not treated as measured zero counts.
+
+Successful route results pass `OfflinePedestrianRouteGeometryContract`: each graph coordinate maps to an ordered node, each directed edge joins adjacent node IDs, the first and last geometry points match the snapped graph nodes, and source edge lengths agree with network distance. Approximate endpoint snap distance remains separate from displayed graph geometry. Failed results carry a reason and no path geometry. These checks establish source-graph consistency, not field safety. Request deadlines are cooperative; PDO SQLite cannot interrupt a statement while it runs, so a browser abort prevents stale UI updates but cannot promise immediate server-side cancellation.
 
 ## Fail-closed behavior
 

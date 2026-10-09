@@ -30,6 +30,8 @@ final class OfflinePedestrianGraphRouterTest extends TestCase
             $this->assertSame('ROUTE_FOUND', $route['status']);
             $this->assertSame([1, 2, 3], $route['node_ids']);
             $this->assertSame(20.0, $route['distance_meters']);
+            $this->assertSame([1, 2], [$route['edges'][0]['from_node_id'], $route['edges'][0]['to_node_id']]);
+            $this->assertSame([2, 3], [$route['edges'][1]['from_node_id'], $route['edges'][1]['to_node_id']]);
             $this->assertSame('estimate_only', $route['duration_label']);
             $this->assertNotNull($route['estimated_duration_seconds']);
             $this->assertSame('path_unavailable', $reverse['reason_code']);

@@ -1,0 +1,203 @@
+{
+  "format": "biyahe-batch041-work-ledger-v1",
+  "started_at_utc": "2026-10-09T18:20:46Z",
+  "started_at_local": "2026-10-10T02:20:46+08:00",
+  "head_at_start": "60c82e8e9f101f25b409dcff8fd18293a47faad9",
+  "branch": "main",
+  "historical_untracked_reports": [
+    "docs/reports/batch033-doctor-v33.json",
+    "docs/reports/batch034-doctor-v34-coverage.json",
+    "docs/reports/batch034-doctor-v34-current.json",
+    "docs/reports/batch034-doctor-v34-final-evidence.json",
+    "docs/reports/batch034-doctor-v34-final.json",
+    "docs/reports/batch034-doctor-v34.json",
+    "docs/reports/batch039-doctor-v39.json"
+  ],
+  "protected_graph": {
+    "path": "$HOME/.cache/biyahe/batch030/cebu-walk-central-visayas-20261007-v3.sqlite",
+    "sha256": "29d7aaf9c45a596f4065c44d13f983f4a7edeec5ac2ea41b718b1c52ca865bf8"
+  },
+  "resource_floors_kib": {
+    "swap_free": 131072,
+    "mem_available": 524288
+  },
+  "recovery_snapshot": "$HOME/storage/external-1/Termux-Archive/Biyahe/Batch041-Recovery/20261009T182057Z",
+  "tasks": [
+    {
+      "id": "R1",
+      "scope": "preflight, graph identity, historical reports, SD bundle, recovery snapshot",
+      "dependencies": [],
+      "status": "VERIFIED",
+      "files_changed": [
+        "docs/reports/batch041-work-ledger.json"
+      ],
+      "evidence": "HEAD, branch, graph hash, seven untracked Doctor reports, B040 SD bundle, and timestamped SD recovery snapshot verified."
+    },
+    {
+      "id": "E1",
+      "scope": "reconcile restriction and graph-quality evidence definitions and hashes",
+      "dependencies": [
+        "R1"
+      ],
+      "status": "VERIFIED",
+      "files_changed": [
+        "docs/reports/batch041-evidence-provenance.json",
+        "docs/reports/batch041-evidence-reconciliation.md",
+        "api/scripts/evidence_provenance.py",
+        "api/scripts/validate-batch041-provenance.py",
+        "api/scripts/test_evidence_provenance.py"
+      ],
+      "evidence": "Six source reports and 13 metric claims are SHA-bound. 648 = 619 stored + 29 source-only; legacy quality zeros are unmeasured defaults, while graph audit reports 26/944/1510. Validator and 6 focused tests pass."
+    },
+    {
+      "id": "C1",
+      "scope": "coverage summarizer record integrity and evidence boundaries",
+      "dependencies": [
+        "R1"
+      ],
+      "status": "VERIFIED",
+      "files_changed": [
+        "api/scripts/summarize-offline-coverage.py",
+        "api/scripts/test_summarize_offline_coverage.py",
+        "api/scripts/offline-evidence-smoke.py",
+        "api/scripts/test_offline_evidence_smoke.py"
+      ],
+      "evidence": "Stored-record schema, unique IDs, coordinates, 25 m snaps, transfer trust, source identity, and route evidence checks added. 11 summary tests and 2 static smoke tests pass; no SQLite/PBF opened."
+    },
+    {
+      "id": "A1",
+      "scope": "offline adapter and geometry contract review",
+      "dependencies": [
+        "R1"
+      ],
+      "status": "IMPLEMENTED_UNTESTED",
+      "files_changed": [
+        "api/app/Services/Routing/OfflinePedestrianRouteGeometryContract.php",
+        "api/app/Services/Routing/OfflinePedestrianGraphRouter.php",
+        "api/app/Services/Routing/OfflineJourneyWalkingPreview.php",
+        "api/tests/Unit/OfflinePedestrianRouteGeometryContractTest.php"
+      ],
+      "evidence": "Reusable source-bound geometry/direction/distance contract added; PHP syntax passes. PHPUnit functional execution blocked by sustained SwapFree floor failure."
+    },
+    {
+      "id": "C2",
+      "scope": "offline corpus comparator geometry and identity assertions",
+      "dependencies": [
+        "E1"
+      ],
+      "status": "VERIFIED",
+      "files_changed": [
+        "api/scripts/compare-offline-corpus.py",
+        "api/scripts/test_compare_offline_corpus.py"
+      ],
+      "evidence": "Four synthetic report-contract tests pass: exact ten case keys, source identity, directed edge continuity, and no geometry on disconnected failures. No route was executed."
+    },
+    {
+      "id": "J1",
+      "scope": "journey preview, Ride Mode, saved snapshot, map/mobile regression review",
+      "dependencies": [
+        "R1"
+      ],
+      "status": "BLOCKED",
+      "files_changed": [
+        "web/src/components/CommuteCard.tsx",
+        "web/src/components/RideMode.tsx",
+        "web/src/lib/savedJourneys.ts",
+        "web/src/app/page.tsx"
+      ],
+      "evidence": "Static inspection confirms preview identity, cancellation, save exclusion, and uncertainty UI exist. Ride Mode, saved journey, map/mobile regression execution was not attempted after swap preflight failed."
+    },
+    {
+      "id": "V1",
+      "scope": "validation ledger and resource-aware scheduling review",
+      "dependencies": [
+        "R1"
+      ],
+      "status": "IMPLEMENTED_UNTESTED",
+      "files_changed": [
+        "web/scripts/validation-ledger.mjs",
+        "docs/batch040-validation-scheduler.md"
+      ],
+      "evidence": "Reviewed fingerprint/evidence binding, atomic write, interruption precedence, and owned-process scheduler contracts. Batch041 did not rerun the Node harness due the swap floor."
+    },
+    {
+      "id": "P1",
+      "scope": "portable kit no-database smoke verification",
+      "dependencies": [
+        "R1"
+      ],
+      "status": "IMPLEMENTED_UNTESTED",
+      "files_changed": [
+        "api/scripts/offline-evidence-smoke.py",
+        "api/scripts/test_offline_evidence_smoke.py"
+      ],
+      "evidence": "No-database carried-forward evidence smoke command and two fixtures pass. Batch041 portable v2 source package and manifest still to be built."
+    },
+    {
+      "id": "D1",
+      "scope": "Doctor V41 machine-readable evidence statuses",
+      "dependencies": [
+        "E1",
+        "C1",
+        "A1",
+        "J1",
+        "V1",
+        "P1"
+      ],
+      "status": "NOT_STARTED",
+      "files_changed": [],
+      "evidence": "Generate Doctor V41 after final evidence and test statuses are known."
+    },
+    {
+      "id": "T1",
+      "scope": "resource-aware test execution",
+      "dependencies": [
+        "C1",
+        "A1",
+        "J1",
+        "V1"
+      ],
+      "status": "BLOCKED",
+      "files_changed": [
+        "docs/reports/batch041-work-ledger.json"
+      ],
+      "evidence": "Three spaced samples: MemAvailable 936048/979420/923316 KiB; SwapFree 137020/129792/130244 KiB. Swap floor 131072 KiB failed in samples 2 and 3; no Node/PHP functional test or graph replay launched."
+    },
+    {
+      "id": "G1",
+      "scope": "commit, fresh SD bundle and final report/clipboard",
+      "dependencies": [
+        "D1",
+        "T1"
+      ],
+      "status": "NOT_STARTED",
+      "files_changed": [],
+      "evidence": "After final delivery: commit coherent verified changes, bundle final HEAD on SD, and write final report/clipboard status."
+    }
+  ],
+  "queues": {
+    "A_resource_independent": [
+      "D1",
+      "P1 package completion",
+      "portable verification v2",
+      "final review"
+    ],
+    "B_lightweight_validation": [
+      "evidence registry and summary fixtures PASS",
+      "comparator fixtures PASS",
+      "static syntax and diff checks PASS"
+    ],
+    "C_resource_gated_execution": [
+      "Node/PHP harnesses BLOCKED by three-sample SwapFree preflight (2 below 131072 KiB)",
+      "ten-case SQLite graph replay BLOCKED; not attempted"
+    ],
+    "D_external_host": [
+      "full Linux PostgreSQL staging and route parity"
+    ],
+    "E_field_dependent": [
+      "transfer verification",
+      "walking safety, crossing and accessibility observations"
+    ]
+  },
+  "next_safe_action": "Create Doctor V41 and a source-pinned no-database portable verification v2 package; then repeat static checks and commit."
+}

@@ -51,8 +51,16 @@ final class OfflineJourneyWalkingPreview
             if ((hrtime(true) - $routeStarted) > ((int) $this->setting('maximum_request_seconds') * 1_000_000_000)) {
                 throw new OfflineWalkingPreviewException('resource_budget_exceeded', 'A bounded graph route exceeded the local preview time budget.');
             }
-            if (($route['status'] ?? null) === 'ROUTE_FOUND') {
-                $this->assertRouteGeometryWithinContract($route);
+            try {
+                OfflinePedestrianRouteGeometryContract::assertResult(
+                    $route,
+                    (string) $this->setting('source_sha256'),
+                    (string) $this->setting('graph_fingerprint'),
+                    (float) $this->setting('maximum_snap_distance_meters'),
+                    (int) $this->setting('maximum_geometry_points'),
+                );
+            } catch (\InvalidArgumentException $exception) {
+                throw new OfflineWalkingPreviewException('graph_unavailable', $exception->getMessage());
             }
             $journey['legs'][$index] = $this->applyRouteResult($leg, $route);
             $this->assertRequestTimeWithinBudget($routeWorkStarted);
@@ -116,6 +124,17 @@ final class OfflineJourneyWalkingPreview
                 $maximumDistance,
                 (int) $this->setting('maximum_request_seconds') * 1_000,
             );
+            try {
+                OfflinePedestrianRouteGeometryContract::assertResult(
+                    $actual,
+                    (string) $this->setting('source_sha256'),
+                    (string) $this->setting('graph_fingerprint'),
+                    (float) $this->setting('maximum_snap_distance_meters'),
+                    (int) $this->setting('maximum_geometry_points'),
+                );
+            } catch (\InvalidArgumentException $exception) {
+                throw new OfflineWalkingPreviewException('graph_unavailable', $exception->getMessage());
+            }
             $expectedStatus = (string) ($expected['status'] ?? '');
             $statusMatches = ($actual['status'] ?? null) === $expectedStatus;
             $reasonMatches = ($actual['reason_code'] ?? null) === ($expected['reason_code'] ?? null);
@@ -128,16 +147,19 @@ final class OfflineJourneyWalkingPreview
             $directionMatches = $expectedStatus !== 'ROUTE_FOUND'
                 || (($actual['node_ids'] ?? null) === ($expected['node_ids'] ?? null)
                     && $actualCoordinates === $expectedCoordinates);
+            $actualEdgeIdentity = array_map(static fn (array $edge): array => [
+                'way_id' => $edge['way_id'] ?? null,
+                'segment_index' => $edge['segment_index'] ?? null,
+                'length_meters' => $edge['length_meters'] ?? null,
+            ], $actual['edges'] ?? []);
             $edgeIdentityMatches = $expectedStatus !== 'ROUTE_FOUND'
-                || (($actual['edges'] ?? null) === ($expected['edges'] ?? null));
+                || ($actualEdgeIdentity === ($expected['edges'] ?? null));
             $snapMatches = $expectedStatus !== 'ROUTE_FOUND'
                 || (($actual['origin_snap']['node_id'] ?? null) === ($expected['origin_snap']['node_id'] ?? null)
-                    && ($actual['destination_snap']['node_id'] ?? null) === ($expected['destination_snap']['node_id'] ?? null));
-            $geometryContinuous = $expectedStatus !== 'ROUTE_FOUND'
-                || (is_array($actualCoordinates) && count($actualCoordinates) >= 2
-                    && count($actual['edges'] ?? []) === count($actualCoordinates) - 1
-                    && count($actual['node_ids'] ?? []) === count($actualCoordinates)
-                    && ! $this->hasAdjacentDuplicateCoordinates($actualCoordinates));
+                    && ($actual['destination_snap']['node_id'] ?? null) === ($expected['destination_snap']['node_id'] ?? null)
+                    && abs((float) ($actual['origin_snap']['snap_distance_meters'] ?? -1000) - (float) ($expected['origin_snap']['snap_distance_meters'] ?? -2000)) <= 0.001
+                    && abs((float) ($actual['destination_snap']['snap_distance_meters'] ?? -1000) - (float) ($expected['destination_snap']['snap_distance_meters'] ?? -2000)) <= 0.001);
+            $geometryContinuous = true; // The shared route contract checked every coordinate, node, oriented edge and distance above.
             $results[] = [
                 'case_index' => $caseIndex,
                 'case_key' => sprintf('%02d:%s', $caseIndex, $caseId),
@@ -169,7 +191,18 @@ final class OfflineJourneyWalkingPreview
                 'component_id' => $actual['component_id'] ?? null,
                 'origin_snap_node_id' => $actual['origin_snap']['node_id'] ?? null,
                 'destination_snap_node_id' => $actual['destination_snap']['node_id'] ?? null,
+                'origin_snap_coordinate' => isset($actual['origin_snap']['node_longitude'], $actual['origin_snap']['node_latitude'])
+                    ? [$actual['origin_snap']['node_longitude'], $actual['origin_snap']['node_latitude']] : null,
+                'destination_snap_coordinate' => isset($actual['destination_snap']['node_longitude'], $actual['destination_snap']['node_latitude'])
+                    ? [$actual['destination_snap']['node_longitude'], $actual['destination_snap']['node_latitude']] : null,
                 'geometry_points' => is_array($actualCoordinates) ? count($actualCoordinates) : 0,
+                'geometry' => $actual['geometry'] ?? null,
+                'node_ids' => $actual['node_ids'] ?? [],
+                'edges' => $actual['edges'] ?? [],
+                'origin_snap_distance_meters' => $actual['origin_snap']['snap_distance_meters'] ?? null,
+                'destination_snap_distance_meters' => $actual['destination_snap']['snap_distance_meters'] ?? null,
+                'failure_has_no_path_geometry' => ($actual['status'] ?? null) !== 'ROUTE_UNAVAILABLE'
+                    || (($actual['geometry'] ?? null) === null && ($actual['node_ids'] ?? []) === [] && ($actual['edges'] ?? []) === []),
                 'elapsed_milliseconds' => round((hrtime(true) - $caseStarted) / 1_000_000, 3),
             ];
         }
@@ -189,6 +222,7 @@ final class OfflineJourneyWalkingPreview
             'graph_format' => (string) ($graphMetadata['format'] ?? ''),
             'graph_schema_version' => (int) ($graphMetadata['schema_version'] ?? 0),
             'resource_preflight' => $resourcePreflight,
+            'maximum_snap_distance_meters' => (float) $this->setting('maximum_snap_distance_meters'),
             'cases_total' => count($results),
             'routes_found' => count(array_filter($results, static fn (array $case): bool => $case['actual_status'] === 'ROUTE_FOUND')),
             'routes_unavailable' => count(array_filter($results, static fn (array $case): bool => $case['actual_status'] === 'ROUTE_UNAVAILABLE')),
@@ -283,17 +317,6 @@ final class OfflineJourneyWalkingPreview
             'component_disconnected' => 'NO_WALKABLE_ACCESS',
             default => 'ROUTING_UNAVAILABLE',
         };
-    }
-
-    private function hasAdjacentDuplicateCoordinates(array $coordinates): bool
-    {
-        for ($index = 1; $index < count($coordinates); $index++) {
-            if ($coordinates[$index] === $coordinates[$index - 1]) {
-                return true;
-            }
-        }
-
-        return false;
     }
 
     /** @return array{samples: int, minimum_memavailable_kib: int, minimum_swapfree_kib: int} */
@@ -458,72 +481,6 @@ final class OfflineJourneyWalkingPreview
         }
 
         return $router;
-    }
-
-    /** @param array<string, mixed> $route */
-    private function assertRouteGeometryWithinContract(array $route): void
-    {
-        $geometry = $route['geometry'] ?? null;
-        $coordinates = is_array($geometry) && ($geometry['type'] ?? null) === 'LineString'
-            ? ($geometry['coordinates'] ?? null)
-            : null;
-        $edges = $route['edges'] ?? null;
-        $nodeIds = $route['node_ids'] ?? null;
-        $maximumPoints = (int) $this->setting('maximum_geometry_points');
-        if (! is_array($coordinates) || count($coordinates) < 2 || count($coordinates) > $maximumPoints
-            || ! is_array($edges) || count($edges) !== count($coordinates) - 1
-            || ! is_array($nodeIds) || count($nodeIds) !== count($coordinates)
-            || ! is_numeric($route['distance_meters'] ?? null) || (float) $route['distance_meters'] <= 0
-            || ! is_numeric($route['total_distance_with_approximate_snaps_meters'] ?? null)
-            || (float) $route['total_distance_with_approximate_snaps_meters'] < (float) $route['distance_meters']
-            || (float) $route['total_distance_with_approximate_snaps_meters'] <= 0
-            || ! is_array($route['origin_snap'] ?? null) || ! is_array($route['destination_snap'] ?? null)) {
-            throw new OfflineWalkingPreviewException('graph_unavailable', 'The graph route geometry or distance does not meet the source contract.');
-        }
-        $previous = null;
-        foreach ($coordinates as $coordinate) {
-            if (! is_array($coordinate) || count($coordinate) !== 2
-                || ! is_numeric($coordinate[0]) || ! is_numeric($coordinate[1])
-                || ! is_finite((float) $coordinate[0]) || ! is_finite((float) $coordinate[1])
-                || (float) $coordinate[0] < -180 || (float) $coordinate[0] > 180
-                || (float) $coordinate[1] < -90 || (float) $coordinate[1] > 90
-                || ($previous !== null && abs((float) $coordinate[0] - (float) $previous[0]) < 0.000000000001
-                    && abs((float) $coordinate[1] - (float) $previous[1]) < 0.000000000001)) {
-                throw new OfflineWalkingPreviewException('graph_unavailable', 'The graph route contains invalid, duplicate, or discontinuous coordinates.');
-            }
-            $previous = $coordinate;
-        }
-        $origin = $route['origin_snap'];
-        $destination = $route['destination_snap'];
-        foreach ([$origin['node_longitude'] ?? null, $origin['node_latitude'] ?? null,
-            $destination['node_longitude'] ?? null, $destination['node_latitude'] ?? null] as $endpointCoordinate) {
-            if (! is_numeric($endpointCoordinate) || ! is_finite((float) $endpointCoordinate)) {
-                throw new OfflineWalkingPreviewException('graph_unavailable', 'The verified snapped route endpoint has an invalid coordinate.');
-            }
-        }
-        if (abs((float) $coordinates[0][0] - (float) ($origin['node_longitude'] ?? NAN)) > 0.000000001
-            || abs((float) $coordinates[0][1] - (float) ($origin['node_latitude'] ?? NAN)) > 0.000000001
-            || abs((float) $coordinates[count($coordinates) - 1][0] - (float) ($destination['node_longitude'] ?? NAN)) > 0.000000001
-            || abs((float) $coordinates[count($coordinates) - 1][1] - (float) ($destination['node_latitude'] ?? NAN)) > 0.000000001) {
-            throw new OfflineWalkingPreviewException('graph_unavailable', 'The graph geometry endpoints do not match the verified snapped nodes.');
-        }
-        $edgeDistance = 0.0;
-        foreach ($nodeIds as $nodeId) {
-            if (! is_int($nodeId) || $nodeId <= 0) {
-                throw new OfflineWalkingPreviewException('graph_unavailable', 'The graph route contains an invalid node identity.');
-            }
-        }
-        foreach ($edges as $edge) {
-            if (! is_array($edge) || ! is_int($edge['way_id'] ?? null) || ! is_int($edge['segment_index'] ?? null)
-                || ! is_numeric($edge['length_meters'] ?? null)
-                || ! is_finite((float) $edge['length_meters']) || (float) $edge['length_meters'] <= 0) {
-                throw new OfflineWalkingPreviewException('graph_unavailable', 'The graph route contains an invalid source edge identity or length.');
-            }
-            $edgeDistance += (float) $edge['length_meters'];
-        }
-        if (abs($edgeDistance - (float) $route['distance_meters']) > 0.05) {
-            throw new OfflineWalkingPreviewException('graph_unavailable', 'The graph route edge lengths do not match the reported network distance.');
-        }
     }
 
     private function assertRequestTimeWithinBudget(int $startedAt): void

@@ -2,6 +2,8 @@
 """Compare a stored-corpus replay against the pinned Batch032 Cebu evidence."""
 
 import argparse
+import ctypes
+import errno
 import hashlib
 import json
 import math
@@ -20,11 +22,95 @@ class CompareError(ValueError):
     pass
 
 
+def publish_no_clobber(source: Path, destination: Path) -> None:
+    """Atomically publish a same-filesystem file without replacing a peer."""
+    if hasattr(os, "link"):
+        os.link(source, destination)
+        return
+    libc = ctypes.CDLL(None, use_errno=True)
+    link = libc.link
+    link.argtypes = (ctypes.c_char_p, ctypes.c_char_p)
+    link.restype = ctypes.c_int
+    if link(os.fsencode(source), os.fsencode(destination)) != 0:
+        error_number = ctypes.get_errno()
+        raise OSError(error_number, os.strerror(error_number), str(destination))
+
+
 def read_pinned(path):
     data = path.read_bytes()
     if len(data) > MAX_REPORT_BYTES:
         raise CompareError(f"{path} exceeds the 5 MB report limit")
     return data, json.loads(data)
+
+
+def finite_number(value):
+    return isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(value)
+
+
+def validate_path_evidence(actual_case, expected_route, found):
+    geometry = actual_case.get("geometry")
+    nodes = actual_case.get("node_ids")
+    edges = actual_case.get("edges")
+    if not found:
+        return geometry is None and nodes == [] and edges == [] and actual_case.get("failure_has_no_path_geometry") is True
+    if not isinstance(geometry, dict) or geometry.get("type") != "LineString":
+        return False
+    coordinates = geometry.get("coordinates")
+    if not isinstance(coordinates, list) or not 2 <= len(coordinates) <= 2048:
+        return False
+    if not isinstance(nodes, list) or len(nodes) != len(coordinates) or not isinstance(edges, list) or len(edges) != len(coordinates) - 1:
+        return False
+    if any(not isinstance(node, int) or isinstance(node, bool) or node <= 0 for node in nodes) or len(set(nodes)) != len(nodes):
+        return False
+    normalized_coordinates = []
+    for point in coordinates:
+        if not isinstance(point, list) or len(point) != 2 or not all(finite_number(value) for value in point):
+            return False
+        longitude, latitude = point
+        if not -180 <= longitude <= 180 or not -90 <= latitude <= 90:
+            return False
+        normalized_coordinates.append(point)
+    if any(left == right for left, right in zip(normalized_coordinates, normalized_coordinates[1:])):
+        return False
+
+    expected_origin = expected_route.get("origin_snap") or {}
+    expected_destination = expected_route.get("destination_snap") or {}
+    origin_distance = actual_case.get("origin_snap_distance_meters")
+    destination_distance = actual_case.get("destination_snap_distance_meters")
+    if not finite_number(origin_distance) or not finite_number(destination_distance) or not (0 <= origin_distance <= 25 and 0 <= destination_distance <= 25):
+        return False
+    if (nodes[0] != actual_case.get("origin_snap_node_id") or nodes[-1] != actual_case.get("destination_snap_node_id")
+        or nodes[0] != expected_origin.get("node_id") or nodes[-1] != expected_destination.get("node_id")
+        or abs(origin_distance - expected_origin.get("snap_distance_meters", -1000)) > 0.001
+        or abs(destination_distance - expected_destination.get("snap_distance_meters", -1000)) > 0.001):
+        return False
+    origin_coordinate = actual_case.get("origin_snap_coordinate")
+    destination_coordinate = actual_case.get("destination_snap_coordinate")
+    if (origin_coordinate != [expected_origin.get("node_longitude"), expected_origin.get("node_latitude")]
+        or destination_coordinate != [expected_destination.get("node_longitude"), expected_destination.get("node_latitude")]
+        or normalized_coordinates[0] != origin_coordinate or normalized_coordinates[-1] != destination_coordinate):
+        return False
+
+    edge_lengths = 0.0
+    normalized_edges = []
+    for index, edge in enumerate(edges):
+        if not isinstance(edge, dict):
+            return False
+        if (edge.get("from_node_id") != nodes[index] or edge.get("to_node_id") != nodes[index + 1]
+            or not isinstance(edge.get("way_id"), int) or isinstance(edge.get("way_id"), bool) or edge["way_id"] <= 0
+            or not isinstance(edge.get("segment_index"), int) or isinstance(edge.get("segment_index"), bool) or edge["segment_index"] < 0
+            or not finite_number(edge.get("length_meters")) or edge["length_meters"] <= 0):
+            return False
+        edge_lengths += edge["length_meters"]
+        normalized_edges.append({key: edge[key] for key in ("way_id", "segment_index", "length_meters")})
+    distance = actual_case.get("distance_meters")
+    expected_distance = expected_route.get("distance_meters")
+    return (finite_number(distance) and distance > 0 and finite_number(expected_distance)
+            and abs(edge_lengths - distance) <= 0.05
+            and abs(distance - expected_distance) <= 0.02
+            and normalized_edges == expected_route.get("edges")
+            and nodes == expected_route.get("node_ids")
+            and geometry == expected_route.get("geometry"))
 
 
 def compare(expected, actual, expected_sha, actual_sha):
@@ -50,8 +136,8 @@ def compare(expected, actual, expected_sha, actual_sha):
     actual_cases = actual.get("cases")
     if not isinstance(expected_cases, list) or len(expected_cases) != 10 or not isinstance(actual_cases, list) or len(actual_cases) != 10:
         raise CompareError("expected and actual reports must each contain ten indexed cases")
-    if len({row.get("case_key") for row in actual_cases if isinstance(row, dict)}) != 10:
-        raise CompareError("actual case keys are missing or duplicated")
+    if actual.get("cases_total") != 10 or actual.get("maximum_snap_distance_meters") != 25:
+        raise CompareError("actual replay case count or snap policy is missing or unsupported")
     results = []
     for index, (expected_case, actual_case) in enumerate(zip(expected_cases, actual_cases)):
         if not isinstance(expected_case, dict) or not isinstance(actual_case, dict):
@@ -69,16 +155,16 @@ def compare(expected, actual, expected_sha, actual_sha):
         reason_match = actual_case.get("actual_reason_code") == expected_route.get("reason_code")
         expected_distance = expected_route.get("distance_meters")
         actual_distance = actual_case.get("distance_meters")
-        valid_distances = all(isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(value)
-                              for value in (expected_distance, actual_distance))
+        valid_distances = all(finite_number(value) for value in (expected_distance, actual_distance))
         distance_match = not found or (valid_distances and abs(actual_distance - expected_distance) <= 0.02)
         component_match = actual_case.get("component_id") == expected_route.get("component_id")
-        geometry_match = not found or actual_case.get("geometry_matches_stored_route") is True
-        direction_match = not found or actual_case.get("geometry_direction_matches") is True
-        edges_match = not found or actual_case.get("edge_identity_matches") is True
-        continuous = not found or actual_case.get("geometry_continuous") is True
-        expected_origin = expected_route.get("origin_snap", {}).get("node_id")
-        expected_destination = expected_route.get("destination_snap", {}).get("node_id")
+        path_evidence_valid = validate_path_evidence(actual_case, expected_route, found)
+        geometry_match = not found or (path_evidence_valid and actual_case.get("geometry_matches_stored_route") is True)
+        direction_match = not found or (path_evidence_valid and actual_case.get("geometry_direction_matches") is True)
+        edges_match = not found or (path_evidence_valid and actual_case.get("edge_identity_matches") is True)
+        continuous = path_evidence_valid and (not found or actual_case.get("geometry_continuous") is True)
+        expected_origin = (expected_route.get("origin_snap") or {}).get("node_id")
+        expected_destination = (expected_route.get("destination_snap") or {}).get("node_id")
         snap_match = not found or (actual_case.get("origin_snap_node_id") == expected_origin
                                    and actual_case.get("destination_snap_node_id") == expected_destination)
         matches = all((status_match, reason_match, distance_match, component_match, geometry_match, direction_match, edges_match, continuous, snap_match))
@@ -105,6 +191,13 @@ def compare(expected, actual, expected_sha, actual_sha):
             "snapped_endpoint_match": snap_match,
             "match": matches,
         })
+    actual_case_keys = [row.get("case_key") for row in actual_cases]
+    if any(not isinstance(key, str) or not key for key in actual_case_keys) or len(set(actual_case_keys)) != 10:
+        raise CompareError("actual case keys are missing or duplicated")
+    actual_found = sum(row.get("actual_status") == "ROUTE_FOUND" for row in actual_cases)
+    actual_unavailable = sum(row.get("actual_status") == "ROUTE_UNAVAILABLE" for row in actual_cases)
+    if actual.get("routes_found") != actual_found or actual.get("routes_unavailable") != actual_unavailable:
+        raise CompareError("actual route counts do not match the per-case results")
     return {
         "format": "biyahe-offline-corpus-comparison-v1",
         "status": "PASS" if all(row["match"] for row in results) else "FAIL",
@@ -116,6 +209,9 @@ def compare(expected, actual, expected_sha, actual_sha):
         "cases_total": len(results),
         "matches": sum(row["match"] for row in results),
         "mismatches": len(results) - sum(row["match"] for row in results),
+        "geometry_contract_checked": True,
+        "directed_edge_continuity_checked": True,
+        "endpoint_connector_geometry_rejected": True,
         "external_host_execution": False,
         "field_safety_verified": False,
         "cases": results,
@@ -136,7 +232,7 @@ def write_new(path, document):
             os.fsync(handle.fileno())
         # A same-directory hard link publishes atomically and fails if another
         # process created the destination after the initial check.
-        os.link(temporary, path)
+        publish_no_clobber(temporary, path)
         temporary.unlink()
         owns_temporary = False
     except Exception:
