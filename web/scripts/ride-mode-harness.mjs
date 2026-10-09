@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { generateCommuteInstructions, instructionForRideMode } from "../src/lib/commuteInstructions.ts";
 import {
   applyRideModeAction,
+  canReviewPreviousRideModeStep,
   classifyLocation,
   createRideModeSession,
   evaluateRideModeLocation,
@@ -176,6 +177,24 @@ for (const transfers of [0, 1, 2]) {
 
 const direct = createRideModeSession(syntheticJourney(0), 10_000);
 const active = transition(direct, "ACTIVATE", 10_001);
+assert.equal(canReviewPreviousRideModeStep(active), false, "there is no prior step before a journey starts");
+let reviewSession = transition(active, "START_WALK", 10_002);
+reviewSession = transition(reviewSession, "REVIEW_PREVIOUS_STEP", 10_003);
+assert.equal(reviewSession.currentLegIndex, 0);
+assert.equal(reviewSession.currentLegState, "NOT_STARTED");
+reviewSession = transition(reviewSession, "START_WALK", 10_004);
+reviewSession = transition(reviewSession, "AT_BOARDING_AREA", 10_005);
+assert.equal(reviewSession.currentLegState, "WAITING_TO_BOARD");
+reviewSession = transition(reviewSession, "REVIEW_PREVIOUS_STEP", 10_006);
+assert.equal(reviewSession.currentLegIndex, 0);
+assert.equal(reviewSession.currentLegState, "WALKING");
+reviewSession = transition(reviewSession, "AT_BOARDING_AREA", 10_007);
+reviewSession = transition(reviewSession, "BOARDED", 10_008);
+assert.equal(reviewSession.currentLegState, "RIDING");
+reviewSession = transition(reviewSession, "REVIEW_PREVIOUS_STEP", 10_009);
+assert.equal(reviewSession.currentLegState, "WAITING_TO_BOARD");
+const prematureBoarding = applyRideModeAction(active, "AT_BOARDING_AREA", 10_010);
+assert.match(prematureBoarding.error ?? "", /Start the walking step/);
 const cancelled = applyRideModeAction(active, "CANCEL", 10_002);
 assert.equal(cancelled.error, null);
 assert.equal(cancelled.session.status, "CANCELLED");

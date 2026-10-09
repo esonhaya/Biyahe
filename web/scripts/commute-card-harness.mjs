@@ -6,6 +6,7 @@ import {
   walkingEvidenceLabels,
 } from "../src/lib/commuteInstructions.ts";
 import { journeyGeometryDisclosure, journeyPointFeatures, journeyRouteFeatures } from "../src/lib/journeyMapPresentation.ts";
+import { explainJourney } from "../src/lib/journeyExplanation.ts";
 import {
   isJourneySnapshot,
   parseSavedJourneys,
@@ -150,6 +151,18 @@ const models = [0, 1, 2].map((transfers) => {
   assert.ok(model.instructions.every((instruction) => instruction.id.includes(`synthetic-${transfers}`)));
   return model;
 });
+const directExplanation = explainJourney(syntheticJourney(0));
+assert.equal(directExplanation.structure, "Direct · 1 ride");
+assert.ok(directExplanation.evidence.some((item) => item.includes("mapped pedestrian path geometry")));
+assert.ok(directExplanation.limitations.some((item) => item.includes("Fare information is unavailable")));
+assert.ok(directExplanation.limitations.some((item) => item.includes("Synthetic test data only")));
+const estimateExplanation = explainJourney(syntheticJourney(1));
+assert.ok(estimateExplanation.limitations.some((item) => item.includes("Straight-line distance is context only")));
+assert.ok(estimateExplanation.limitations.some((item) => item.includes("physical interchange")));
+assert.ok(!estimateExplanation.evidence.some((item) => item.includes("straight-line") && item.includes("path")));
+const staleExplanationJourney = syntheticJourney(0);
+staleExplanationJourney.origin.verification = { ...verified, state: "STALE" };
+assert.ok(explainJourney(staleExplanationJourney).limitations.some((item) => item.includes("explicitly marked stale")));
 const generationMs = performance.now() - started;
 
 assert.equal(models[0].instructions.find((instruction) => instruction.type === "BOARD")?.precision, "BOARDING_AREA");

@@ -10,6 +10,7 @@ import {
   type CommuteInstruction,
   type CommuteInstructionType,
 } from "@/lib/commuteInstructions";
+import { explainJourney } from "@/lib/journeyExplanation";
 import { savedSnapshotAgeLabel } from "@/lib/savedJourneys";
 import styles from "@/app/page.module.css";
 
@@ -86,6 +87,7 @@ export default function CommuteCard({
   onReplan,
 }: CommuteCardProps) {
   const model = useMemo(() => generateCommuteInstructions(journey), [journey]);
+  const explanation = useMemo(() => explainJourney(journey), [journey]);
   const [shareStatus, setShareStatus] = useState<string | null>(null);
   const compact = variant === "compact";
   const savedAge = savedAt ? savedSnapshotAgeLabel(savedAt) : null;
@@ -141,7 +143,13 @@ export default function CommuteCard({
         <span>{model.summary.fare}</span>
       </div>
       {!compact && routeCodes.length > 0 && <div className={styles.routePills} aria-label="Routes used"><strong>Ride:</strong>{routeCodes.map((code) => <span key={code}>{code}</span>)}</div>}
-      {journey.ranking.reasons.length > 0 && <p className={styles.rankingReasons}><strong>Why this option:</strong> {journey.ranking.reasons.slice(0, 2).join(" · ")}</p>}
+      {explanation.plannerReasons.length > 0 && <p className={styles.rankingReasons}><strong>Why shown:</strong> {explanation.plannerReasons.slice(0, 2).join(" · ")}</p>}
+      <details className={styles.journeyEvidenceDetails}>
+        <summary>Route evidence and limitations</summary>
+        <p><strong>{explanation.structure}</strong></p>
+        {explanation.evidence.length > 0 && <ul aria-label="Journey evidence">{explanation.evidence.map((item) => <li key={item}>{item}</li>)}</ul>}
+        {explanation.limitations.length > 0 && <ul aria-label="Journey limitations">{explanation.limitations.slice(0, 6).map((item) => <li key={item}>{item}</li>)}</ul>}
+      </details>
       {model.summary.walkingDistanceHasFallback && <p className={styles.warning}>Walking evidence varies by leg. Estimates, approximate access, and missing route lines are labeled separately.</p>}
       {compact && compactRideRows.length > 0 && <ol className={styles.compactRideList} aria-label="Ride and stop sequence">
         {compactRideRows.map(({ ride, board, alight }) => (

@@ -3,6 +3,7 @@ import { readFile } from "node:fs/promises";
 const files = {
   page: await readFile(new URL("../src/app/page.tsx", import.meta.url), "utf8"),
   card: await readFile(new URL("../src/components/CommuteCard.tsx", import.meta.url), "utf8"),
+  journeyExplanation: await readFile(new URL("../src/lib/journeyExplanation.ts", import.meta.url), "utf8"),
   savedJourneyLibrary: await readFile(new URL("../src/lib/savedJourneys.ts", import.meta.url), "utf8"),
   latestPlaceSearch: await readFile(new URL("../src/lib/latestPlaceSearch.ts", import.meta.url), "utf8"),
   searchKeyboard: await readFile(new URL("../src/lib/searchKeyboard.ts", import.meta.url), "utf8"),
@@ -15,6 +16,9 @@ const files = {
   nearbyHarness: await readFile(new URL("./nearby-harness.mjs", import.meta.url), "utf8"),
   pulse: await readFile(new URL("../src/components/BiyahePulse.tsx", import.meta.url), "utf8"),
   ride: await readFile(new URL("../src/components/RideMode.tsx", import.meta.url), "utf8"),
+  rideModeState: await readFile(new URL("../src/lib/rideMode.ts", import.meta.url), "utf8"),
+  validationLedger: await readFile(new URL("./validation-ledger.mjs", import.meta.url), "utf8"),
+  validationLedgerHarness: await readFile(new URL("./validation-ledger-harness.mjs", import.meta.url), "utf8"),
   personal: await readFile(new URL("../src/components/PersonalCommuteTools.tsx", import.meta.url), "utf8"),
   field: await readFile(new URL("../src/components/FieldMode.tsx", import.meta.url), "utf8"),
   pageStyles: await readFile(new URL("../src/app/page.module.css", import.meta.url), "utf8"),
@@ -75,6 +79,12 @@ const checks = [
   ["Route Explorer shows pattern-load failure beside its retry action", files.page.includes("Could not load the stops for {selectedPattern.name}") && files.page.includes("Retry this direction") && files.page.includes("setPatternLoadError(true)")],
   ["saved offline snapshots show a deterministic age band", files.card.includes("savedSnapshotAgeLabel(savedAt)") && files.savedJourneyLibrary.includes("export function savedSnapshotAgeLabel")],
   ["Ride Mode labels local progress age and service uncertainty", files.ride.includes("Local Ride Mode progress last updated") && files.ride.includes("does not confirm current service")],
+  ["journey evidence explanation is separate from planner ranking", files.card.includes("explainJourney(journey)") && files.card.includes("Why shown:") && files.card.includes("Route evidence and limitations") && files.journeyExplanation.includes("does not affect planner ranking")],
+  ["straight-line distance is explicitly not a walking path", files.journeyExplanation.includes("Straight-line distance is context only and is not a walking path.")],
+  ["Ride Mode supports bounded manual progress review", files.ride.includes("Review previous step") && files.rideModeState.includes('"REVIEW_PREVIOUS_STEP"') && files.rideModeState.includes("canReviewPreviousRideModeStep")],
+  ["boarding confirmation requires the walk step to be started", files.rideModeState.includes("Start the walking step before confirming the boarding area.")],
+  ["validation ledger binds reusable passes to all fingerprints", files.validationLedger.includes("sourceFingerprint") && files.validationLedger.includes("configFingerprint") && files.validationLedger.includes("toolVersion") && files.validationLedger.includes('latest?.status === "PASS"')],
+  ["validation ledger records blocked results and writes atomically outside Git", files.validationLedger.includes('"NOT_EXECUTED"') && files.validationLedger.includes("await rename(temporaryPath, ledgerPath)") && files.validationLedger.includes('".cache", "biyahe", "validation-ledger"') && files.validationLedgerHarness.includes("BLOCKED_NOT_REUSED=PASS")],
 ];
 
 const failures = checks.filter(([, passed]) => !passed).map(([name]) => name);

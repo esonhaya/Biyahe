@@ -13,6 +13,7 @@ import {
 } from "@/lib/commuteInstructions";
 import {
   applyRideModeAction,
+  canReviewPreviousRideModeStep,
   classifyLocation,
   createRideModeSession,
   currentRideModeLeg,
@@ -510,6 +511,7 @@ export default function RideMode({ selectedJourney, offlineSnapshot = false, all
               {session.status === "ACTIVE" && currentLeg?.type === "RIDE" && session.currentLegState === "WAITING_TO_BOARD" && <button type="button" className={styles.primaryButton} onClick={() => dispatch("BOARDED")}>I boarded</button>}
               {session.status === "ACTIVE" && currentLeg?.type === "RIDE" && session.currentLegState === "RIDING" && <button type="button" className={styles.primaryButton} onClick={() => dispatch("GOT_OFF")}>I got off</button>}
               {session.status === "ACTIVE" && currentLeg?.type === "WALK_EGRESS" && session.currentLegState === "WALKING" && <button type="button" className={styles.primaryButton} onClick={() => dispatch("ARRIVED")}>I&apos;ve arrived</button>}
+              {canReviewPreviousRideModeStep(session) && <button type="button" className={styles.secondaryButton} onClick={() => dispatch("REVIEW_PREVIOUS_STEP")}>Review previous step</button>}
               {session.status === "ACTIVE" && !confirmEnd && <button type="button" className={styles.secondaryButton} onClick={() => setConfirmEnd(true)}>End Ride Mode</button>}
               {session.status === "ACTIVE" && confirmEnd && <div className={styles.rideNotice} role="group" aria-label="Confirm ending Ride Mode">
                 <strong>End this guide and clear its saved progress from this device?</strong>
@@ -519,6 +521,7 @@ export default function RideMode({ selectedJourney, offlineSnapshot = false, all
                 </div>
               </div>}
             </div>
+            {session.status === "ACTIVE" && <p className={styles.snapshotNote}>Progress is manual. Reviewing a previous step changes this guide only; it does not verify your location or travel.</p>}
             {actionError && <p className={styles.error} role="alert">{actionError}</p>}
           </div>
 

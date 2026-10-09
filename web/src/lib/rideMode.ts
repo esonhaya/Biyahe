@@ -31,6 +31,7 @@ export type RideModeAction =
   | "BOARDED"
   | "GOT_OFF"
   | "ARRIVED"
+  | "REVIEW_PREVIOUS_STEP"
   | "CANCEL";
 
 export type RideModeSession = {
@@ -197,6 +198,36 @@ export function currentRideModeLeg(session: RideModeSession): JourneyLeg | null 
   return session.journey.legs[session.currentLegIndex] ?? null;
 }
 
+function previousManualProgress(session: RideModeSession): { currentLegIndex: number; currentLegState: RideModeLegState } | null {
+  const leg = currentRideModeLeg(session);
+  if (!leg) return null;
+
+  if (session.currentLegState === "WALKING") {
+    return { currentLegIndex: session.currentLegIndex, currentLegState: "NOT_STARTED" };
+  }
+  if (leg.type === "RIDE" && session.currentLegState === "RIDING") {
+    return { currentLegIndex: session.currentLegIndex, currentLegState: "WAITING_TO_BOARD" };
+  }
+  if (leg.type === "RIDE" && session.currentLegState === "WAITING_TO_BOARD") {
+    const previousLeg = session.journey.legs[session.currentLegIndex - 1];
+    if (previousLeg && ["WALK_ACCESS", "TRANSFER_WALK"].includes(previousLeg.type)) {
+      return { currentLegIndex: session.currentLegIndex - 1, currentLegState: "WALKING" };
+    }
+  }
+  if (["WALK_ACCESS", "TRANSFER_WALK", "WALK_EGRESS"].includes(leg.type) && session.currentLegState === "NOT_STARTED") {
+    const previousIndex = session.currentLegIndex - 1;
+    const previousLeg = session.journey.legs[previousIndex];
+    if (previousLeg?.type === "RIDE") {
+      return { currentLegIndex: previousIndex, currentLegState: "RIDING" };
+    }
+  }
+  return null;
+}
+
+export function canReviewPreviousRideModeStep(session: RideModeSession): boolean {
+  return session.status === "ACTIVE" && previousManualProgress(session) !== null;
+}
+
 export function applyRideModeAction(
   session: RideModeSession,
   action: RideModeAction,
@@ -220,6 +251,12 @@ export function applyRideModeAction(
     return transitionError(session, "Start Ride Mode before changing journey progress.");
   }
 
+  if (action === "REVIEW_PREVIOUS_STEP") {
+    const previous = previousManualProgress(session);
+    if (!previous) return transitionError(session, "There is no previous manual step to review.");
+    return { session: copyWithUpdate(session, previous, now), error: null };
+  }
+
   const leg = currentRideModeLeg(session);
   if (!leg) {
     return transitionError(session, "The current journey leg is unavailable.");
@@ -238,6 +275,9 @@ export function applyRideModeAction(
   if (action === "AT_BOARDING_AREA") {
     if (!["WALK_ACCESS", "TRANSFER_WALK"].includes(leg.type)) {
       return transitionError(session, "A boarding area can only follow a walking access leg.");
+    }
+    if (session.currentLegState !== "WALKING") {
+      return transitionError(session, "Start the walking step before confirming the boarding area.");
     }
     const followingLeg = session.journey.legs[session.currentLegIndex + 1];
     if (!followingLeg || followingLeg.type !== "RIDE") {

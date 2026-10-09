@@ -1,0 +1,44 @@
+{
+  "format": "biyahe-doctor-v38-static-v1",
+  "overall_release_gate": "BLOCKED",
+  "postgresql_contacted": false,
+  "production_activation": "NO",
+  "scope": "Batch 038 commuter experience changes; no browser, PostgreSQL, graph, or field operation was performed.",
+  "baseline_evidence": {
+    "graph_sha256": "29d7aaf9c45a596f4065c44d13f983f4a7edeec5ac2ea41b718b1c52ca865bf8",
+    "graph_counts": { "nodes": 76685, "edges": 78225, "walkable_components": 432 },
+    "stop_coverage": { "snappable": 436, "total": 503, "radius_meters": 25 },
+    "place_coverage": { "snappable": 30, "total": 37 },
+    "offline_corpus": { "cases": 10, "routes_found": 9, "disconnected": 1 },
+    "transfers_field_verified": 0,
+    "evidence_scope": "Carried forward from Batch 037; hashes and corpus were not recomputed in Batch 038."
+  },
+  "readiness": [
+    { "name": "offline_graph_artifact_integrity", "implementation": "BATCH036_BASELINE_REUSED", "validation": "NOT_REHASHED_THIS_BATCH", "status": "WARN", "evidence": "The verified graph SHA256 and counts are carried forward from earlier evidence; the immutable graph file was not modified or revalidated in Batch 038." },
+    { "name": "offline_route_engine_correctness", "implementation": "EXISTING_REUSED", "validation": "REAL_CORPUS_NOT_RERUN", "status": "WARN", "evidence": { "baseline_cases": 10, "routes_found": 9, "disconnected": 1, "snap_radius_meters": 25 } },
+    { "name": "stop_and_place_coverage", "implementation": "EXISTING_REUSED", "validation": "BASELINE_NOT_RECOMPUTED", "status": "WARN", "evidence": { "stops_snappable": 436, "stops_total": 503, "places_snappable": 30, "places_total": 37, "unsnappable_stops": 67, "unsnappable_places": 7 } },
+    { "name": "journey_discovery", "implementation": "EXISTING_REUSED", "validation": "NOT_RUN_THIS_BATCH", "status": "WARN", "evidence": "Batch 037 origin-first search, debounce, cancellation, keyboard navigation, clear, swap, and retry remain in place; no separate search implementation was added." },
+    { "name": "result_presentation_and_explanations", "implementation": "IMPLEMENTED", "validation": "FOCUSED_HARNESS_ADDED_NOT_RUN", "status": "WARN", "evidence": "A presentation helper separates planner ranking reasons from route structure, recorded walking geometry, direction, fare availability, stale records, and limitations. It reads existing journey fields only." },
+    { "name": "walking_and_map_evidence", "implementation": "EXISTING_REUSED", "validation": "NOT_RUN_THIS_BATCH", "status": "WARN", "evidence": "Existing map geometry rules remain; estimate-only and missing geometry are not converted to walking lines. Separate SQLite graph live integration remains unproven." },
+    { "name": "map_and_list_coordination", "implementation": "EXISTING_REUSED", "validation": "BROWSER_NOT_RUN", "status": "WARN", "evidence": "Selected-journey and instruction-to-map synchronization are reused; no MapLibre browser interaction was exercised." },
+    { "name": "route_comparison_and_failure_states", "implementation": "EXISTING_REUSED", "validation": "NOT_RUN_THIS_BATCH", "status": "WARN", "evidence": "Existing filters, explicit unavailable reasons, and empty/error states remain unchanged; no live API request was made." },
+    { "name": "ride_mode_progress", "implementation": "IMPLEMENTED", "validation": "FOCUSED_HARNESS_ADDED_NOT_RUN", "status": "WARN", "evidence": "Added a previous-step correction for supported manual transitions and requires a walking step before boarding-area confirmation. No live vehicle or location verification is claimed." },
+    { "name": "saved_journeys_and_offline", "implementation": "EXISTING_REUSED", "validation": "NOT_RUN_THIS_BATCH", "status": "WARN", "evidence": "Versioned local snapshots remain readable offline and retain cached-result labeling. Fresh planning still requires the API; graph routing is not declared generally offline." },
+    { "name": "can_i_ride", "implementation": "EXISTING_REUSED", "validation": "NOT_RUN_THIS_BATCH", "status": "WARN", "evidence": "Existing API yes/no/unknown presentation is preserved; no second routing engine was added." },
+    { "name": "validation_ledger", "implementation": "IMPLEMENTED", "validation": "HARNESS_ADDED_NOT_RUN", "status": "WARN", "evidence": "Local atomic JSON ledger binds results to source/config/tool fingerprints. Blocked and failed records are not reusable passes." },
+    { "name": "mobile_and_accessibility", "implementation": "IMPLEMENTED_SOURCE_REVIEW_ONLY", "validation": "BROWSER_NOT_RUN", "status": "WARN", "evidence": "Native details disclosure has a minimum 44px summary target. No viewport or screen-reader browser test ran." },
+    { "name": "resource_guard", "implementation": "EXISTING_GUARD_RETAINED", "validation": "BLOCKED", "status": "BLOCKED", "evidence": "Observed SwapFree was 4648 KiB, below the configured 131072 KiB floor; test runners, typecheck, lint, builds, and browser checks were not started." },
+    { "name": "real_postgresql_staging", "implementation": "PORTABLE_PACKAGE_FROM_BATCH036", "validation": "NOT_RUN_BY_SCOPE", "status": "BLOCKED", "evidence": "No PostgreSQL cluster was started or contacted; real staging and route parity remain unverified." },
+    { "name": "field_verification", "implementation": "NO_NEW_FIELD_EVIDENCE", "validation": "BLOCKED", "status": "BLOCKED", "evidence": "Neither graph connectivity nor this UI work verifies transfer safety, boarding location, pedestrian conditions, or actual travel." },
+    { "name": "private_beta", "implementation": "RELEASE_GATE_RETAINED", "validation": "BLOCKED", "status": "BLOCKED", "evidence": "Browser interaction, real staging/parity, and field verification remain open." }
+  ],
+  "validation_summary": {
+    "git_diff_check": "PASS",
+    "focused_harnesses": "NOT_RUN_RESOURCE_GUARD",
+    "typescript": "NOT_RUN_RESOURCE_GUARD",
+    "lint": "NOT_RUN_RESOURCE_GUARD",
+    "browser": "NOT_RUN",
+    "resource_guard_swap_floor_kib": 131072,
+    "resource_guard_observed_swap_free_kib": 4648
+  }
+}
