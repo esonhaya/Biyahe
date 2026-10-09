@@ -11,12 +11,13 @@
     "graph_sha256_expected": "29d7aaf9c45a596f4065c44d13f983f4a7edeec5ac2ea41b718b1c52ca865bf8",
     "graph_sha256_observed_at_preflight": "29d7aaf9c45a596f4065c44d13f983f4a7edeec5ac2ea41b718b1c52ca865bf8",
     "graph_hash_preflight": "VERIFIED",
-    "graph_hash_after_implementation": "NOT_RECHECKED",
-    "sqlite_integrity_check": "NOT_RUN_RESOURCE_GUARD",
+    "graph_hash_after_implementation": "VERIFIED_HASH_MATCH",
+    "sqlite_integrity_check": "NOT_RUN_RESOURCE_GATE",
     "graph_writes": false,
     "pbf_rescan": false,
     "postgresql_contacted": false,
-    "production_activation": "NO"
+    "production_activation": "NO",
+    "graph_sha256_after_implementation": "29d7aaf9c45a596f4065c44d13f983f4a7edeec5ac2ea41b718b1c52ca865bf8"
   },
   "categories": [
     {
@@ -47,7 +48,7 @@
       "name": "coverage_diagnostics",
       "implementation": "IMPLEMENTED",
       "validation": "VERIFIED",
-      "evidence": "The carried-forward summarizer completed against the SHA-pinned Batch032 report (SHA-256 6caf101177904bee6fda1b12cab9c5cda36ddaf7ecc08b0d9778c0517123c81b). It validates stored coordinate ranges: 503/503 stops and 37/37 places; reports 49 stop cells and 17 place cells on a 0.01-degree record grid, with zero cells meeting the stated 3-record/<50%-snapped review threshold; separates graph component, trust, city-ID and transfer evidence. It did not open SQLite or PBF and did not replay routes. Synthetic fixtures remain unrun."
+      "evidence": "The carried-forward summarizer completed against the SHA-pinned Batch032 report (SHA-256 6caf101177904bee6fda1b12cab9c5cda36ddaf7ecc08b0d9778c0517123c81b). It validated stored coordinate ranges: 503/503 stops and 37/37 places; reports 49 stop cells and 17 place cells on a 0.01-degree record grid, with zero cells meeting the stated 3-record/<50%-snapped review threshold; separates graph component, trust, city-ID and transfer evidence. Graph artifact SHA was rechecked unchanged after implementation. It did not run SQLite integrity_check, open PBF, or replay routes. Synthetic fixtures remain unrun."
     },
     {
       "name": "offline_corpus_framework",
@@ -77,7 +78,7 @@
       "name": "portable_linux_kit",
       "implementation": "IMPLEMENTED",
       "validation": "VERIFIED",
-      "evidence": "The package contains 35 source snapshot files, required external artifacts and version constraints. verify-kit.sh passed all 38 SHA256SUMS entries, manifest validation, exact checkout revision b723f78653d76e1796f2980e7a414b29782ae01b, and byte identity of packaged source copies on Termux. This is package integrity only; external host execution remains NOT_RUN."
+      "evidence": "The package contains 35 source snapshot files, pins repository revision b723f78653d76e1796f2980e7a414b29782ae01b, and is committed. verify-kit.sh passed all checks on Termux. SD copy SHA256SUMS verification also passed; no external-host execution is claimed."
     },
     {
       "name": "resource_guard",
@@ -133,10 +134,12 @@
     "portable_kit_self_check": "PASS_ON_TERMUX_STATIC_PACKAGE_CHECK",
     "coverage_summary_command": "PASS_CARRIED_FORWARD_PINNED_EVIDENCE",
     "coordinate_grid_analysis": "PASS_CARRIED_FORWARD_EVIDENCE_ONLY_49_STOP_CELLS_17_PLACE_CELLS_ZERO_LOW_SNAP_CANDIDATES",
-    "coverage_synthetic_fixtures": "NOT_RUN_AFTER_RESOURCE_GATE"
+    "coverage_synthetic_fixtures": "NOT_RUN_AFTER_RESOURCE_GATE",
+    "graph_sha256_after_implementation": "PASS_29d7aaf9c45a596f4065c44d13f983f4a7edeec5ac2ea41b718b1c52ca865bf8",
+    "sqlite_integrity_check": "NOT_RUN_RESOURCE_GATE"
   },
   "release_gates": {
-    "offline_graph_artifact": "WARN_HASH_MATCHED_AT_PREFLIGHT_SQLITE_INTEGRITY_NOT_RERUN",
+    "offline_graph_artifact": "WARN_SOURCE_HASH_MATCHED_PRE_AND_POST_SQLITE_INTEGRITY_NOT_RUN",
     "local_graph_adapter": "BLOCKED_FUNCTIONAL_SUITE_NOT_COMPLETED",
     "offline_experience": "IMPLEMENTED_WITH_PARTIAL_SYNTHETIC_HARNESS_EVIDENCE",
     "live_api_integration": "BLOCKED_NOT_CONNECTED",

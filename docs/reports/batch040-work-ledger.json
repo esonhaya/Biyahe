@@ -1,7 +1,7 @@
 {
   "format": "biyahe-batch040-work-ledger-v1",
   "started_at_utc": "2026-10-09T15:30:19Z",
-  "last_updated_at_utc": "2026-10-09T16:22:40Z",
+  "last_updated_at_utc": "2026-10-09T16:26:30Z",
   "expected_head": "6de4e7dbf2710eb6c587dca3a7697d6938e7a8b7",
   "actual_head_at_start": "6de4e7dbf2710eb6c587dca3a7697d6938e7a8b7",
   "resource_floors_kib": {
@@ -80,7 +80,7 @@
           "docs/reports/batch040-coverage-diagnostics.json",
           "docs/reports/batch040-coverage-diagnostics.md"
         ],
-        "evidence": "The carried-forward report generator ran against pinned Batch032 JSON (input SHA 6caf101177904bee6fda1b12cab9c5cda36ddaf7ecc08b0d9778c0517123c81b). It validates all stored stop/place coordinates (503/503 and 37/37), reports 49/17 coordinate cells, zero low-snap candidate cells under the declared threshold, per-component snapped stop counts, confidence/source categories, both historical discrepancy sets, and UNVERIFIED transfers. Graph/PBF not opened; current route corpus not replayed.",
+        "evidence": "The carried-forward report generator ran against pinned Batch032 JSON (input SHA 6caf101177904bee6fda1b12cab9c5cda36ddaf7ecc08b0d9778c0517123c81b). It validated 503/503 stops and 37/37 place coordinate ranges; reports 49 stop cells and 17 place cells, zero low-snap cells under the documented 3-record/<50% rule, stop component distribution, confidence/source categories, restriction and quality discrepancies, and UNVERIFIED transfers. Graph hash was rechecked unchanged; graph/PBF were not opened by summarizer and current route corpus was not replayed.",
         "blockers": [
           "Synthetic fixture suite was not run after the resource guard stopped the functional group.",
           "Graph-derived/current route replay remains blocked."
@@ -196,7 +196,7 @@
           "docs/portable-verification-v1/SHA256SUMS",
           "docs/portable-verification-v1/source-snapshot/"
         ],
-        "evidence": "The portable kit contains 35 source snapshot files and pins repository revision b723f78653d76e1796f2980e7a414b29782ae01b. verify-kit.sh passed checksum inventory, manifest, exact checkout revision and byte comparison.",
+        "evidence": "The portable kit is committed; 35 source snapshot files are pinned to code revision b723f78653d76e1796f2980e7a414b29782ae01b. verify-kit.sh passed on the pinned checkout and the SD copy passed all 38 SHA256SUMS entries.",
         "blockers": [],
         "follow_up": "Run the graph replay and optional disposable database workflow on the external Linux host; do not infer execution from package integrity."
       },
@@ -241,18 +241,19 @@
         "dependencies": [
           "W13_REVIEW"
         ],
-        "status": "IN_PROGRESS",
+        "status": "VERIFIED",
         "files_changed": [
           "2d1641d",
           "422a17d",
           "ca0ee8f",
           "90ca1d7",
           "b723f78",
-          "portable-verification-v1 pending commit"
+          "6f669ba",
+          "SD bundle and Doctor archive"
         ],
-        "evidence": "Five coherent code/diagnostic commits are present. The portable package and final ledger/Doctor update are prepared; the SD bundle and preservation archive are pending.",
+        "evidence": "Six coherent implementation/package commits are present. The 6f669ba all-refs Git bundle was verified at SD path /data/data/com.termux/files/home/storage/external-1/Termux-Archive/Biyahe/Batch040-Delivery/20261009T162357Z/biyahe-batch040-all-refs.bundle (SHA-256 5ed0b2c8c77298c33e37e31ee5fcd3893ebad517e725cea7e00cebc781ae755d). Seven preserved historical Doctor reports were archived and byte-verified (archive SHA-256 fd4b661b2de482f9963b1b51c1a9becae327420862653b1d0263e3055df0c757). A final versioned bundle will also include the delivery evidence commit.",
         "blockers": [],
-        "follow_up": "Commit the portable package and final evidence, then create and verify the new SD bundle and report archive."
+        "follow_up": "No code delivery blocker; final report records the newest bundle and final evidence commit."
       }
     ],
     "B_lightweight_validation": [
