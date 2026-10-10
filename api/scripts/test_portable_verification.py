@@ -147,6 +147,12 @@ class PortableRunnerTests(unittest.TestCase):
             self.assertEqual(packaged["resource_log_sha256"], PACKAGER.sha256(snapshot / packaged["resource_log"]))
             self.assertTrue(all(item["path"].startswith("source-snapshot/evidence/") for item in bundled))
 
+    def test_checkout_verifier_validates_only_documented_doctor_path_relocation(self):
+        self.assertIn("normalized_checkout_files", PACKAGER.VERIFY_SCRIPT)
+        self.assertIn("checkout_sha256", PACKAGER.VERIFY_SCRIPT)
+        self.assertIn("snapshot_sha256", PACKAGER.VERIFY_SCRIPT)
+        self.assertIn("differs beyond evidence path relocation", PACKAGER.VERIFY_SCRIPT)
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

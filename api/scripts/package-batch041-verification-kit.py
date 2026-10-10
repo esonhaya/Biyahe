@@ -144,12 +144,41 @@ actual=subprocess.check_output(['git','-C',str(repo),'rev-parse','HEAD'],text=Tr
 if actual!=m.get('repository_revision'): raise SystemExit(f'ERROR: expected source revision {m.get("repository_revision")}, got {actual}')
 source=m.get('executable_source_revision')
 if subprocess.run(['git','-C',str(repo),'merge-base','--is-ancestor',source,actual]).returncode: raise SystemExit('ERROR: executable source revision is not an ancestor of the checkout')
+normalized={row['path']:row for row in m.get('normalized_checkout_files',[])}
 for relative in m['required_checkout_paths']:
     p=PurePosixPath(relative)
     checkout=repo.joinpath(*p.parts)
     packaged=kit/'source-snapshot'
     for part in p.parts: packaged=packaged/part
     if not checkout.is_file() or not packaged.is_file(): raise SystemExit(f'ERROR: missing checkout or snapshot file {relative}')
+    if relative in normalized:
+        record=normalized[relative]
+        committed=subprocess.check_output(['git','-C',str(repo),'show',f'{actual}:{relative}'])
+        if hashlib.sha256(committed).hexdigest()!=record.get('checkout_sha256') or hashlib.sha256(checkout.read_bytes()).hexdigest()!=record.get('checkout_sha256'):
+            raise SystemExit(f'ERROR: normalized checkout source differs from pinned Git content: {relative}')
+        if hashlib.sha256(packaged.read_bytes()).hexdigest()!=record.get('snapshot_sha256'):
+            raise SystemExit(f'ERROR: normalized package snapshot differs from manifest: {relative}')
+        if record.get('transformation')!='doctor_evidence_path_relocation':
+            raise SystemExit(f'ERROR: unsupported normalized checkout transformation: {relative}')
+        original=json.loads(committed)
+        bundled=json.loads(packaged.read_bytes())
+        evidence={(row['test'],row['kind']):row for row in m.get('packaged_test_evidence',[])}
+        expected_evidence=set()
+        for test_name,test_row in original.get('tests',{}).items():
+            for field,hash_field,kind in (('output_path','output_sha256','stdout.txt'),('resource_log','resource_log_sha256','resource.log')):
+                if hash_field not in test_row: continue
+                key=(test_name,kind)
+                expected_evidence.add(key)
+                artifact=evidence.get(key)
+                if artifact is None or artifact.get('sha256')!=test_row[hash_field]:
+                    raise SystemExit(f'ERROR: normalized Doctor evidence mapping is missing or inconsistent: {test_name}/{kind}')
+                artifact_path=PurePosixPath(artifact['path'])
+                if artifact_path.is_absolute() or '..' in artifact_path.parts or not artifact_path.parts or artifact_path.parts[0]!='source-snapshot':
+                    raise SystemExit(f'ERROR: unsafe normalized Doctor evidence path: {artifact["path"]}')
+                test_row[field]=PurePosixPath(*artifact_path.parts[1:]).as_posix()
+        if set(evidence)!=expected_evidence or original!=bundled:
+            raise SystemExit(f'ERROR: packaged Doctor differs beyond evidence path relocation: {relative}')
+        continue
     if hashlib.sha256(checkout.read_bytes()).digest()!=hashlib.sha256(packaged.read_bytes()).digest(): raise SystemExit(f'ERROR: source snapshot differs from pinned checkout: {relative}')
 for relative,expected in m.get('executable_source_fingerprints',{}).items():
     checkout=repo.joinpath(*PurePosixPath(relative).parts)
@@ -180,7 +209,7 @@ From this directory, run `bash verify-kit.sh MODE`. Available modes are:
 | `CORPUS` | Read-only replay against the pinned Cebu SQLite graph, if it is present and its SHA256 matches |
 | `FULL` | Runs the modes in order and records blocked dependencies or resource gates per suite |
 
-`verify-kit.sh` validates its manifest and every `SHA256SUMS` entry before invoking the runner. By default, commands use the included `source-snapshot`. Add `--repo-root CHECKOUT` to require the exact Git revision in the manifest and byte-compare every pinned source path. `--output-root DIR` selects a new evidence root; run directories are unique and existing outputs are never overwritten.
+`verify-kit.sh` validates its manifest and every `SHA256SUMS` entry before invoking the runner. By default, commands use the included `source-snapshot`. Add `--repo-root CHECKOUT` to require the exact Git revision in the manifest and compare the pinned checkout with the package. Doctor V42 is source-bound to the pinned commit; its evidence paths are relocated in the package, and the verifier checks that this is the only report change. `--output-root DIR` selects a new evidence root; run directories are unique and existing outputs are never overwritten.
 
 The package includes checksum-verified output and resource logs referenced by the pinned Doctor report, relocated under `source-snapshot/evidence/` so report validation works without the original host cache.
 
@@ -327,6 +356,12 @@ def main(argv=None) -> int:
             "expected_stored_coverage": {"stops": 503, "stops_snappable_within_25m": 436, "places": 37, "places_snappable_within_25m": 30, "transfers_unverified": 2, "historical_corpus_cases": 10, "historical_routes_found": 9, "historical_routes_disconnected": 1},
             "resource_floors_kib": {"memavailable_minimum": 524288, "swapfree_minimum": 131072, "sustained_samples": 5, "sample_spacing_seconds": 5},
             "required_checkout_paths": FILES,
+            "normalized_checkout_files": [{
+                "path": "docs/reports/batch042-doctor-v42.json",
+                "checkout_sha256": sha256(ROOT / "docs/reports/batch042-doctor-v42.json"),
+                "snapshot_sha256": sha256(snapshot_root / "docs/reports/batch042-doctor-v42.json"),
+                "transformation": "doctor_evidence_path_relocation"
+            }],
             "included_files": [f"source-snapshot/{relative}" for relative in FILES] + [item["path"] for item in packaged_test_evidence],
             "packaged_test_evidence": packaged_test_evidence,
             "execution_claims": {"package_generation": "COMPLETED", "local_verification": "NOT_RUN_AT_PACKAGE_TIME", "real_graph_replay": "NOT_RUN", "external_host_execution": "NOT_RUN", "postgresql": "NOT_RUN", "browser": "NOT_RUN", "field_verification": "NOT_RUN", "production_activation": "NO"}
