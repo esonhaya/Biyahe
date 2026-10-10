@@ -27,7 +27,7 @@
       "static evidence smoke and corpus comparator contract fixtures",
       "guarded graph-runner contract and Doctor V43 contract",
       "portable runner source/command/tool fingerprints and interrupted-run recovery",
-      "PHP geometry smoke, syntax checks, JSON parsing, and git diff --check"
+      "PHP geometry and no-clobber report-writer smokes, syntax checks, JSON parsing, and git diff --check"
     ],
     "FRONTEND": [
       "walking preview request identity and stale-response rejection",

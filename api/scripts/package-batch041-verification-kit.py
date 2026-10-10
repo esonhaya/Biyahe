@@ -32,6 +32,7 @@ FILES = [
     "api/scripts/test_offline_corpus_verification.py", "api/scripts/run-portable-verification.py",
     "api/scripts/test_portable_verification.py",
     "api/scripts/run-portable-verification.sh", "api/scripts/test_offline_route_geometry_contract.php",
+    "api/scripts/test_offline_corpus_report_writer.php",
     "api/scripts/summarize-offline-coverage.py", "api/scripts/test_compare_offline_corpus.py",
     "api/scripts/test_evidence_provenance.py", "api/scripts/test_offline_evidence_smoke.py",
     "api/scripts/test_summarize_offline_coverage.py", "api/scripts/test_validate_batch041_doctor.py",
@@ -221,7 +222,7 @@ From this directory, run `bash verify-kit.sh MODE`. Available modes are:
 
 | Mode | Work |
 |---|---|
-| `STATIC` | Provenance, coverage, comparator, Doctor, geometry, syntax, JSON, and diff checks |
+| `STATIC` | Provenance, coverage, comparator, Doctor, geometry and report-writer contracts, syntax, JSON, and diff checks |
 | `FRONTEND` | Preview, commute card, Ride Mode, search, Can-I-Ride, ledger, TypeScript, and ESLint checks |
 | `ADAPTER` | Focused walking adapter PHPUnit tests |
 | `CORPUS` | Read-only replay against the pinned Cebu SQLite graph, if it is present and its SHA256 matches |

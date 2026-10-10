@@ -37,6 +37,7 @@ SOURCE_PATHS = [
     "api/scripts/package-batch041-verification-kit.py",
     "api/scripts/run-bounded-process.sh",
     "api/scripts/run-offline-corpus-verification.py",
+    "api/scripts/test_offline_corpus_report_writer.php",
     "api/scripts/run-portable-verification.py",
     "api/scripts/run-portable-verification.sh",
     "api/scripts/test_compare_offline_corpus.py",

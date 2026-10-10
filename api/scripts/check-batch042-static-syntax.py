@@ -29,6 +29,8 @@ def main() -> int:
         "api/scripts/test_portable_verification.py",
         "api/scripts/evidence_provenance.py",
         "api/scripts/compare-offline-corpus.py",
+        "api/scripts/test_compare_offline_corpus.py",
+        "api/scripts/test_summarize_offline_coverage.py",
         "api/scripts/validate-batch041-doctor.py",
         "api/scripts/validate-batch042-doctor.py",
         "api/scripts/test_validate_batch042_doctor.py",
@@ -57,6 +59,7 @@ def main() -> int:
 
     for relative in [
         "api/scripts/test_offline_route_geometry_contract.php",
+        "api/scripts/test_offline_corpus_report_writer.php",
         "api/app/Services/Routing/OfflineJourneyWalkingPreview.php",
         "api/app/Services/Routing/OfflineWalkingCorpusSelection.php",
         "api/app/Services/Routing/OfflinePedestrianGraphRouter.php",

@@ -226,11 +226,13 @@ def command_specs(root: Path, mode: str, run_dir: Path,
         "api/scripts/test_offline_corpus_verification.py", "api/scripts/package-batch041-verification-kit.py",
         "api/scripts/refresh-batch042-doctor.py", "api/scripts/test_portable_verification.py",
         "api/scripts/evidence_provenance.py", "api/scripts/compare-offline-corpus.py",
+        "api/scripts/test_compare_offline_corpus.py", "api/scripts/test_summarize_offline_coverage.py",
         "api/scripts/validate-batch041-doctor.py", "api/scripts/validate-batch042-doctor.py",
         "api/scripts/test_validate_batch042_doctor.py", "api/scripts/refresh-batch043-doctor.py",
         "api/scripts/validate-batch043-doctor.py", "api/scripts/test_validate_batch043_doctor.py",
         "api/scripts/run-bounded-process.sh", "api/scripts/run-portable-verification.sh",
         "api/scripts/check-batch043-staging-preflight.sh", "api/scripts/test_offline_route_geometry_contract.php",
+        "api/scripts/test_offline_corpus_report_writer.php",
         "api/app/Services/Routing/OfflineJourneyWalkingPreview.php",
         "api/app/Services/Routing/OfflineWalkingCorpusSelection.php",
         "api/app/Services/Routing/OfflinePedestrianGraphRouter.php",
@@ -261,6 +263,7 @@ def command_specs(root: Path, mode: str, run_dir: Path,
         {"id": "corpus-verification-contract", "argv": [sys.executable, "api/scripts/test_offline_corpus_verification.py"], "cwd": root, "inputs": ["api/scripts/run-offline-corpus-verification.py", "api/scripts/test_offline_corpus_verification.py"]},
         {"id": "doctor-v43-contract", "argv": [sys.executable, "api/scripts/test_validate_batch043_doctor.py"], "cwd": root, "inputs": ["api/scripts/refresh-batch043-doctor.py", "api/scripts/validate-batch043-doctor.py", "api/scripts/test_validate_batch043_doctor.py", "docs/reports/batch032-cebu-coverage.json", "docs/reports/batch041-evidence-provenance.json"]},
         {"id": "doctor-v43-report-validator", "argv": [sys.executable, "api/scripts/validate-batch043-doctor.py"], "cwd": root, "inputs": ["api/scripts/validate-batch043-doctor.py", "docs/reports/batch043-doctor-v43.json", "docs/reports/batch032-cebu-coverage.json", "docs/reports/batch041-evidence-provenance.json", *doctor_v43_sources]},
+        {"id": "php-corpus-report-writer", "argv": ["php", "api/scripts/test_offline_corpus_report_writer.php"], "cwd": root, "inputs": ["api/composer.lock", "api/app/Console/Commands/VerifyOfflineWalkingCorpus.php", "api/app/Services/Routing/OfflineWalkingCorpusSelection.php", "api/scripts/test_offline_corpus_report_writer.php"]},
         {"id": "portable-runner-contract", "argv": [sys.executable, "api/scripts/test_portable_verification.py"], "cwd": root, "inputs": ["api/scripts/package-batch041-verification-kit.py", "api/scripts/run-portable-verification.py", "api/scripts/test_portable_verification.py"]},
         {"id": "php-geometry-contract", "argv": ["php", "api/scripts/test_offline_route_geometry_contract.php"], "cwd": root, "inputs": ["api/scripts/test_offline_route_geometry_contract.php", "api/app/Services/Routing/OfflinePedestrianRouteGeometryContract.php"]},
         {"id": "syntax-and-json", "argv": [sys.executable, "api/scripts/check-batch042-static-syntax.py", "--root", str(root)], "cwd": root, "inputs": syntax_inputs},
@@ -424,6 +427,8 @@ def run_specs(root: Path, run_dir: Path, specs: list[dict[str, object]], resourc
             if not shutil.which("npm"):
                 missing.append("npm")
         if identifier in {"adapter-phpunit", "real-cebu-corpus"} and not (root / "api/vendor/autoload.php").is_file():
+            missing.append("api/vendor/autoload.php")
+        if identifier == "php-corpus-report-writer" and not (root / "api/vendor/autoload.php").is_file():
             missing.append("api/vendor/autoload.php")
         if identifier == "typescript" and not (root / "web/node_modules/.bin/tsc").is_file():
             missing.append("web/node_modules/.bin/tsc")

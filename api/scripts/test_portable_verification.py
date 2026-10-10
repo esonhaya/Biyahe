@@ -169,6 +169,7 @@ class PortableRunnerTests(unittest.TestCase):
         self.assertIn("api/scripts/compare-offline-corpus.py", by_id["coverage-fixtures"])
         self.assertIn("docs/reports/batch032-cebu-coverage.json", by_id["corpus-comparator-fixtures"])
         self.assertIn("docs/reports/batch041-evidence-provenance.json", by_id["doctor-v43-contract"])
+        self.assertIn("api/scripts/test_offline_corpus_report_writer.php", by_id["php-corpus-report-writer"])
 
     def test_toolchain_suites_fingerprint_their_full_source_and_installed_compiler(self):
         specs = RUNNER.command_specs(ROOT, "FRONTEND", ROOT / ".temporary-run-directory")
