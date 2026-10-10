@@ -219,6 +219,29 @@ def command_specs(root: Path, mode: str, run_dir: Path) -> list[dict[str, object
         {"id": "commute-card", "argv": ["node", "--experimental-strip-types", "scripts/commute-card-harness.mjs"], "cwd": web, "inputs": ["web/src/lib/savedJourneys.ts", "web/src/lib/commuteInstructions.ts", "web/scripts/commute-card-harness.mjs"]},
         {"id": "ride-mode", "argv": ["node", "--experimental-strip-types", "scripts/ride-mode-harness.mjs"], "cwd": web, "inputs": ["web/src/lib/rideMode.ts", "web/scripts/ride-mode-harness.mjs"]},
         {"id": "request-gate", "argv": ["node", "--experimental-strip-types", "scripts/request-gate-harness.mjs"], "cwd": web, "inputs": ["web/src/lib/requestGate.ts", "web/scripts/request-gate-harness.mjs"]},
+        {"id": "place-search", "argv": ["node", "--experimental-strip-types", "scripts/place-search-harness.mjs"], "cwd": web, "inputs": ["web/scripts/place-search-harness.mjs", "web/src/lib/latestPlaceSearch.ts"]},
+        {"id": "search-keyboard", "argv": ["node", "--experimental-strip-types", "scripts/search-keyboard-harness.mjs"], "cwd": web, "inputs": ["web/scripts/search-keyboard-harness.mjs", "web/src/lib/searchKeyboard.ts"]},
+        {"id": "validation-ledger", "argv": ["node", "scripts/validation-ledger-harness.mjs"], "cwd": web, "inputs": ["web/scripts/validation-ledger-harness.mjs", "web/scripts/validation-ledger.mjs"]},
+        {"id": "can-i-ride", "argv": ["node", "--experimental-strip-types", "scripts/can-i-ride-harness.mjs"], "cwd": web, "inputs": ["web/scripts/can-i-ride-harness.mjs", "web/src/lib/canIRidePresentation.ts", "web/src/app/page.tsx"]},
+        {"id": "ux-contract", "argv": ["node", "scripts/ux-contract-harness.mjs"], "cwd": web, "inputs": [
+            "web/scripts/ux-contract-harness.mjs", "web/src/app/page.tsx", "web/src/app/page.module.css",
+            "web/src/app/globals.css", "web/src/lib/canIRidePresentation.ts", "web/scripts/can-i-ride-harness.mjs",
+            "web/src/components/CommuteCard.tsx", "web/src/lib/journeyExplanation.ts",
+            "web/src/lib/commuteInstructions.ts", "web/src/lib/savedJourneys.ts",
+            "web/src/lib/latestPlaceSearch.ts", "web/src/lib/searchKeyboard.ts",
+            "web/scripts/place-search-harness.mjs", "web/scripts/search-keyboard-harness.mjs",
+            "web/src/components/MapView.tsx", "web/src/lib/journeyMapPresentation.ts",
+            "web/src/lib/offlineWalkingPreviewState.ts", "web/scripts/offline-walking-preview-state-harness.mjs",
+            "web/src/lib/requestGate.ts", "web/scripts/request-gate-harness.mjs",
+            "web/src/components/NearbyRoutes.tsx", "web/src/lib/nearbyLookup.ts", "web/scripts/nearby-harness.mjs",
+            "web/src/components/BiyahePulse.tsx", "web/src/components/RideMode.tsx", "web/src/lib/rideMode.ts",
+            "web/scripts/validation-ledger.mjs", "web/scripts/validation-ledger-harness.mjs",
+            "web/scripts/offline-walking-preview-harness.mjs", "web/scripts/commute-card-harness.mjs",
+            "api/app/Http/Controllers/Api/DevelopmentOfflineWalkingPreviewController.php",
+            "api/app/Services/Routing/OfflineJourneyWalkingPreview.php", "api/routes/api.php",
+            "web/src/components/PersonalCommuteTools.tsx", "web/src/components/FieldMode.tsx",
+            "web/src/lib/api.ts", "web/public/sw.js", "web/public/manifest.webmanifest"
+        ]},
         {"id": "search-and-can-i-ride", "argv": [sys.executable, "-c", "import subprocess,sys; cs=[['node','--experimental-strip-types','scripts/place-search-harness.mjs'],['node','--experimental-strip-types','scripts/search-keyboard-harness.mjs'],['node','--experimental-strip-types','scripts/can-i-ride-harness.mjs'],['node','scripts/ux-contract-harness.mjs'],['node','scripts/validation-ledger-harness.mjs']]; failed=0\nfor c in cs:\n p=subprocess.run(c); print('CHILD_COMMAND='+repr(c)+' EXIT='+str(p.returncode), flush=True); failed |= p.returncode != 0\nsys.exit(1 if failed else 0)"], "cwd": web, "inputs": [
             "web/src/app/page.tsx", "web/src/app/page.module.css", "web/src/app/globals.css",
             "web/src/components/CommuteCard.tsx", "web/src/components/MapView.tsx",
@@ -274,7 +297,7 @@ def run_specs(root: Path, run_dir: Path, specs: list[dict[str, object]], resourc
         argv = list(spec["argv"])
         cwd = Path(spec["cwd"])
         started = utc_now()
-        guarded = identifier in {"preview-state", "preview-contract", "commute-card", "ride-mode", "request-gate", "search-and-can-i-ride", "typescript", "eslint", "adapter-phpunit", "real-cebu-corpus"}
+        guarded = identifier in {"preview-state", "preview-contract", "commute-card", "ride-mode", "request-gate", "place-search", "search-keyboard", "validation-ledger", "can-i-ride", "ux-contract", "search-and-can-i-ride", "typescript", "eslint", "adapter-phpunit", "real-cebu-corpus"}
         effective_environment = {"PYTHONDONTWRITEBYTECODE": "1", **(GUARD_ENV if guarded else {})}
         inherited_environment = {key: os.environ.get(key, "") for key in
                                  ("PATH", "LANG", "LC_ALL", "TZ", "NODE_OPTIONS")}
@@ -301,7 +324,7 @@ def run_specs(root: Path, run_dir: Path, specs: list[dict[str, object]], resourc
             continue
         missing = [argv[0]] if not (Path(argv[0]).is_absolute() and Path(argv[0]).exists()) and shutil.which(argv[0]) is None else []
         missing.extend(f"source input {entry['path']}" for entry in input_files if entry["sha256"] == "MISSING")
-        if identifier in {"preview-state", "preview-contract", "commute-card", "ride-mode", "request-gate", "search-and-can-i-ride"}:
+        if identifier in {"preview-state", "preview-contract", "commute-card", "ride-mode", "request-gate", "place-search", "search-keyboard", "validation-ledger", "can-i-ride", "ux-contract", "search-and-can-i-ride"}:
             if not shutil.which("node"):
                 missing.append("node")
         if identifier == "syntax-and-json":

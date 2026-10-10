@@ -100,11 +100,12 @@ class PortableRunnerTests(unittest.TestCase):
         self.assertEqual(RUNNER.aggregate([{"status": "PASS"}, {"status": "NOT_RUN"}]), "NOT_RUN")
 
     def test_individual_suite_selection_is_mode_scoped(self):
-        specs = [{"id": "preview-state"}, {"id": "commute-card"}]
-        self.assertEqual(RUNNER.select_specs(specs, "commute-card"), [specs[1]])
-        self.assertEqual(RUNNER.select_specs(specs, None), specs)
+        specs = RUNNER.command_specs(ROOT, "FRONTEND", ROOT / ".temporary-run-directory")
+        self.assertEqual(["commute-card"], [spec["id"] for spec in RUNNER.select_specs(specs, "commute-card")])
+        for suite_id in ("place-search", "search-keyboard", "validation-ledger", "can-i-ride", "ux-contract"):
+            self.assertEqual([suite_id], [spec["id"] for spec in RUNNER.select_specs(specs, suite_id)])
         with self.assertRaisesRegex(ValueError, "not available in this mode"):
-            RUNNER.select_specs(specs, "adapter-phpunit")
+            RUNNER.select_specs(specs, "not-a-suite")
 
     def test_search_group_fingerprints_every_ux_harness_source(self):
         specs = RUNNER.command_specs(ROOT, "FRONTEND", ROOT / ".temporary-run-directory")

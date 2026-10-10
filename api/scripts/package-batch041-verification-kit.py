@@ -184,7 +184,7 @@ From this directory, run `bash verify-kit.sh MODE`. Available modes are:
 
 The package includes checksum-verified output and resource logs referenced by the pinned Doctor report, relocated under `source-snapshot/evidence/` so report validation works without the original host cache.
 
-Run one suite with `bash verify-kit.sh --mode FRONTEND --suite commute-card`. Suite identifiers are printed by each mode and recorded in `run-status.json`; a suite unavailable in the selected mode is rejected before execution.
+Run one suite with `bash verify-kit.sh --mode FRONTEND --suite commute-card`. Search, Can-I-Ride, UX, and ledger checks can be run separately with `--suite place-search`, `--suite search-keyboard`, `--suite can-i-ride`, `--suite ux-contract`, or `--suite validation-ledger`. Suite identifiers are printed by each mode and recorded in `run-status.json`; a suite unavailable in the selected mode is rejected before execution.
 
 Each run writes an atomic `run-status.json`, individual command output, source/tool/command fingerprints, resource logs for guarded work, and an evidence checksum list. Interrupted `RUNNING` records recover to `NOT_RUN`; the runner never infers PASS from partial output. Guarded suites use five samples spaced five seconds apart, the fixed 524288 KiB memory and 131072 KiB swap floors, and first-breach cancellation. No database service is started.
 
@@ -316,7 +316,12 @@ def main(argv=None) -> int:
                 "bash verify-kit.sh ADAPTER",
                 "bash verify-kit.sh CORPUS",
                 "bash verify-kit.sh FULL",
-                "bash verify-kit.sh --mode FRONTEND --suite commute-card"
+                "bash verify-kit.sh --mode FRONTEND --suite commute-card",
+                "bash verify-kit.sh --mode FRONTEND --suite place-search",
+                "bash verify-kit.sh --mode FRONTEND --suite search-keyboard",
+                "bash verify-kit.sh --mode FRONTEND --suite can-i-ride",
+                "bash verify-kit.sh --mode FRONTEND --suite ux-contract",
+                "bash verify-kit.sh --mode FRONTEND --suite validation-ledger"
             ],
             "expected_output_formats": ["biyahe-offline-evidence-smoke-v1", "biyahe-evidence-provenance-validation-v1", "biyahe-doctor-v42-validation-v1", "biyahe-portable-verification-run-v1", "biyahe-offline-walking-corpus-v1"],
             "expected_stored_coverage": {"stops": 503, "stops_snappable_within_25m": 436, "places": 37, "places_snappable_within_25m": 30, "transfers_unverified": 2, "historical_corpus_cases": 10, "historical_routes_found": 9, "historical_routes_disconnected": 1},

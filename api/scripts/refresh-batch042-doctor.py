@@ -451,11 +451,16 @@ def main() -> int:
             "ride_mode": make_test("ride_mode", find_suite(runs, "ride-mode")),
             "request_gate": make_test("request_gate", find_suite(runs, "request-gate")),
         }
-        for name, fragment in (("place_search", "place-search-harness"), ("search_keyboard", "search-keyboard-harness"),
-                               ("can_i_ride", "can-i-ride-harness"), ("ux_contract", "ux-contract-harness"),
-                               ("validation_ledger", "validation-ledger-harness")):
+        for name, fragment, standalone_suite in (
+            ("place_search", "place-search-harness", "place-search"),
+            ("search_keyboard", "search-keyboard-harness", "search-keyboard"),
+            ("can_i_ride", "can-i-ride-harness", "can-i-ride"),
+            ("ux_contract", "ux-contract-harness", "ux-contract"),
+            ("validation_ledger", "validation-ledger-harness", "validation-ledger"),
+        ):
             parent, child = find_child(runs, "search-and-can-i-ride", fragment)
-            tests[name] = make_test(name, parent, child)
+            standalone = find_suite(runs, standalone_suite) if standalone_suite else None
+            tests[name] = make_test(name, standalone) if standalone else make_test(name, parent, child)
         tests["typescript"] = make_test("typescript", find_suite(runs, "typescript") or find_suite(runs, "typecheck-and-eslint"))
         tests["eslint"] = make_test("eslint", find_suite(runs, "eslint"))
         tests["adapter_phpunit"] = make_test("adapter_phpunit", find_suite(runs, "adapter-phpunit"))
