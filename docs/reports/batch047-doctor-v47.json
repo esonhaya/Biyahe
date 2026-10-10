@@ -1,0 +1,194 @@
+{
+  "doctor": "Biyahe Doctor V47",
+  "generated_at_utc": "2026-10-10T17:39:07Z",
+  "executable_source_revision": "793e04e22e428804111d91f60842ad9e753bd2d5",
+  "tested_application_revision": "6e199f33deed7397996241b1867c420f757ec6ae",
+  "documentation_revision": "separate documentation-only commit; not part of the executable test target",
+  "changed_modules": [
+    "api/scripts/run-lightweight-check.sh",
+    "api/scripts/create-batch047-bundle.sh"
+  ],
+  "source_fingerprints_sha256": {
+    "web/src/lib/api.ts": "1ca22f7e4cb60d67a2cf1004e3c0cb1b8164121e5d910cfcbc0a6cd616092f4e",
+    "web/src/lib/fetchWithTimeout.ts": "65a29fccfaf89af6bf82736111592f3b5b32180fac8422ed2679d9e6cefd4c53",
+    "web/src/lib/savedJourneys.ts": "24764b33c555f3a38f77b3740e552f40d4ff1efc0d430942aa00304565295527",
+    "web/src/lib/commuteInstructions.ts": "0ee449fd4f131e134e58b778e1bcf33d40ff070955005b7f61f6855010c4facf",
+    "web/src/lib/rideMode.ts": "18babd485317b02a7c59c830d3316d52c1b0c9aae3e86e4475b99e258d0dbcc3",
+    "web/scripts/api-failure-harness.mjs": "55ef617cb77aa12e06160d1a92ec9491ba526d4e6a8a67a57d2d34d4bd1b58cf",
+    "web/scripts/commute-card-harness.mjs": "b56346afd8b3f78e23d5a87ba4378a38eadb6b4d9e4bca23438fd2ef0b16c020",
+    "web/scripts/ride-mode-harness.mjs": "bd6c8a9ee5fc6d876aa30221bf587c90239f507a032f8c4c0fd3153b43169ac6",
+    "web/scripts/request-gate-harness.mjs": "43324c506f9be07ff3f73bd1ef31976cfb1ea2ce030624da0c35f9a37c99c1af",
+    "api/scripts/run-lightweight-check.sh": "cf0547a665e7224bdc2766855b976c9bd4794ab6a11f32cf6f120aa30a509486",
+    "api/scripts/create-batch047-bundle.sh": "2bf3045131057a04a7c2d9a76b288de405020c7d7ca771ec83fd3207521915b9",
+    "api/scripts/run-bounded-process.sh": "c01fad04c7508be32c980fa30f052778e69ea54fde3f8e49a3567bea530d9ad0"
+  },
+  "assessments": {
+    "prechange_git_backup": {
+      "status": "VERIFIED",
+      "head": "6e199f33deed7397996241b1867c420f757ec6ae",
+      "bundle": "/data/data/com.termux/files/home/storage/external-1/Termux-Archive/Biyahe/Batch047-Recovery/20261010T172654Z/biyahe-batch047-initial-6e199f33deed7397996241b1867c420f757ec6ae.bundle",
+      "sha256": "b939d081d10eec729b02a87a8098a721abc09485332acc0c42b21c8b8f777d74",
+      "verification": "git bundle verify and refs/heads/main HEAD check passed; clone the bundle into a new directory to restore",
+      "evidence": "/data/data/com.termux/files/home/.cache/biyahe/batch047/20261010T1728Z/initial-bundle-resume-publish.jsonl"
+    },
+    "lightweight_execution_policy": {
+      "status": "IMPLEMENTED_UNTESTED",
+      "details": "A strict operation allowlist delegates to the existing owned-process-group guard. Heavy limits remain MemAvailable 524288 KiB, SwapFree 131072 KiB and RSS 262144 KiB. The light profile uses a 32768 KiB swap reserve, RSS cap 131072 KiB, three 1-second preflight samples, 60-second timeout and first-breach cancellation. No graph, build, browser or database command is allowlisted. The passing worker path was not completed through the checked-in wrapper in this batch.",
+      "heavy_guard_fingerprint": "c01fad04c7508be32c980fa30f052778e69ea54fde3f8e49a3567bea530d9ad0"
+    },
+    "api_failure_contract_fixtures": {
+      "status": "VERIFIED",
+      "command": "node --experimental-strip-types web/scripts/api-failure-harness.mjs",
+      "execution_wrapper": "temporary measured lightweight runner, since removed; test source and input hashes are recorded in evidence",
+      "exit_code": 0,
+      "runtime_seconds": 2.043,
+      "peak_process_tree_rss_kib": 103620,
+      "minimum_memavailable_kib": 947236,
+      "minimum_swapfree_kib": 128040,
+      "assertions": [
+        "place, direct, transfer and empty-result contracts",
+        "partial journey rejection and source identity",
+        "HTTP diagnostics and malformed JSON handling",
+        "header and response-body timeouts",
+        "caller cancellation and timer/listener cleanup"
+      ],
+      "network": "none; synthetic fixtures"
+    },
+    "commute_cards_and_saved_journeys": {
+      "status": "VERIFIED",
+      "command": "node --experimental-strip-types web/scripts/commute-card-harness.mjs",
+      "execution_wrapper": "temporary measured lightweight runner, since removed",
+      "exit_code": 0,
+      "runtime_seconds": 1.798,
+      "peak_process_tree_rss_kib": 99444,
+      "minimum_memavailable_kib": 932612,
+      "minimum_swapfree_kib": 129736,
+      "assertions": [
+        "direct, one-transfer and two-transfer cards",
+        "saved snapshot validation, offline reopen and corrupt-storage preservation",
+        "no preview persistence, backend requests or GPS persistence",
+        "walking estimate, missing geometry, connector and uncertainty disclosures",
+        "share text excludes coordinates and internal IDs"
+      ],
+      "network": "none; synthetic fixtures",
+      "final_checked_in_wrapper_attempt": {
+        "status": "BLOCKED_RESOURCE",
+        "exit_code": 6,
+        "runtime_seconds": 9,
+        "worker_started": true,
+        "peak_rss_kib": 56864,
+        "minimum_memavailable_kib": 855988,
+        "minimum_swapfree_kib": 29644,
+        "result": "The harness printed its PASS assertions, but the guard observed SwapFree below 32768 KiB and terminated the owned worker. This invocation is not counted as PASS.",
+        "evidence": "/data/data/com.termux/files/home/.cache/biyahe/batch047/final-wrapper-20261010T1738Z/commute-cards.guard.log"
+      }
+    },
+    "ride_mode_manual_progress_fixtures": {
+      "status": "VERIFIED",
+      "command": "node --experimental-strip-types web/scripts/ride-mode-harness.mjs",
+      "execution_wrapper": "temporary measured lightweight runner, since removed",
+      "exit_code": 0,
+      "runtime_seconds": 1.911,
+      "peak_process_tree_rss_kib": 87248,
+      "minimum_memavailable_kib": 852976,
+      "minimum_swapfree_kib": 35428,
+      "assertions": [
+        "direct, one-transfer and two-transfer progress",
+        "poor or stale evidence rejection and conservative off-route behavior",
+        "persistence excludes raw GPS and preserves uncertainty",
+        "corrupt-session write guard preserves existing data"
+      ],
+      "network": "none; synthetic fixtures"
+    },
+    "request_gate_fixtures": {
+      "status": "BLOCKED_RESOURCE",
+      "command": "node --experimental-strip-types web/scripts/request-gate-harness.mjs",
+      "exit_code": 125,
+      "worker_started": true,
+      "runtime_seconds": 1.644,
+      "peak_process_tree_rss_kib": 78360,
+      "minimum_memavailable_kib": 870308,
+      "minimum_swapfree_kib": 26120,
+      "cancellation": "first-breach SIGTERM sent to owned process group; PID absent on follow-up; no unrelated process targeted",
+      "evidence": "/data/data/com.termux/files/home/.cache/biyahe/batch047/20261010T1728Z/request-gate.jsonl"
+    },
+    "checked_in_wrapper_api_attempt": {
+      "status": "BLOCKED_RESOURCE",
+      "command": "api/scripts/run-lightweight-check.sh api-failure $HOME/.cache/biyahe/batch047/light-wrapper-20261010T1731Z",
+      "exit_code": 4,
+      "worker_started": false,
+      "minimum_memavailable_kib": 804664,
+      "minimum_swapfree_kib": 2252,
+      "evidence": "/data/data/com.termux/files/home/.cache/biyahe/batch047/light-wrapper-20261010T1731Z/api-failure.guard.log"
+    },
+    "journey_selection_and_search_fixtures": {
+      "status": "NOT_RUN",
+      "details": "Place search, keyboard selection, Can-I-Ride and full origin/destination sequencing fixtures were not run. Request-gate coverage was blocked by the resource reserve; no second attempt was made. Source inspection found no independently demonstrated application defect to fix."
+    },
+    "lightweight_wrapper_first_breach": {
+      "status": "VERIFIED",
+      "details": "The checked-in wrapper ran an allowlisted commute-card harness through the existing process-group guard; on the first sample below the 32768 KiB light reserve, the owned process group was cancelled and the wrapper returned BLOCKED_RESOURCE. Output produced before cancellation is not accepted as a functional PASS.",
+      "minimum_swapfree_kib": 29644,
+      "evidence": "/data/data/com.termux/files/home/.cache/biyahe/batch047/final-wrapper-20261010T1738Z/commute-cards.guard.log"
+    },
+    "static_validation": {
+      "status": "VERIFIED",
+      "commands": [
+        "bash -n api/scripts/run-lightweight-check.sh",
+        "bash -n api/scripts/create-batch047-bundle.sh",
+        "bash -n api/scripts/run-bounded-process.sh",
+        "git diff --check",
+        "git diff --cached --check"
+      ],
+      "functional_tests": false
+    },
+    "application_change_review": {
+      "status": "VERIFIED",
+      "details": "Inspected API timeout/response validation, saved snapshot handling, selected journey request state, commute cards and manual Ride Mode. No new application defect was demonstrated, so no app code or persistence format was changed in Batch 047. The inherited Batch 045/046 changes were covered by the fixture results above."
+    },
+    "real_cebu_graph_and_corpus": {
+      "status": "NOT_RUN",
+      "details": "No graph access or replay occurred. Historical results are not current validation."
+    },
+    "postgresql_staging": {
+      "status": "NOT_RUN",
+      "details": "No PostgreSQL, Docker, or database service was started."
+    },
+    "field_transfer_safety": {
+      "status": "BLOCKED_DEPENDENCY",
+      "details": "Two transfer locations remain physically unverified; no field evidence was collected."
+    },
+    "private_beta": "BLOCKED",
+    "production_activation": "NO"
+  },
+  "resource_policy": {
+    "heavy_min_memavailable_kib": 524288,
+    "heavy_min_swapfree_kib": 131072,
+    "heavy_process_tree_rss_cap_kib": 262144,
+    "heavy_guard_changed": false,
+    "lightweight_min_memavailable_kib": 524288,
+    "lightweight_min_swapfree_kib": 32768,
+    "lightweight_process_tree_rss_cap_kib": 131072,
+    "first_breach_cancellation": true,
+    "worker_cancellations": 2,
+    "postgresql_rss_kib": 0
+  },
+  "evidence_integrity": {
+    "stored_stops": 503,
+    "stops_snappable_within_25m": 436,
+    "stored_places": 37,
+    "places_snappable_within_25m": 30,
+    "vehicle_only_classifications": 648,
+    "vehicle_only_stored": 619,
+    "vehicle_only_omitted": 29,
+    "physical_transfer_verification": "UNVERIFIED",
+    "historical_graph_diagnostics": {
+      "long_edges": 26,
+      "boundary_nodes": 944,
+      "crossing_tagged_nodes": 1510
+    },
+    "interpretation": "Historical stored-record diagnostics only; not new measurements, geographic coverage, accessibility, sidewalk, crossing or field-safety verification."
+  },
+  "release_readiness": "NOT_READY_FOR_PRIVATE_BETA",
+  "production_activation": "NO"
+}
