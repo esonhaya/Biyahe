@@ -1,0 +1,378 @@
+{
+  "format": "biyahe-batch041-test-plan-v2",
+  "resource_floors_kib": {
+    "memavailable_minimum": 524288,
+    "swapfree_minimum": 131072,
+    "sustained_samples": 5,
+    "sample_spacing_seconds": 5
+  },
+  "checks": [
+    {
+      "id": "provenance-cli",
+      "cost": "LIGHT",
+      "command": [
+        "python3",
+        "-B",
+        "api/scripts/validate-batch041-provenance.py"
+      ],
+      "working_directory": ".",
+      "status": "VERIFIED",
+      "result": "6 sources, 13 metric claims, 0 unresolved",
+      "reason": "Hashes, metric definitions and source identities were checked.",
+      "source_revision": "2850683120fd04bef25d926f9d9ed5655e5ca6f0",
+      "command_fingerprint_scope": "canonical argv + working directory + tested source revision",
+      "command_fingerprint_sha256": "ce417867aa3461ffecf74a9c3291efdb040bc043905172ee6d3675b617049b7f"
+    },
+    {
+      "id": "provenance-fixtures",
+      "cost": "LIGHT",
+      "command": [
+        "python3",
+        "-B",
+        "api/scripts/test_evidence_provenance.py"
+      ],
+      "working_directory": ".",
+      "status": "VERIFIED",
+      "result": "6 passed",
+      "reason": "Deterministic provenance fixtures.",
+      "source_revision": "2850683120fd04bef25d926f9d9ed5655e5ca6f0",
+      "command_fingerprint_scope": "canonical argv + working directory + tested source revision",
+      "command_fingerprint_sha256": "1c658806381a9fa2de15a770f619d2ef6fc146acd2419216d1a76b0e7684f03c"
+    },
+    {
+      "id": "coverage-fixtures",
+      "cost": "LIGHT",
+      "command": [
+        "python3",
+        "-B",
+        "api/scripts/test_summarize_offline_coverage.py"
+      ],
+      "working_directory": ".",
+      "status": "VERIFIED",
+      "result": "11 passed",
+      "reason": "Pinned stored-record coverage contract; no graph opened.",
+      "source_revision": "2850683120fd04bef25d926f9d9ed5655e5ca6f0",
+      "command_fingerprint_scope": "canonical argv + working directory + tested source revision",
+      "command_fingerprint_sha256": "9f942cc42887fed3b808e4f6bb0badae664c3bd1d42da4a326a70de836207904"
+    },
+    {
+      "id": "static-evidence-fixtures",
+      "cost": "LIGHT",
+      "command": [
+        "python3",
+        "-B",
+        "api/scripts/test_offline_evidence_smoke.py"
+      ],
+      "working_directory": ".",
+      "status": "VERIFIED",
+      "result": "2 passed",
+      "reason": "Static evidence fixtures only.",
+      "source_revision": "2850683120fd04bef25d926f9d9ed5655e5ca6f0",
+      "command_fingerprint_scope": "canonical argv + working directory + tested source revision",
+      "command_fingerprint_sha256": "fcd5179b408a394f499b0bc5d9946a8dbf315f000554618602209c759ee5e101"
+    },
+    {
+      "id": "static-evidence-smoke",
+      "cost": "LIGHT",
+      "command": [
+        "python3",
+        "-B",
+        "api/scripts/offline-evidence-smoke.py"
+      ],
+      "working_directory": ".",
+      "status": "VERIFIED",
+      "result": "PASS_STATIC_EVIDENCE_ONLY",
+      "reason": "No SQLite/PBF/PostgreSQL access; historical corpus figures were not presented as a current replay.",
+      "source_revision": "2850683120fd04bef25d926f9d9ed5655e5ca6f0",
+      "command_fingerprint_scope": "canonical argv + working directory + tested source revision",
+      "command_fingerprint_sha256": "44ce2201a9303ec48cea15055d0a5f14749405920643b740d2d8f191c296e227"
+    },
+    {
+      "id": "corpus-comparator-fixtures",
+      "cost": "LIGHT",
+      "command": [
+        "python3",
+        "-B",
+        "api/scripts/test_compare_offline_corpus.py"
+      ],
+      "working_directory": ".",
+      "status": "VERIFIED",
+      "result": "4 passed; synthetic report data only",
+      "reason": "Comparator contract only, not route execution.",
+      "source_revision": "2850683120fd04bef25d926f9d9ed5655e5ca6f0",
+      "command_fingerprint_scope": "canonical argv + working directory + tested source revision",
+      "command_fingerprint_sha256": "673233ef55f72c4f55141086c6a7591217c37ee808877ff8da6ac954d87c11e8"
+    },
+    {
+      "id": "coverage-summary",
+      "cost": "LIGHT",
+      "command": [
+        "python3",
+        "-B",
+        "api/scripts/summarize-offline-coverage.py",
+        "--output-dir",
+        "$HOME/.cache/biyahe/batch041-recovery/coverage-diagnostics"
+      ],
+      "working_directory": ".",
+      "status": "VERIFIED",
+      "result": "503 stops/436 snappable; 37 places/30 snappable; pinned report only",
+      "reason": "No graph recomputation. Transfer records remain unverified.",
+      "source_revision": "2850683120fd04bef25d926f9d9ed5655e5ca6f0",
+      "command_fingerprint_scope": "canonical argv + working directory + tested source revision",
+      "command_fingerprint_sha256": "7462b4487736c15e68d2e7f059e84d04a5079aa5f6d534ee27bc1cb4967774d4"
+    },
+    {
+      "id": "doctor-cli",
+      "cost": "LIGHT",
+      "command": [
+        "python3",
+        "-B",
+        "api/scripts/validate-batch041-doctor.py"
+      ],
+      "working_directory": ".",
+      "status": "VERIFIED",
+      "result": "13 categories; replay BLOCKED_RESOURCE_ABORTED; activation NO",
+      "reason": "Doctor gates fail closed.",
+      "source_revision": "2850683120fd04bef25d926f9d9ed5655e5ca6f0",
+      "command_fingerprint_scope": "canonical argv + working directory + tested source revision",
+      "command_fingerprint_sha256": "66480c0ad439bc1af19e4525efad6f77766f2126d962d3f12aa8632e004693bf"
+    },
+    {
+      "id": "doctor-fixtures",
+      "cost": "LIGHT",
+      "command": [
+        "python3",
+        "-B",
+        "api/scripts/test_validate_batch041_doctor.py"
+      ],
+      "working_directory": ".",
+      "status": "VERIFIED",
+      "result": "6 passed",
+      "reason": "Includes legacy status rejection and resource-aborted replay handling.",
+      "source_revision": "2850683120fd04bef25d926f9d9ed5655e5ca6f0",
+      "command_fingerprint_scope": "canonical argv + working directory + tested source revision",
+      "command_fingerprint_sha256": "ba11fcb8439303b015384951890a0b7a86aed2398ae97dc8e396e1481bca5b02"
+    },
+    {
+      "id": "geometry-contract-smoke",
+      "cost": "LIGHT",
+      "command": [
+        "php",
+        "api/scripts/test_offline_route_geometry_contract.php"
+      ],
+      "working_directory": ".",
+      "status": "VERIFIED",
+      "result": "7 passed; no graph read or Laravel bootstrap",
+      "reason": "Directed geometry, identity, distance and failure geometry contract fixtures.",
+      "source_revision": "2850683120fd04bef25d926f9d9ed5655e5ca6f0",
+      "command_fingerprint_scope": "canonical argv + working directory + tested source revision",
+      "command_fingerprint_sha256": "265f5337f27a89a19a8372c5fbbe5d2fa12b2258b03759f94c262fce1103fce4"
+    },
+    {
+      "id": "adapter-phpunit",
+      "cost": "MODERATE",
+      "command": [
+        "php",
+        "artisan",
+        "test",
+        "--filter=OfflinePedestrianRouteGeometryContractTest|OfflinePedestrianGraphRouterTest|OfflineJourneyWalkingPreviewTest"
+      ],
+      "working_directory": "api",
+      "status": "VERIFIED",
+      "result": "22 tests, 75 assertions, 0 failures; peak owned tree RSS 154092 KiB",
+      "reason": "Guarded isolated process group; five preflight samples passed. Runtime minimum MemAvailable 872920 KiB, SwapFree 368604 KiB; PostgreSQL RSS 0. First run exposed and fixed a fixture expectation; rerun passed.",
+      "source_revision": "2850683120fd04bef25d926f9d9ed5655e5ca6f0",
+      "command_fingerprint_scope": "canonical argv + working directory + tested source revision",
+      "command_fingerprint_sha256": "9edcfed4bfb5e73c963c65821e9d981b15357defa62ea42e30593a1fe94e0c80",
+      "execution_status": "EXECUTED_PASS",
+      "evidence_log": "$HOME/.cache/biyahe/batch041-recovery/adapter-phpunit-rerun.guard.log"
+    },
+    {
+      "id": "frontend-harness-group",
+      "cost": "MODERATE",
+      "command": [
+        "node",
+        "--experimental-strip-types",
+        "web/scripts/offline-walking-preview-harness.mjs"
+      ],
+      "working_directory": ".",
+      "status": "BLOCKED_RESOURCE",
+      "result": "NOT_EXECUTED; preflight minimum MemAvailable 838872 KiB, SwapFree 18964 KiB",
+      "reason": "Existing five-sample guard withheld the command; no retry. The group included preview, Ride Mode, commute, UX, validation-ledger, and search keyboard harnesses.",
+      "source_revision": "2850683120fd04bef25d926f9d9ed5655e5ca6f0",
+      "command_fingerprint_scope": "canonical argv + working directory + tested source revision",
+      "command_fingerprint_sha256": "fd30549edd0154a5774f25f773c6d2f225f8df3fadf17fce475815c4310117b1",
+      "execution_status": "COMMAND_NOT_STARTED",
+      "evidence_log": "$HOME/.cache/biyahe/batch041-recovery/frontend-regressions.guard.log"
+    },
+    {
+      "id": "real-cebu-corpus",
+      "cost": "HEAVY",
+      "command": [
+        "php",
+        "artisan",
+        "biyahe:pedestrian:verify-offline-corpus",
+        "--output=$HOME/.cache/biyahe/batch041-recovery/cebu-corpus-20261009T235655Z.json"
+      ],
+      "working_directory": "api",
+      "status": "BLOCKED_RESOURCE",
+      "result": "ABORTED; no report written; worker exit 143/SIGTERM; peak RSS 49984 KiB",
+      "reason": "Five-sample preflight passed (minimum MemAvailable 762352 KiB, SwapFree 154908 KiB). Live SwapFree then fell to 64988 and 27184 KiB; the owned group was SIGTERM-cancelled after the second one-second breach sample. No route result or PASS is claimed.",
+      "source_revision": "2850683120fd04bef25d926f9d9ed5655e5ca6f0",
+      "command_fingerprint_scope": "canonical argv + working directory + tested source revision",
+      "command_fingerprint_sha256": "a67989441dbabae04d22e6aa51e00170cd17eb18a756f0182160e288dffa8057",
+      "execution_status": "EXECUTED_ABORTED_RESOURCE",
+      "evidence_log": "$HOME/.cache/biyahe/batch041-recovery/cebu-corpus.guard.log"
+    },
+    {
+      "id": "browser-viewport",
+      "cost": "HEAVY",
+      "command": [
+        "repository-supported browser suite",
+        "320px",
+        "360px",
+        "390px"
+      ],
+      "working_directory": ".",
+      "status": "NOT_RUN",
+      "result": "No browser binary or supported browser test environment available; visual checks not performed",
+      "reason": "No Playwright, Chromium, Chrome, Firefox, or adb executable was found.",
+      "source_revision": "2850683120fd04bef25d926f9d9ed5655e5ca6f0",
+      "command_fingerprint_scope": "canonical argv + working directory + tested source revision",
+      "command_fingerprint_sha256": "f737dad4701a9bb37b55cd501a5e27ab258c2864ceef97d184d577bbd3187ba8"
+    },
+    {
+      "id": "typecheck-lint-build",
+      "cost": "MODERATE",
+      "command": [
+        "repository-defined typecheck, ESLint, PHP formatting, focused frontend build commands"
+      ],
+      "working_directory": ".",
+      "status": "BLOCKED_RESOURCE",
+      "result": "NOT_RUN",
+      "reason": "Node harness preflight failed; no further moderate worker was launched. No command is marked PASS.",
+      "source_revision": "2850683120fd04bef25d926f9d9ed5655e5ca6f0",
+      "command_fingerprint_scope": "canonical argv + working directory + tested source revision",
+      "command_fingerprint_sha256": "230c68d6292d9da97f9a93ad806cfcae484029fe0b40d3554aeb5814dbc7ea57"
+    },
+    {
+      "id": "php-syntax",
+      "cost": "LIGHT",
+      "command": [
+        "php",
+        "-l",
+        "<each changed PHP file>"
+      ],
+      "working_directory": ".",
+      "status": "VERIFIED",
+      "result": "Changed PHP files passed php -l (6 original changed files plus recovered PHPUnit test)",
+      "reason": "Includes recovery PHPUnit file after the fixture correction.",
+      "source_revision": "2850683120fd04bef25d926f9d9ed5655e5ca6f0",
+      "command_fingerprint_scope": "canonical argv + working directory + tested source revision",
+      "command_fingerprint_sha256": "84897a54d89117b309175bad007b00c6d44be9afd242f7c5f51155336acc9944"
+    },
+    {
+      "id": "python-js-bash-json-syntax",
+      "cost": "LIGHT",
+      "command": [
+        "repository syntax and JSON validation checks"
+      ],
+      "working_directory": ".",
+      "status": "VERIFIED",
+      "result": "Python AST, JavaScript syntax, Bash syntax, JSON parsing, and diff checks passed in recovery; JavaScript/Bash sources unchanged by source commit",
+      "reason": "Light syntax/static checks only; not an application build.",
+      "source_revision": "2850683120fd04bef25d926f9d9ed5655e5ca6f0",
+      "command_fingerprint_scope": "canonical argv + working directory + tested source revision",
+      "command_fingerprint_sha256": "c573f04e88a992ae1e72bc05693380a5026ed56acd308e7350631bbb8e3da2a9"
+    },
+    {
+      "id": "sqlite-integrity",
+      "cost": "MODERATE",
+      "command": [
+        "sqlite3",
+        "<pinned graph>",
+        "PRAGMA integrity_check"
+      ],
+      "working_directory": ".",
+      "status": "NOT_RUN",
+      "result": "NOT_RUN",
+      "reason": "No SQLite integrity scan or route replay completed; graph identity was verified by SHA256 only.",
+      "source_revision": "2850683120fd04bef25d926f9d9ed5655e5ca6f0",
+      "command_fingerprint_scope": "canonical argv + working directory + tested source revision",
+      "command_fingerprint_sha256": "d1b7437f7e729867b4b8dd6e241e5d550e6209de7af87d6f10bf9d078cfd047d"
+    },
+    {
+      "id": "postgres-staging",
+      "cost": "EXTERNAL_HOST",
+      "command": [
+        "external disposable Linux PostgreSQL staging procedure"
+      ],
+      "working_directory": ".",
+      "status": "BLOCKED_DEPENDENCY",
+      "result": "NOT_RUN",
+      "reason": "PostgreSQL was not started on this device.",
+      "source_revision": "2850683120fd04bef25d926f9d9ed5655e5ca6f0",
+      "command_fingerprint_scope": "canonical argv + working directory + tested source revision",
+      "command_fingerprint_sha256": "1f6d4f90dff7f659e8f171e48e24fa51086868338e75658e454b586a5b6ea7f4"
+    },
+    {
+      "id": "field-transfer-evidence",
+      "cost": "FIELD_DEPENDENT",
+      "command": [
+        "independent in-person transfer, sidewalk and crossing verification"
+      ],
+      "working_directory": ".",
+      "status": "NOT_RUN",
+      "result": "FIELD_EVIDENCE_REQUIRED",
+      "reason": "Graph records and OSM tags are not field safety observations.",
+      "source_revision": "2850683120fd04bef25d926f9d9ed5655e5ca6f0",
+      "command_fingerprint_scope": "canonical argv + working directory + tested source revision",
+      "command_fingerprint_sha256": "ae2f12281d4e8ae958210b35f8dcaff35040369d00c6823eb5912fee685c5b5a"
+    },
+    {
+      "id": "portable-kit-v2-checksums",
+      "cost": "LIGHT",
+      "command": [
+        "sha256sum",
+        "-c",
+        "SHA256SUMS"
+      ],
+      "working_directory": "docs/portable-verification-v2",
+      "status": "VERIFIED",
+      "result": "58 package files matched SHA256SUMS",
+      "reason": "Manifest and checksum inventory verified; exact-revision verify-kit.sh was not run from a mismatched checkout.",
+      "source_revision": "2850683120fd04bef25d926f9d9ed5655e5ca6f0",
+      "command_fingerprint_scope": "canonical argv + working directory + tested source revision",
+      "command_fingerprint_sha256": "8e02aad66743d9b3ae0a1b78f0fc714d68ba02504c959fec205891e7b874ca3b"
+    },
+    {
+      "id": "portable-kit-v2-static-smoke",
+      "cost": "LIGHT",
+      "command": [
+        "python3",
+        "-B",
+        "api/scripts/offline-evidence-smoke.py"
+      ],
+      "working_directory": "docs/portable-verification-v2/source-snapshot",
+      "status": "VERIFIED",
+      "result": "PASS_STATIC_EVIDENCE_ONLY",
+      "reason": "Packaged static smoke passed; no graph or database access.",
+      "source_revision": "2850683120fd04bef25d926f9d9ed5655e5ca6f0",
+      "command_fingerprint_scope": "canonical argv + working directory + tested source revision",
+      "command_fingerprint_sha256": "6070b9eb9cdc8fa3be0fd67d1f047d58f42c8e49e43189217ea064a1c93e8e76"
+    }
+  ],
+  "policy": {
+    "one_resource_intensive_process_at_a_time": true,
+    "never_lower_floors": true,
+    "cancel_owned_worker_and_descendants_on_floor_breach": true,
+    "future_live_breach_samples_before_cancel": 1,
+    "recovery_corpus_breach_samples_before_cancel": 2,
+    "do_not_repeat_without_changed_conditions": true,
+    "blocked_is_not_pass": true,
+    "synthetic_comparator_fixtures_are_not_route_evidence": true,
+    "no_postgresql_pbf_rescan_or_graph_rebuild": true
+  },
+  "recovery_source_revision": "2850683120fd04bef25d926f9d9ed5655e5ca6f0",
+  "recovery_recorded_at_utc": "2026-10-10T00:03:44Z"
+}
