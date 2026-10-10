@@ -9,8 +9,38 @@
     }
   ],
   "delivery": {
-    "final_sd_bundle": "created after evidence commit; checksum recorded in $HOME/biyahe-batch045-report.txt",
-    "push": "NO"
+    "attempts": [
+      {
+        "command_started": false,
+        "ended_at_utc": "2026-10-10T14:18:33Z",
+        "exit_code": 4,
+        "minimum_memavailable_kib": 691444,
+        "minimum_swapfree_kib": 39496,
+        "resource_log": "docs/reports/batch045-test-evidence/20261010T141747Z/final-bundle-preflight.log",
+        "resource_log_sha256": "c6930c015f31d01570ef8962e8aae3b3425b9b4a1ca9aa661ad03bbcb2397f46",
+        "started_at_utc": "2026-10-10T14:18:09Z",
+        "status": "BLOCKED_RESOURCE"
+      },
+      {
+        "command_started": false,
+        "ended_at_utc": "2026-10-10T14:19:39Z",
+        "exit_code": 4,
+        "minimum_memavailable_kib": 671628,
+        "minimum_swapfree_kib": 108712,
+        "resource_log": "docs/reports/batch045-test-evidence/20261010T141900Z/final-bundle-preflight.log",
+        "resource_log_sha256": "32e118afde5cf230367bf9ef0ed51ea8416452c816264210b252af305f76aa54",
+        "started_at_utc": "2026-10-10T14:19:15Z",
+        "status": "BLOCKED_RESOURCE"
+      }
+    ],
+    "final_bundle": null,
+    "initial_recovery_bundle": {
+      "path": "~/storage/external-1/Termux-Archive/Biyahe/Batch045-Recovery/20261010T134814Z/biyahe-batch045-initial-c5844d227b2f63ac1995973d5c7ef8254b92ca6c.bundle",
+      "sha256": "f6eaea7d9ec21dce2c94bd7bc15a2d5ac21334c77fdaaf13eed61aaace8ed114",
+      "verified": true
+    },
+    "push": "NO",
+    "status": "BLOCKED_RESOURCE"
   },
   "executable_revision": "98ad3016a93f255ec88bf865fddaa9e93d060c91",
   "format": "biyahe-batch045-work-ledger-v1",
@@ -85,6 +115,30 @@
     "build": "NOT_RUN",
     "doctor_contract": "docs/reports/batch045-test-evidence/20261010T141653Z/doctor-v45-contract-final.json",
     "eslint": "NOT_RUN",
+    "final_bundle_preflights": [
+      {
+        "command_started": false,
+        "ended_at_utc": "2026-10-10T14:18:33Z",
+        "exit_code": 4,
+        "minimum_memavailable_kib": 691444,
+        "minimum_swapfree_kib": 39496,
+        "resource_log": "docs/reports/batch045-test-evidence/20261010T141747Z/final-bundle-preflight.log",
+        "resource_log_sha256": "c6930c015f31d01570ef8962e8aae3b3425b9b4a1ca9aa661ad03bbcb2397f46",
+        "started_at_utc": "2026-10-10T14:18:09Z",
+        "status": "BLOCKED_RESOURCE"
+      },
+      {
+        "command_started": false,
+        "ended_at_utc": "2026-10-10T14:19:39Z",
+        "exit_code": 4,
+        "minimum_memavailable_kib": 671628,
+        "minimum_swapfree_kib": 108712,
+        "resource_log": "docs/reports/batch045-test-evidence/20261010T141900Z/final-bundle-preflight.log",
+        "resource_log_sha256": "32e118afde5cf230367bf9ef0ed51ea8416452c816264210b252af305f76aa54",
+        "started_at_utc": "2026-10-10T14:19:15Z",
+        "status": "BLOCKED_RESOURCE"
+      }
+    ],
     "final_staged_checks": "docs/reports/batch045-test-evidence/20261010T141219Z/staged-diff-checks.json",
     "graph": "NOT_RUN",
     "guard_log": "docs/reports/batch045-test-evidence/20261010T140829Z/api-failure.resource.log",
@@ -95,7 +149,7 @@
     "staging": "NOT_RUN",
     "typecheck": "NOT_RUN"
   },
-  "updated_at_utc": "2026-10-10T14:17:23Z",
+  "updated_at_utc": "2026-10-10T14:20:08Z",
   "workstreams": {
     "api_failure_regression": {
       "evidence": "Guarded five-sample attempt; minimum SwapFree 23108 KiB; command not started.",
@@ -130,6 +184,10 @@
     "evidence_presentation": {
       "evidence": "No presentation changes; no current runtime execution.",
       "status": "IMPLEMENTED_UNTESTED"
+    },
+    "final_sd_delivery": {
+      "evidence": "Two guarded full-bundle preflights did not start Git; both breached SwapFree floor. No bundle worker or cancellation occurred.",
+      "status": "BLOCKED_RESOURCE"
     },
     "frontend_build": {
       "evidence": "No five-sample preflight cleared the fixed swap floor; build/typecheck/lint workers were not started.",
