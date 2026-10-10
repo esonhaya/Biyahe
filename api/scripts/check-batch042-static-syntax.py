@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Bounded syntax and JSON checks for the Batch043 evidence source set."""
+"""Bounded syntax and JSON checks for the portable Batch044 source set."""
 
 from __future__ import annotations
 
@@ -27,6 +27,9 @@ def main() -> int:
         "api/scripts/package-batch041-verification-kit.py",
         "api/scripts/refresh-batch042-doctor.py",
         "api/scripts/test_portable_verification.py",
+        "api/scripts/refresh-batch044-doctor.py",
+        "api/scripts/validate-batch044-doctor.py",
+        "api/scripts/test_validate_batch044_doctor.py",
         "api/scripts/evidence_provenance.py",
         "api/scripts/compare-offline-corpus.py",
         "api/scripts/test_compare_offline_corpus.py",
@@ -37,6 +40,14 @@ def main() -> int:
         "api/scripts/refresh-batch043-doctor.py",
         "api/scripts/validate-batch043-doctor.py",
         "api/scripts/test_validate_batch043_doctor.py",
+        "api/scripts/validate-staging-config.py",
+        "api/scripts/staging-api-smoke.py",
+        "api/scripts/test_staging_api_smoke.py",
+        "api/scripts/test_staging_config.py",
+        "api/scripts/staging-db-init-sql.py",
+        "api/scripts/test_staging_db_init_sql.py",
+        "api/scripts/test_offline_corpus_verification.py",
+        "api/scripts/test_portable_verification.py",
     ]
     for relative in python_paths:
         path = root / relative
@@ -48,7 +59,7 @@ def main() -> int:
         except (OSError, SyntaxError, UnicodeError) as error:
             errors.append(f"PYTHON {relative}: {error}")
 
-    for relative in ["api/scripts/run-bounded-process.sh", "api/scripts/run-portable-verification.sh", "api/scripts/check-batch043-staging-preflight.sh"]:
+    for relative in ["api/scripts/run-bounded-process.sh", "api/scripts/run-portable-verification.sh", "api/scripts/check-batch043-staging-preflight.sh", "api/scripts/staging-bootstrap.sh", "deploy/staging/api-entrypoint.sh"]:
         path = root / relative
         if not path.is_file() or shutil.which("bash") is None:
             continue
@@ -60,6 +71,10 @@ def main() -> int:
     for relative in [
         "api/scripts/test_offline_route_geometry_contract.php",
         "api/scripts/test_offline_corpus_report_writer.php",
+        "api/scripts/test-staging-secret-config.php",
+        "api/config/app.php",
+        "api/config/database.php",
+        "api/config/cors.php",
         "api/app/Services/Routing/OfflineJourneyWalkingPreview.php",
         "api/app/Services/Routing/OfflineWalkingCorpusSelection.php",
         "api/app/Services/Routing/OfflinePedestrianGraphRouter.php",
@@ -89,6 +104,8 @@ def main() -> int:
         "web/scripts/ux-contract-harness.mjs",
         "web/scripts/place-search-harness.mjs",
         "web/scripts/search-keyboard-harness.mjs",
+        "web/playwright.config.ts",
+        "web/e2e/staging-journey.spec.ts",
     ]
     if shutil.which("node"):
         for relative in javascript_paths:
@@ -110,6 +127,10 @@ def main() -> int:
         "docs/reports/batch043-doctor-v43.json",
         "docs/reports/batch043-work-ledger.json",
         "docs/testing/batch043-test-plan.json",
+        "docs/reports/batch044-work-ledger.json",
+        "docs/testing/batch044-test-plan.json",
+        "docs/reports/batch044-doctor-v44.json",
+        "web/package-lock.json",
     ]
     for relative in json_paths:
         path = root / relative

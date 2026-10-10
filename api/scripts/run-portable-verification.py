@@ -200,7 +200,8 @@ def acquire_lock(output_root: Path) -> Path:
 
 
 def command_specs(root: Path, mode: str, run_dir: Path,
-                  corpus_case_indices: list[int] | None = None) -> list[dict[str, object]]:
+                  corpus_case_indices: list[int] | None = None,
+                  corpus_graph_path: Path | None = None) -> list[dict[str, object]]:
     api = root / "api"
     web = root / "web"
     doctor_v43_report = root / "docs/reports/batch043-doctor-v43.json"
@@ -210,6 +211,15 @@ def command_specs(root: Path, mode: str, run_dir: Path,
         fingerprints = doctor_document.get("source_fingerprints", {})
         if isinstance(fingerprints, dict):
             doctor_v43_sources = sorted(path for path in fingerprints if isinstance(path, str))
+    except (OSError, json.JSONDecodeError):
+        pass
+    doctor_v44_report = root / "docs/reports/batch044-doctor-v44.json"
+    doctor_v44_sources: list[str] = []
+    try:
+        doctor_document = json.loads(doctor_v44_report.read_text(encoding="utf-8"))
+        fingerprints = doctor_document.get("source_fingerprints", {})
+        if isinstance(fingerprints, dict):
+            doctor_v44_sources = sorted(path for path in fingerprints if isinstance(path, str))
     except (OSError, json.JSONDecodeError):
         pass
     typecheck_sources = sorted(
@@ -230,6 +240,17 @@ def command_specs(root: Path, mode: str, run_dir: Path,
         "api/scripts/validate-batch041-doctor.py", "api/scripts/validate-batch042-doctor.py",
         "api/scripts/test_validate_batch042_doctor.py", "api/scripts/refresh-batch043-doctor.py",
         "api/scripts/validate-batch043-doctor.py", "api/scripts/test_validate_batch043_doctor.py",
+        "api/scripts/refresh-batch044-doctor.py", "api/scripts/validate-batch044-doctor.py",
+        "api/scripts/test_validate_batch044_doctor.py",
+        "api/scripts/validate-staging-config.py", "api/scripts/test_staging_config.py",
+        "api/scripts/staging-api-smoke.py", "api/scripts/test_staging_api_smoke.py",
+        "api/scripts/staging-db-init-sql.py", "api/scripts/test_staging_db_init_sql.py",
+        "api/scripts/test-staging-secret-config.php", "api/scripts/staging-bootstrap.sh",
+        "deploy/staging/compose.yaml", "deploy/staging/.env.example", "deploy/staging/nginx.conf.template",
+        "deploy/staging/api.Dockerfile", "deploy/staging/api-entrypoint.sh", "deploy/staging/web.Dockerfile",
+        ".dockerignore", "api/config/app.php", "api/config/database.php", "api/config/cors.php",
+        "web/playwright.config.ts", "web/e2e/staging-journey.spec.ts",
+        "docs/deployment/batch044-linux-staging-handoff.md",
         "api/scripts/run-bounded-process.sh", "api/scripts/run-portable-verification.sh",
         "api/scripts/check-batch043-staging-preflight.sh", "api/scripts/test_offline_route_geometry_contract.php",
         "api/scripts/test_offline_corpus_report_writer.php",
@@ -250,6 +271,9 @@ def command_specs(root: Path, mode: str, run_dir: Path,
         "docs/reports/batch042-doctor-v42.json", "docs/reports/batch042-work-ledger.json",
         "docs/testing/batch042-test-plan.json", "docs/reports/batch043-doctor-v43.json",
         "docs/reports/batch043-work-ledger.json", "docs/testing/batch043-test-plan.json",
+        "docs/reports/batch044-work-ledger.json", "docs/reports/batch044-doctor-v44.json",
+        "docs/testing/batch044-test-plan.json",
+        ".github/workflows/ci.yml", ".github/workflows/external-cebu-corpus.yml", ".github/workflows/external-staging-browser.yml",
     ]
     static: list[dict[str, object]] = [
         {"id": "source-provenance", "argv": [sys.executable, "api/scripts/validate-batch041-provenance.py"], "cwd": root, "inputs": ["api/scripts/evidence_provenance.py", "api/scripts/validate-batch041-provenance.py", "docs/reports/batch041-evidence-provenance.json"]},
@@ -263,9 +287,16 @@ def command_specs(root: Path, mode: str, run_dir: Path,
         {"id": "corpus-verification-contract", "argv": [sys.executable, "api/scripts/test_offline_corpus_verification.py"], "cwd": root, "inputs": ["api/scripts/run-offline-corpus-verification.py", "api/scripts/test_offline_corpus_verification.py"]},
         {"id": "doctor-v43-contract", "argv": [sys.executable, "api/scripts/test_validate_batch043_doctor.py"], "cwd": root, "inputs": ["api/scripts/refresh-batch043-doctor.py", "api/scripts/validate-batch043-doctor.py", "api/scripts/test_validate_batch043_doctor.py", "docs/reports/batch032-cebu-coverage.json", "docs/reports/batch041-evidence-provenance.json"]},
         {"id": "doctor-v43-report-validator", "argv": [sys.executable, "api/scripts/validate-batch043-doctor.py"], "cwd": root, "inputs": ["api/scripts/validate-batch043-doctor.py", "docs/reports/batch043-doctor-v43.json", "docs/reports/batch032-cebu-coverage.json", "docs/reports/batch041-evidence-provenance.json", *doctor_v43_sources]},
+        {"id": "doctor-v44-contract", "argv": [sys.executable, "api/scripts/test_validate_batch044_doctor.py"], "cwd": root, "inputs": ["api/scripts/refresh-batch044-doctor.py", "api/scripts/validate-batch044-doctor.py", "api/scripts/test_validate_batch044_doctor.py", "docs/reports/batch032-cebu-coverage.json", "docs/reports/batch041-evidence-provenance.json"]},
+        {"id": "doctor-v44-report-validator", "argv": [sys.executable, "api/scripts/validate-batch044-doctor.py"], "cwd": root, "inputs": ["api/scripts/validate-batch044-doctor.py", "docs/reports/batch044-doctor-v44.json", "docs/reports/batch032-cebu-coverage.json", "docs/reports/batch041-evidence-provenance.json", *doctor_v44_sources]},
         {"id": "php-corpus-report-writer", "argv": ["php", "api/scripts/test_offline_corpus_report_writer.php"], "cwd": root, "inputs": ["api/composer.lock", "api/app/Console/Commands/VerifyOfflineWalkingCorpus.php", "api/app/Services/Routing/OfflineWalkingCorpusSelection.php", "api/scripts/test_offline_corpus_report_writer.php"]},
         {"id": "portable-runner-contract", "argv": [sys.executable, "api/scripts/test_portable_verification.py"], "cwd": root, "inputs": ["api/scripts/package-batch041-verification-kit.py", "api/scripts/run-portable-verification.py", "api/scripts/test_portable_verification.py"]},
         {"id": "php-geometry-contract", "argv": ["php", "api/scripts/test_offline_route_geometry_contract.php"], "cwd": root, "inputs": ["api/scripts/test_offline_route_geometry_contract.php", "api/app/Services/Routing/OfflinePedestrianRouteGeometryContract.php"]},
+        {"id": "staging-config-validation", "argv": [sys.executable, "api/scripts/validate-staging-config.py"], "cwd": root, "inputs": ["api/scripts/validate-staging-config.py", "deploy/staging/compose.yaml", "deploy/staging/.env.example", "deploy/staging/nginx.conf.template", "deploy/staging/api.Dockerfile", "deploy/staging/api-entrypoint.sh", "deploy/staging/web.Dockerfile", ".dockerignore", "api/config/cors.php", "api/scripts/staging-bootstrap.sh", "api/scripts/staging-db-init-sql.py", "web/playwright.config.ts"]},
+        {"id": "staging-config-contract", "argv": [sys.executable, "-m", "unittest", "api/scripts/test_staging_config.py"], "cwd": root, "inputs": ["api/scripts/validate-staging-config.py", "api/scripts/test_staging_config.py", "deploy/staging/compose.yaml", "deploy/staging/.env.example", "deploy/staging/nginx.conf.template", "deploy/staging/api.Dockerfile", "deploy/staging/api-entrypoint.sh", "deploy/staging/web.Dockerfile", ".dockerignore", "api/config/cors.php", "api/scripts/staging-bootstrap.sh", "api/scripts/staging-db-init-sql.py", "web/playwright.config.ts"]},
+        {"id": "staging-smoke-contract", "argv": [sys.executable, "-m", "unittest", "api/scripts/test_staging_api_smoke.py"], "cwd": root, "inputs": ["api/scripts/staging-api-smoke.py", "api/scripts/test_staging_api_smoke.py"]},
+        {"id": "staging-db-init-sql-contract", "argv": [sys.executable, "-m", "unittest", "api/scripts/test_staging_db_init_sql.py"], "cwd": root, "inputs": ["api/scripts/staging-db-init-sql.py", "api/scripts/test_staging_db_init_sql.py"]},
+        {"id": "staging-secret-config-contract", "argv": ["php", "api/scripts/test-staging-secret-config.php"], "cwd": root, "inputs": ["api/scripts/test-staging-secret-config.php", "api/config/app.php", "api/config/database.php"]},
         {"id": "syntax-and-json", "argv": [sys.executable, "api/scripts/check-batch042-static-syntax.py", "--root", str(root)], "cwd": root, "inputs": syntax_inputs},
     ]
     frontend = [
@@ -324,7 +355,7 @@ def command_specs(root: Path, mode: str, run_dir: Path,
         {"id": "eslint", "argv": ["npm", "run", "lint", "--", "src/app/page.tsx", "src/components/CommuteCard.tsx", "src/components/RideMode.tsx", "src/lib/offlineWalkingPreviewState.ts", "src/lib/requestGate.ts", "src/lib/savedJourneys.ts", "src/lib/rideMode.ts", "src/lib/canIRidePresentation.ts"], "cwd": web, "inputs": ["web/package.json", "web/package-lock.json", "web/eslint.config.mjs", "web/node_modules/.bin/eslint", "web/node_modules/eslint/package.json", "web/node_modules/eslint-config-next/package.json", "web/src/app/page.tsx", "web/src/components/CommuteCard.tsx", "web/src/components/RideMode.tsx", "web/src/lib/offlineWalkingPreviewState.ts", "web/src/lib/requestGate.ts", "web/src/lib/savedJourneys.ts", "web/src/lib/rideMode.ts", "web/src/lib/canIRidePresentation.ts"]},
     ]
     adapter = [{"id": "adapter-phpunit", "argv": ["php", "artisan", "test", "--filter=OfflinePedestrianRouteGeometryContractTest|OfflinePedestrianGraphRouterTest|OfflineJourneyWalkingPreviewTest|OfflineWalkingCorpusSelectionTest"], "cwd": api, "inputs": ["api/composer.lock", "api/phpunit.xml", "api/app/Services/Routing/OfflineJourneyWalkingPreview.php", "api/app/Services/Routing/OfflineWalkingCorpusSelection.php", "api/app/Services/Routing/OfflinePedestrianGraphRouter.php", "api/tests/Unit/OfflineJourneyWalkingPreviewTest.php", "api/tests/Unit/OfflinePedestrianGraphRouterTest.php", "api/tests/Unit/OfflinePedestrianRouteGeometryContractTest.php", "api/tests/Unit/OfflineWalkingCorpusSelectionTest.php", "api/tests/Support/OfflinePedestrianGraphFixture.php"]}]
-    corpus_graph = Path.home() / ".cache/biyahe/batch030/cebu-walk-central-visayas-20261007-v3.sqlite"
+    corpus_graph = corpus_graph_path or Path.home() / ".cache/biyahe/batch030/cebu-walk-central-visayas-20261007-v3.sqlite"
     corpus_actual = run_dir / "real-cebu-corpus.json"
     corpus_comparison = run_dir / "real-cebu-corpus-comparison.json"
     corpus_argv = [sys.executable, "api/scripts/run-offline-corpus-verification.py",
@@ -438,6 +469,8 @@ def run_specs(root: Path, run_dir: Path, specs: list[dict[str, object]], resourc
             missing.append("docs/reports/batch042-doctor-v42.json")
         if identifier == "doctor-v43-report-validator" and not (root / "docs/reports/batch043-doctor-v43.json").is_file():
             missing.append("docs/reports/batch043-doctor-v43.json")
+        if identifier == "doctor-v44-report-validator" and not (root / "docs/reports/batch044-doctor-v44.json").is_file():
+            missing.append("docs/reports/batch044-doctor-v44.json")
         if missing:
             record.update(status="BLOCKED_DEPENDENCY", missing_dependencies=missing, ended_at=utc_now())
             finish_record()
@@ -451,7 +484,7 @@ def run_specs(root: Path, run_dir: Path, specs: list[dict[str, object]], resourc
             safe_id = identifier.replace("_", "-")
             cancel_path = run_dir / f"{safe_id}.cancel-pid"
             guard_log = run_dir / f"{safe_id}.resource.log"
-            token = f"biyahe-batch043-{safe_id}"
+            token = f"biyahe-batch044-{safe_id}"
             command = ["bash", str(resource_guard), "--operation", safe_id[:40], "--disk-path", str(run_dir),
                        "--cancel-pid-file", str(cancel_path), "--cancel-match", token,
                        "--log", str(guard_log), "--", *argv]
@@ -622,9 +655,10 @@ def main() -> int:
     parser.add_argument("--mode", choices=["STATIC", "FRONTEND", "ADAPTER", "CORPUS", "FULL"], default="STATIC")
     parser.add_argument("--suite", help="run only one named suite available in the selected mode")
     parser.add_argument("--repo-root", type=Path, default=Path(__file__).resolve().parents[2])
-    parser.add_argument("--output-root", type=Path, default=Path.home() / ".cache/biyahe/batch043/portable-verification")
+    parser.add_argument("--output-root", type=Path, default=Path.home() / ".cache/biyahe/batch044/portable-verification")
     parser.add_argument("--source-revision", help="verified Git revision for a packaged source snapshot without .git metadata")
     parser.add_argument("--corpus-cases", help="run only selected zero-based Cebu corpus case indices, such as 0,3")
+    parser.add_argument("--graph-path", type=Path, help="explicit pinned SQLite graph path for external CORPUS/FULL execution")
     args = parser.parse_args()
     try:
         corpus_case_indices = parse_corpus_case_indices(args.corpus_cases)
@@ -632,6 +666,8 @@ def main() -> int:
         parser.error(str(error))
     if corpus_case_indices is not None and args.mode not in {"CORPUS", "FULL"}:
         parser.error("--corpus-cases is available only with CORPUS or FULL mode")
+    if args.graph_path is not None and args.mode not in {"CORPUS", "FULL"}:
+        parser.error("--graph-path is available only with CORPUS or FULL mode")
     root = args.repo_root.resolve()
     output_root = args.output_root.resolve()
     if not (root / "api/scripts/run-bounded-process.sh").is_file():
@@ -650,6 +686,8 @@ def main() -> int:
             "run_directory": str(run_dir), "recovered_interrupted_runs": recovered, "suites": []}
         if args.suite:
             current["selected_suite"] = args.suite
+        if args.graph_path is not None:
+            current["requested_graph_path"] = str(args.graph_path.expanduser().resolve())
         try:
             git_revision = subprocess.check_output(["git", "-C", str(root), "rev-parse", "HEAD"], text=True, stderr=subprocess.DEVNULL).strip()
             current["source_revision"] = git_revision
@@ -668,7 +706,8 @@ def main() -> int:
             current["executable_source_revision"] = args.source_revision or "SOURCE_SNAPSHOT_NO_GIT_METADATA"
         atomic_json(status_path, current)
         try:
-            specs = select_specs(command_specs(root, args.mode, run_dir, corpus_case_indices), args.suite)
+            graph_path = args.graph_path.expanduser().resolve() if args.graph_path is not None else None
+            specs = select_specs(command_specs(root, args.mode, run_dir, corpus_case_indices, graph_path), args.suite)
         except ValueError as error:
             current.update(status="NOT_RUN", ended_at=utc_now(), selection_error=str(error))
             atomic_json(status_path, current)

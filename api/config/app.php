@@ -1,5 +1,19 @@
 <?php
 
+$readDeploymentSecret = static function (string $fileVariable, string $valueVariable): ?string {
+    $secretPath = env($fileVariable);
+    if (! is_string($secretPath) || trim($secretPath) === '') {
+        return env($valueVariable);
+    }
+
+    $secret = @file_get_contents($secretPath);
+    if ($secret === false) {
+        throw new RuntimeException("Unable to read configured deployment secret file: {$fileVariable}");
+    }
+
+    return rtrim($secret, "\r\n");
+};
+
 return [
 
     /*
@@ -97,7 +111,7 @@ return [
 
     'cipher' => 'AES-256-CBC',
 
-    'key' => env('APP_KEY'),
+    'key' => $readDeploymentSecret('APP_KEY_FILE', 'APP_KEY'),
 
     'previous_keys' => [
         ...array_filter(

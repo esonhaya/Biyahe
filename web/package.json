@@ -10,6 +10,7 @@
     "build": "next build --webpack",
     "typecheck": "tsc --noEmit",
     "start": "next start",
+    "test:browser": "playwright test --config=playwright.config.ts",
     "lint": "eslint",
     "test:ride-mode": "node --experimental-strip-types scripts/ride-mode-harness.mjs",
     "test:commute-cards": "node --experimental-strip-types scripts/commute-card-harness.mjs",
@@ -32,6 +33,7 @@
     "react-dom": "19.2.8"
   },
   "devDependencies": {
+    "@playwright/test": "1.64.0",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",

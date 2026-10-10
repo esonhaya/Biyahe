@@ -3,6 +3,20 @@
 use Illuminate\Support\Str;
 use Pdo\Mysql;
 
+$databasePassword = static function (): ?string {
+    $secretPath = env('DB_PASSWORD_FILE');
+    if (! is_string($secretPath) || trim($secretPath) === '') {
+        return env('DB_PASSWORD', '');
+    }
+
+    $secret = @file_get_contents($secretPath);
+    if ($secret === false) {
+        throw new RuntimeException('Unable to read configured deployment secret file: DB_PASSWORD_FILE');
+    }
+
+    return rtrim($secret, "\r\n");
+};
+
 return [
 
     /*
@@ -91,7 +105,7 @@ return [
             'port' => env('DB_PORT', '5432'),
             'database' => env('DB_DATABASE', 'laravel'),
             'username' => env('DB_USERNAME', 'root'),
-            'password' => env('DB_PASSWORD', ''),
+            'password' => $databasePassword(),
             'charset' => env('DB_CHARSET', 'utf8'),
             'prefix' => '',
             'prefix_indexes' => true,

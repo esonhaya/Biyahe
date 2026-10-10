@@ -6,6 +6,7 @@ from __future__ import annotations
 import importlib.util
 import os
 from pathlib import Path
+import sqlite3
 import tempfile
 import unittest
 from unittest.mock import patch
@@ -32,6 +33,22 @@ def valid_guard_environment() -> dict[str, str]:
 
 
 class OfflineCorpusVerificationTests(unittest.TestCase):
+    def test_sqlite_integrity_probe_is_read_only_and_timed(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            graph = Path(temporary) / "fixture.sqlite"
+            connection = sqlite3.connect(graph)
+            try:
+                connection.execute("CREATE TABLE nodes (id INTEGER PRIMARY KEY)")
+                connection.execute("INSERT INTO nodes (id) VALUES (1)")
+                connection.commit()
+            finally:
+                connection.close()
+            before = VERIFIER.sha256_file(graph)
+            result, elapsed = VERIFIER.sqlite_readonly_integrity(graph)
+            self.assertEqual("ok", result)
+            self.assertGreaterEqual(elapsed, 0)
+            self.assertEqual(before, VERIFIER.sha256_file(graph))
+
     def test_case_selection_is_sorted_and_rejects_duplicates_or_malformed_values(self):
         self.assertIsNone(VERIFIER.parse_case_indices(None))
         self.assertEqual([1, 4], VERIFIER.parse_case_indices("4,1"))

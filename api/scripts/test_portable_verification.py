@@ -145,6 +145,13 @@ class PortableRunnerTests(unittest.TestCase):
         self.assertIn("api/scripts/run-bounded-process.sh", corpus["inputs"])
         self.assertIn("api/app/Services/Routing/OfflineWalkingCorpusSelection.php", corpus["inputs"])
 
+    def test_corpus_runner_uses_explicit_external_graph_path(self):
+        graph = Path("/external/staging/cebu.sqlite")
+        spec = RUNNER.command_specs(ROOT, "CORPUS", ROOT / ".temporary-run-directory", [2], graph)[0]
+        self.assertEqual(str(graph), spec["corpus_graph_path"])
+        self.assertEqual(str(graph), spec["argv"][spec["argv"].index("--graph") + 1])
+        self.assertIn("--case-indices", spec["argv"])
+
     def test_corpus_claim_never_promotes_a_subset_to_full_pass(self):
         claim = RUNNER.corpus_execution_claim
         self.assertEqual("NOT_RUN", claim(None))
@@ -170,6 +177,15 @@ class PortableRunnerTests(unittest.TestCase):
         self.assertIn("docs/reports/batch032-cebu-coverage.json", by_id["corpus-comparator-fixtures"])
         self.assertIn("docs/reports/batch041-evidence-provenance.json", by_id["doctor-v43-contract"])
         self.assertIn("api/scripts/test_offline_corpus_report_writer.php", by_id["php-corpus-report-writer"])
+
+    def test_static_mode_exposes_staging_contracts_as_individual_suites(self):
+        specs = RUNNER.command_specs(ROOT, "STATIC", ROOT / ".temporary-run-directory")
+        by_id = {spec["id"]: spec for spec in specs}
+        for suite in ("staging-config-validation", "staging-config-contract", "staging-smoke-contract", "staging-db-init-sql-contract", "staging-secret-config-contract"):
+            self.assertIn(suite, by_id)
+        self.assertIn("deploy/staging/compose.yaml", by_id["staging-config-contract"]["inputs"])
+        self.assertIn("api/config/app.php", by_id["staging-secret-config-contract"]["inputs"])
+        self.assertIn("biyahe-batch044-", Path(__file__).with_name("run-portable-verification.py").read_text(encoding="utf-8"))
 
     def test_toolchain_suites_fingerprint_their_full_source_and_installed_compiler(self):
         specs = RUNNER.command_specs(ROOT, "FRONTEND", ROOT / ".temporary-run-directory")

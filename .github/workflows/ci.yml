@@ -8,11 +8,47 @@ permissions:
   contents: read
 
 jobs:
+  staging-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate staging and API smoke contracts
+        run: |
+          python3 api/scripts/validate-staging-config.py
+          python3 -m unittest api/scripts/test_staging_config.py api/scripts/test_staging_api_smoke.py api/scripts/test_staging_db_init_sql.py api/scripts/test_validate_batch044_doctor.py api/scripts/test_offline_corpus_verification.py api/scripts/test_portable_verification.py
+          python3 api/scripts/validate-batch044-doctor.py
+          php -l api/config/app.php
+          php -l api/config/database.php
+          php -l api/config/cors.php
+          php api/scripts/test-staging-secret-config.php
+          bash -n api/scripts/staging-bootstrap.sh
+          bash -n deploy/staging/api-entrypoint.sh
+
+      - name: Verify the portable v6 package and static suites
+        run: bash docs/portable-verification-v6/verify-kit.sh STATIC --suite staging-config-validation --output-root "$RUNNER_TEMP/biyahe-portable-static"
+
+      - name: Validate Compose configuration without starting services
+        run: |
+          set -euo pipefail
+          mkdir -p deploy/staging/secrets
+          trap 'rm -rf deploy/staging/secrets deploy/staging/.env' EXIT
+          umask 077
+          printf '%s' 'ephemeral-ci-app-key-placeholder' > deploy/staging/secrets/app_key
+          printf '%s' 'ephemeral-ci-app-db-password-placeholder' > deploy/staging/secrets/db_app_password
+          printf '%s' 'ephemeral-ci-admin-password-placeholder' > deploy/staging/secrets/db_admin_password
+          cp deploy/staging/.env.example deploy/staging/.env
+          docker compose --project-directory deploy/staging --env-file deploy/staging/.env -f deploy/staging/compose.yaml config --quiet
+          echo 'COMPOSE_CONFIG=PASS SERVICES_STARTED=NO DATABASE_MUTATED=NO'
+
   verify:
     runs-on: ubuntu-latest
     services:
       postgres:
-        image: postgis/postgis:16-3.4
+        image: postgis/postgis:16-3.5
         env:
           POSTGRES_DB: biyahe
           POSTGRES_USER: postgres
@@ -46,7 +82,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20.9'
+          node-version: '24.21.0'
           cache: npm
           cache-dependency-path: web/package-lock.json
 
@@ -57,6 +93,23 @@ jobs:
       - name: Install frontend dependencies
         working-directory: web
         run: npm ci
+
+      - name: Run focused commuter harnesses
+        working-directory: web
+        run: |
+          npm run test:ride-mode
+          npm run test:commute-cards
+          npm run test:offline-walking-preview
+          npm run test:personal-commute
+          npm run test:disruptions
+          npm run test:pulse-replan
+          npm run test:field-mode
+          npm run test:request-gate
+          npm run test:can-i-ride
+          npm run test:place-search
+          npm run test:nearby
+          npm run test:search-keyboard
+          npm run test:ux
 
       - name: Migrate and seed PostGIS database
         working-directory: api

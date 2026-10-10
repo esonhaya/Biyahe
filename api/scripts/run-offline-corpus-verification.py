@@ -8,6 +8,7 @@ import hashlib
 import os
 from pathlib import Path
 import re
+import sqlite3
 import subprocess
 import sys
 import time
@@ -64,6 +65,21 @@ def sha256_file(path: Path) -> str:
     return digest.hexdigest()
 
 
+def sqlite_readonly_integrity(path: Path) -> tuple[str, float]:
+    """Run SQLite quick_check using an immutable read-only connection."""
+    started = time.monotonic_ns()
+    uri = f"file:{path.resolve().as_posix()}?mode=ro&immutable=1"
+    connection = sqlite3.connect(uri, uri=True, timeout=5.0)
+    try:
+        connection.execute("PRAGMA query_only=ON")
+        result = connection.execute("PRAGMA quick_check(1)").fetchone()
+        if result is None:
+            return "EMPTY_RESULT", (time.monotonic_ns() - started) / 1_000_000
+        return str(result[0]), (time.monotonic_ns() - started) / 1_000_000
+    finally:
+        connection.close()
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--graph", type=Path, required=True)
@@ -98,8 +114,9 @@ def main(argv: list[str] | None = None) -> int:
         print("BLOCKED_DEPENDENCY=PHP_PDO_SQLITE_MISSING", file=sys.stderr)
         return 20
 
+    graph_path = args.graph.expanduser().resolve()
     hash_started = time.monotonic_ns()
-    actual_graph_sha = sha256_file(args.graph)
+    actual_graph_sha = sha256_file(graph_path)
     hash_milliseconds = (time.monotonic_ns() - hash_started) / 1_000_000
     print(f"GRAPH_SHA256={actual_graph_sha}")
     print(f"GRAPH_HASH_MILLISECONDS={hash_milliseconds:.3f}")
@@ -107,6 +124,17 @@ def main(argv: list[str] | None = None) -> int:
     if actual_graph_sha != EXPECTED_GRAPH:
         print(f"BLOCKED_DEPENDENCY=GRAPH_SHA256_MISMATCH expected={EXPECTED_GRAPH} actual={actual_graph_sha}", file=sys.stderr)
         return 20
+
+    try:
+        integrity, integrity_milliseconds = sqlite_readonly_integrity(graph_path)
+    except sqlite3.Error as error:
+        print(f"GRAPH_INTEGRITY=FAIL:{type(error).__name__}", file=sys.stderr)
+        return 21
+    print(f"GRAPH_INTEGRITY={'PASS' if integrity == 'ok' else 'FAIL'}")
+    print(f"GRAPH_INTEGRITY_RESULT={integrity}")
+    print(f"GRAPH_INTEGRITY_MILLISECONDS={integrity_milliseconds:.3f}")
+    if integrity != "ok":
+        return 21
 
     case_label = "FULL" if selected_indices is None else ",".join(str(index) for index in selected_indices)
     print(f"RESOURCE_PREFLIGHT_MINIMUM_MEMAVAILABLE_KIB={minimum_memory}")
@@ -120,7 +148,10 @@ def main(argv: list[str] | None = None) -> int:
     if selected_indices is not None:
         php_command.append("--cases=" + ",".join(str(index) for index in selected_indices))
     started = time.monotonic_ns()
-    result = subprocess.run(php_command, cwd=API_ROOT, text=True, stdout=subprocess.PIPE,
+    child_environment = os.environ.copy()
+    child_environment["BIYAHE_OFFLINE_GRAPH_PATH"] = str(graph_path)
+    child_environment["BIYAHE_OFFLINE_GRAPH_SHA256"] = actual_graph_sha
+    result = subprocess.run(php_command, cwd=API_ROOT, env=child_environment, text=True, stdout=subprocess.PIPE,
                             stderr=subprocess.STDOUT, check=False)
     elapsed_milliseconds = (time.monotonic_ns() - started) / 1_000_000
     print(result.stdout, end="" if result.stdout.endswith("\n") else "\n")
