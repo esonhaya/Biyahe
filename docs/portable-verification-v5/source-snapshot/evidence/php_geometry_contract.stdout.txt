@@ -1,0 +1,5 @@
+WARNING: linker: Warning: "/data/data/com.termux/files/usr/lib/node_modules/@mmmbuto/codex-cli-termux/bin/libc++_shared.so" unused DT entry: unknown processor-specific (type 0x70000001 arg 0x0) (ignoring)
+GEOMETRY_CONTRACT_SMOKE=PASS
+CASES=7
+GRAPH_READ=NO
+LARAVEL_BOOTSTRAP=NO

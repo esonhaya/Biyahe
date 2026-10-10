@@ -1,0 +1,13 @@
+test_changed_source_fingerprint_invalidates_report (__main__.DoctorV43Tests.test_changed_source_fingerprint_invalidates_report) ... ok
+test_partial_case_evidence_cannot_be_promoted_to_complete (__main__.DoctorV43Tests.test_partial_case_evidence_cannot_be_promoted_to_complete) ... ok
+test_release_gates_cannot_be_promoted (__main__.DoctorV43Tests.test_release_gates_cannot_be_promoted) ... ok
+test_report_write_is_no_clobber_and_releases_temporary_file (__main__.DoctorV43Tests.test_report_write_is_no_clobber_and_releases_temporary_file) ... ok
+test_resource_samples_must_be_spaced (__main__.DoctorV43Tests.test_resource_samples_must_be_spaced) ... ok
+test_unrecognized_status_fails_closed (__main__.DoctorV43Tests.test_unrecognized_status_fails_closed) ... ok
+test_verified_test_requires_hash_bound_output (__main__.DoctorV43Tests.test_verified_test_requires_hash_bound_output) ... ok
+test_zero_current_cases_and_resource_block_are_valid (__main__.DoctorV43Tests.test_zero_current_cases_and_resource_block_are_valid) ... ok
+
+----------------------------------------------------------------------
+Ran 8 tests in 0.107s
+
+OK

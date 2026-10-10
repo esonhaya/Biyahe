@@ -1,0 +1,77 @@
+{
+  "format": "biyahe-batch043-test-plan-v1",
+  "batch": 43,
+  "expected_start_revision": "19172ef20c2fff9e9a6d02d66d36b182ac6acb74",
+  "expected_branch": "main",
+  "resource_floors_kib": {
+    "memavailable_minimum": 524288,
+    "swapfree_minimum": 131072,
+    "preflight_samples": 5,
+    "sample_spacing_seconds": 5,
+    "breach_samples": 1,
+    "maximum_owned_worker_tree_rss": 262144,
+    "graph_access_before_pass": false,
+    "postgresql_start_allowed": false
+  },
+  "real_corpus": {
+    "graph_path": "$HOME/.cache/biyahe/batch030/cebu-walk-central-visayas-20261007-v3.sqlite",
+    "expected_sha256": "29d7aaf9c45a596f4065c44d13f983f4a7edeec5ac2ea41b718b1c52ca865bf8",
+    "read_only": true,
+    "case_indices": "zero-based 0 through 9",
+    "subset_result": "PARTIAL_CASE_SUBSET_MATCHED; never a full corpus PASS",
+    "historical_results_not_current": {"cases": 10, "routes_found": 9, "disconnected": 1}
+  },
+  "verification_modes": {
+    "STATIC": [
+      "evidence provenance and stored-record coverage fixtures",
+      "static evidence smoke and corpus comparator contract fixtures",
+      "guarded graph-runner contract and Doctor V43 contract",
+      "portable runner source/command/tool fingerprints and interrupted-run recovery",
+      "PHP geometry and no-clobber report-writer smokes, syntax checks, JSON parsing, and git diff --check"
+    ],
+    "FRONTEND": [
+      "walking preview request identity and stale-response rejection",
+      "journey result evidence, map geometry, and partial preview disclosure",
+      "manual Ride Mode and saved snapshot-v1 compatibility",
+      "search cancellation/keyboard selection and Can-I-Ride yes/no/unknown",
+      "TypeScript and ESLint run separately under the resource guard"
+    ],
+    "ADAPTER": [
+      "focused OfflineJourneyWalkingPreview, OfflinePedestrianGraphRouter, and route geometry PHPUnit tests",
+      "requires installed Laravel dependencies and a fresh passing resource preflight"
+    ],
+    "CORPUS": [
+      "resource guard preflight before graph metadata or hash access",
+      "read-only graph SHA256 binding before SQLite access",
+      "individual or selected bounded cases, then deterministic full corpus when resources remain safe",
+      "case identity, snaps, directed edges, geometry, component, distance, and failure reason comparator"
+    ],
+    "FULL": [
+      "STATIC, FRONTEND, ADAPTER, and CORPUS in deterministic order",
+      "dependency and resource failures remain distinct and do not imply success",
+      "full graph replay is PASS only when all ten cases execute and match"
+    ]
+  },
+  "evidence_reuse": {
+    "rules": [
+      "PASS is reusable only when source, test, configuration, tool, command, and evidence fingerprints match",
+      "RUNNING after interruption recovers to NOT_RUN",
+      "BLOCKED_RESOURCE, BLOCKED_DEPENDENCY, FAILED, or missing evidence cannot reuse stale PASS",
+      "unique run directories, no-clobber outputs, atomic reports, and per-suite timing"
+    ],
+    "browser_visual_verification": "NOT_RUN unless a real browser runs the requested viewports"
+  },
+  "staging": {
+    "runbook": "docs/deployment/batch043-external-linux-staging-runbook.md",
+    "preflight_script": "api/scripts/check-batch043-staging-preflight.sh",
+    "database_connection_or_mutation_by_preflight": false,
+    "staging_execution": "NOT_RUN"
+  },
+  "release_gates": {
+    "live_production_graph_integration": "BLOCKED",
+    "postgresql_staging": "BLOCKED",
+    "field_safety": "BLOCKED",
+    "private_beta": "BLOCKED",
+    "production_activation": "NO"
+  }
+}

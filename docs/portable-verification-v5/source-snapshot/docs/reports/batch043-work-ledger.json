@@ -1,0 +1,1326 @@
+{
+  "batch": 43,
+  "branch": "main",
+  "doctor_categories": {
+    "adapter_real_graph": {
+      "evidence": "No real graph adapter response was requested because current graph access was resource-blocked; live production graph remains blocked.",
+      "status": "BLOCKED_RESOURCE"
+    },
+    "can_i_ride": {
+      "evidence": "Current Can-I-Ride harness was not launched after the resource gate remained below the required swap floor.",
+      "status": "BLOCKED_RESOURCE"
+    },
+    "external_staging": {
+      "evidence": "The external Linux runbook and passive preflight are present. Local preflight is blocked by missing Composer and staging environment; no host or database was contacted.",
+      "status": "BLOCKED_DEPENDENCY"
+    },
+    "field_safety": {
+      "evidence": "Two physical transfer locations remain unverified; no field observations were collected.",
+      "status": "BLOCKED_DEPENDENCY"
+    },
+    "frontend_preview": {
+      "evidence": "No current preview harness worker was launched because no five-sample resource preflight passed.",
+      "status": "BLOCKED_RESOURCE"
+    },
+    "graph_identity": {
+      "evidence": "Expected graph SHA256 and fingerprint are pinned; current identity was not recomputed because the five-sample swap floor failed before graph metadata access.",
+      "status": "BLOCKED_RESOURCE"
+    },
+    "graph_integrity": {
+      "evidence": "Read-only SQLite integrity_check was not run; no SQLite access occurred after guard refusal.",
+      "status": "BLOCKED_RESOURCE"
+    },
+    "lint": {
+      "evidence": "The ESLint dependency is installed, but the guarded ESLint command was not attempted because no current resource preflight passed.",
+      "status": "BLOCKED_RESOURCE"
+    },
+    "live_api_integration": {
+      "evidence": "Local real-graph adapter integration was not executed; production API integration remains blocked.",
+      "status": "BLOCKED_RESOURCE"
+    },
+    "map_mobile": {
+      "evidence": "No real browser viewport execution or screenshots were produced; static architecture and CSS evidence is not visual verification.",
+      "status": "NOT_RUN"
+    },
+    "portable_verification_v5": {
+      "evidence": "V5 source, deterministic suites, subset support, fingerprinting, status recovery and no-clobber rules are implemented; final package generation/local execution is pending.",
+      "status": "IMPLEMENTED_UNTESTED"
+    },
+    "postgresql_staging": {
+      "evidence": "No PostgreSQL service was started and no database connection was attempted; external staging is required.",
+      "status": "BLOCKED_DEPENDENCY"
+    },
+    "real_cebu_corpus": {
+      "evidence": "One representative case was selected but zero cases executed; the guard returned exit 4 with command_not_started=yes. Historical 9/1 is not current evidence.",
+      "status": "BLOCKED_RESOURCE"
+    },
+    "resource_behavior": {
+      "evidence": "Guard configuration and no-launch refusal are recorded; process-group cancellation regression tests were not executed in this resource state.",
+      "status": "IMPLEMENTED_UNTESTED"
+    },
+    "ride_mode": {
+      "evidence": "Current Ride Mode harness was not launched after the resource gate remained below the required swap floor.",
+      "status": "BLOCKED_RESOURCE"
+    },
+    "saved_journeys": {
+      "evidence": "Current saved-snapshot harness was not launched after the resource gate remained below the required swap floor.",
+      "status": "BLOCKED_RESOURCE"
+    },
+    "search": {
+      "evidence": "Current search harnesses were not launched after the resource gate remained below the required swap floor.",
+      "status": "BLOCKED_RESOURCE"
+    },
+    "source_provenance": {
+      "evidence": "Current source-bound provenance validator and provenance fixtures passed; outputs, tool versions and file fingerprints are retained in tests.",
+      "status": "VERIFIED"
+    },
+    "stored_record_coverage": {
+      "evidence": "Current coverage fixtures and pinned summary pass: 503/436/67 stops and 37/30/7 places, stored-record scope only.",
+      "status": "VERIFIED"
+    },
+    "typescript": {
+      "evidence": "The tsc dependency is installed, but the guarded TypeScript command was not attempted because no current resource preflight passed.",
+      "status": "BLOCKED_RESOURCE"
+    },
+    "walking_geometry": {
+      "evidence": "The focused PHP geometry contract smoke passed on committed source. Graph-derived Cebu route geometry remains unverified because corpus execution was blocked.",
+      "status": "VERIFIED"
+    }
+  },
+  "doctor_evidence": {
+    "graph": {
+      "actual_sha256": null,
+      "expected_fingerprint": "a0d9f1cb8289cf1f9bde3905d1ad8a57124ee41120153b4efc1f5b31e4c03ecd",
+      "expected_sha256": "29d7aaf9c45a596f4065c44d13f983f4a7edeec5ac2ea41b718b1c52ca865bf8",
+      "fingerprint_status": "EXPECTED_IDENTITY_NOT_RECOMPUTED_THIS_BATCH",
+      "graph_accessed": false,
+      "graph_modified": false,
+      "observed_at_utc": null,
+      "path": "$HOME/.cache/biyahe/batch030/cebu-walk-central-visayas-20261007-v3.sqlite",
+      "pbf_rescanned": false,
+      "status": "BLOCKED_RESOURCE",
+      "write_allowed": false
+    },
+    "graph_integrity": {
+      "method": null,
+      "result": null,
+      "status": "BLOCKED_RESOURCE"
+    },
+    "real_cebu_corpus": {
+      "case_indices_attempted": [],
+      "case_indices_selected": [
+        0
+      ],
+      "cases_blocked": 1,
+      "cases_executed": 0,
+      "cases_expected_total": 10,
+      "cases_fail": 0,
+      "cases_not_selected": 9,
+      "cases_pass": 0,
+      "command_not_started": true,
+      "complete_corpus": false,
+      "guard_exit_code": 4,
+      "historical_result_only": {
+        "cases": 10,
+        "current_batch": false,
+        "disconnected": 1,
+        "routes_found": 9
+      },
+      "resource_log": "/data/data/com.termux/files/home/.cache/biyahe/batch043/portable-verification/20261010T103747Z-3762/real-cebu-corpus.resource.log",
+      "status": "BLOCKED_RESOURCE"
+    },
+    "reconciliation": {
+      "measured_graph_quality": {
+        "boundary_nodes": 944,
+        "crossing_tagged_nodes": 1510,
+        "long_edges": 26
+      },
+      "provenance_registry_sha256": "882fd1ae2c7ab8f2e1edab87c9122911f62c4568513bbe6c8875263958dc1bb6",
+      "unmeasured_legacy_defaults_are_zero_facts": false,
+      "vehicle_only_restrictions": {
+        "omitted": 29,
+        "stored": 619,
+        "total": 648
+      }
+    },
+    "resource_preflight": {
+      "breach_samples": 1,
+      "cancellation": "NOT_NEEDED_COMMAND_NOT_STARTED",
+      "memavailable_floor_kib": 524288,
+      "minimum_memavailable_kib": 824604,
+      "minimum_swapfree_kib": 116124,
+      "postgresql_rss_kib": 0,
+      "postgresql_started": false,
+      "preflight_status": "BLOCKED_RESOURCE",
+      "process_tree_rss_cap_kib": 262144,
+      "resource_log": "/data/data/com.termux/files/home/.cache/biyahe/batch043/portable-verification/20261010T103747Z-3762/real-cebu-corpus.resource.log",
+      "samples": [
+        {
+          "memavailable_kib": 904520,
+          "owned_worker_rss_kib": null,
+          "owned_worker_started": false,
+          "owned_worker_swap_kib": null,
+          "postgresql_rss_kib": 0,
+          "swapfree_kib": 206892,
+          "timestamp_utc": "2026-10-10T10:37:49Z"
+        },
+        {
+          "memavailable_kib": 877812,
+          "owned_worker_rss_kib": null,
+          "owned_worker_started": false,
+          "owned_worker_swap_kib": null,
+          "postgresql_rss_kib": 0,
+          "swapfree_kib": 234628,
+          "timestamp_utc": "2026-10-10T10:37:55Z"
+        },
+        {
+          "memavailable_kib": 824604,
+          "owned_worker_rss_kib": null,
+          "owned_worker_started": false,
+          "owned_worker_swap_kib": null,
+          "postgresql_rss_kib": 0,
+          "swapfree_kib": 147512,
+          "timestamp_utc": "2026-10-10T10:38:01Z"
+        },
+        {
+          "memavailable_kib": 874056,
+          "owned_worker_rss_kib": null,
+          "owned_worker_started": false,
+          "owned_worker_swap_kib": null,
+          "postgresql_rss_kib": 0,
+          "swapfree_kib": 116124,
+          "timestamp_utc": "2026-10-10T10:38:07Z"
+        },
+        {
+          "memavailable_kib": 852428,
+          "owned_worker_rss_kib": null,
+          "owned_worker_started": false,
+          "owned_worker_swap_kib": null,
+          "postgresql_rss_kib": 0,
+          "swapfree_kib": 125376,
+          "timestamp_utc": "2026-10-10T10:38:13Z"
+        }
+      ],
+      "swapfree_floor_kib": 131072,
+      "worker_peak_rss_kib": null,
+      "worker_peak_swap_kib": null,
+      "worker_started": false
+    },
+    "stored_record_coverage": {
+      "geographic_population_sidewalk_field_claims": "NONE",
+      "places": {
+        "snappable_within_25m": 30,
+        "total": 37,
+        "unsnappable": 7
+      },
+      "scope": "STORED_RECORDS_ONLY",
+      "source_report": "docs/reports/batch032-cebu-coverage.json",
+      "source_report_sha256": "6caf101177904bee6fda1b12cab9c5cda36ddaf7ecc08b0d9778c0517123c81b",
+      "stops": {
+        "snappable_within_25m": 436,
+        "total": 503,
+        "unsnappable": 67
+      }
+    },
+    "transfer_verification": {
+      "evidence_scope": "Stored graph connectivity does not establish physical transfer safety.",
+      "field_verified": false,
+      "status": "BLOCKED_DEPENDENCY",
+      "unverified_count": 2
+    }
+  },
+  "execution_history": {
+    "browser": {
+      "reason": "No browser viewport execution was performed.",
+      "status": "NOT_RUN"
+    },
+    "coverage_fixture_first_attempt": {
+      "cause": "The comparator failure was correct; the fixture still expected the previous message text.",
+      "corrected_run_status": "/data/data/com.termux/files/home/.cache/biyahe/batch043/portable-verification/20261010T105408Z-19425/run-status.json",
+      "correction": "Updated the assertion to the comparator selected-case-scope diagnostic; the same 11-test suite passed afterward.",
+      "run_status": "/data/data/com.termux/files/home/.cache/biyahe/batch043/portable-verification/20261010T104634Z-16925/run-status.json",
+      "status": "FAILED_RECOVERED"
+    },
+    "current_static_suite_results": {
+      "corpus_comparator_fixtures": {
+        "evidence": "/data/data/com.termux/files/home/.cache/biyahe/batch043/portable-verification/20261010T110137Z-22679/run-status.json",
+        "status": "VERIFIED"
+      },
+      "corpus_verification_contract": {
+        "evidence": "/data/data/com.termux/files/home/.cache/biyahe/batch043/portable-verification/20261010T110138Z-22688/run-status.json",
+        "status": "VERIFIED"
+      },
+      "coverage_fixtures": {
+        "evidence": "/data/data/com.termux/files/home/.cache/biyahe/batch043/portable-verification/20261010T110132Z-22654/run-status.json",
+        "status": "VERIFIED"
+      },
+      "coverage_pinned_summary": {
+        "evidence": "/data/data/com.termux/files/home/.cache/biyahe/batch043/portable-verification/20261010T110134Z-22660/run-status.json",
+        "status": "VERIFIED"
+      },
+      "doctor_v43_contract": {
+        "evidence": "/data/data/com.termux/files/home/.cache/biyahe/batch043/portable-verification/20261010T110140Z-22697/run-status.json",
+        "status": "VERIFIED"
+      },
+      "php_corpus_report_writer": {
+        "evidence": "/data/data/com.termux/files/home/.cache/biyahe/batch043/portable-verification/20261010T110144Z-22722/run-status.json",
+        "status": "VERIFIED"
+      },
+      "php_geometry_contract": {
+        "evidence": "/data/data/com.termux/files/home/.cache/biyahe/batch043/portable-verification/20261010T110143Z-22714/run-status.json",
+        "status": "VERIFIED"
+      },
+      "portable_runner_contract": {
+        "evidence": "/data/data/com.termux/files/home/.cache/biyahe/batch043/portable-verification/20261010T110141Z-22705/run-status.json",
+        "status": "VERIFIED"
+      },
+      "provenance_fixtures": {
+        "evidence": "/data/data/com.termux/files/home/.cache/biyahe/batch043/portable-verification/20261010T110130Z-22649/run-status.json",
+        "status": "VERIFIED"
+      },
+      "source_provenance": {
+        "evidence": "/data/data/com.termux/files/home/.cache/biyahe/batch043/portable-verification/20261010T110129Z-22641/run-status.json",
+        "status": "VERIFIED"
+      },
+      "static_evidence_smoke": {
+        "evidence": "/data/data/com.termux/files/home/.cache/biyahe/batch043/portable-verification/20261010T110135Z-22667/run-status.json",
+        "status": "VERIFIED"
+      }
+    },
+    "doctor_generation": {
+      "output": "DOCTOR_V43 generation completed with atomic no-clobber publication.",
+      "previous_sha256": "7b628061b678d672a3e220c307f2c34ca6897f441b812dcd3b67653b92c05771",
+      "report_path": "docs/reports/batch043-doctor-v43.json",
+      "report_sha256": "d82831180857d891830c341c6e6e8552f32c5050a42e9979d9676430c78fcc09",
+      "source_fingerprints": 59,
+      "status": "VERIFIED",
+      "superseded_report_archive": "/data/data/com.termux/files/home/.cache/biyahe/batch043/doctor-v43-initial.json",
+      "superseded_report_sha256": "7b628061b678d672a3e220c307f2c34ca6897f441b812dcd3b67653b92c05771",
+      "test_records": 11,
+      "tested_executable_revision": "dad74a31898c1c96235e14b94ef8b4a69e31287f"
+    },
+    "doctor_report_validator": {
+      "output_path": "/data/data/com.termux/files/home/.cache/biyahe/batch043/portable-verification/20261010T110405Z-23942/doctor-v43-report-validator.stdout.txt",
+      "output_sha256": "deb94886be38de818df47faa5d00a8f51c53e10c914af1ad9cce93b2525cd988",
+      "run_status": "/data/data/com.termux/files/home/.cache/biyahe/batch043/portable-verification/20261010T110405Z-23942/run-status.json",
+      "source_fingerprint_sha256": "25f458ab670e0b105a285453bb03609fdfee340e3943c2cc89d6fddcf349f067",
+      "status": "VERIFIED"
+    },
+    "frontend_heavy_checks": {
+      "not_run": [
+        "FRONTEND harness suite",
+        "TypeScript",
+        "ESLint",
+        "adapter PHPUnit",
+        "combined syntax-and-json guarded suite"
+      ],
+      "reason": "No five-sample resource preflight passed. The current graph preflight minima were MemAvailable 824604 KiB and SwapFree 116124 KiB; the earlier spaced baseline minima were 844184 KiB and 85460 KiB.",
+      "status": "BLOCKED_RESOURCE"
+    },
+    "graph_integrity": {
+      "reason": "No SQLite query or metadata access occurred before a passing guard.",
+      "status": "BLOCKED_RESOURCE"
+    },
+    "real_graph_attempt": {
+      "case_indices_requested": [
+        0
+      ],
+      "cases_executed": 0,
+      "command_not_started": true,
+      "graph_accessed": false,
+      "guard_exit_code": 4,
+      "recovery_note": "The guard log is the authoritative block evidence; the interrupted runner record was not promoted to PASS.",
+      "resource_log": "/data/data/com.termux/files/home/.cache/biyahe/batch043/portable-verification/20261010T103747Z-3762/real-cebu-corpus.resource.log",
+      "runner_status_recovered_as": "NOT_RUN",
+      "status": "BLOCKED_RESOURCE"
+    },
+    "recovery_fixes": [
+      {
+        "issue": "coverage fixture expected a superseded comparator diagnostic",
+        "resolution": "assert the current selected-scope diagnostic; 11 fixture cases pass"
+      },
+      {
+        "issue": "staging preflight script was not executable",
+        "resolution": "set executable mode and rerun; passive check returns BLOCKED_DEPENDENCY with no service or database action"
+      },
+      {
+        "issue": "Termux denies hard-link publication for generated files",
+        "resolution": "Python uses renameat2(RENAME_NOREPLACE) when available; PHP report writer uses exclusive-create fallback; no-clobber smoke passes"
+      },
+      {
+        "issue": "first Doctor report refresh used a mistaken full commit ID and then encountered unavailable os.link",
+        "resolution": "Correct full source revision and add no-clobber rename fallback; the refreshed report and 59-source validator pass."
+      }
+    ],
+    "staging_preflight": {
+      "database_connection_attempted": false,
+      "evidence": "/data/data/com.termux/files/home/.cache/biyahe/batch043-staging-preflight.txt",
+      "failures": [
+        "Composer unavailable",
+        "external staging environment variables absent"
+      ],
+      "service_start_attempted": false,
+      "status": "BLOCKED_DEPENDENCY"
+    },
+    "tested_executable_revision": "dad74a31898c1c96235e14b94ef8b4a69e31287f"
+  },
+  "format": "biyahe-batch043-work-ledger-v1",
+  "head_at_start": "19172ef20c2fff9e9a6d02d66d36b182ac6acb74",
+  "historical_report_hashes": "SHA256 matched Batch042 pre-edit manifest at initial capture",
+  "historical_untracked_reports": [
+    "docs/reports/batch033-doctor-v33.json",
+    "docs/reports/batch034-doctor-v34-coverage.json",
+    "docs/reports/batch034-doctor-v34-current.json",
+    "docs/reports/batch034-doctor-v34-final-evidence.json",
+    "docs/reports/batch034-doctor-v34-final.json",
+    "docs/reports/batch034-doctor-v34.json",
+    "docs/reports/batch039-doctor-v39.json"
+  ],
+  "initial_tracked_worktree": "CLEAN",
+  "protected_graph": {
+    "current_identity_status": "NOT_CHECKED_RESOURCE_GATE",
+    "expected_sha256": "29d7aaf9c45a596f4065c44d13f983f4a7edeec5ac2ea41b718b1c52ca865bf8",
+    "path": "$HOME/.cache/biyahe/batch030/cebu-walk-central-visayas-20261007-v3.sqlite",
+    "write_allowed": false
+  },
+  "recovery_snapshot": "$HOME/storage/external-1/Termux-Archive/Biyahe/Batch043-Recovery/20261010T1012Z",
+  "resource_policy": {
+    "breach_samples": 1,
+    "cancellation": "NOT_NEEDED_COMMAND_NOT_STARTED",
+    "graph_access_permitted": false,
+    "initial_memavailable_kib": 609528,
+    "initial_observation_utc": "2026-10-10T10:19:14Z",
+    "initial_swapfree_kib": 17552,
+    "latest_guarded_preflight_status": "BLOCKED_RESOURCE",
+    "latest_guarded_resource_log": "/data/data/com.termux/files/home/.cache/biyahe/batch043/portable-verification/20261010T103747Z-3762/real-cebu-corpus.resource.log",
+    "latest_guarded_samples": [
+      {
+        "memavailable_kib": 904520,
+        "owned_worker_rss_kib": null,
+        "owned_worker_started": false,
+        "owned_worker_swap_kib": null,
+        "postgresql_rss_kib": 0,
+        "swapfree_kib": 206892,
+        "timestamp_utc": "2026-10-10T10:37:49Z"
+      },
+      {
+        "memavailable_kib": 877812,
+        "owned_worker_rss_kib": null,
+        "owned_worker_started": false,
+        "owned_worker_swap_kib": null,
+        "postgresql_rss_kib": 0,
+        "swapfree_kib": 234628,
+        "timestamp_utc": "2026-10-10T10:37:55Z"
+      },
+      {
+        "memavailable_kib": 824604,
+        "owned_worker_rss_kib": null,
+        "owned_worker_started": false,
+        "owned_worker_swap_kib": null,
+        "postgresql_rss_kib": 0,
+        "swapfree_kib": 147512,
+        "timestamp_utc": "2026-10-10T10:38:01Z"
+      },
+      {
+        "memavailable_kib": 874056,
+        "owned_worker_rss_kib": null,
+        "owned_worker_started": false,
+        "owned_worker_swap_kib": null,
+        "postgresql_rss_kib": 0,
+        "swapfree_kib": 116124,
+        "timestamp_utc": "2026-10-10T10:38:07Z"
+      },
+      {
+        "memavailable_kib": 852428,
+        "owned_worker_rss_kib": null,
+        "owned_worker_started": false,
+        "owned_worker_swap_kib": null,
+        "postgresql_rss_kib": 0,
+        "swapfree_kib": 125376,
+        "timestamp_utc": "2026-10-10T10:38:13Z"
+      }
+    ],
+    "latest_min_memavailable_kib": 824604,
+    "latest_min_swapfree_kib": 116124,
+    "maximum_process_tree_rss_kib": 262144,
+    "memavailable_minimum_kib": 524288,
+    "minimum_memavailable_kib": 844184,
+    "minimum_swapfree_kib": 85460,
+    "owned_worker_rss": "NO_OWNED_WORKER_LAUNCHED",
+    "postgresql_processes_observed": "NONE",
+    "postgresql_started": false,
+    "preflight_evidence": "/data/data/com.termux/files/home/.cache/biyahe/batch043/resource-preflight-20261010T-current.json",
+    "preflight_samples": 5,
+    "preflight_spacing_seconds": 5,
+    "preflight_status": "BLOCKED_RESOURCE",
+    "sampled_at_utc": [
+      "2026-10-10T10:25:26+00:00",
+      "2026-10-10T10:25:31+00:00",
+      "2026-10-10T10:25:37+00:00",
+      "2026-10-10T10:25:42+00:00",
+      "2026-10-10T10:25:47+00:00"
+    ],
+    "sampled_memavailable_kib": [
+      933108,
+      949960,
+      910456,
+      939508,
+      844184
+    ],
+    "sampled_swapfree_kib": [
+      148540,
+      142788,
+      127304,
+      152032,
+      85460
+    ],
+    "swapfree_minimum_kib": 131072,
+    "worker_peak_rss_kib": null,
+    "worker_peak_swap_kib": null,
+    "worker_started": false
+  },
+  "routing_diagnosis": {
+    "bounded_route_limits": {
+      "maximum_edges_per_route": 50000,
+      "maximum_request_seconds": 8,
+      "maximum_route_distance_meters": 2000,
+      "maximum_snap_meters": 25,
+      "maximum_visited_nodes_per_route": 20000
+    },
+    "configured_edges": 78225,
+    "configured_nodes": 76685,
+    "current_resource_gate": "BLOCKED_RESOURCE; minimum SwapFree 85460 KiB is below 131072 KiB; no graph hash or SQLite access occurred.",
+    "historical_block_reason": "five-sample resource preflight failed before worker launch",
+    "historical_corpus_worker_started": false,
+    "observed_code_costs": [
+      "one router is reused across cases within a replay",
+      "first route materializes whole-graph temporary node and edge R-trees",
+      "first route materializes a joined edge table and builds PHP union-find component maps",
+      "current portable runner hashes the graph before its owned-worker resource preflight"
+    ],
+    "performance_measurement": "BLOCKED_RESOURCE_NO_GRAPH_ACCESS",
+    "status": "STATIC_INSPECTION_COMPLETE"
+  },
+  "started_at_utc": "2026-10-10T10:12:52Z",
+  "stop_conditions": [
+    "Do not access graph metadata, hash the graph or open SQLite until all five preflight samples pass.",
+    "Preserve MemAvailable >= 524288 KiB, SwapFree >= 131072 KiB, first-breach cancellation and 262144 KiB worker-tree RSS cap.",
+    "Do not retry the Batch043 case-0 graph attempt; its worker did not start and its gate evidence is preserved.",
+    "Do not claim the historical 9 found / 1 disconnected result as a current result.",
+    "TypeScript, ESLint, browser, PostgreSQL and field checks remain blocked or not run as recorded.",
+    "Finish only after V43, V5, SD delivery, report and clipboard audit are complete."
+  ],
+  "test_results": {
+    "corpus_comparator_fixtures": {
+      "assertion_count": null,
+      "command": [
+        "/data/data/com.termux/files/usr/bin/python3",
+        "api/scripts/test_compare_offline_corpus.py"
+      ],
+      "command_fingerprint_sha256": "cf595c2ce9d1395d7269c4730c3880d3bc6fbd811e3e87413ef1e1e29d452652",
+      "cwd": "/data/data/com.termux/files/home/Biyahe",
+      "elapsed_milliseconds": 717.238,
+      "ended_at": "2026-10-10T11:01:38Z",
+      "executed": true,
+      "exit_code": 0,
+      "failure_count": 0,
+      "fingerprint_environment": {
+        "LANG": "en_US.UTF-8",
+        "LC_ALL": "C.UTF-8",
+        "NODE_OPTIONS": "",
+        "PATH": "/data/data/com.termux/files/home/.codex/tmp/arg0/codex-arg0MWU38W:/data/data/com.termux/files/home/.codex/tmp/arg0/codex-arg0hewtZJ:/data/data/com.termux/files/usr/bin",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "TZ": ""
+      },
+      "guard_environment": {
+        "PYTHONDONTWRITEBYTECODE": "1"
+      },
+      "id": "corpus-comparator-fixtures",
+      "input_files": [
+        {
+          "path": "api/scripts/compare-offline-corpus.py",
+          "sha256": "37d88a15512a59d82556b2acb80a4656b332dec6c9c7bde23b3f10c943dda946"
+        },
+        {
+          "path": "api/scripts/test_compare_offline_corpus.py",
+          "sha256": "f78e3a73536f4033ea8143fae0b4b3b7ded0a4d7ae939189ebe83a68cb9dbe5e"
+        },
+        {
+          "path": "docs/reports/batch032-cebu-coverage.json",
+          "sha256": "6caf101177904bee6fda1b12cab9c5cda36ddaf7ecc08b0d9778c0517123c81b"
+        }
+      ],
+      "input_fingerprint_sha256": "cf595c2ce9d1395d7269c4730c3880d3bc6fbd811e3e87413ef1e1e29d452652",
+      "input_paths": [
+        "api/scripts/compare-offline-corpus.py",
+        "api/scripts/test_compare_offline_corpus.py",
+        "docs/reports/batch032-cebu-coverage.json"
+      ],
+      "memavailable_floor_kib": 524288,
+      "output_path": "/data/data/com.termux/files/home/.cache/biyahe/batch043/portable-verification/20261010T110137Z-22679/corpus-comparator-fixtures.stdout.txt",
+      "output_sha256": "77d39d232626e3e59e6a916819491f0ba13a87739af70ac3ae4468c1f8dea0c8",
+      "reported_check_markers": 0,
+      "resource_guard": "NOT_REQUIRED",
+      "source_revision": "dad74a31898c1c96235e14b94ef8b4a69e31287f",
+      "started_at": "2026-10-10T11:01:37Z",
+      "status": "VERIFIED",
+      "swapfree_floor_kib": 131072,
+      "test_count": 8,
+      "tool_versions": {
+        "/data/data/com.termux/files/usr/bin/python3": "path=/data/data/com.termux/files/usr/bin/python3.14;sha256=4f8d78ede7fc26e96e99342dd83ce42d32c9b4d0806bc9a99ff7151396269b25",
+        "bash": "path=/data/data/com.termux/files/usr/bin/bash;sha256=0179c7b15fb3df857608ef745daa17077523ffc42b7755ccc725ad7a712698a2",
+        "composer": "MISSING",
+        "node": "path=/data/data/com.termux/files/usr/bin/node;sha256=d682000d9f5d887ec66de1ed68d9616c7a9d064bca9ae9d8c46725a00912cbc6",
+        "npm": "path=/data/data/com.termux/files/usr/lib/node_modules/npm/bin/npm-cli.js;sha256=8e5f6f3429f8cdbe693cdc29904e9d5a7b127a494bd15c804bd54c7403bfcbe7",
+        "php": "path=/data/data/com.termux/files/usr/bin/php;sha256=0d7dad516768df79137c8921d9a63c77faa7df1d89c36240aa116a346ae9ad4d",
+        "python3": "path=/data/data/com.termux/files/usr/bin/python3.14;sha256=4f8d78ede7fc26e96e99342dd83ce42d32c9b4d0806bc9a99ff7151396269b25",
+        "python_runtime": "3.14.6"
+      }
+    },
+    "corpus_verification_contract": {
+      "assertion_count": null,
+      "command": [
+        "/data/data/com.termux/files/usr/bin/python3",
+        "api/scripts/test_offline_corpus_verification.py"
+      ],
+      "command_fingerprint_sha256": "2440af1bc91a3f96b5346dbb210efd583aac983746e9d759a1f1a381f2584c2b",
+      "cwd": "/data/data/com.termux/files/home/Biyahe",
+      "elapsed_milliseconds": 962.958,
+      "ended_at": "2026-10-10T11:01:39Z",
+      "executed": true,
+      "exit_code": 0,
+      "failure_count": 0,
+      "fingerprint_environment": {
+        "LANG": "en_US.UTF-8",
+        "LC_ALL": "C.UTF-8",
+        "NODE_OPTIONS": "",
+        "PATH": "/data/data/com.termux/files/home/.codex/tmp/arg0/codex-arg0MWU38W:/data/data/com.termux/files/home/.codex/tmp/arg0/codex-arg0hewtZJ:/data/data/com.termux/files/usr/bin",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "TZ": ""
+      },
+      "guard_environment": {
+        "PYTHONDONTWRITEBYTECODE": "1"
+      },
+      "id": "corpus-verification-contract",
+      "input_files": [
+        {
+          "path": "api/scripts/run-offline-corpus-verification.py",
+          "sha256": "d46e4c946a55b42ae487a90e40d539f0beb60ad6ada81e11bca3c73f9cec2cf7"
+        },
+        {
+          "path": "api/scripts/test_offline_corpus_verification.py",
+          "sha256": "6e60d2e6cda2246007b2eb4dec46f61409c63ec8093ce0b687983f9a5024949c"
+        }
+      ],
+      "input_fingerprint_sha256": "2440af1bc91a3f96b5346dbb210efd583aac983746e9d759a1f1a381f2584c2b",
+      "input_paths": [
+        "api/scripts/run-offline-corpus-verification.py",
+        "api/scripts/test_offline_corpus_verification.py"
+      ],
+      "memavailable_floor_kib": 524288,
+      "output_path": "/data/data/com.termux/files/home/.cache/biyahe/batch043/portable-verification/20261010T110138Z-22688/corpus-verification-contract.stdout.txt",
+      "output_sha256": "ed6a2508e63469a7b6617d4b4c9bf50d05acfcbf4e7d2351ce73bd3324f5d3f4",
+      "reported_check_markers": 0,
+      "resource_guard": "NOT_REQUIRED",
+      "source_revision": "dad74a31898c1c96235e14b94ef8b4a69e31287f",
+      "started_at": "2026-10-10T11:01:38Z",
+      "status": "VERIFIED",
+      "swapfree_floor_kib": 131072,
+      "test_count": 4,
+      "tool_versions": {
+        "/data/data/com.termux/files/usr/bin/python3": "path=/data/data/com.termux/files/usr/bin/python3.14;sha256=4f8d78ede7fc26e96e99342dd83ce42d32c9b4d0806bc9a99ff7151396269b25",
+        "bash": "path=/data/data/com.termux/files/usr/bin/bash;sha256=0179c7b15fb3df857608ef745daa17077523ffc42b7755ccc725ad7a712698a2",
+        "composer": "MISSING",
+        "node": "path=/data/data/com.termux/files/usr/bin/node;sha256=d682000d9f5d887ec66de1ed68d9616c7a9d064bca9ae9d8c46725a00912cbc6",
+        "npm": "path=/data/data/com.termux/files/usr/lib/node_modules/npm/bin/npm-cli.js;sha256=8e5f6f3429f8cdbe693cdc29904e9d5a7b127a494bd15c804bd54c7403bfcbe7",
+        "php": "path=/data/data/com.termux/files/usr/bin/php;sha256=0d7dad516768df79137c8921d9a63c77faa7df1d89c36240aa116a346ae9ad4d",
+        "python3": "path=/data/data/com.termux/files/usr/bin/python3.14;sha256=4f8d78ede7fc26e96e99342dd83ce42d32c9b4d0806bc9a99ff7151396269b25",
+        "python_runtime": "3.14.6"
+      }
+    },
+    "coverage_fixtures": {
+      "assertion_count": null,
+      "command": [
+        "/data/data/com.termux/files/usr/bin/python3",
+        "api/scripts/test_summarize_offline_coverage.py"
+      ],
+      "command_fingerprint_sha256": "ce7f8105f22d3da273fce91d944bd68a64706ce9c2a8e7c3950a8c2ca50b2fbb",
+      "cwd": "/data/data/com.termux/files/home/Biyahe",
+      "elapsed_milliseconds": 817.458,
+      "ended_at": "2026-10-10T11:01:33Z",
+      "executed": true,
+      "exit_code": 0,
+      "failure_count": 0,
+      "fingerprint_environment": {
+        "LANG": "en_US.UTF-8",
+        "LC_ALL": "C.UTF-8",
+        "NODE_OPTIONS": "",
+        "PATH": "/data/data/com.termux/files/home/.codex/tmp/arg0/codex-arg0MWU38W:/data/data/com.termux/files/home/.codex/tmp/arg0/codex-arg0hewtZJ:/data/data/com.termux/files/usr/bin",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "TZ": ""
+      },
+      "guard_environment": {
+        "PYTHONDONTWRITEBYTECODE": "1"
+      },
+      "id": "coverage-fixtures",
+      "input_files": [
+        {
+          "path": "api/scripts/compare-offline-corpus.py",
+          "sha256": "37d88a15512a59d82556b2acb80a4656b332dec6c9c7bde23b3f10c943dda946"
+        },
+        {
+          "path": "api/scripts/summarize-offline-coverage.py",
+          "sha256": "73ce4efc2a6ebca72af14a26bf1eb545781e9c41b09c4de210bcd0014b3aa719"
+        },
+        {
+          "path": "api/scripts/test_summarize_offline_coverage.py",
+          "sha256": "05bc3a1e883ed31248c9249dbcbe773cb7820d838d9b398ed77445c8c60a3226"
+        }
+      ],
+      "input_fingerprint_sha256": "ce7f8105f22d3da273fce91d944bd68a64706ce9c2a8e7c3950a8c2ca50b2fbb",
+      "input_paths": [
+        "api/scripts/summarize-offline-coverage.py",
+        "api/scripts/test_summarize_offline_coverage.py",
+        "api/scripts/compare-offline-corpus.py"
+      ],
+      "memavailable_floor_kib": 524288,
+      "output_path": "/data/data/com.termux/files/home/.cache/biyahe/batch043/portable-verification/20261010T110132Z-22654/coverage-fixtures.stdout.txt",
+      "output_sha256": "e41f5b5abb045943ad8cdeaf6888b08e484050b9a2af42746411083a598e0cff",
+      "reported_check_markers": 0,
+      "resource_guard": "NOT_REQUIRED",
+      "source_revision": "dad74a31898c1c96235e14b94ef8b4a69e31287f",
+      "started_at": "2026-10-10T11:01:32Z",
+      "status": "VERIFIED",
+      "swapfree_floor_kib": 131072,
+      "test_count": 11,
+      "tool_versions": {
+        "/data/data/com.termux/files/usr/bin/python3": "path=/data/data/com.termux/files/usr/bin/python3.14;sha256=4f8d78ede7fc26e96e99342dd83ce42d32c9b4d0806bc9a99ff7151396269b25",
+        "bash": "path=/data/data/com.termux/files/usr/bin/bash;sha256=0179c7b15fb3df857608ef745daa17077523ffc42b7755ccc725ad7a712698a2",
+        "composer": "MISSING",
+        "node": "path=/data/data/com.termux/files/usr/bin/node;sha256=d682000d9f5d887ec66de1ed68d9616c7a9d064bca9ae9d8c46725a00912cbc6",
+        "npm": "path=/data/data/com.termux/files/usr/lib/node_modules/npm/bin/npm-cli.js;sha256=8e5f6f3429f8cdbe693cdc29904e9d5a7b127a494bd15c804bd54c7403bfcbe7",
+        "php": "path=/data/data/com.termux/files/usr/bin/php;sha256=0d7dad516768df79137c8921d9a63c77faa7df1d89c36240aa116a346ae9ad4d",
+        "python3": "path=/data/data/com.termux/files/usr/bin/python3.14;sha256=4f8d78ede7fc26e96e99342dd83ce42d32c9b4d0806bc9a99ff7151396269b25",
+        "python_runtime": "3.14.6"
+      }
+    },
+    "coverage_pinned_summary": {
+      "assertion_count": null,
+      "command": [
+        "/data/data/com.termux/files/usr/bin/python3",
+        "api/scripts/summarize-offline-coverage.py",
+        "--output-dir",
+        "/data/data/com.termux/files/home/.cache/biyahe/batch043/portable-verification/20261010T110134Z-22660/coverage-pinned-summary"
+      ],
+      "command_fingerprint_sha256": "78cc291e6023fcc8fc79444474386f7fddf046347ede1dcc23e8943332cae74e",
+      "cwd": "/data/data/com.termux/files/home/Biyahe",
+      "elapsed_milliseconds": 874.717,
+      "ended_at": "2026-10-10T11:01:35Z",
+      "executed": true,
+      "exit_code": 0,
+      "failure_count": 0,
+      "fingerprint_environment": {
+        "LANG": "en_US.UTF-8",
+        "LC_ALL": "C.UTF-8",
+        "NODE_OPTIONS": "",
+        "PATH": "/data/data/com.termux/files/home/.codex/tmp/arg0/codex-arg0MWU38W:/data/data/com.termux/files/home/.codex/tmp/arg0/codex-arg0hewtZJ:/data/data/com.termux/files/usr/bin",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "TZ": ""
+      },
+      "guard_environment": {
+        "PYTHONDONTWRITEBYTECODE": "1"
+      },
+      "id": "coverage-pinned-summary",
+      "input_files": [
+        {
+          "path": "api/scripts/evidence_provenance.py",
+          "sha256": "e17d63dda770595880842a5e93a96e87020cae71ba3384f76b854e10dc9ef46d"
+        },
+        {
+          "path": "api/scripts/summarize-offline-coverage.py",
+          "sha256": "73ce4efc2a6ebca72af14a26bf1eb545781e9c41b09c4de210bcd0014b3aa719"
+        },
+        {
+          "path": "docs/reports/batch032-cebu-coverage.json",
+          "sha256": "6caf101177904bee6fda1b12cab9c5cda36ddaf7ecc08b0d9778c0517123c81b"
+        },
+        {
+          "path": "docs/reports/batch041-evidence-provenance.json",
+          "sha256": "882fd1ae2c7ab8f2e1edab87c9122911f62c4568513bbe6c8875263958dc1bb6"
+        }
+      ],
+      "input_fingerprint_sha256": "78cc291e6023fcc8fc79444474386f7fddf046347ede1dcc23e8943332cae74e",
+      "input_paths": [
+        "api/scripts/summarize-offline-coverage.py",
+        "api/scripts/evidence_provenance.py",
+        "docs/reports/batch032-cebu-coverage.json",
+        "docs/reports/batch041-evidence-provenance.json"
+      ],
+      "memavailable_floor_kib": 524288,
+      "output_path": "/data/data/com.termux/files/home/.cache/biyahe/batch043/portable-verification/20261010T110134Z-22660/coverage-pinned-summary.stdout.txt",
+      "output_sha256": "8cc20a11a42b949068a6591bce3355d66dc4e4a724df08de656f560324999d9e",
+      "reported_check_markers": 0,
+      "resource_guard": "NOT_REQUIRED",
+      "source_revision": "dad74a31898c1c96235e14b94ef8b4a69e31287f",
+      "started_at": "2026-10-10T11:01:34Z",
+      "status": "VERIFIED",
+      "swapfree_floor_kib": 131072,
+      "test_count": null,
+      "tool_versions": {
+        "/data/data/com.termux/files/usr/bin/python3": "path=/data/data/com.termux/files/usr/bin/python3.14;sha256=4f8d78ede7fc26e96e99342dd83ce42d32c9b4d0806bc9a99ff7151396269b25",
+        "bash": "path=/data/data/com.termux/files/usr/bin/bash;sha256=0179c7b15fb3df857608ef745daa17077523ffc42b7755ccc725ad7a712698a2",
+        "composer": "MISSING",
+        "node": "path=/data/data/com.termux/files/usr/bin/node;sha256=d682000d9f5d887ec66de1ed68d9616c7a9d064bca9ae9d8c46725a00912cbc6",
+        "npm": "path=/data/data/com.termux/files/usr/lib/node_modules/npm/bin/npm-cli.js;sha256=8e5f6f3429f8cdbe693cdc29904e9d5a7b127a494bd15c804bd54c7403bfcbe7",
+        "php": "path=/data/data/com.termux/files/usr/bin/php;sha256=0d7dad516768df79137c8921d9a63c77faa7df1d89c36240aa116a346ae9ad4d",
+        "python3": "path=/data/data/com.termux/files/usr/bin/python3.14;sha256=4f8d78ede7fc26e96e99342dd83ce42d32c9b4d0806bc9a99ff7151396269b25",
+        "python_runtime": "3.14.6"
+      }
+    },
+    "doctor_v43_contract": {
+      "assertion_count": null,
+      "command": [
+        "/data/data/com.termux/files/usr/bin/python3",
+        "api/scripts/test_validate_batch043_doctor.py"
+      ],
+      "command_fingerprint_sha256": "3e0abc31ad3d666c805e8d13687cecaa6b1e9c219769e2d66914767e8ae32ee6",
+      "cwd": "/data/data/com.termux/files/home/Biyahe",
+      "elapsed_milliseconds": 818.641,
+      "ended_at": "2026-10-10T11:01:41Z",
+      "executed": true,
+      "exit_code": 0,
+      "failure_count": 0,
+      "fingerprint_environment": {
+        "LANG": "en_US.UTF-8",
+        "LC_ALL": "C.UTF-8",
+        "NODE_OPTIONS": "",
+        "PATH": "/data/data/com.termux/files/home/.codex/tmp/arg0/codex-arg0MWU38W:/data/data/com.termux/files/home/.codex/tmp/arg0/codex-arg0hewtZJ:/data/data/com.termux/files/usr/bin",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "TZ": ""
+      },
+      "guard_environment": {
+        "PYTHONDONTWRITEBYTECODE": "1"
+      },
+      "id": "doctor-v43-contract",
+      "input_files": [
+        {
+          "path": "api/scripts/refresh-batch043-doctor.py",
+          "sha256": "45d1fb1e0c7af453597b4b6232d6551d079580cea67306073780ba3d4f6e533a"
+        },
+        {
+          "path": "api/scripts/test_validate_batch043_doctor.py",
+          "sha256": "5a6981590db1b8b15bbaccd23f1cebf64be06c27f40324d76b0d8f315f37227d"
+        },
+        {
+          "path": "api/scripts/validate-batch043-doctor.py",
+          "sha256": "36a2fcdfafbe6811d8e1a7f3d89d5c8b18e244b7c18dc0a6bc9caa15c430fe2d"
+        },
+        {
+          "path": "docs/reports/batch032-cebu-coverage.json",
+          "sha256": "6caf101177904bee6fda1b12cab9c5cda36ddaf7ecc08b0d9778c0517123c81b"
+        },
+        {
+          "path": "docs/reports/batch041-evidence-provenance.json",
+          "sha256": "882fd1ae2c7ab8f2e1edab87c9122911f62c4568513bbe6c8875263958dc1bb6"
+        }
+      ],
+      "input_fingerprint_sha256": "3e0abc31ad3d666c805e8d13687cecaa6b1e9c219769e2d66914767e8ae32ee6",
+      "input_paths": [
+        "api/scripts/refresh-batch043-doctor.py",
+        "api/scripts/validate-batch043-doctor.py",
+        "api/scripts/test_validate_batch043_doctor.py",
+        "docs/reports/batch032-cebu-coverage.json",
+        "docs/reports/batch041-evidence-provenance.json"
+      ],
+      "memavailable_floor_kib": 524288,
+      "output_path": "/data/data/com.termux/files/home/.cache/biyahe/batch043/portable-verification/20261010T110140Z-22697/doctor-v43-contract.stdout.txt",
+      "output_sha256": "4f5fa5cb8d9d4aa44458c33083c0561d19765ab12b230f82b2236125064d4e14",
+      "reported_check_markers": 0,
+      "resource_guard": "NOT_REQUIRED",
+      "source_revision": "dad74a31898c1c96235e14b94ef8b4a69e31287f",
+      "started_at": "2026-10-10T11:01:40Z",
+      "status": "VERIFIED",
+      "swapfree_floor_kib": 131072,
+      "test_count": 8,
+      "tool_versions": {
+        "/data/data/com.termux/files/usr/bin/python3": "path=/data/data/com.termux/files/usr/bin/python3.14;sha256=4f8d78ede7fc26e96e99342dd83ce42d32c9b4d0806bc9a99ff7151396269b25",
+        "bash": "path=/data/data/com.termux/files/usr/bin/bash;sha256=0179c7b15fb3df857608ef745daa17077523ffc42b7755ccc725ad7a712698a2",
+        "composer": "MISSING",
+        "node": "path=/data/data/com.termux/files/usr/bin/node;sha256=d682000d9f5d887ec66de1ed68d9616c7a9d064bca9ae9d8c46725a00912cbc6",
+        "npm": "path=/data/data/com.termux/files/usr/lib/node_modules/npm/bin/npm-cli.js;sha256=8e5f6f3429f8cdbe693cdc29904e9d5a7b127a494bd15c804bd54c7403bfcbe7",
+        "php": "path=/data/data/com.termux/files/usr/bin/php;sha256=0d7dad516768df79137c8921d9a63c77faa7df1d89c36240aa116a346ae9ad4d",
+        "python3": "path=/data/data/com.termux/files/usr/bin/python3.14;sha256=4f8d78ede7fc26e96e99342dd83ce42d32c9b4d0806bc9a99ff7151396269b25",
+        "python_runtime": "3.14.6"
+      }
+    },
+    "php_corpus_report_writer": {
+      "assertion_count": null,
+      "command": [
+        "php",
+        "api/scripts/test_offline_corpus_report_writer.php"
+      ],
+      "command_fingerprint_sha256": "0dd265767f4f70e30d2020864ece912797adc40e7835b4aac4ac0b14b26a54ad",
+      "cwd": "/data/data/com.termux/files/home/Biyahe",
+      "elapsed_milliseconds": 544.593,
+      "ended_at": "2026-10-10T11:01:45Z",
+      "executed": true,
+      "exit_code": 0,
+      "failure_count": 0,
+      "fingerprint_environment": {
+        "LANG": "en_US.UTF-8",
+        "LC_ALL": "C.UTF-8",
+        "NODE_OPTIONS": "",
+        "PATH": "/data/data/com.termux/files/home/.codex/tmp/arg0/codex-arg0MWU38W:/data/data/com.termux/files/home/.codex/tmp/arg0/codex-arg0hewtZJ:/data/data/com.termux/files/usr/bin",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "TZ": ""
+      },
+      "guard_environment": {
+        "PYTHONDONTWRITEBYTECODE": "1"
+      },
+      "id": "php-corpus-report-writer",
+      "input_files": [
+        {
+          "path": "api/app/Console/Commands/VerifyOfflineWalkingCorpus.php",
+          "sha256": "8c32bd1129d68c33df297d9fe43e7e9846b0d2e91918e39947984add4922dda2"
+        },
+        {
+          "path": "api/app/Services/Routing/OfflineWalkingCorpusSelection.php",
+          "sha256": "32b631a366fd7aeba77e38e24f2b2951385a8befb8fbb70040af7ffcc659d8f8"
+        },
+        {
+          "path": "api/composer.lock",
+          "sha256": "d705a772f93cfe6d1b374e3896eaa3b4ee919aa6b222e2daab86dd31db99b4be"
+        },
+        {
+          "path": "api/scripts/test_offline_corpus_report_writer.php",
+          "sha256": "6b38cfd46b0da8c9109eb0d0879fdf464cf1723b7e8ce2ed9f40a6940e7e780b"
+        }
+      ],
+      "input_fingerprint_sha256": "0dd265767f4f70e30d2020864ece912797adc40e7835b4aac4ac0b14b26a54ad",
+      "input_paths": [
+        "api/composer.lock",
+        "api/app/Console/Commands/VerifyOfflineWalkingCorpus.php",
+        "api/app/Services/Routing/OfflineWalkingCorpusSelection.php",
+        "api/scripts/test_offline_corpus_report_writer.php"
+      ],
+      "memavailable_floor_kib": 524288,
+      "output_path": "/data/data/com.termux/files/home/.cache/biyahe/batch043/portable-verification/20261010T110144Z-22722/php-corpus-report-writer.stdout.txt",
+      "output_sha256": "5a1f5acafa4af4a4e4d44fd3d1b838d5e298a8f922b3e9d3f47c6fd6bc074f27",
+      "reported_check_markers": 1,
+      "resource_guard": "NOT_REQUIRED",
+      "source_revision": "dad74a31898c1c96235e14b94ef8b4a69e31287f",
+      "started_at": "2026-10-10T11:01:44Z",
+      "status": "VERIFIED",
+      "swapfree_floor_kib": 131072,
+      "test_count": null,
+      "tool_versions": {
+        "bash": "path=/data/data/com.termux/files/usr/bin/bash;sha256=0179c7b15fb3df857608ef745daa17077523ffc42b7755ccc725ad7a712698a2",
+        "composer": "MISSING",
+        "node": "path=/data/data/com.termux/files/usr/bin/node;sha256=d682000d9f5d887ec66de1ed68d9616c7a9d064bca9ae9d8c46725a00912cbc6",
+        "npm": "path=/data/data/com.termux/files/usr/lib/node_modules/npm/bin/npm-cli.js;sha256=8e5f6f3429f8cdbe693cdc29904e9d5a7b127a494bd15c804bd54c7403bfcbe7",
+        "php": "path=/data/data/com.termux/files/usr/bin/php;sha256=0d7dad516768df79137c8921d9a63c77faa7df1d89c36240aa116a346ae9ad4d",
+        "python3": "path=/data/data/com.termux/files/usr/bin/python3.14;sha256=4f8d78ede7fc26e96e99342dd83ce42d32c9b4d0806bc9a99ff7151396269b25",
+        "python_runtime": "3.14.6"
+      }
+    },
+    "php_geometry_contract": {
+      "assertion_count": null,
+      "command": [
+        "php",
+        "api/scripts/test_offline_route_geometry_contract.php"
+      ],
+      "command_fingerprint_sha256": "b48a5cae0e7d1c66cc209d9bbe288e0a9835c7f2feab1fc43b2c884044b0069c",
+      "cwd": "/data/data/com.termux/files/home/Biyahe",
+      "elapsed_milliseconds": 536.436,
+      "ended_at": "2026-10-10T11:01:44Z",
+      "executed": true,
+      "exit_code": 0,
+      "failure_count": 0,
+      "fingerprint_environment": {
+        "LANG": "en_US.UTF-8",
+        "LC_ALL": "C.UTF-8",
+        "NODE_OPTIONS": "",
+        "PATH": "/data/data/com.termux/files/home/.codex/tmp/arg0/codex-arg0MWU38W:/data/data/com.termux/files/home/.codex/tmp/arg0/codex-arg0hewtZJ:/data/data/com.termux/files/usr/bin",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "TZ": ""
+      },
+      "guard_environment": {
+        "PYTHONDONTWRITEBYTECODE": "1"
+      },
+      "id": "php-geometry-contract",
+      "input_files": [
+        {
+          "path": "api/app/Services/Routing/OfflinePedestrianRouteGeometryContract.php",
+          "sha256": "4f9ef2483c2cf4fa8cbc91d4a9407242d44fea6ae7889da07833560c1613b4f4"
+        },
+        {
+          "path": "api/scripts/test_offline_route_geometry_contract.php",
+          "sha256": "8d13c3451ba15758bbcc28e21068f1e17e547dece5cb95dbbbfc3cfc154bba80"
+        }
+      ],
+      "input_fingerprint_sha256": "b48a5cae0e7d1c66cc209d9bbe288e0a9835c7f2feab1fc43b2c884044b0069c",
+      "input_paths": [
+        "api/scripts/test_offline_route_geometry_contract.php",
+        "api/app/Services/Routing/OfflinePedestrianRouteGeometryContract.php"
+      ],
+      "memavailable_floor_kib": 524288,
+      "output_path": "/data/data/com.termux/files/home/.cache/biyahe/batch043/portable-verification/20261010T110143Z-22714/php-geometry-contract.stdout.txt",
+      "output_sha256": "9e87ca6809f8bdb977918e23a41b43a16fae2ca89c3d3504a5e8d0f83573bd32",
+      "reported_check_markers": 1,
+      "resource_guard": "NOT_REQUIRED",
+      "source_revision": "dad74a31898c1c96235e14b94ef8b4a69e31287f",
+      "started_at": "2026-10-10T11:01:43Z",
+      "status": "VERIFIED",
+      "swapfree_floor_kib": 131072,
+      "test_count": null,
+      "tool_versions": {
+        "bash": "path=/data/data/com.termux/files/usr/bin/bash;sha256=0179c7b15fb3df857608ef745daa17077523ffc42b7755ccc725ad7a712698a2",
+        "composer": "MISSING",
+        "node": "path=/data/data/com.termux/files/usr/bin/node;sha256=d682000d9f5d887ec66de1ed68d9616c7a9d064bca9ae9d8c46725a00912cbc6",
+        "npm": "path=/data/data/com.termux/files/usr/lib/node_modules/npm/bin/npm-cli.js;sha256=8e5f6f3429f8cdbe693cdc29904e9d5a7b127a494bd15c804bd54c7403bfcbe7",
+        "php": "path=/data/data/com.termux/files/usr/bin/php;sha256=0d7dad516768df79137c8921d9a63c77faa7df1d89c36240aa116a346ae9ad4d",
+        "python3": "path=/data/data/com.termux/files/usr/bin/python3.14;sha256=4f8d78ede7fc26e96e99342dd83ce42d32c9b4d0806bc9a99ff7151396269b25",
+        "python_runtime": "3.14.6"
+      }
+    },
+    "portable_runner_contract": {
+      "assertion_count": null,
+      "command": [
+        "/data/data/com.termux/files/usr/bin/python3",
+        "api/scripts/test_portable_verification.py"
+      ],
+      "command_fingerprint_sha256": "0257dee53b4c7f14cd63b313d4915290ee155840dd055bf8b6aea8297fceb9a7",
+      "cwd": "/data/data/com.termux/files/home/Biyahe",
+      "elapsed_milliseconds": 1210.466,
+      "ended_at": "2026-10-10T11:01:43Z",
+      "executed": true,
+      "exit_code": 0,
+      "failure_count": 0,
+      "fingerprint_environment": {
+        "LANG": "en_US.UTF-8",
+        "LC_ALL": "C.UTF-8",
+        "NODE_OPTIONS": "",
+        "PATH": "/data/data/com.termux/files/home/.codex/tmp/arg0/codex-arg0MWU38W:/data/data/com.termux/files/home/.codex/tmp/arg0/codex-arg0hewtZJ:/data/data/com.termux/files/usr/bin",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "TZ": ""
+      },
+      "guard_environment": {
+        "PYTHONDONTWRITEBYTECODE": "1"
+      },
+      "id": "portable-runner-contract",
+      "input_files": [
+        {
+          "path": "api/scripts/package-batch041-verification-kit.py",
+          "sha256": "1ea37150eee5f9afff7174254203afca36c18b19ca3cf126623c2e651195537d"
+        },
+        {
+          "path": "api/scripts/run-portable-verification.py",
+          "sha256": "a1a183cfce87bf10219e1594b9c83d8386518741bb871916f1c2dcc0d408d9ed"
+        },
+        {
+          "path": "api/scripts/test_portable_verification.py",
+          "sha256": "31f517fa9830f71404853ecacbe21c3228f984414d4442e10730ff24d151bad5"
+        }
+      ],
+      "input_fingerprint_sha256": "0257dee53b4c7f14cd63b313d4915290ee155840dd055bf8b6aea8297fceb9a7",
+      "input_paths": [
+        "api/scripts/package-batch041-verification-kit.py",
+        "api/scripts/run-portable-verification.py",
+        "api/scripts/test_portable_verification.py"
+      ],
+      "memavailable_floor_kib": 524288,
+      "output_path": "/data/data/com.termux/files/home/.cache/biyahe/batch043/portable-verification/20261010T110141Z-22705/portable-runner-contract.stdout.txt",
+      "output_sha256": "4740fb0ff2d3205fde56199baa0d655f2ffa97301fe1055ae08e76f2d3a4ccda",
+      "reported_check_markers": 0,
+      "resource_guard": "NOT_REQUIRED",
+      "source_revision": "dad74a31898c1c96235e14b94ef8b4a69e31287f",
+      "started_at": "2026-10-10T11:01:41Z",
+      "status": "VERIFIED",
+      "swapfree_floor_kib": 131072,
+      "test_count": 18,
+      "tool_versions": {
+        "/data/data/com.termux/files/usr/bin/python3": "path=/data/data/com.termux/files/usr/bin/python3.14;sha256=4f8d78ede7fc26e96e99342dd83ce42d32c9b4d0806bc9a99ff7151396269b25",
+        "bash": "path=/data/data/com.termux/files/usr/bin/bash;sha256=0179c7b15fb3df857608ef745daa17077523ffc42b7755ccc725ad7a712698a2",
+        "composer": "MISSING",
+        "node": "path=/data/data/com.termux/files/usr/bin/node;sha256=d682000d9f5d887ec66de1ed68d9616c7a9d064bca9ae9d8c46725a00912cbc6",
+        "npm": "path=/data/data/com.termux/files/usr/lib/node_modules/npm/bin/npm-cli.js;sha256=8e5f6f3429f8cdbe693cdc29904e9d5a7b127a494bd15c804bd54c7403bfcbe7",
+        "php": "path=/data/data/com.termux/files/usr/bin/php;sha256=0d7dad516768df79137c8921d9a63c77faa7df1d89c36240aa116a346ae9ad4d",
+        "python3": "path=/data/data/com.termux/files/usr/bin/python3.14;sha256=4f8d78ede7fc26e96e99342dd83ce42d32c9b4d0806bc9a99ff7151396269b25",
+        "python_runtime": "3.14.6"
+      }
+    },
+    "provenance_fixtures": {
+      "assertion_count": null,
+      "command": [
+        "/data/data/com.termux/files/usr/bin/python3",
+        "api/scripts/test_evidence_provenance.py"
+      ],
+      "command_fingerprint_sha256": "d7e4ab391416e4cccef591e1312c6852526a92500c5669f919d65ff785330000",
+      "cwd": "/data/data/com.termux/files/home/Biyahe",
+      "elapsed_milliseconds": 1091.864,
+      "ended_at": "2026-10-10T11:01:32Z",
+      "executed": true,
+      "exit_code": 0,
+      "failure_count": 0,
+      "fingerprint_environment": {
+        "LANG": "en_US.UTF-8",
+        "LC_ALL": "C.UTF-8",
+        "NODE_OPTIONS": "",
+        "PATH": "/data/data/com.termux/files/home/.codex/tmp/arg0/codex-arg0MWU38W:/data/data/com.termux/files/home/.codex/tmp/arg0/codex-arg0hewtZJ:/data/data/com.termux/files/usr/bin",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "TZ": ""
+      },
+      "guard_environment": {
+        "PYTHONDONTWRITEBYTECODE": "1"
+      },
+      "id": "provenance-fixtures",
+      "input_files": [
+        {
+          "path": "api/scripts/evidence_provenance.py",
+          "sha256": "e17d63dda770595880842a5e93a96e87020cae71ba3384f76b854e10dc9ef46d"
+        },
+        {
+          "path": "api/scripts/test_evidence_provenance.py",
+          "sha256": "a9e64eae5df4afe8124cfee44a95d3df89f0b0ea26beb8b65d5a22462476d9d2"
+        },
+        {
+          "path": "docs/reports/batch041-evidence-provenance.json",
+          "sha256": "882fd1ae2c7ab8f2e1edab87c9122911f62c4568513bbe6c8875263958dc1bb6"
+        },
+        {
+          "path": "docs/reports/batch041-evidence-reconciliation.md",
+          "sha256": "bfca264f02dbe3e11b9d62f4ac60be0e46fa8a4523b3e119c7ac7a62c4d877f9"
+        }
+      ],
+      "input_fingerprint_sha256": "d7e4ab391416e4cccef591e1312c6852526a92500c5669f919d65ff785330000",
+      "input_paths": [
+        "api/scripts/evidence_provenance.py",
+        "api/scripts/test_evidence_provenance.py",
+        "docs/reports/batch041-evidence-provenance.json",
+        "docs/reports/batch041-evidence-reconciliation.md"
+      ],
+      "memavailable_floor_kib": 524288,
+      "output_path": "/data/data/com.termux/files/home/.cache/biyahe/batch043/portable-verification/20261010T110130Z-22649/provenance-fixtures.stdout.txt",
+      "output_sha256": "2173d1480e58efa5bd89bf22db5bc4cb4ad8841397e9b171dc3eb95551fd81e7",
+      "reported_check_markers": 0,
+      "resource_guard": "NOT_REQUIRED",
+      "source_revision": "dad74a31898c1c96235e14b94ef8b4a69e31287f",
+      "started_at": "2026-10-10T11:01:31Z",
+      "status": "VERIFIED",
+      "swapfree_floor_kib": 131072,
+      "test_count": 6,
+      "tool_versions": {
+        "/data/data/com.termux/files/usr/bin/python3": "path=/data/data/com.termux/files/usr/bin/python3.14;sha256=4f8d78ede7fc26e96e99342dd83ce42d32c9b4d0806bc9a99ff7151396269b25",
+        "bash": "path=/data/data/com.termux/files/usr/bin/bash;sha256=0179c7b15fb3df857608ef745daa17077523ffc42b7755ccc725ad7a712698a2",
+        "composer": "MISSING",
+        "node": "path=/data/data/com.termux/files/usr/bin/node;sha256=d682000d9f5d887ec66de1ed68d9616c7a9d064bca9ae9d8c46725a00912cbc6",
+        "npm": "path=/data/data/com.termux/files/usr/lib/node_modules/npm/bin/npm-cli.js;sha256=8e5f6f3429f8cdbe693cdc29904e9d5a7b127a494bd15c804bd54c7403bfcbe7",
+        "php": "path=/data/data/com.termux/files/usr/bin/php;sha256=0d7dad516768df79137c8921d9a63c77faa7df1d89c36240aa116a346ae9ad4d",
+        "python3": "path=/data/data/com.termux/files/usr/bin/python3.14;sha256=4f8d78ede7fc26e96e99342dd83ce42d32c9b4d0806bc9a99ff7151396269b25",
+        "python_runtime": "3.14.6"
+      }
+    },
+    "source_provenance": {
+      "assertion_count": null,
+      "command": [
+        "/data/data/com.termux/files/usr/bin/python3",
+        "api/scripts/validate-batch041-provenance.py"
+      ],
+      "command_fingerprint_sha256": "1003096d56f302f5ff6708210347b7726d85d69197342f7a23cd6e238d97a4dc",
+      "cwd": "/data/data/com.termux/files/home/Biyahe",
+      "elapsed_milliseconds": 742.909,
+      "ended_at": "2026-10-10T11:01:30Z",
+      "executed": true,
+      "exit_code": 0,
+      "failure_count": 0,
+      "fingerprint_environment": {
+        "LANG": "en_US.UTF-8",
+        "LC_ALL": "C.UTF-8",
+        "NODE_OPTIONS": "",
+        "PATH": "/data/data/com.termux/files/home/.codex/tmp/arg0/codex-arg0MWU38W:/data/data/com.termux/files/home/.codex/tmp/arg0/codex-arg0hewtZJ:/data/data/com.termux/files/usr/bin",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "TZ": ""
+      },
+      "guard_environment": {
+        "PYTHONDONTWRITEBYTECODE": "1"
+      },
+      "id": "source-provenance",
+      "input_files": [
+        {
+          "path": "api/scripts/evidence_provenance.py",
+          "sha256": "e17d63dda770595880842a5e93a96e87020cae71ba3384f76b854e10dc9ef46d"
+        },
+        {
+          "path": "api/scripts/validate-batch041-provenance.py",
+          "sha256": "b31085fa0c2c190d48c2b1dc1e0cd72b9c4210efc4843fbc346361cfdd3ac6de"
+        },
+        {
+          "path": "docs/reports/batch041-evidence-provenance.json",
+          "sha256": "882fd1ae2c7ab8f2e1edab87c9122911f62c4568513bbe6c8875263958dc1bb6"
+        }
+      ],
+      "input_fingerprint_sha256": "1003096d56f302f5ff6708210347b7726d85d69197342f7a23cd6e238d97a4dc",
+      "input_paths": [
+        "api/scripts/evidence_provenance.py",
+        "api/scripts/validate-batch041-provenance.py",
+        "docs/reports/batch041-evidence-provenance.json"
+      ],
+      "memavailable_floor_kib": 524288,
+      "output_path": "/data/data/com.termux/files/home/.cache/biyahe/batch043/portable-verification/20261010T110129Z-22641/source-provenance.stdout.txt",
+      "output_sha256": "f34abe4053f2b55655260063cc2776bdcb015540af26b170bc66c74577804d2e",
+      "reported_check_markers": 1,
+      "resource_guard": "NOT_REQUIRED",
+      "source_revision": "dad74a31898c1c96235e14b94ef8b4a69e31287f",
+      "started_at": "2026-10-10T11:01:29Z",
+      "status": "VERIFIED",
+      "swapfree_floor_kib": 131072,
+      "test_count": null,
+      "tool_versions": {
+        "/data/data/com.termux/files/usr/bin/python3": "path=/data/data/com.termux/files/usr/bin/python3.14;sha256=4f8d78ede7fc26e96e99342dd83ce42d32c9b4d0806bc9a99ff7151396269b25",
+        "bash": "path=/data/data/com.termux/files/usr/bin/bash;sha256=0179c7b15fb3df857608ef745daa17077523ffc42b7755ccc725ad7a712698a2",
+        "composer": "MISSING",
+        "node": "path=/data/data/com.termux/files/usr/bin/node;sha256=d682000d9f5d887ec66de1ed68d9616c7a9d064bca9ae9d8c46725a00912cbc6",
+        "npm": "path=/data/data/com.termux/files/usr/lib/node_modules/npm/bin/npm-cli.js;sha256=8e5f6f3429f8cdbe693cdc29904e9d5a7b127a494bd15c804bd54c7403bfcbe7",
+        "php": "path=/data/data/com.termux/files/usr/bin/php;sha256=0d7dad516768df79137c8921d9a63c77faa7df1d89c36240aa116a346ae9ad4d",
+        "python3": "path=/data/data/com.termux/files/usr/bin/python3.14;sha256=4f8d78ede7fc26e96e99342dd83ce42d32c9b4d0806bc9a99ff7151396269b25",
+        "python_runtime": "3.14.6"
+      }
+    },
+    "static_evidence_smoke": {
+      "assertion_count": null,
+      "command": [
+        "/data/data/com.termux/files/usr/bin/python3",
+        "api/scripts/test_offline_evidence_smoke.py"
+      ],
+      "command_fingerprint_sha256": "457962f78157a03ceec8663b8379c85b7861c3740e70c608d697acedbcc05045",
+      "cwd": "/data/data/com.termux/files/home/Biyahe",
+      "elapsed_milliseconds": 1090.166,
+      "ended_at": "2026-10-10T11:01:36Z",
+      "executed": true,
+      "exit_code": 0,
+      "failure_count": 0,
+      "fingerprint_environment": {
+        "LANG": "en_US.UTF-8",
+        "LC_ALL": "C.UTF-8",
+        "NODE_OPTIONS": "",
+        "PATH": "/data/data/com.termux/files/home/.codex/tmp/arg0/codex-arg0MWU38W:/data/data/com.termux/files/home/.codex/tmp/arg0/codex-arg0hewtZJ:/data/data/com.termux/files/usr/bin",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "TZ": ""
+      },
+      "guard_environment": {
+        "PYTHONDONTWRITEBYTECODE": "1"
+      },
+      "id": "static-evidence-smoke",
+      "input_files": [
+        {
+          "path": "api/scripts/offline-evidence-smoke.py",
+          "sha256": "01450f3bd284a6f965784475d8de025f0a4f42306e561a06b329f3b1251dd9a3"
+        },
+        {
+          "path": "api/scripts/test_offline_evidence_smoke.py",
+          "sha256": "893cf0881b8b415ac21b606dd1a7c0b6d6f529f24dbaed97dd092577352d2681"
+        },
+        {
+          "path": "docs/reports/batch041-evidence-provenance.json",
+          "sha256": "882fd1ae2c7ab8f2e1edab87c9122911f62c4568513bbe6c8875263958dc1bb6"
+        }
+      ],
+      "input_fingerprint_sha256": "457962f78157a03ceec8663b8379c85b7861c3740e70c608d697acedbcc05045",
+      "input_paths": [
+        "api/scripts/offline-evidence-smoke.py",
+        "api/scripts/test_offline_evidence_smoke.py",
+        "docs/reports/batch041-evidence-provenance.json"
+      ],
+      "memavailable_floor_kib": 524288,
+      "output_path": "/data/data/com.termux/files/home/.cache/biyahe/batch043/portable-verification/20261010T110135Z-22667/static-evidence-smoke.stdout.txt",
+      "output_sha256": "74430ae68417c6dda5435b144197ca18f14be85ce5b3da8ea6069450c4876d69",
+      "reported_check_markers": 0,
+      "resource_guard": "NOT_REQUIRED",
+      "source_revision": "dad74a31898c1c96235e14b94ef8b4a69e31287f",
+      "started_at": "2026-10-10T11:01:35Z",
+      "status": "VERIFIED",
+      "swapfree_floor_kib": 131072,
+      "test_count": 2,
+      "tool_versions": {
+        "/data/data/com.termux/files/usr/bin/python3": "path=/data/data/com.termux/files/usr/bin/python3.14;sha256=4f8d78ede7fc26e96e99342dd83ce42d32c9b4d0806bc9a99ff7151396269b25",
+        "bash": "path=/data/data/com.termux/files/usr/bin/bash;sha256=0179c7b15fb3df857608ef745daa17077523ffc42b7755ccc725ad7a712698a2",
+        "composer": "MISSING",
+        "node": "path=/data/data/com.termux/files/usr/bin/node;sha256=d682000d9f5d887ec66de1ed68d9616c7a9d064bca9ae9d8c46725a00912cbc6",
+        "npm": "path=/data/data/com.termux/files/usr/lib/node_modules/npm/bin/npm-cli.js;sha256=8e5f6f3429f8cdbe693cdc29904e9d5a7b127a494bd15c804bd54c7403bfcbe7",
+        "php": "path=/data/data/com.termux/files/usr/bin/php;sha256=0d7dad516768df79137c8921d9a63c77faa7df1d89c36240aa116a346ae9ad4d",
+        "python3": "path=/data/data/com.termux/files/usr/bin/python3.14;sha256=4f8d78ede7fc26e96e99342dd83ce42d32c9b4d0806bc9a99ff7151396269b25",
+        "python_runtime": "3.14.6"
+      }
+    }
+  },
+  "test_statuses_at_recovery": {
+    "adapter_phpunit": "BLOCKED_RESOURCE_HISTORICAL",
+    "browser": "NOT_RUN_HISTORICAL",
+    "eslint": "BLOCKED_RESOURCE_HISTORICAL",
+    "frontend_focus": "Batch042 source-bound evidence exists; current Batch043 checks not run",
+    "real_cebu_corpus": "BLOCKED_RESOURCE_HISTORICAL; no Batch042 graph replay worker ran",
+    "typescript": "BLOCKED_RESOURCE_HISTORICAL"
+  },
+  "workstreams": [
+    {
+      "id": "RECOVERY",
+      "status": "VERIFIED",
+      "stop_condition": "Initial SD bundle and seven report hashes verified before tracked edits; all seven still match."
+    },
+    {
+      "id": "ROUTING_DIAGNOSIS",
+      "status": "VERIFIED_STATIC",
+      "stop_condition": "No graph metadata or content access until all five resource samples pass."
+    },
+    {
+      "id": "CORPUS_CASE_SELECTION",
+      "status": "VERIFIED",
+      "stop_condition": "Strict case parsing, subset completeness, and comparator contracts pass."
+    },
+    {
+      "id": "RESOURCE_GUARD_ORDER",
+      "status": "VERIFIED_STATIC",
+      "stop_condition": "Graph metadata/hash moved behind five-sample guard; failed gate proved no worker launch."
+    },
+    {
+      "id": "REAL_CEBU_CORPUS",
+      "status": "BLOCKED_RESOURCE",
+      "stop_condition": "Do not retry this blocked case in Batch043; resume only after a fresh five-sample pass in a later run."
+    },
+    {
+      "id": "ADAPTER_REAL_GRAPH",
+      "status": "BLOCKED_RESOURCE",
+      "stop_condition": "Requires safe current graph access and Laravel focused integration."
+    },
+    {
+      "id": "ROUTING_PERFORMANCE",
+      "status": "BLOCKED_RESOURCE",
+      "stop_condition": "No performance claims without a safe bounded graph measurement."
+    },
+    {
+      "id": "FRONTEND_REGRESSIONS",
+      "status": "BLOCKED_RESOURCE",
+      "stop_condition": "Run guarded harnesses only after five passing samples."
+    },
+    {
+      "id": "PORTABLE_V5",
+      "status": "IMPLEMENTED_UNTESTED",
+      "stop_condition": "Build from a clean tracked checkout, verify all manifest hashes, then execute local static entry point."
+    },
+    {
+      "id": "STAGING_READINESS",
+      "status": "IMPLEMENTED_UNTESTED",
+      "stop_condition": "External Linux host and staging-only environment are required; local preflight is passive."
+    },
+    {
+      "id": "DOCTOR_V43",
+      "status": "VERIFIED",
+      "stop_condition": "Generate from the exact executable revision and validate before documentation commit."
+    },
+    {
+      "id": "DELIVERY",
+      "status": "IN_PROGRESS",
+      "stop_condition": "Commit evidence/docs and kit; verify final SD bundle, archive, report, and clipboard."
+    }
+  ]
+}

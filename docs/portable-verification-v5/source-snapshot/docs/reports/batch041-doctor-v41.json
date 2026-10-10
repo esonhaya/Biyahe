@@ -1,0 +1,252 @@
+{
+  "format": "biyahe-doctor-v41-evidence-v1",
+  "batch": 41,
+  "assessed_revision": "2850683120fd04bef25d926f9d9ed5655e5ca6f0",
+  "source_and_graph": {
+    "source_snapshot": "2026-10-07T01:00:21Z",
+    "source_pbf_sha256": "787cac20ecc586b754b1a464643a040566d486457c6a37bc0b11ce683bc66d4d",
+    "graph_sha256": "29d7aaf9c45a596f4065c44d13f983f4a7edeec5ac2ea41b718b1c52ca865bf8",
+    "graph_fingerprint": "a0d9f1cb8289cf1f9bde3905d1ad8a57124ee41120153b4efc1f5b31e4c03ecd",
+    "graph_hash_observed_at_utc": "2026-10-10T00:03:44Z",
+    "graph_hash_status": "VERIFIED",
+    "sqlite_integrity_check": "NOT_RUN",
+    "provenance_registry_sha256": "882fd1ae2c7ab8f2e1edab87c9122911f62c4568513bbe6c8875263958dc1bb6",
+    "pbf_opened": false,
+    "graph_modified": false
+  },
+  "categories": [
+    {
+      "name": "evidence_reconciliation",
+      "implementation": "VERIFIED",
+      "validation": "VERIFIED",
+      "evidence": "batch041-evidence-provenance.json SHA256 882fd1ae2c7ab8f2e1edab87c9122911f62c4568513bbe6c8875263958dc1bb6; six reports and thirteen metric claims validated. 648 = 619 stored + 29 omitted; legacy quality zeros are unmeasured defaults; measured graph diagnostics are 26 long edges, 944 boundary nodes, 1510 crossing-tag nodes."
+    },
+    {
+      "name": "coverage_diagnostics",
+      "implementation": "VERIFIED",
+      "validation": "VERIFIED",
+      "evidence": "Pinned Batch032 report is validated as stored-record coverage only: 503 stops / 436 snappable; 37 places / 30 snappable. Coordinates, unique IDs, snap status/radius, transfer verification and historical route evidence are checked. No geographic, sidewalk, population or field coverage is claimed."
+    },
+    {
+      "name": "graph_identity",
+      "implementation": "VERIFIED",
+      "validation": "VERIFIED",
+      "evidence": "The external SQLite artifact SHA256 matched at 2026-10-09T18:38:21Z. This is an identity check only; SQLite integrity_check and real route replay were not run."
+    },
+    {
+      "name": "offline_adapter_contract",
+      "implementation": "IMPLEMENTED",
+      "validation": "VERIFIED",
+      "evidence": "Guarded focused PHPUnit rerun at source revision 2850683120fd04bef25d926f9d9ed5655e5ca6f0 passed 22/22 tests and 75 assertions, including router and preview contracts. A fixture expectation defect was corrected and mixed-success PARTIAL coverage added. No real graph route is claimed."
+    },
+    {
+      "name": "ten_case_corpus",
+      "implementation": "IMPLEMENTED",
+      "validation": "BLOCKED",
+      "evidence": "Four synthetic comparator fixtures pass. Replay was canceled by the owned-process guard after live SwapFree readings of 64988 and 27184 KiB in consecutive one-second samples; group SIGTERM cancellation completed. No report was written; historical 9 found / 1 disconnected is not current replay evidence."
+    },
+    {
+      "name": "journey_preview",
+      "implementation": "IMPLEMENTED",
+      "validation": "BLOCKED",
+      "evidence": "Backend preview behavior is included in the 22 passing adapter PHPUnit tests. The frontend identity, cancellation, retry, removal, presentation, and save-exclusion harness group did not start because its five-sample guard preflight reached SwapFree 18,964 KiB. Static source inspection is not UI execution."
+    },
+    {
+      "name": "ride_mode",
+      "implementation": "IMPLEMENTED",
+      "validation": "BLOCKED",
+      "evidence": "Manual progression and saved-session assertions are present in the existing harness, but the guarded frontend harness group was not launched after SwapFree fell below the unchanged floor."
+    },
+    {
+      "name": "saved_journeys",
+      "implementation": "IMPLEMENTED",
+      "validation": "BLOCKED",
+      "evidence": "Snapshot-v1 validation, reopening, stale disclosure, and preview save exclusion were statically reviewed. The focused frontend harness group was blocked before execution by the SwapFree preflight."
+    },
+    {
+      "name": "map_and_mobile",
+      "implementation": "IMPLEMENTED",
+      "validation": "NOT_RUN",
+      "evidence": "Static review confirms source-geometry filtering, mobile CSS, focus styles, and 44 px controls. No browser executable or browser test environment was available; viewport and visual checks were not run."
+    },
+    {
+      "name": "validation_ledger",
+      "implementation": "IMPLEMENTED",
+      "validation": "BLOCKED",
+      "evidence": "Fingerprint binding and interruption handling were statically reviewed. The Node ledger harness was included in a frontend group that did not start after the SwapFree preflight failed."
+    },
+    {
+      "name": "portable_verification",
+      "implementation": "VERIFIED",
+      "validation": "VERIFIED",
+      "evidence": "Portable v2: 55 required paths matched Git blobs at its pinned revision, 58 checksums and packaged static smoke passed. Recovery v3 pins documentation commit 0bd2324cdcdbd9d5146e00a8020bb913dada572c; 58 required paths and 61 package checksums passed its local verifier and static no-database smoke. No external host was used."
+    },
+    {
+      "name": "postgresql_staging",
+      "implementation": "NOT_RUN",
+      "validation": "BLOCKED",
+      "evidence": "PostgreSQL was not started or contacted. Staging and route parity require a separate external host."
+    },
+    {
+      "name": "transfer_field_evidence",
+      "implementation": "NOT_RUN",
+      "validation": "BLOCKED",
+      "evidence": "No field observation was made. Both transfer records remain UNVERIFIED_RECORD; graph connectivity is not field safety evidence."
+    }
+  ],
+  "execution_evidence": {
+    "provenance_fixtures": {
+      "status": "VERIFIED",
+      "passed": 6,
+      "failed": 0
+    },
+    "coverage_fixtures": {
+      "status": "VERIFIED",
+      "passed": 11,
+      "failed": 0
+    },
+    "static_evidence_smoke_fixtures": {
+      "status": "VERIFIED",
+      "passed": 2,
+      "failed": 0
+    },
+    "corpus_comparator_contract_fixtures": {
+      "status": "VERIFIED",
+      "passed": 4,
+      "failed": 0,
+      "synthetic_only": true
+    },
+    "changed_php_syntax": {
+      "status": "VERIFIED",
+      "files_passed": 6
+    },
+    "python_ast_json_and_diff_checks": "VERIFIED",
+    "provenance_cli": "VERIFIED_6_SOURCES_13_CLAIMS_0_UNRESOLVED",
+    "offline_coverage_summary": "VERIFIED_PINNED_REPORT_ONLY",
+    "resource_samples_kib": {
+      "source": "recovery external baseline, before guarded workers",
+      "sample_timestamps_utc": [
+        "2026-10-09T23:48:58Z",
+        "2026-10-09T23:49:37Z",
+        "2026-10-09T23:50:11Z",
+        "2026-10-09T23:50:23Z",
+        "2026-10-09T23:50:57Z"
+      ],
+      "memavailable": [
+        1050908,
+        1044400,
+        969164,
+        1108260,
+        1199744
+      ],
+      "swapfree": [
+        658932,
+        572408,
+        451028,
+        268084,
+        290700
+      ],
+      "required_memavailable_minimum": 524288,
+      "required_swapfree_minimum": 131072,
+      "baseline_gate": "PASS_ALL_FIVE",
+      "owned_test_worker": "NONE_DURING_BASELINE",
+      "postgresql_process": "NONE_OBSERVED"
+    },
+    "phpunit": "VERIFIED_22_TESTS_75_ASSERTIONS",
+    "frontend_node_harnesses": "BLOCKED_NOT_LAUNCHED",
+    "real_graph_replay": "BLOCKED_RESOURCE_ABORTED",
+    "sqlite_integrity_check": "NOT_RUN",
+    "browser_tests": "NOT_RUN_BROWSER_UNAVAILABLE",
+    "postgresql": "NOT_CONTACTED",
+    "field_verification": "NOT_RUN",
+    "portable_kit": {
+      "status": "VERIFIED_STATIC_ONLY_V2_AND_V3",
+      "v2": {
+        "source_revision": "3ec11b5ed3bab4a1bd5ed880f144bbd43ee4fca4",
+        "required_paths_byte_matched": 55,
+        "checksummed_files": 58,
+        "packaged_static_smoke": "PASS_STATIC_EVIDENCE_ONLY",
+        "verify_kit_script": "NOT_RUN_AT_MISMATCHED_CHECKOUT_REVISION",
+        "external_host_execution": "NOT_RUN"
+      },
+      "v3": {
+        "format": "biyahe-portable-offline-verification-kit-v3",
+        "source_revision": "0bd2324cdcdbd9d5146e00a8020bb913dada572c",
+        "package_commit": "90d32255c2912abc6d249d727ceb4c14265535e2",
+        "required_paths_byte_matched": 58,
+        "checksummed_files": 61,
+        "total_package_files": 62,
+        "manifest_sha256": "60553bb6136ef4a5f416f2744da0be202f5317e0db34dc9ddb63f55bc3bf8350",
+        "sha256sums_sha256": "876ad4f0eb0842101debd08a1d6177814dd7ccdfeff820fcf3fb0146adda95d1",
+        "verify_kit": "PASS",
+        "no_database_smoke": "PASS_STATIC_EVIDENCE_ONLY",
+        "real_graph_replay": "NOT_RUN",
+        "external_host_execution": "NOT_RUN",
+        "postgresql": "NOT_RUN",
+        "field_verification": "NOT_RUN"
+      }
+    },
+    "doctor_contract_fixtures": {
+      "status": "VERIFIED",
+      "passed": 6,
+      "failed": 0
+    },
+    "php_geometry_contract_smoke": {
+      "status": "VERIFIED",
+      "passed": 7,
+      "failed": 0,
+      "graph_read": false,
+      "laravel_bootstrap": false,
+      "cases": [
+        "valid directed route",
+        "reversed edge rejected",
+        "virtual connector rejected",
+        "source mismatch rejected",
+        "distance mismatch rejected",
+        "disconnected no-path accepted",
+        "failure geometry rejected"
+      ]
+    },
+    "adapter_phpunit": {
+      "status": "VERIFIED",
+      "passed": 22,
+      "failed": 0,
+      "assertions": 75,
+      "peak_worker_rss_kib": 154092,
+      "min_memavailable_kib": 872920,
+      "min_swapfree_kib": 368604,
+      "postgres_rss_kib": 0,
+      "first_run_failure_resolved": "The disconnected-only fixture expected PARTIAL instead of UNAVAILABLE; corrected and covered both summary states."
+    },
+    "frontend_harnesses": {
+      "status": "BLOCKED_RESOURCE",
+      "execution_status": "NOT_EXECUTED",
+      "min_memavailable_kib": 838872,
+      "min_swapfree_kib": 18964,
+      "required_swapfree_minimum_kib": 131072,
+      "reason": "Five-sample owned-worker preflight failed; no frontend harness command was released."
+    },
+    "typecheck": "BLOCKED_RESOURCE_NOT_RUN",
+    "lint": "BLOCKED_RESOURCE_NOT_RUN",
+    "php_formatting": "BLOCKED_RESOURCE_NOT_RUN",
+    "resource_guard": {
+      "preflight_samples": 5,
+      "spacing_seconds": 5,
+      "minimum_memavailable_kib": 524288,
+      "minimum_swapfree_kib": 131072,
+      "owned_process_group_guard": "VERIFIED_FOR_ADAPTER; VERIFIED_AND_SIGTERM_CANCELLED_FOR_CORPUS",
+      "active_worker_swap": "NOT_CAPTURED_BY_GUARD_ACTIVE_MONITOR",
+      "corpus_cancel_after_consecutive_breach_samples": 2,
+      "future_cancellation_policy": "Set BIYAHE_RESOURCE_BREACH_SAMPLES=1 for first-sample cancellation."
+    }
+  },
+  "release_gates": {
+    "local_walking_adapter": "IMPLEMENTED_UNIT_VERIFIED",
+    "live_api_integration": "BLOCKED_NOT_CONNECTED",
+    "postgresql_staging": "BLOCKED_NOT_RUN",
+    "route_parity": "BLOCKED_NOT_RUN",
+    "field_safety": "BLOCKED_NO_FIELD_EVIDENCE",
+    "private_beta": "BLOCKED",
+    "production_activation": "NO"
+  }
+}
