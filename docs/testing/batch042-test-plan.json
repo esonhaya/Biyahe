@@ -33,7 +33,8 @@
       "debounced place search and keyboard selection",
       "Can-I-Ride presentation and UX contract",
       "validation ledger fingerprints and interruption recovery",
-      "TypeScript typecheck and focused ESLint when dependencies are installed"
+      "TypeScript typecheck and focused ESLint as independent suites when dependencies are installed",
+      "Each mode supports --suite SUITE_ID for one-suite execution"
     ],
     "ADAPTER": ["focused OfflineJourneyWalkingPreview, OfflinePedestrianGraphRouter, and OfflinePedestrianRouteGeometryContract PHPUnit tests"],
     "CORPUS": ["verify pinned SQLite SHA256", "bounded read-only ten-case corpus replay to a new path"],

@@ -83,6 +83,13 @@ class PortableRunnerTests(unittest.TestCase):
         self.assertEqual(RUNNER.aggregate([{"status": "PASS"}, {"status": "FAIL"}]), "FAIL")
         self.assertEqual(RUNNER.aggregate([{"status": "PASS"}, {"status": "NOT_RUN"}]), "NOT_RUN")
 
+    def test_individual_suite_selection_is_mode_scoped(self):
+        specs = [{"id": "preview-state"}, {"id": "commute-card"}]
+        self.assertEqual(RUNNER.select_specs(specs, "commute-card"), [specs[1]])
+        self.assertEqual(RUNNER.select_specs(specs, None), specs)
+        with self.assertRaisesRegex(ValueError, "not available in this mode"):
+            RUNNER.select_specs(specs, "adapter-phpunit")
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

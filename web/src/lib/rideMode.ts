@@ -446,8 +446,11 @@ export function parseRideModeSession(raw: string | null): RideModeSession | null
     if (status === "COMPLETED" && (currentLegIndex !== value.journey.legs.length - 1
       || currentLeg.type !== "WALK_EGRESS" || currentState !== "ARRIVED")) return null;
     if (status !== "COMPLETED" && currentState === "ARRIVED") return null;
-    if (currentLeg.type === "RIDE" && !["WAITING_TO_BOARD", "RIDING"].includes(currentState)) return null;
-    if (currentLeg.type !== "RIDE" && !["NOT_STARTED", "WALKING"].includes(currentState)) return null;
+    if (currentLeg.type === "RIDE") {
+      if (!["WAITING_TO_BOARD", "RIDING"].includes(currentState)) return null;
+    } else if (status !== "COMPLETED" && !["NOT_STARTED", "WALKING"].includes(currentState)) {
+      return null;
+    }
 
     return value as unknown as RideModeSession;
   } catch {

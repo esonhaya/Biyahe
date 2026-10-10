@@ -174,9 +174,8 @@ function runJourney(transfers) {
   return session;
 }
 
-for (const transfers of [0, 1, 2]) {
-  runJourney(transfers);
-}
+const completedSession = runJourney(0);
+for (const transfers of [1, 2]) runJourney(transfers);
 
 const direct = createRideModeSession(syntheticJourney(0), 10_000);
 const identityJourney = syntheticJourney(0);
@@ -256,7 +255,9 @@ const changedRoute = { ...active.journey, legs: active.journey.legs.map((leg, in
 assert.equal(replaceSessionJourney(active, changedRoute, 10_010), active, "a detail refresh cannot silently switch the active route endpoints");
 const unstartedFinalWalk = { ...active, currentLegIndex: active.journey.legs.length - 1, currentLegState: "NOT_STARTED" };
 assert.equal(applyRideModeAction(unstartedFinalWalk, "ARRIVED", 10_011).error?.includes("Start the final walking step"), true, "arrival requires a started final walk");
-assert.equal(parseRideModeSession(JSON.stringify({ ...runJourney(0), status: "COMPLETED" })) !== null, true, "valid completed sessions remain resumable for display");
+assert.notEqual(parseRideModeSession(JSON.stringify(completedSession)), null, "valid completed sessions remain resumable for display");
+assert.equal(parseRideModeSession(JSON.stringify({ ...completedSession, status: "ACTIVE" })), null, "ARRIVED is valid only for a completed final walking leg");
+assert.equal(parseRideModeSession(JSON.stringify({ ...completedSession, currentLegState: "WALKING" })), null, "completed sessions must retain their final arrived state");
 
 console.log("RIDE_MODE_HARNESS=PASS");
 console.log("DIRECT=PASS ONE_TRANSFER=PASS TWO_TRANSFER=PASS");

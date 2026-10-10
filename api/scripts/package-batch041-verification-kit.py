@@ -71,15 +71,17 @@ VERIFY_SCRIPT = r'''#!/usr/bin/env bash
 set -euo pipefail
 kit_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 mode=STATIC
+suite=""
 repo_root=""
 output_root="${HOME}/.cache/biyahe/batch042/portable-verification"
 while (($#)); do
   case "$1" in
     STATIC|FRONTEND|ADAPTER|CORPUS|FULL) mode="$1"; shift ;;
     --mode) (($# >= 2)) || { printf '%s\n' 'ERROR: --mode requires a value.' >&2; exit 2; }; mode="$2"; shift 2 ;;
+    --suite) (($# >= 2)) || { printf '%s\n' 'ERROR: --suite requires a value.' >&2; exit 2; }; suite="$2"; shift 2 ;;
     --repo-root) (($# >= 2)) || { printf '%s\n' 'ERROR: --repo-root requires a path.' >&2; exit 2; }; repo_root="$2"; shift 2 ;;
     --output-root) (($# >= 2)) || { printf '%s\n' 'ERROR: --output-root requires a path.' >&2; exit 2; }; output_root="$2"; shift 2 ;;
-    --help) printf 'Usage: %s [STATIC|FRONTEND|ADAPTER|CORPUS|FULL] [--repo-root PINNED_CHECKOUT] [--output-root DIR]\n' "$0"; exit 0 ;;
+    --help) printf 'Usage: %s [STATIC|FRONTEND|ADAPTER|CORPUS|FULL] [--suite SUITE_ID] [--repo-root PINNED_CHECKOUT] [--output-root DIR]\n' "$0"; exit 0 ;;
     *) printf 'ERROR: unknown option: %s\n' "$1" >&2; exit 2 ;;
   esac
 done
@@ -153,7 +155,9 @@ for relative,expected in m.get('executable_source_fingerprints',{}).items():
 PY
 fi
 export PYTHONDONTWRITEBYTECODE=1
-exec python3 "$repo_root/api/scripts/run-portable-verification.py" --mode "$mode" --repo-root "$repo_root" --output-root "$output_root" --source-revision "$source_revision"
+runner_args=(--mode "$mode" --repo-root "$repo_root" --output-root "$output_root" --source-revision "$source_revision")
+if [[ -n "$suite" ]]; then runner_args+=(--suite "$suite"); fi
+exec python3 "$repo_root/api/scripts/run-portable-verification.py" "${runner_args[@]}"
 '''
 
 README = """# Biyahe Batch042 portable verification kit v4
@@ -173,6 +177,8 @@ From this directory, run `bash verify-kit.sh MODE`. Available modes are:
 | `FULL` | Runs the modes in order and records blocked dependencies or resource gates per suite |
 
 `verify-kit.sh` validates its manifest and every `SHA256SUMS` entry before invoking the runner. By default, commands use the included `source-snapshot`. Add `--repo-root CHECKOUT` to require the exact Git revision in the manifest and byte-compare every pinned source path. `--output-root DIR` selects a new evidence root; run directories are unique and existing outputs are never overwritten.
+
+Run one suite with `bash verify-kit.sh --mode FRONTEND --suite commute-card`. Suite identifiers are printed by each mode and recorded in `run-status.json`; a suite unavailable in the selected mode is rejected before execution.
 
 Each run writes an atomic `run-status.json`, individual command output, source/tool/command fingerprints, resource logs for guarded work, and an evidence checksum list. Interrupted `RUNNING` records recover to `NOT_RUN`; the runner never infers PASS from partial output. Guarded suites use five samples spaced five seconds apart, the fixed 524288 KiB memory and 131072 KiB swap floors, and first-breach cancellation. No database service is started.
 
@@ -265,7 +271,8 @@ def main(argv=None) -> int:
                 "bash verify-kit.sh FRONTEND",
                 "bash verify-kit.sh ADAPTER",
                 "bash verify-kit.sh CORPUS",
-                "bash verify-kit.sh FULL"
+                "bash verify-kit.sh FULL",
+                "bash verify-kit.sh --mode FRONTEND --suite commute-card"
             ],
             "expected_output_formats": ["biyahe-offline-evidence-smoke-v1", "biyahe-evidence-provenance-validation-v1", "biyahe-doctor-v42-validation-v1", "biyahe-portable-verification-run-v1", "biyahe-offline-walking-corpus-v1"],
             "expected_stored_coverage": {"stops": 503, "stops_snappable_within_25m": 436, "places": 37, "places_snappable_within_25m": 30, "transfers_unverified": 2, "historical_corpus_cases": 10, "historical_routes_found": 9, "historical_routes_disconnected": 1},

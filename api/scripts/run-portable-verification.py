@@ -198,7 +198,8 @@ def command_specs(root: Path, mode: str, run_dir: Path) -> list[dict[str, object
         {"id": "ride-mode", "argv": ["node", "--experimental-strip-types", "scripts/ride-mode-harness.mjs"], "cwd": web, "inputs": ["web/src/lib/rideMode.ts", "web/scripts/ride-mode-harness.mjs"]},
         {"id": "request-gate", "argv": ["node", "--experimental-strip-types", "scripts/request-gate-harness.mjs"], "cwd": web, "inputs": ["web/src/lib/requestGate.ts", "web/scripts/request-gate-harness.mjs"]},
         {"id": "search-and-can-i-ride", "argv": [sys.executable, "-c", "import subprocess,sys; cs=[['node','--experimental-strip-types','scripts/place-search-harness.mjs'],['node','--experimental-strip-types','scripts/search-keyboard-harness.mjs'],['node','--experimental-strip-types','scripts/can-i-ride-harness.mjs'],['node','scripts/ux-contract-harness.mjs'],['node','scripts/validation-ledger-harness.mjs']]; failed=0\nfor c in cs:\n p=subprocess.run(c); print('CHILD_COMMAND='+repr(c)+' EXIT='+str(p.returncode), flush=True); failed |= p.returncode != 0\nsys.exit(1 if failed else 0)"], "cwd": web, "inputs": ["web/src/lib/latestPlaceSearch.ts", "web/src/lib/searchKeyboard.ts", "web/src/lib/canIRidePresentation.ts", "web/scripts/place-search-harness.mjs", "web/scripts/search-keyboard-harness.mjs", "web/scripts/can-i-ride-harness.mjs", "web/scripts/ux-contract-harness.mjs", "web/scripts/validation-ledger-harness.mjs", "web/scripts/validation-ledger.mjs"]},
-        {"id": "typecheck-and-eslint", "argv": [sys.executable, "-c", "import subprocess,sys; cs=[['npm','run','typecheck'],['npm','run','lint','--','src/app/page.tsx','src/components/CommuteCard.tsx','src/components/RideMode.tsx','src/lib/offlineWalkingPreviewState.ts','src/lib/requestGate.ts','src/lib/savedJourneys.ts','src/lib/rideMode.ts','src/lib/canIRidePresentation.ts']]; failed=0\nfor c in cs:\n p=subprocess.run(c); print('CHILD_COMMAND='+repr(c)+' EXIT='+str(p.returncode), flush=True); failed |= p.returncode != 0\nsys.exit(1 if failed else 0)"], "cwd": web, "inputs": ["web/package.json", "web/package-lock.json", "web/tsconfig.json", "web/eslint.config.mjs", "web/src/app/page.tsx", "web/src/components/CommuteCard.tsx", "web/src/components/RideMode.tsx", "web/src/lib/offlineWalkingPreviewState.ts", "web/src/lib/requestGate.ts", "web/src/lib/savedJourneys.ts", "web/src/lib/rideMode.ts", "web/src/lib/canIRidePresentation.ts"]},
+        {"id": "typescript", "argv": ["npm", "run", "typecheck"], "cwd": web, "inputs": ["web/package.json", "web/package-lock.json", "web/tsconfig.json", "web/src/app/page.tsx", "web/src/components/CommuteCard.tsx", "web/src/components/RideMode.tsx", "web/src/lib/offlineWalkingPreviewState.ts", "web/src/lib/requestGate.ts", "web/src/lib/savedJourneys.ts", "web/src/lib/rideMode.ts", "web/src/lib/canIRidePresentation.ts"]},
+        {"id": "eslint", "argv": ["npm", "run", "lint", "--", "src/app/page.tsx", "src/components/CommuteCard.tsx", "src/components/RideMode.tsx", "src/lib/offlineWalkingPreviewState.ts", "src/lib/requestGate.ts", "src/lib/savedJourneys.ts", "src/lib/rideMode.ts", "src/lib/canIRidePresentation.ts"], "cwd": web, "inputs": ["web/package.json", "web/package-lock.json", "web/eslint.config.mjs", "web/src/app/page.tsx", "web/src/components/CommuteCard.tsx", "web/src/components/RideMode.tsx", "web/src/lib/offlineWalkingPreviewState.ts", "web/src/lib/requestGate.ts", "web/src/lib/savedJourneys.ts", "web/src/lib/rideMode.ts", "web/src/lib/canIRidePresentation.ts"]},
     ]
     adapter = [{"id": "adapter-phpunit", "argv": ["php", "artisan", "test", "--filter=OfflinePedestrianRouteGeometryContractTest|OfflinePedestrianGraphRouterTest|OfflineJourneyWalkingPreviewTest"], "cwd": api, "inputs": ["api/composer.lock", "api/phpunit.xml", "api/app/Services/Routing/OfflineJourneyWalkingPreview.php", "api/app/Services/Routing/OfflinePedestrianGraphRouter.php", "api/tests/Unit/OfflineJourneyWalkingPreviewTest.php", "api/tests/Unit/OfflinePedestrianGraphRouterTest.php", "api/tests/Unit/OfflinePedestrianRouteGeometryContractTest.php", "api/tests/Support/OfflinePedestrianGraphFixture.php"]}]
     corpus = [{"id": "real-cebu-corpus", "argv": ["php", "artisan", "biyahe:pedestrian:verify-offline-corpus", f"--output={run_dir / 'real-cebu-corpus.json'}"], "cwd": api, "inputs": ["api/composer.lock", "api/app/Console/Commands/VerifyOfflineWalkingCorpus.php", "api/scripts/compare-offline-corpus.py", "docs/testing/batch041-test-plan.json"]}]
@@ -215,6 +216,16 @@ def command_specs(root: Path, mode: str, run_dir: Path) -> list[dict[str, object
     raise ValueError(f"unsupported mode: {mode}")
 
 
+def select_specs(specs: list[dict[str, object]], suite_id: str | None) -> list[dict[str, object]]:
+    if suite_id is None:
+        return specs
+    selected = [spec for spec in specs if spec["id"] == suite_id]
+    if not selected:
+        available = ", ".join(str(spec["id"]) for spec in specs)
+        raise ValueError(f"suite {suite_id!r} is not available in this mode; choose one of: {available}")
+    return selected
+
+
 def run_specs(root: Path, run_dir: Path, specs: list[dict[str, object]], resource_guard: Path,
               on_update=None) -> list[dict[str, object]]:
     results: list[dict[str, object]] = []
@@ -223,7 +234,7 @@ def run_specs(root: Path, run_dir: Path, specs: list[dict[str, object]], resourc
         argv = list(spec["argv"])
         cwd = Path(spec["cwd"])
         started = utc_now()
-        guarded = identifier in {"preview-state", "preview-contract", "commute-card", "ride-mode", "request-gate", "search-and-can-i-ride", "typecheck-and-eslint", "adapter-phpunit", "real-cebu-corpus"}
+        guarded = identifier in {"preview-state", "preview-contract", "commute-card", "ride-mode", "request-gate", "search-and-can-i-ride", "typescript", "eslint", "adapter-phpunit", "real-cebu-corpus"}
         effective_environment = {"PYTHONDONTWRITEBYTECODE": "1", **(GUARD_ENV if guarded else {})}
         inherited_environment = {key: os.environ.get(key, "") for key in
                                  ("PATH", "LANG", "LC_ALL", "TZ", "NODE_OPTIONS")}
@@ -255,13 +266,15 @@ def run_specs(root: Path, run_dir: Path, specs: list[dict[str, object]], resourc
                 missing.append("node")
         if identifier == "syntax-and-json":
             missing.extend(f"{tool} required for static syntax checks" for tool in ("node", "php", "bash") if not shutil.which(tool))
-        if identifier == "typecheck-and-eslint":
+        if identifier in {"typescript", "eslint"}:
             if not shutil.which("npm"):
                 missing.append("npm")
         if identifier in {"adapter-phpunit", "real-cebu-corpus"} and not (root / "api/vendor/autoload.php").is_file():
             missing.append("api/vendor/autoload.php")
-        if identifier == "typecheck-and-eslint" and not (root / "web/node_modules/.bin/tsc").is_file():
-            missing.append("web/node_modules/.bin/tsc and ESLint dependencies")
+        if identifier == "typescript" and not (root / "web/node_modules/.bin/tsc").is_file():
+            missing.append("web/node_modules/.bin/tsc")
+        if identifier == "eslint" and not (root / "web/node_modules/.bin/eslint").is_file():
+            missing.append("web/node_modules/.bin/eslint")
         if identifier in {"doctor-v42-contract", "doctor-v42-report-validator"} and not (root / "docs/reports/batch042-doctor-v42.json").is_file():
             missing.append("docs/reports/batch042-doctor-v42.json")
         if missing:
@@ -416,6 +429,7 @@ def aggregate(results: list[dict[str, object]]) -> str:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--mode", choices=["STATIC", "FRONTEND", "ADAPTER", "CORPUS", "FULL"], default="STATIC")
+    parser.add_argument("--suite", help="run only one named suite available in the selected mode")
     parser.add_argument("--repo-root", type=Path, default=Path(__file__).resolve().parents[2])
     parser.add_argument("--output-root", type=Path, default=Path.home() / ".cache/biyahe/batch042/portable-verification")
     parser.add_argument("--source-revision", help="verified Git revision for a packaged source snapshot without .git metadata")
@@ -436,6 +450,8 @@ def main() -> int:
         current: dict[str, object] = {"format": "biyahe-portable-verification-run-v1", "mode": args.mode,
             "status": "RUNNING", "pid": os.getpid(), "repository_root": str(root), "started_at": utc_now(),
             "run_directory": str(run_dir), "recovered_interrupted_runs": recovered, "suites": []}
+        if args.suite:
+            current["selected_suite"] = args.suite
         try:
             git_revision = subprocess.check_output(["git", "-C", str(root), "rev-parse", "HEAD"], text=True, stderr=subprocess.DEVNULL).strip()
             current["source_revision"] = git_revision
@@ -453,7 +469,13 @@ def main() -> int:
             current["source_revision"] = "SOURCE_SNAPSHOT_NO_GIT_METADATA"
             current["executable_source_revision"] = args.source_revision or "SOURCE_SNAPSHOT_NO_GIT_METADATA"
         atomic_json(status_path, current)
-        specs = command_specs(root, args.mode, run_dir)
+        try:
+            specs = select_specs(command_specs(root, args.mode, run_dir), args.suite)
+        except ValueError as error:
+            current.update(status="NOT_RUN", ended_at=utc_now(), selection_error=str(error))
+            atomic_json(status_path, current)
+            print(f"SUITE_SELECTION_ERROR={error}", file=sys.stderr)
+            return 2
 
         def persist_progress(done: list[dict[str, object]], active: dict[str, object] | None) -> None:
             current["suites"] = list(done)
@@ -476,6 +498,8 @@ def main() -> int:
         atomic_json(status_path, current)
         print(f"RUN_DIRECTORY={run_dir}")
         print(f"MODE={args.mode}")
+        if args.suite:
+            print(f"SELECTED_SUITE={args.suite}")
         for result in results:
             print(f"SUITE={result['id']} STATUS={result['status']} INPUT_SHA256={result['input_fingerprint_sha256']}")
         print(f"OVERALL={current['status']}")

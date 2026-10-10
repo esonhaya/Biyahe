@@ -279,7 +279,7 @@ const emptyCorruptStorage = {
 };
 assert.equal(readSavedJourneyStore(emptyCorruptStorage).writable, false,
   "an existing empty storage value is treated as unreadable data, not an absent store");
-assert.throws(() => persistSavedJourneys(emptyCorruptStorage, saved), /unreadable format/);
+assert.throws(() => persistSavedJourneys(emptyCorruptStorage, saved), /could not be parsed/);
 assert.equal(emptyCorruptData.get(SAVED_JOURNEYS_STORAGE_KEY), "",
   "an empty unreadable store is preserved until the user backs it up");
 assert.deepEqual(parseSavedJourneys(JSON.stringify({ version: 1, journeys: [{

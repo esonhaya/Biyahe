@@ -307,10 +307,8 @@ def main() -> int:
                                ("validation_ledger", "validation-ledger-harness")):
             parent, child = find_child(runs, "search-and-can-i-ride", fragment)
             tests[name] = make_test(name, parent, child)
-        type_parent, type_child = find_child(runs, "typecheck-and-eslint", "typecheck")
-        lint_parent, lint_child = find_child(runs, "typecheck-and-eslint", "lint")
-        tests["typescript"] = make_test("typescript", type_parent, type_child)
-        tests["eslint"] = make_test("eslint", lint_parent, lint_child)
+        tests["typescript"] = make_test("typescript", find_suite(runs, "typescript"))
+        tests["eslint"] = make_test("eslint", find_suite(runs, "eslint"))
         tests["adapter_phpunit"] = make_test("adapter_phpunit", find_suite(runs, "adapter-phpunit"))
         tests["real_cebu_corpus"] = make_test("real_cebu_corpus", find_suite(runs, "real-cebu-corpus"))
         tests["portable_runner_contract"] = make_test("portable_runner_contract", find_suite(runs, "portable-runner-contract"))
