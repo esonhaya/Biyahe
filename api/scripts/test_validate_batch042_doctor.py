@@ -55,7 +55,7 @@ class DoctorV42Tests(unittest.TestCase):
 
     def test_changed_command_fingerprint_invalidates_current_pass(self):
         document = copy.deepcopy(DOCTOR)
-        document["source_fingerprints"]["api/scripts/test_validate_batch042_doctor.py"] = VALIDATOR.sha256(SCRIPT)
+        document["source_fingerprints"]["api/scripts/test_validate_batch042_doctor.py"] = VALIDATOR.sha256(Path(__file__).resolve())
         output_path = ROOT / "docs/reports/batch042-doctor-v42.json"
         command = ["python3", "api/scripts/test_evidence_provenance.py"]
         cwd = str(ROOT)
