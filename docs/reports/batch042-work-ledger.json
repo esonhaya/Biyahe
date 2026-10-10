@@ -447,7 +447,8 @@
       "Doctor V42 full current suite 15/15 and report validator (source commit 2fba314)",
       "portable v4 current-source kit and checkout-bound STATIC verification (11/11; Doctor 15/15; runner 10/10)",
       "final Doctor V42 refresh pinned to executable source commit 2fba314; full validator and 15/15 tests pass",
-      "current Doctor/ledger/source static syntax and JSON checks (Python 10, Bash 2, PHP 5, JavaScript 11, JSON 6; git diff --check PASS)"
+      "current Doctor/ledger/source static syntax and JSON checks (Python 10, Bash 2, PHP 5, JavaScript 11, JSON 6; git diff --check PASS)",
+      "portable v4, Doctor V42 and evidence ledger committed; raw captured logs preserved and scoped whitespace attributes pass git diff --check"
     ],
     "implemented_untested": [],
     "blocked_resource": [
@@ -626,7 +627,7 @@
   },
   "current_checkpoint": {
     "branch": "main",
-    "head": "a91dabe1996f5809d25ebd6b57cfd4bab024a493",
+    "head": "45f52b3153515e8113552f149acc7b42a3825ca6",
     "executable_source_revision": "2fba3141170cc3406c532623a433257610ff726e"
   },
   "commits_since_start": [
@@ -646,6 +647,16 @@
     "049cf77225b522fe272baa6166400c5262b59f52",
     "e182af10b822361698b1b5343b5805b8004f9c39",
     "2fba3141170cc3406c532623a433257610ff726e",
-    "a91dabe1996f5809d25ebd6b57cfd4bab024a493"
-  ]
+    "a91dabe1996f5809d25ebd6b57cfd4bab024a493",
+    "45f52b3153515e8113552f149acc7b42a3825ca6"
+  ],
+  "delivery_checkpoint": {
+    "repository_commit": "45f52b3153515e8113552f149acc7b42a3825ca6",
+    "portable_kit_manifest_sha256": "ea8f2f0695f02e2a8fddc1a39f572004aa2878163216d82e8d3e416a281521d5",
+    "portable_kit_sha256sums_sha256": "0ecdb4233dbb38c305e1d2d018a741111eda7698e0fe8a75a8f30561c2768243",
+    "portable_kit_static_run_status": "$HOME/.cache/biyahe/batch042/portable-verification/20261010T044618Z-16777/run-status.json",
+    "portable_kit_static_output_sha256": "13eb5eafff353d78da1f7d85f48ad58d8d1528315ec159ef47078e293d90a7e2",
+    "git_bundle": "PENDING_FINAL_CHECKPOINT",
+    "sd_recovery_archive": "PENDING_FINAL_CHECKPOINT"
+  }
 }
