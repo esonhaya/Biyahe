@@ -306,6 +306,7 @@ def main() -> int:
     parser.add_argument("--executable-revision")
     parser.add_argument("--portable-output", type=Path)
     parser.add_argument("--portable-manifest", type=Path)
+    parser.add_argument("--graph-path", type=Path, help="read-only graph file to hash for identity evidence")
     parser.add_argument("--output", type=Path, default=ROOT / "docs/reports/batch042-doctor-v42.json")
     args = parser.parse_args()
     try:
@@ -356,11 +357,22 @@ def main() -> int:
         provenance_status = tests["source_provenance_validator"]["status"]
         coverage_ok = tests["coverage_fixtures"]["status"] == "VERIFIED" and tests["coverage_pinned_summary"]["status"] == "VERIFIED"
         graph_row = find_suite(runs, "real-cebu-corpus")
-        graph_actual = graph_row.get("actual_graph_sha256") if graph_row else None
-        graph_status = "VERIFIED" if graph_actual == GRAPH_SHA256 else ("FAILED" if graph_actual is not None else "NOT_RUN")
+        graph_observations = []
+        if graph_row and graph_row.get("actual_graph_sha256"):
+            graph_observations.append({"method": "corpus_preflight_sha256", "path": graph_row.get("graph_path"),
+                "sha256": graph_row.get("actual_graph_sha256"), "observed_at_utc": graph_row.get("graph_hash_observed_at_utc")})
+        if args.graph_path:
+            graph_path = args.graph_path.resolve()
+            if not graph_path.is_file():
+                raise ValueError(f"graph identity file is missing: {graph_path}")
+            graph_observations.append({"method": "read_only_sha256", "path": str(graph_path),
+                "sha256": sha256(graph_path), "size_bytes": graph_path.stat().st_size, "observed_at_utc": utc_now()})
+        observed_graph_hashes = [observation["sha256"] for observation in graph_observations]
+        graph_actual = observed_graph_hashes[-1] if observed_graph_hashes else None
+        graph_status = "VERIFIED" if observed_graph_hashes and all(value == GRAPH_SHA256 for value in observed_graph_hashes) else ("FAILED" if observed_graph_hashes else "NOT_RUN")
         categories = [
             category("source_provenance", provenance_status, "Current Batch042 registry validator and provenance fixtures determine this status; the registry itself binds historical source artifacts."),
-            category("graph_identity", graph_status, "Current corpus preflight hashes the immutable SQLite file. Identity does not assert SQLite integrity or routing success."),
+            category("graph_identity", graph_status, "A current read-only SHA256 observation identifies the immutable SQLite file. Identity does not assert SQLite integrity or routing success."),
             category("graph_integrity", "NOT_RUN", "SQLite integrity_check was not run; graph identity alone does not establish internal integrity."),
             category("coverage", "VERIFIED" if coverage_ok else combine(tests["coverage_fixtures"]["status"], tests["coverage_pinned_summary"]["status"]), "Pinned 503/436/67 stops and 37/30/7 places are stored-record counts only; no geographic, population, sidewalk, or field coverage is claimed."),
             category("adapter_contract", implemented_status(tests["adapter_phpunit"]["status"]), "Status reflects the current focused adapter PHPUnit result. Pure geometry smoke is listed separately."),
@@ -399,7 +411,8 @@ def main() -> int:
                     "expected_sha256": GRAPH_SHA256, "expected_fingerprint": historical_graph_fingerprint,
                     "fingerprint_status": "HISTORICAL_EXPECTATION_NOT_RECOMPUTED",
                     "actual_sha256": graph_actual, "status": graph_status,
-                    "observed_at_utc": graph_row.get("graph_hash_observed_at_utc") if graph_row else None,
+                    "observations": graph_observations,
+                    "observed_at_utc": graph_observations[-1].get("observed_at_utc") if graph_observations else None,
                     "graph_modified": False, "pbf_rescanned": False},
                 "graph_integrity": {"status": "NOT_RUN", "method": None},
                 "stored_record_coverage": {

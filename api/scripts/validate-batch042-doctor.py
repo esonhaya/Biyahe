@@ -101,6 +101,17 @@ def validate_doctor(document: object, repo_root: Path) -> dict[str, object]:
         raise DoctorError("graph identity has an invalid status")
     if graph.get("status") == "VERIFIED" and graph.get("actual_sha256") != EXPECTED_GRAPH_SHA256:
         raise DoctorError("graph identity cannot be verified with a different or absent SHA256")
+    if graph.get("status") == "VERIFIED":
+        observations = graph.get("observations")
+        if not isinstance(observations, list) or not observations:
+            raise DoctorError("verified graph identity needs a current read-only hash observation")
+        for observation in observations:
+            if (not isinstance(observation, dict)
+                or observation.get("method") not in {"read_only_sha256", "corpus_preflight_sha256"}
+                or observation.get("sha256") != EXPECTED_GRAPH_SHA256
+                or not isinstance(observation.get("path"), str)
+                or not isinstance(observation.get("observed_at_utc"), str)):
+                raise DoctorError("graph identity observation is malformed or mismatched")
     graph_integrity = evidence.get("graph_integrity")
     if not isinstance(graph_integrity, dict) or graph_integrity.get("status") == "VERIFIED" and graph_integrity.get("method") != "sqlite_integrity_check_read_only":
         raise DoctorError("graph integrity needs an explicit read-only integrity check")

@@ -42,6 +42,20 @@ class DoctorV42Tests(unittest.TestCase):
         with self.assertRaisesRegex(VALIDATOR.DoctorError, "different or absent SHA256"):
             VALIDATOR.validate_doctor(document, ROOT)
 
+    def test_graph_identity_requires_a_current_read_only_hash_observation(self):
+        document = copy.deepcopy(DOCTOR)
+        graph = document["evidence"]["graph"]
+        graph["status"] = "VERIFIED"
+        graph["actual_sha256"] = VALIDATOR.EXPECTED_GRAPH_SHA256
+        graph["observations"] = [{
+            "method": "read_only_sha256", "path": "$HOME/.cache/graph.sqlite",
+            "sha256": VALIDATOR.EXPECTED_GRAPH_SHA256, "observed_at_utc": "2026-10-10T00:00:00Z",
+        }]
+        self.assertEqual("PASS_STATIC_DOCTOR_CONTRACT", VALIDATOR.validate_doctor(document, ROOT)["status"])
+        graph["observations"] = []
+        with self.assertRaisesRegex(VALIDATOR.DoctorError, "current read-only hash observation"):
+            VALIDATOR.validate_doctor(document, ROOT)
+
     def test_current_pass_requires_current_execution_and_evidence(self):
         document = copy.deepcopy(DOCTOR)
         document["tests"]["provenance_fixtures"] = {
