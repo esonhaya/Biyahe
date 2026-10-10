@@ -10,7 +10,7 @@ import sys
 
 from evidence_provenance import ProvenanceError, validate_registry_file
 
-ALLOWED = {"VERIFIED", "IMPLEMENTED_UNTESTED", "BLOCKED", "FAILED", "UNRESOLVED"}
+ALLOWED = {"IMPLEMENTED", "VERIFIED", "IMPLEMENTED_UNTESTED", "BLOCKED", "NOT_RUN", "FAILED"}
 REQUIRED_CATEGORIES = {
     "evidence_reconciliation", "coverage_diagnostics", "graph_identity",
     "offline_adapter_contract", "ten_case_corpus", "journey_preview",
@@ -65,8 +65,9 @@ def validate_doctor(document: object, repo_root: Path, registry_path: Path) -> d
         raise DoctorError("PostgreSQL staging and field safety cannot be promoted by this report")
     if gates.get("private_beta") != "BLOCKED" or gates.get("production_activation") != "NO":
         raise DoctorError("private beta and production activation must remain blocked")
-    if document.get("execution_evidence", {}).get("real_graph_replay") != "BLOCKED_NOT_RUN":
-        raise DoctorError("a static evidence report cannot claim real graph replay")
+    replay_status = document.get("execution_evidence", {}).get("real_graph_replay")
+    if replay_status not in {"NOT_RUN", "BLOCKED_NOT_RUN", "BLOCKED_RESOURCE_ABORTED"}:
+        raise DoctorError("an incomplete or static report cannot claim a completed real graph replay")
 
     return {
         "format": "biyahe-doctor-v41-validation-v1",
@@ -75,7 +76,7 @@ def validate_doctor(document: object, repo_root: Path, registry_path: Path) -> d
         "registry_sha256": registry["registry_sha256"],
         "production_activation": "NO",
         "private_beta": "BLOCKED",
-        "real_graph_replay": "BLOCKED_NOT_RUN",
+        "real_graph_replay": replay_status,
     }
 
 

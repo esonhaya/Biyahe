@@ -35,6 +35,22 @@ class DoctorV41Tests(unittest.TestCase):
         with self.assertRaisesRegex(VALIDATOR.DoctorError, "invalid validation status"):
             VALIDATOR.validate_doctor(document, ROOT, REGISTRY)
 
+    def test_legacy_unresolved_status_is_rejected(self):
+        document = copy.deepcopy(DOCTOR)
+        document["categories"][-1]["implementation"] = "UNRESOLVED"
+        with self.assertRaisesRegex(VALIDATOR.DoctorError, "invalid implementation status"):
+            VALIDATOR.validate_doctor(document, ROOT, REGISTRY)
+
+    def test_resource_aborted_replay_is_reported_without_claiming_success(self):
+        document = copy.deepcopy(DOCTOR)
+        document["execution_evidence"]["real_graph_replay"] = "BLOCKED_RESOURCE_ABORTED"
+        result = VALIDATOR.validate_doctor(document, ROOT, REGISTRY)
+        self.assertEqual("BLOCKED_RESOURCE_ABORTED", result["real_graph_replay"])
+
+        document["execution_evidence"]["real_graph_replay"] = "PASS"
+        with self.assertRaisesRegex(VALIDATOR.DoctorError, "cannot claim a completed real graph replay"):
+            VALIDATOR.validate_doctor(document, ROOT, REGISTRY)
+
     def test_private_beta_or_activation_cannot_be_promoted(self):
         document = copy.deepcopy(DOCTOR)
         document["release_gates"]["private_beta"] = "VERIFIED"

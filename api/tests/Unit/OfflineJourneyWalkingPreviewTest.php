@@ -65,7 +65,46 @@ final class OfflineJourneyWalkingPreviewTest extends TestCase
             $this->assertSame('UNAVAILABLE', $walk['distance_type']);
             $this->assertFalse($walk['distance_is_estimate']);
             $this->assertNull($walk['geometry']);
+            $this->assertSame('UNAVAILABLE', $result['preview']['status']);
+            $this->assertSame(0, $result['preview']['routes_found']);
+        } finally {
+            OfflinePedestrianGraphFixture::remove($graph);
+            @unlink($settings['coverage_report_path']);
+        }
+    }
+
+    public function test_mixed_preview_reports_partial_without_geometry_for_disconnected_legs(): void
+    {
+        $graph = OfflinePedestrianGraphFixture::create([
+            [1, 10.3, 123.87, 1, null, null],
+            [2, 10.3, 123.8701, 1, null, null],
+            [3, 10.3, 123.871, 1, null, null],
+            [4, 10.3, 123.872, 1, null, null],
+        ], [[100, 0, 1, 2, 1, 10.0]]);
+        $settings = $this->settings($graph);
+
+        try {
+            $journey = $this->journey();
+            $journey['legs'][] = [
+                'type' => 'WALK_EGRESS',
+                'origin' => ['location' => ['lat' => 10.3, 'lng' => 123.871]],
+                'destination' => ['location' => ['lat' => 10.3, 'lng' => 123.872]],
+                'geometry' => ['type' => 'LineString', 'coordinates' => [[123.871, 10.3], [123.872, 10.3]]],
+                'warnings' => [],
+            ];
+
+            $result = $this->previewer($settings)->preview($journey);
+            $routedWalk = $result['journey']['legs'][0];
+            $disconnectedWalk = $result['journey']['legs'][2];
+
             $this->assertSame('PARTIAL', $result['preview']['status']);
+            $this->assertSame(2, $result['preview']['walking_legs']);
+            $this->assertSame(1, $result['preview']['routes_found']);
+            $this->assertSame('ROUTE_FOUND', $routedWalk['routing_status']);
+            $this->assertSame('ROUTE_UNAVAILABLE', $disconnectedWalk['routing_status']);
+            $this->assertSame('component_disconnected', $disconnectedWalk['offline_walking_preview']['reason_code']);
+            $this->assertNull($disconnectedWalk['geometry']);
+            $this->assertNull($disconnectedWalk['distance_meters']);
         } finally {
             OfflinePedestrianGraphFixture::remove($graph);
             @unlink($settings['coverage_report_path']);

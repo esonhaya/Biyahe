@@ -12,7 +12,7 @@ import subprocess
 import sys
 
 ROOT = Path(__file__).resolve().parents[2]
-DEFAULT_OUTPUT = ROOT / "docs/portable-verification-v2"
+DEFAULT_OUTPUT = ROOT / "docs/portable-verification-v3"
 
 FILES = [
     "api/composer.json", "api/composer.lock", "api/app/Console/Commands/VerifyOfflineWalkingCorpus.php",
@@ -24,6 +24,7 @@ FILES = [
     "api/config/offline_walking_preview.php", "api/routes/api.php",
     "api/scripts/compare-offline-corpus.py", "api/scripts/evidence_provenance.py",
     "api/scripts/offline-evidence-smoke.py", "api/scripts/package-batch041-verification-kit.py",
+    "api/scripts/test_offline_route_geometry_contract.php",
     "api/scripts/summarize-offline-coverage.py", "api/scripts/test_compare_offline_corpus.py",
     "api/scripts/test_evidence_provenance.py", "api/scripts/test_offline_evidence_smoke.py",
     "api/scripts/test_summarize_offline_coverage.py", "api/scripts/test_validate_batch041_doctor.py",
@@ -40,10 +41,12 @@ FILES = [
     "docs/reports/batch032-cebu-coverage.json", "docs/reports/batch032-cebu-doctor-v32.json",
     "docs/reports/batch040-coverage-diagnostics.json",
     "docs/reports/batch041-doctor-v41.json", "docs/reports/batch041-evidence-provenance.json",
+    "docs/reports/batch041-recovery-validation.json",
     "docs/reports/batch041-evidence-reconciliation.md", "docs/testing/batch041-test-plan.json",
     "web/package.json", "web/package-lock.json", "web/scripts/commute-card-harness.mjs",
     "web/scripts/offline-walking-preview-harness.mjs", "web/scripts/ride-mode-harness.mjs",
     "web/scripts/ux-contract-harness.mjs", "web/scripts/validation-ledger-harness.mjs",
+    "web/scripts/search-keyboard-harness.mjs",
     "web/scripts/validation-ledger.mjs", "web/src/app/page.tsx",
     "web/src/components/CommuteCard.tsx", "web/src/components/RideMode.tsx",
     "web/src/lib/api.ts", "web/src/lib/commuteInstructions.ts",
@@ -115,7 +118,7 @@ printf '%s\n' "$smoke_output" | python3 -c 'import json,sys; r=json.load(sys.std
 printf 'PORTABLE_KIT_STATIC_VERIFICATION=PASS\nREAL_GRAPH_REPLAY=NOT_RUN\nPOSTGRESQL_STAGING=NOT_RUN\nEXTERNAL_HOST_EXECUTION=NOT_RUN\nFIELD_VERIFICATION=NOT_RUN\n'
 '''
 
-README = """# Biyahe Batch041 portable evidence and adapter kit v2
+README = """# Biyahe Batch041 portable evidence and adapter kit v3
 
 This package pins repository revision `@REVISION@` and carries the relevant PHP adapter, frontend contract, tests, reports, and provenance registry as a reviewable source snapshot. The SQLite graph, OSM PBF, PostgreSQL dump, credentials, databases, and runtime caches are **not included**.
 
@@ -130,9 +133,9 @@ This package pins repository revision `@REVISION@` and carries the relevant PHP 
 ## Clean-room verification
 
 1. Check out the full repository revision in `manifest.json`. Do not copy `.env`, credentials, sessions, caches, databases, or working state.
-2. Run `bash /path/to/portable-verification-v2/verify-kit.sh --repo-root "$CHECKOUT"`. It checks package inventory, SHA256SUMS, exact Git revision, byte identity of source snapshots, and a no-database evidence smoke.
+2. Run `bash /path/to/portable-verification-v3/verify-kit.sh --repo-root "$CHECKOUT"`. It checks package inventory, SHA256SUMS, exact Git revision, byte identity of source snapshots, and a no-database evidence smoke.
 3. The smoke checks only immutable JSON reports, metric provenance, and the carried-forward 503/37 record summary. It does not open SQLite/PBF, route a journey, or contact PostgreSQL.
-4. With Python 3, the bounded report fixtures can run from the pinned checkout using the commands in `manifest.json`. The synthetic comparator fixtures are not real route results.
+4. With Python 3 and PHP, the bounded report fixtures and pure geometry contract smoke can run from the pinned checkout using the commands in `manifest.json`. The geometry smoke covers seven deterministic cases without Laravel or SQLite. The synthetic comparator fixtures are not real route results.
 5. Real graph replay is separate: first hash the transferred SQLite artifact, then enforce the resource floors in `docs/testing/batch041-test-plan.json`, and write a fresh report path. Never replace a pinned report or graph.
 6. Collect host/tool versions and new evidence separately. Do not call a static smoke an adapter run or a Cebu route replay.
 
@@ -180,7 +183,7 @@ def main(argv=None) -> int:
             shutil.copyfile(source, destination)
 
         manifest = {
-            "format": "biyahe-portable-offline-verification-kit-v2",
+            "format": "biyahe-portable-offline-verification-kit-v3",
             "batch": 41,
             "repository_revision": revision,
             "source_snapshot": "2026-10-07T01:00:21Z",
@@ -197,7 +200,7 @@ def main(argv=None) -> int:
             },
             "runtime_requirements": {"python": "Python 3 standard library", "bash": "required", "git": "required for revision identity", "sha256sum": "required", "php_laravel": "required only for adapter PHPUnit and real graph replay", "node": "required only for web harnesses"},
             "verification_commands": [
-                "bash docs/portable-verification-v2/verify-kit.sh --repo-root \"$CHECKOUT\"",
+                "bash docs/portable-verification-v3/verify-kit.sh --repo-root \"$CHECKOUT\"",
                 "python3 api/scripts/validate-batch041-provenance.py",
                 "python3 api/scripts/validate-batch041-doctor.py",
                 "python3 api/scripts/test_evidence_provenance.py",
@@ -205,17 +208,22 @@ def main(argv=None) -> int:
                 "python3 api/scripts/test_offline_evidence_smoke.py",
                 "python3 api/scripts/test_compare_offline_corpus.py",
                 "python3 api/scripts/test_validate_batch041_doctor.py",
+                "php api/scripts/test_offline_route_geometry_contract.php",
                 "(cd api && php artisan test --filter='OfflinePedestrianRouteGeometryContractTest|OfflinePedestrianGraphRouterTest|OfflineJourneyWalkingPreviewTest')",
                 "node --experimental-strip-types web/scripts/offline-walking-preview-harness.mjs",
                 "node --experimental-strip-types web/scripts/ride-mode-harness.mjs",
+                "node --experimental-strip-types web/scripts/commute-card-harness.mjs",
+                "node scripts/ux-contract-harness.mjs",
+                "node scripts/validation-ledger-harness.mjs",
+                "node --experimental-strip-types web/scripts/search-keyboard-harness.mjs",
                 "(cd api && php artisan biyahe:pedestrian:verify-offline-corpus --output=\"$RUN_ROOT/offline-corpus.json\")"
             ],
             "expected_output_formats": ["biyahe-offline-evidence-smoke-v1", "biyahe-evidence-provenance-validation-v1", "biyahe-doctor-v41-validation-v1", "biyahe-offline-walking-corpus-v1"],
             "expected_stored_coverage": {"stops": 503, "stops_snappable_within_25m": 436, "places": 37, "places_snappable_within_25m": 30, "transfers_unverified": 2, "historical_corpus_cases": 10, "historical_routes_found": 9, "historical_routes_disconnected": 1},
-            "resource_floors_kib": {"memavailable_minimum": 524288, "swapfree_minimum": 131072, "sustained_samples": 3, "sample_spacing_seconds": 5},
+            "resource_floors_kib": {"memavailable_minimum": 524288, "swapfree_minimum": 131072, "sustained_samples": 5, "sample_spacing_seconds": 5},
             "required_checkout_paths": FILES,
             "included_files": [f"source-snapshot/{relative}" for relative in FILES],
-            "execution_claims": {"termux_static_verification": "NOT_RUN_YET", "real_graph_replay": "NOT_RUN", "external_host_execution": "NOT_RUN", "postgresql": "NOT_RUN", "field_verification": "NOT_RUN", "production_activation": "NO"}
+            "execution_claims": {"termux_static_verification": "NOT_RUN_AT_PACKAGE_TIME", "real_graph_replay": "NOT_RUN", "external_host_execution": "NOT_RUN", "postgresql": "NOT_RUN", "field_verification": "NOT_RUN", "production_activation": "NO"}
         }
         (output / "manifest.json").write_text(json.dumps(manifest, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
         (output / "README.md").write_text(README.format(revision=revision), encoding="utf-8")
