@@ -20,19 +20,113 @@
     "sha256": "29d7aaf9c45a596f4065c44d13f983f4a7edeec5ac2ea41b718b1c52ca865bf8",
     "write_allowed": false
   },
-  "resource_floors_kib": {"memavailable": 524288, "swapfree": 131072},
+  "resource_floors_kib": {
+    "memavailable": 524288,
+    "swapfree": 131072
+  },
   "tasks": [
-    {"id": "RECOVERY", "scope": "baseline and SD recovery bundle", "status": "VERIFIED", "evidence": "Expected branch and HEAD matched. Tracked tree was clean. Seven historical reports were hash-checked. Recovery bundle contains the expected HEAD and passed bundle verification before edits."},
-    {"id": "ARCHITECTURE", "scope": "trace search through saved journey and Ride Mode ownership", "status": "VERIFIED", "evidence": "Static architecture map recorded in batch042-frontend-architecture.md. No browser execution is claimed."},
-    {"id": "PREVIEW_STATE", "scope": "development-only walking preview state and identity transitions", "status": "IMPLEMENTED_UNTESTED", "evidence": "Reducer, current identity gate, source response match, cancellation, retry, removal, partial/unavailable states, and harness added. Current harness group has not completed."},
-    {"id": "JOURNEY_SELECTION", "scope": "selected journey identity for alternatives and preview responses", "status": "IMPLEMENTED_UNTESTED", "evidence": "Replan request now uses RequestGate and selected identity. Preview eligibility changes cancel owned work. Deterministic request-gate tests added but not yet completed in the guarded run."},
-    {"id": "SAVED_V1", "scope": "backward-compatible snapshot parsing and duplicate/delete behavior", "status": "IMPLEMENTED_UNTESTED", "evidence": "Parser validates nested forbidden fields, point/leg shapes, coordinates, and optional older-v1 provenance. Corruption, duplicate replacement, deletion, and compatibility fixtures added; guarded suite pending."},
-    {"id": "CAN_I_RIDE", "scope": "pure status presentation and evidence contract", "status": "IMPLEMENTED_UNTESTED", "evidence": "Existing engine reused; pure presentation helper and yes/no/unknown fixture added. Guarded suite pending."},
-    {"id": "VALIDATION_LEDGER", "scope": "complete source/test/config/tool/command/evidence binding and recovery", "status": "IMPLEMENTED_UNTESTED", "evidence": "Added file-set and scheduled-command fingerprints, fixed resource policy, missing/changed evidence invalidation, and atomic interrupted RUNNING to NOT_RUN recovery. Harness pending."},
-    {"id": "PORTABLE_RUNNER", "scope": "STATIC/FRONTEND/ADAPTER/CORPUS/FULL runner and no-clobber evidence", "status": "IMPLEMENTED_UNTESTED", "evidence": "Runner separates suites, records source/tool/command fingerprints, fixed resource environment, worker logs, output hashes, atomic RUNNING state, interruption recovery, and dependency blocks. Static self-validation pending."},
-    {"id": "REAL_CEBU_CORPUS", "scope": "current ten-case replay against expected read-only graph", "status": "NOT_STARTED", "evidence": "No current replay result. Historical 9/1 result remains historical only."},
-    {"id": "MOBILE_BROWSER", "scope": "320/360/390 pixel visual and keyboard/touch checks", "status": "NOT_STARTED", "evidence": "No browser environment has been established; static CSS review only."},
-    {"id": "RELEASE_GATES", "scope": "live integration, PostgreSQL, transfer field safety, beta, production", "status": "BLOCKED", "evidence": "No PostgreSQL startup/contact, no field evidence, and no production graph activation."}
+    {
+      "id": "RECOVERY",
+      "scope": "baseline and SD recovery bundle",
+      "status": "VERIFIED",
+      "evidence": "Branch main and expected starting HEAD matched; tracked tree was clean. The seven historical untracked Doctor reports were hash-checked and preserved. Pre-edit recovery bundle on SD verified against the expected HEAD."
+    },
+    {
+      "id": "ARCHITECTURE",
+      "scope": "search through saved journey and manual Ride Mode ownership",
+      "status": "VERIFIED",
+      "evidence": "Static flow map in docs/reports/batch042-frontend-architecture.md. Browser interaction is not claimed."
+    },
+    {
+      "id": "PREVIEW_STATE",
+      "scope": "development-only preview state, cancellation, selected identity and stale-response rejection",
+      "status": "VERIFIED",
+      "evidence": "Focused state and component request harnesses passed at 39417b1. Their recorded source fingerprints match current preview sources; later resource-preflight refusal did not execute a new worker."
+    },
+    {
+      "id": "JOURNEY_SELECTION",
+      "scope": "selected journey and request gate synchronization",
+      "status": "VERIFIED",
+      "evidence": "Request-gate harness PASS at 39417b1 with unchanged source/test fingerprints."
+    },
+    {
+      "id": "JOURNEY_RESULTS_AND_SAVED_V1",
+      "scope": "route explanations, snapshot-v1 compatibility, corruption and preview exclusion",
+      "status": "VERIFIED",
+      "evidence": "Current commute-card suite PASS at db843f7; output and source hashes are recorded in run 20261010T033532Z-19047."
+    },
+    {
+      "id": "RIDE_MODE",
+      "scope": "manual progress, correction, version switch and completed final walking session",
+      "status": "VERIFIED",
+      "evidence": "Current Ride Mode suite PASS at db843f7; output and source hashes are recorded in run 20261010T033144Z-18467."
+    },
+    {
+      "id": "SEARCH",
+      "scope": "place-search cancellation and keyboard selection",
+      "status": "VERIFIED",
+      "evidence": "Both child commands exited 0 in run 20261010T033954Z-19642. Their harness/source inputs were fingerprinted. The aggregate group later stopped for a resource breach."
+    },
+    {
+      "id": "CAN_I_RIDE",
+      "scope": "yes/no/unknown source-aware result presentation",
+      "status": "VERIFIED",
+      "evidence": "Standalone `can-i-ride` harness PASS at 1015874. Run 20261010T043115Z-10082 fingerprints the harness, presentation helper and page.tsx; min MemAvailable 813232 KiB, min SwapFree 255448 KiB, peak RSS 60592 KiB."
+    },
+    {
+      "id": "UX_CONTRACT",
+      "scope": "result, map and mobile static contract harness",
+      "status": "BLOCKED",
+      "evidence": "Standalone `ux-contract` preflight failed at sample 4 with SwapFree 129320 KiB (<131072); command_not_started=yes. No worker ran. Earlier grouped PASS is not reusable because its source-input list was incomplete."
+    },
+    {
+      "id": "VALIDATION_LEDGER",
+      "scope": "fingerprint invalidation, atomic recovery and stale-result semantics",
+      "status": "VERIFIED",
+      "evidence": "Child command exited 0 in run 20261010T021146Z-2203. Child-specific fingerprints for the ledger harness/module match current source. The later partial group never reached this child."
+    },
+    {
+      "id": "EVIDENCE_SYSTEM",
+      "scope": "portable runner, Doctor per-test evidence, partial worker results and input completeness",
+      "status": "VERIFIED",
+      "evidence": "Portable runner tests PASS 8/8; Doctor evidence regressions PASS 14/14; static runner PASS 11/11 at source revision 1015874. Prefixed child-log parsing, per-child input fingerprints, stale-result invalidation and complete standalone suite fingerprints are covered."
+    },
+    {
+      "id": "ADAPTER_PHPUNIT",
+      "scope": "focused walking adapter PHPUnit integration tests",
+      "status": "BLOCKED",
+      "evidence": "Not started because current five-sample graph preflight failed; no PHPUnit worker ran. PHP vendor dependencies are present, but resource floors blocked launch."
+    },
+    {
+      "id": "REAL_CEBU_CORPUS",
+      "scope": "bounded ten-case read-only replay on the pinned SQLite graph",
+      "status": "BLOCKED",
+      "evidence": "Read-only graph hash matched expected SHA256, but the bounded replay preflight failed (minimum SwapFree 59924 KiB; required 131072). The replay command did not start. Historical 9/1 remains historical only."
+    },
+    {
+      "id": "MOBILE_BROWSER",
+      "scope": "320/360/390 px interaction, keyboard and visual checks",
+      "status": "IMPLEMENTED_UNTESTED",
+      "evidence": "No browser binary or automation runner is available. Static/source inspection only; no viewport or visual verification."
+    },
+    {
+      "id": "TYPESCRIPT_AND_ESLINT",
+      "scope": "typecheck and focused lint",
+      "status": "BLOCKED",
+      "evidence": "Combined attempt was cancelled after SwapFree reached 131100 KiB and process-tree RSS exceeded 262144 KiB. Later ESLint preflight refused start. No retry."
+    },
+    {
+      "id": "RELEASE_GATES",
+      "scope": "live API, PostgreSQL staging, field safety, beta and production",
+      "status": "BLOCKED",
+      "evidence": "No PostgreSQL startup/contact, no live production graph integration, and no field transfer evidence. Production activation remains NO."
+    },
+    {
+      "id": "PORTABLE_KIT",
+      "scope": "Batch042 v4 portable verification kit",
+      "status": "IMPLEMENTED_UNTESTED",
+      "evidence": "Source snapshot and standalone modes are implemented. Kit generation/local STATIC verification is the remaining delivery step."
+    }
   ],
   "execution_attempts": [
     {
@@ -47,13 +141,315 @@
       "command_started": false,
       "resource_log": "$HOME/.cache/biyahe/batch042/evidence/frontend-focused-20261010T010230Z.guard.log",
       "evidence": "The five-sample owned-worker preflight observed SwapFree 123792 KiB at sample 4, below the unchanged 131072 KiB floor. A later sample recovered, but the guard blocked launch. The command was not run."
+    },
+    {
+      "id": "frontend-initial-focused-20261010T021146Z-2203",
+      "status": "MIXED_RESULTS_DEFECTS_FIXED",
+      "started_at": "2026-10-10T02:11:47Z",
+      "ended_at": "2026-10-10T02:30:50Z",
+      "source_revision": "39417b17ac9447dd2d1866682ed57e37c8e7fc0b",
+      "evidence": "Preview-state, preview-contract, request-gate, place search, search keyboard, Can-I-Ride and validation-ledger children exited 0. Commute-card, Ride Mode and UX assertions failed against then-current fixtures/contracts; subsequent commits corrected the demonstrated Ride Mode parser defect and stale harness expectations. No failures are relabeled as passes."
+    },
+    {
+      "id": "preview-state-resource-preflight-20261010T024931Z-10856",
+      "status": "BLOCKED_RESOURCE",
+      "started_at": "2026-10-10T02:49:31Z",
+      "command_started": false,
+      "evidence": "Five-sample resource preflight refused worker start; no command retry was made."
+    },
+    {
+      "id": "eslint-resource-preflight-20261010T025502Z-14217",
+      "status": "BLOCKED_RESOURCE",
+      "started_at": "2026-10-10T02:55:02Z",
+      "command_started": false,
+      "evidence": "Resource preflight refused worker start; no command retry was made."
+    },
+    {
+      "id": "static-current-db843-20261010T032742Z-18054",
+      "status": "PASS",
+      "started_at": "2026-10-10T03:27:42Z",
+      "ended_at": "2026-10-10T03:30:20Z",
+      "source_revision": "db843f7acd191f7803793989ab7fd27a74860839",
+      "suites": "11 PASS; provenance fixtures 6, coverage fixtures 11, corpus comparator 4; portable runner contract originally 6 tests, later source edits invalidate those suite fingerprints."
+    },
+    {
+      "id": "ride-mode-current-20261010T033144Z-18467",
+      "status": "PASS",
+      "started_at": "2026-10-10T03:31:44Z",
+      "ended_at": "2026-10-10T03:34:59Z",
+      "source_revision": "db843f7acd191f7803793989ab7fd27a74860839",
+      "resource": "min MemAvailable 910688 KiB; min SwapFree 147444 KiB; peak RSS 76960 KiB; PostgreSQL RSS 0"
+    },
+    {
+      "id": "commute-card-current-20261010T033532Z-19047",
+      "status": "PASS",
+      "started_at": "2026-10-10T03:35:32Z",
+      "ended_at": "2026-10-10T03:39:44Z",
+      "source_revision": "db843f7acd191f7803793989ab7fd27a74860839",
+      "resource": "min MemAvailable 888764 KiB; min SwapFree 151468 KiB; peak RSS 73396 KiB; PostgreSQL RSS 0"
+    },
+    {
+      "id": "search-can-i-ride-partial-20261010T033954Z-19642",
+      "status": "BLOCKED_RESOURCE",
+      "started_at": "2026-10-10T03:39:54Z",
+      "worker_started_at": "2026-10-10T03:50:55Z",
+      "ended_at": "2026-10-10T03:51:02Z",
+      "source_revision": "db843f7acd191f7803793989ab7fd27a74860839",
+      "evidence": "place search, keyboard search, Can-I-Ride and UX children logged exit 0; validation-ledger child did not execute in this run. SwapFree breached to 113960 KiB. Owned worker process group was cancelled completely. Can-I-Ride and UX current verification remain NOT_RUN because the old group omitted relevant input fingerprints."
+    },
+    {
+      "id": "portable-runner-regressions-current",
+      "status": "PASS",
+      "command": "PYTHONDONTWRITEBYTECODE=1 python3 api/scripts/test_portable_verification.py",
+      "result": "8/8 tests; includes child log parsing and complete search group input inventory."
+    },
+    {
+      "id": "doctor-partial-child-regression-current",
+      "status": "PASS",
+      "command": "PYTHONDONTWRITEBYTECODE=1 python3 api/scripts/test_validate_batch042_doctor.py DoctorV42Tests.test_completed_child_remains_verified_when_parent_group_is_resource_blocked",
+      "result": "1/1 test; validates blocked parent plus source-matched child and rejects incomplete/stale evidence."
+    },
+    {
+      "id": "static-current-source-20261010T043031Z-9914",
+      "status": "PASS",
+      "started_at": "2026-10-10T04:30:31Z",
+      "ended_at": "2026-10-10T04:30:47Z",
+      "source_revision": "1015874d95e3d6dc93241cbe3a7ad5645e62dcd5",
+      "result": "11/11 suites PASS, including current Doctor validator, portable runner contract, PHP geometry and syntax/JSON."
+    },
+    {
+      "id": "can-i-ride-standalone-20261010T043115Z-10082",
+      "status": "PASS",
+      "started_at": "2026-10-10T04:31:15Z",
+      "ended_at": "2026-10-10T04:31:41Z",
+      "source_revision": "1015874d95e3d6dc93241cbe3a7ad5645e62dcd5",
+      "resource": "min MemAvailable 813232 KiB; min SwapFree 255448 KiB; peak RSS 60592 KiB; PostgreSQL RSS 0"
+    },
+    {
+      "id": "ux-contract-standalone-20261010T043149Z-10673",
+      "status": "BLOCKED_RESOURCE",
+      "started_at": "2026-10-10T04:31:49Z",
+      "ended_at": "2026-10-10T04:32:13Z",
+      "command_started": false,
+      "resource": "preflight min MemAvailable 746816 KiB; min SwapFree 129320 KiB; first breach sample 4; no worker; no retry"
+    },
+    {
+      "id": "real-cebu-corpus-20261010T043245Z-11286",
+      "status": "BLOCKED_RESOURCE",
+      "started_at": "2026-10-10T04:32:45Z",
+      "ended_at": "2026-10-10T04:33:10Z",
+      "command_started": false,
+      "graph_sha256": "29d7aaf9c45a596f4065c44d13f983f4a7edeec5ac2ea41b718b1c52ca865bf8",
+      "resource": "preflight min MemAvailable 746720 KiB; min SwapFree 59924 KiB; no worker; no replay; no retry"
     }
   ],
   "queues": {
-    "verified": ["expected baseline and SD snapshot", "static frontend ownership review"],
-    "implemented_untested": ["preview reducer", "journey identity cancellation", "saved v1 parser hardening", "Can-I-Ride presentation fixtures", "validation-ledger hardening", "portable runner"],
-    "blocked_resource": ["frontend guarded group after its last five-sample preflight refusal", "real corpus if its bounded replay preflight refuses"],
-    "external_host_required": ["PostgreSQL staging", "external live API integration"],
-    "field_evidence_required": ["transfer walking safety", "boarding/alighting verification", "sidewalk and crossing observations"]
-  }
+    "verified": [
+      "recovery baseline and SD snapshot",
+      "preview state and request gate source-matched harnesses",
+      "commute-card/saved-v1 suite",
+      "Ride Mode suite",
+      "place-search and search-keyboard harnesses",
+      "Can-I-Ride standalone harness",
+      "validation-ledger child harness",
+      "static provenance/coverage/comparator/PHP-geometry/Doctor/portable-runner suites",
+      "read-only graph SHA256 identity"
+    ],
+    "implemented_untested": [
+      "UX contract harness due resource preflight refusal",
+      "mobile browser/viewports and interaction",
+      "portable v4 kit generation/local STATIC verification"
+    ],
+    "blocked_resource": [
+      "TypeScript and ESLint",
+      "adapter PHPUnit",
+      "real Cebu corpus replay",
+      "UX contract harness; sample 4 SwapFree below floor"
+    ],
+    "blocked_dependency": [
+      "PostgreSQL staging and live production integration remain external gates"
+    ],
+    "external_host_required": [
+      "PostgreSQL staging",
+      "live production API integration"
+    ],
+    "field_evidence_required": [
+      "physical transfer safety",
+      "boarding/alighting location verification",
+      "sidewalk and crossing observations"
+    ],
+    "not_started": [
+      "No PostgreSQL startup, browser, graph rebuild, PBF scan or write access to SQLite graph"
+    ]
+  },
+  "resource_observations": {
+    "minimums_kib": {
+      "MemAvailable": 524288,
+      "SwapFree": 131072
+    },
+    "guard": "api/scripts/run-bounded-process.sh",
+    "BIYAHE_RESOURCE_BREACH_SAMPLES": 1,
+    "preflight_samples_before_search_group": [
+      {
+        "at": "2026-10-10T03:40:42Z",
+        "MemAvailable_kib": 913116,
+        "SwapFree_kib": 146204
+      },
+      {
+        "at": "2026-10-10T03:42:38Z",
+        "MemAvailable_kib": 911796,
+        "SwapFree_kib": 146692
+      },
+      {
+        "at": "2026-10-10T03:44:47Z",
+        "MemAvailable_kib": 906972,
+        "SwapFree_kib": 146772
+      },
+      {
+        "at": "2026-10-10T03:50:49Z",
+        "MemAvailable_kib": 1029612,
+        "SwapFree_kib": 241516
+      },
+      {
+        "at": "2026-10-10T03:50:55Z",
+        "MemAvailable_kib": 947864,
+        "SwapFree_kib": 209988
+      }
+    ],
+    "search_worker": {
+      "start": "2026-10-10T03:50:55Z",
+      "end": "2026-10-10T03:51:02Z",
+      "minimum_MemAvailable_kib": 854672,
+      "minimum_SwapFree_kib": 113960,
+      "peak_RSS_kib": 68304,
+      "peak_PostgreSQL_RSS_kib": 0,
+      "status": "BLOCKED_RESOURCE",
+      "first_breach": "SwapFree 113960 KiB < 131072 KiB",
+      "owned_process_group_cancellation": "COMPLETE"
+    },
+    "latest_observation": {
+      "at": "2026-10-10T03:54:23Z",
+      "MemAvailable_kib": 931772,
+      "SwapFree_kib": 68596,
+      "PostgreSQL": "ABSENT"
+    },
+    "postgresql_started": false,
+    "floors_changed": false,
+    "can_i_ride_preflight_samples": [
+      {
+        "at": "2026-10-10T04:31:16Z",
+        "MemAvailable_kib": 862104,
+        "SwapFree_kib": 255448
+      },
+      {
+        "at": "2026-10-10T04:31:22Z",
+        "MemAvailable_kib": 857316,
+        "SwapFree_kib": 271140
+      },
+      {
+        "at": "2026-10-10T04:31:28Z",
+        "MemAvailable_kib": 879240,
+        "SwapFree_kib": 276068
+      },
+      {
+        "at": "2026-10-10T04:31:33Z",
+        "MemAvailable_kib": 822504,
+        "SwapFree_kib": 296700
+      },
+      {
+        "at": "2026-10-10T04:31:39Z",
+        "MemAvailable_kib": 818196,
+        "SwapFree_kib": 296996
+      }
+    ],
+    "ux_contract_preflight_samples": [
+      {
+        "at": "2026-10-10T04:31:51Z",
+        "MemAvailable_kib": 746816,
+        "SwapFree_kib": 183564
+      },
+      {
+        "at": "2026-10-10T04:31:56Z",
+        "MemAvailable_kib": 845816,
+        "SwapFree_kib": 160412
+      },
+      {
+        "at": "2026-10-10T04:32:02Z",
+        "MemAvailable_kib": 842048,
+        "SwapFree_kib": 160996
+      },
+      {
+        "at": "2026-10-10T04:32:07Z",
+        "MemAvailable_kib": 830884,
+        "SwapFree_kib": 129320
+      },
+      {
+        "at": "2026-10-10T04:32:13Z",
+        "MemAvailable_kib": 863196,
+        "SwapFree_kib": 181720
+      }
+    ],
+    "corpus_preflight_samples": [
+      {
+        "at": "2026-10-10T04:32:47Z",
+        "MemAvailable_kib": 746720,
+        "SwapFree_kib": 59924
+      },
+      {
+        "at": "2026-10-10T04:32:53Z",
+        "MemAvailable_kib": 755096,
+        "SwapFree_kib": 101248
+      },
+      {
+        "at": "2026-10-10T04:32:58Z",
+        "MemAvailable_kib": 760628,
+        "SwapFree_kib": 139776
+      },
+      {
+        "at": "2026-10-10T04:33:04Z",
+        "MemAvailable_kib": 772592,
+        "SwapFree_kib": 144656
+      },
+      {
+        "at": "2026-10-10T04:33:10Z",
+        "MemAvailable_kib": 779572,
+        "SwapFree_kib": 146264
+      }
+    ],
+    "can_i_ride_worker": {
+      "start": "2026-10-10T04:31:39Z",
+      "end": "2026-10-10T04:31:41Z",
+      "minimum_MemAvailable_kib": 813232,
+      "minimum_SwapFree_kib": 255448,
+      "peak_RSS_kib": 60592,
+      "peak_PostgreSQL_RSS_kib": 0,
+      "status": "PASS"
+    },
+    "ux_contract_worker": {
+      "status": "NOT_STARTED",
+      "reason": "preflight sample 4 below SwapFree floor"
+    },
+    "corpus_worker": {
+      "status": "NOT_STARTED",
+      "reason": "preflight sample 1 below SwapFree floor; graph SHA verified read-only before preflight"
+    }
+  },
+  "current_checkpoint": {
+    "branch": "main",
+    "head": "1015874d95e3d6dc93241cbe3a7ad5645e62dcd5",
+    "executable_source_revision": "1015874d95e3d6dc93241cbe3a7ad5645e62dcd5"
+  },
+  "commits_since_start": [
+    "aa929e7ef0902680911cb451baea8421a647dc19",
+    "ac48e3856e26cb322ad79c7d7b5ddf1d14fb549c",
+    "39417b17ac9447dd2d1866682ed57e37c8e7fc0b",
+    "3eecb655a69f0740e75d0f137c0f8b9e50dd12d6",
+    "4ac5e74b182c91b847295979090cee76283e4e0c",
+    "31a8b202787f4e0d447183c6581185370699313e",
+    "4306f450232ea4528521d69a79c782fd12263106",
+    "db843f7acd191f7803793989ab7fd27a74860839",
+    "3be8af5fe6b1606d95e28cafaf0cae0da047f568",
+    "eae272fe90e4320f129dd4349f644cbc91bd108b",
+    "1015874d95e3d6dc93241cbe3a7ad5645e62dcd5"
+  ]
 }
