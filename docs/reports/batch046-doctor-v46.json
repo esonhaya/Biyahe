@@ -1,0 +1,98 @@
+{
+  "doctor": "Biyahe Doctor V46",
+  "generated_at_utc": "2026-10-10T15:20:57Z",
+  "executable_source_revision": "18878a355afde49c2f2eb29a525f49e263478e2e",
+  "documentation_revision": "separate documentation-only commit; not part of tested executable source",
+  "changed_modules": [
+    "web/src/lib/api.ts",
+    "web/src/lib/savedJourneys.ts",
+    "web/src/app/page.tsx",
+    "web/tsconfig.json",
+    "web/scripts/api-failure-harness.mjs",
+    "web/scripts/commute-card-harness.mjs"
+  ],
+  "source_fingerprints_sha256": {
+    "web/src/lib/api.ts": "1ca22f7e4cb60d67a2cf1004e3c0cb1b8164121e5d910cfcbc0a6cd616092f4e",
+    "web/src/lib/fetchWithTimeout.ts": "65a29fccfaf89af6bf82736111592f3b5b32180fac8422ed2679d9e6cefd4c53",
+    "web/src/lib/savedJourneys.ts": "24764b33c555f3a38f77b3740e552f40d4ff1efc0d430942aa00304565295527",
+    "web/src/app/page.tsx": "94287890dc7d1992b4d121fbeea7f0f830bd63c2679115e462feab4eb17a21f1",
+    "web/scripts/api-failure-harness.mjs": "55ef617cb77aa12e06160d1a92ec9491ba526d4e6a8a67a57d2d34d4bd1b58cf",
+    "web/scripts/commute-card-harness.mjs": "b56346afd8b3f78e23d5a87ba4378a38eadb6b4d9e4bca23438fd2ef0b16c020",
+    "web/tsconfig.json": "ee6c7d998c5df3678ef51394af1df3cf58dc274cde8b34c33788da61359b96f2"
+  },
+  "assessments": {
+    "api_timeout_cancellation_and_response_contract": {
+      "status": "IMPLEMENTED_UNTESTED",
+      "details": "Added bounded response parsing diagnostics, HTTP status/path errors, request place identity checks, complete journey-leg validation, and nested disruption impact validation. Deterministic fake-timer and response fixtures are present.",
+      "functional_test": {
+        "status": "BLOCKED_RESOURCE",
+        "command": "node --experimental-strip-types web/scripts/api-failure-harness.mjs",
+        "exit_code": 4,
+        "duration_seconds": 24,
+        "worker_started": false,
+        "minimum_memavailable_kib": 754112,
+        "minimum_swapfree_kib": 19328,
+        "swap_floor_kib": 131072,
+        "evidence_path": "/data/data/com.termux/files/home/.cache/biyahe/batch046/20261010T151556Z/api-failure.log"
+      }
+    },
+    "saved_snapshot_v1_integrity": {
+      "status": "IMPLEMENTED_UNTESTED",
+      "details": "Reject mismatched envelope/journey identities and duplicate IDs for writes; preserve duplicate valid records read-only for user review. Added synthetic fixtures; functional assertions were not executed after the resource gate failed.",
+      "functional_test_status": "NOT_RUN"
+    },
+    "request_lifecycle_and_ride_mode": {
+      "status": "NOT_RUN",
+      "details": "Existing request gates and manual Ride Mode transitions were inspected; no further source change was justified without executable regressions."
+    },
+    "evidence_and_mobile_presentation": {
+      "status": "NOT_RUN",
+      "details": "Existing labels were inspected. No browser verification or new visual claim was made."
+    },
+    "static_syntax_json_and_diff": {
+      "status": "VERIFIED",
+      "started_at_utc": "2026-10-10T15:19:48Z",
+      "ended_at_utc": "2026-10-10T15:19:52Z",
+      "commands_exit_code_zero": [
+        "node --experimental-strip-types --check web/src/lib/api.ts",
+        "node --experimental-strip-types --check web/src/lib/fetchWithTimeout.ts",
+        "node --experimental-strip-types --check web/src/lib/savedJourneys.ts",
+        "node --check web/scripts/api-failure-harness.mjs",
+        "node --check web/scripts/commute-card-harness.mjs",
+        "python3 -m json.tool web/package.json",
+        "python3 -m json.tool web/tsconfig.json",
+        "git diff --check"
+      ],
+      "functional_tests": false
+    },
+    "typescript_lint_build_and_browser": {
+      "status": "BLOCKED_RESOURCE",
+      "details": "Not launched after measured SwapFree remained below the configured floor."
+    },
+    "real_cebu_graph_and_corpus": {
+      "status": "NOT_RUN",
+      "details": "No graph access or corpus replay occurred in this batch; historical corpus results were not reused."
+    },
+    "postgresql_staging": {
+      "status": "NOT_RUN",
+      "details": "No database service was started or modified."
+    },
+    "field_transfer_safety": {
+      "status": "BLOCKED_DEPENDENCY",
+      "details": "Two transfer records remain physically unverified; stored-record diagnostics do not establish field safety."
+    },
+    "private_beta": "BLOCKED",
+    "production_activation": "NO"
+  },
+  "resource_policy": {
+    "minimum_memavailable_kib": 524288,
+    "minimum_swapfree_kib": 131072,
+    "owned_process_tree_rss_cap_kib": 262144,
+    "first_breach_cancellation": true,
+    "workers_started": 0,
+    "worker_cancellations": 0,
+    "postgresql_rss_kib": 0
+  },
+  "release_readiness": "NOT_READY_FOR_PRIVATE_BETA",
+  "production_activation": "NO"
+}
