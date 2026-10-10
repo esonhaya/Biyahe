@@ -89,7 +89,7 @@
       "id": "EVIDENCE_SYSTEM",
       "scope": "portable runner, Doctor per-test evidence, partial worker results and input completeness",
       "status": "VERIFIED",
-      "evidence": "Source revision 29df41b passes portable STATIC 11/11 (2026-10-10T04:37:37Z–04:37:52Z). Checkout-bound verification then exposed that packaged Doctor evidence-path relocation made the `--repo-root` byte comparison impossible; no suite ran in that failed attempt. Commit 18d757a records the fix; portable verifier regressions pass 10/10 at 2026-10-10T04:40:58Z–04:40:59Z."
+      "evidence": "Portable runner regressions pass 10/10 after commits 18d757a and 049cf77 (latest 2026-10-10T04:42:21Z–04:42:22Z). Checkout-bound validation now explicitly checks source-bound Doctor content while allowing only hash-pinned evidence path relocation; nullable evidence hashes are ignored. Rebuild and full checkout-bound STATIC remain pending."
     },
     {
       "id": "ADAPTER_PHPUNIT",
@@ -125,7 +125,7 @@
       "id": "PORTABLE_KIT",
       "scope": "Batch042 v4 portable verification kit",
       "status": "IMPLEMENTED_UNTESTED",
-      "evidence": "Fresh package integrity verification and packaged STATIC mode passed 11/11 at 2026-10-10T04:37:37Z–04:37:52Z for executable revision 29df41b. A checkout-bound run failed before test execution because Doctor evidence paths were deliberately relocated but the verifier required byte identity. Preserved that package under $HOME/.cache/biyahe/batch042/evidence/portable-verification-v4-checkout-mismatch-20261010T043737Z. Commit 18d757a fixes the verified transformation contract and passes 10/10 regression tests; a rebuilt checkout-bound kit run remains pending."
+      "evidence": "The first fresh package passed manifest/SHA checks and embedded STATIC 11/11 at 04:37:37Z–04:37:52Z. Checkout-bound attempts exposed and fixed two verifier defects: byte comparison ignored the intentional Doctor evidence relocation (18d757a), then treated null log hashes as required artifacts (049cf77). Both failed attempts and packages are preserved in cache. Latest regression suite passes 10/10; corrected kit build and checkout-bound STATIC are pending."
     }
   ],
   "execution_attempts": [
@@ -294,6 +294,32 @@
       "test_count": 10,
       "failure_count": 0,
       "exit_code": 0
+    },
+    {
+      "id": "portable-v4-checkout-bound-null-hash-20261010T044203Z",
+      "status": "FAILED_PACKAGE_CHECKOUT_CONTRACT",
+      "started_at": "2026-10-10T04:42:03Z",
+      "ended_at": "2026-10-10T04:42:05Z",
+      "wall_time_seconds": 1.23,
+      "repository_revision": "2ba2c2af406e6fd121894773f8d75048555510d5",
+      "command": "bash docs/portable-verification-v4/verify-kit.sh STATIC --repo-root \"$PWD\"",
+      "output_path": "$HOME/.cache/biyahe/batch042/evidence/portable-v4-static-checkout-20261010T044203Z.stdout.txt",
+      "package_path": "$HOME/.cache/biyahe/batch042/evidence/portable-verification-v4-null-hash-failure-20261010T044203Z",
+      "command_started": true,
+      "test_suites_started": false,
+      "result": "Manifest/SHA256SUMS and all unchanged checkout files passed. The verifier then expected an artifact for a null Doctor resource_log_sha256 in corpus_comparator; this is a packaging-verifier defect, not a test result. Fixed in commit 049cf77; preserved the package."
+    },
+    {
+      "id": "portable-verifier-regressions-after-049cf77",
+      "status": "PASS",
+      "started_at": "2026-10-10T04:42:21Z",
+      "ended_at": "2026-10-10T04:42:22Z",
+      "wall_time_seconds": 1.047,
+      "source_revision": "049cf77225b522fe272baa6166400c5262b59f52",
+      "command": "PYTHONDONTWRITEBYTECODE=1 python3 api/scripts/test_portable_verification.py",
+      "test_count": 10,
+      "failure_count": 0,
+      "exit_code": 0
     }
   ],
   "queues": {
@@ -309,10 +335,11 @@
       "read-only graph SHA256 identity",
       "portable checksum verifier missing-import regression (9/9 portable runner tests)",
       "source commit 29df41b package verifier fix plus 9/9 portable runner regressions",
-      "portable kit checkout evidence relocation verifier fix (commit 18d757a; regression harness 10/10)"
+      "portable kit checkout evidence relocation verifier fix (commit 18d757a; regression harness 10/10)",
+      "nullable Doctor evidence mapping regression fixed (commit 049cf77; portable verifier tests 10/10)"
     ],
     "implemented_untested": [
-      "rebuilt v4 package and checkout-bound STATIC verification against the corrected verifier"
+      "rebuilt v4 package and checkout-bound STATIC verification against commits 18d757a and 049cf77"
     ],
     "blocked_resource": [
       "TypeScript and ESLint",
@@ -490,8 +517,8 @@
   },
   "current_checkpoint": {
     "branch": "main",
-    "head": "18d757a19b894881beb45ce490e9d1b5f4e7adfb",
-    "executable_source_revision": "18d757a19b894881beb45ce490e9d1b5f4e7adfb"
+    "head": "049cf77225b522fe272baa6166400c5262b59f52",
+    "executable_source_revision": "049cf77225b522fe272baa6166400c5262b59f52"
   },
   "commits_since_start": [
     "aa929e7ef0902680911cb451baea8421a647dc19",
@@ -506,6 +533,7 @@
     "eae272fe90e4320f129dd4349f644cbc91bd108b",
     "1015874d95e3d6dc93241cbe3a7ad5645e62dcd5",
     "29df41bc768c22d8074970577f5fa67009093c0d",
-    "18d757a19b894881beb45ce490e9d1b5f4e7adfb"
+    "18d757a19b894881beb45ce490e9d1b5f4e7adfb",
+    "049cf77225b522fe272baa6166400c5262b59f52"
   ]
 }

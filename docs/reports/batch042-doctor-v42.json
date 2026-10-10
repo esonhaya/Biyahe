@@ -1,5 +1,5 @@
 {
-  "assessed_at_utc": "2026-10-10T04:41:31Z",
+  "assessed_at_utc": "2026-10-10T04:42:41Z",
   "batch": 42,
   "categories": [
     {
@@ -104,13 +104,13 @@
         },
         {
           "method": "read_only_sha256",
-          "observed_at_utc": "2026-10-10T04:41:31Z",
+          "observed_at_utc": "2026-10-10T04:42:41Z",
           "path": "/data/data/com.termux/files/home/.cache/biyahe/batch030/cebu-walk-central-visayas-20261007-v3.sqlite",
           "sha256": "29d7aaf9c45a596f4065c44d13f983f4a7edeec5ac2ea41b718b1c52ca865bf8",
           "size_bytes": 41013248
         }
       ],
-      "observed_at_utc": "2026-10-10T04:41:31Z",
+      "observed_at_utc": "2026-10-10T04:42:41Z",
       "path": "$HOME/.cache/biyahe/batch030/cebu-walk-central-visayas-20261007-v3.sqlite",
       "pbf_rescanned": false,
       "status": "VERIFIED"
@@ -194,7 +194,7 @@
     "api/scripts/compare-offline-corpus.py": "32bfc2a535ec1fa0f062f3d9bc17de5cd49964286e0cdabf1250371ece320e1e",
     "api/scripts/evidence_provenance.py": "e17d63dda770595880842a5e93a96e87020cae71ba3384f76b854e10dc9ef46d",
     "api/scripts/offline-evidence-smoke.py": "01450f3bd284a6f965784475d8de025f0a4f42306e561a06b329f3b1251dd9a3",
-    "api/scripts/package-batch041-verification-kit.py": "6ba7f7c07c3cdd933811142f5e216522c9e26a8fae2b8916d982069c90c529e7",
+    "api/scripts/package-batch041-verification-kit.py": "276b95845ace4a5b9a44d19835ae33316b49c4a3cbbd140fb26260fdaede645d",
     "api/scripts/refresh-batch042-doctor.py": "a43f38fc5fafffd7c62012a2229fdaf464ceafbbb80b17b16f33d1edbe92bcbe",
     "api/scripts/run-bounded-process.sh": "322b6dede24c1c1af290495ff820b19448d5027cef0f4cb05302fa7f174e2d0f",
     "api/scripts/run-portable-verification.py": "ffed6d088642c502544ac70e02b35c39df7ab6c4cecae8f1eea4f9ab9411c1a6",
@@ -203,7 +203,7 @@
     "api/scripts/test_evidence_provenance.py": "a9e64eae5df4afe8124cfee44a95d3df89f0b0ea26beb8b65d5a22462476d9d2",
     "api/scripts/test_offline_evidence_smoke.py": "893cf0881b8b415ac21b606dd1a7c0b6d6f529f24dbaed97dd092577352d2681",
     "api/scripts/test_offline_route_geometry_contract.php": "8d13c3451ba15758bbcc28e21068f1e17e547dece5cb95dbbbfc3cfc154bba80",
-    "api/scripts/test_portable_verification.py": "9558d60d81edea82d512aa6a79ef9fe7ec74d76fd1dc2d096a72aaae1d885f52",
+    "api/scripts/test_portable_verification.py": "a2ae70066ba41a188a58a84692445f90a1261961dceffcb81caee7020ca696af",
     "api/scripts/test_summarize_offline_coverage.py": "474ca9c077d5e98a52a67ce892305e5358968bcd703c282a42017d328d31d372",
     "api/scripts/test_validate_batch042_doctor.py": "834285bf105fa96d32a5c35c7709cf5b3094dc7f4e26520efcc5ba9e310ef4fd",
     "api/scripts/validate-batch041-provenance.py": "b31085fa0c2c190d48c2b1dc1e0cd72b9c4210efc4843fbc346361cfdd3ac6de",
@@ -259,8 +259,8 @@
   },
   "source_revision": {
     "documentation_checkpoint_note": "Later report and portable-kit commits are documentation-only and are identified by the Batch042 final report; this report does not pin its own commit.",
-    "executable": "18d757a19b894881beb45ce490e9d1b5f4e7adfb",
-    "tested": "18d757a19b894881beb45ce490e9d1b5f4e7adfb"
+    "executable": "049cf77225b522fe272baa6166400c5262b59f52",
+    "tested": "049cf77225b522fe272baa6166400c5262b59f52"
   },
   "tests": {
     "adapter_phpunit": {
