@@ -1,0 +1,267 @@
+{
+  "format": "biyahe-evidence-provenance-registry-v1",
+  "registry_version": 1,
+  "scope": {
+    "source_snapshot": "2026-10-07T01:00:21Z",
+    "source_pbf_sha256": "787cac20ecc586b754b1a464643a040566d486457c6a37bc0b11ce683bc66d4d",
+    "graph_schema": "biyahe-pedestrian-sqlite-v3",
+    "graph_sha256": "29d7aaf9c45a596f4065c44d13f983f4a7edeec5ac2ea41b718b1c52ca865bf8",
+    "graph_content_fingerprint": "a0d9f1cb8289cf1f9bde3905d1ad8a57124ee41120153b4efc1f5b31e4c03ecd"
+  },
+  "sources": [
+    {
+      "id": "batch031_source_restriction_scan",
+      "path": "docs/reports/batch031-cebu-restriction-source-scan.json",
+      "sha256": "ba04117fcfeb9ec05c6833536987714edd27b224604795e50d0e30c919ff0ea6",
+      "format": "biyahe-osm-restriction-source-scan-v1",
+      "repository_commit": "015a73e",
+      "repository_commit_time": "2026-10-09T09:09:07+08:00",
+      "report_embedded_generation_time": null,
+      "producer": "Osmium 1.19.1 tags-filter via api/scripts/osmium-runtime.sh; XMLReader streamed the complete filtered relation output",
+      "source_identity": {"source_sha256": "787cac20ecc586b754b1a464643a040566d486457c6a37bc0b11ce683bc66d4d", "snapshot": "2026-10-07T01:00:21Z"},
+      "method_limit": "Tag-level full filtered-relation scan; it did not resolve member geometry for the 29 omitted relations."
+    },
+    {
+      "id": "batch031_restriction_audit",
+      "path": "docs/reports/batch031-cebu-restriction-audit.json",
+      "sha256": "14671f5cfed2c816dff7986b251d85acb2fae6e816670f9925b67b58cf3a7e6c",
+      "format": "biyahe-pedestrian-restriction-audit-v1",
+      "repository_commit": "015a73e",
+      "repository_commit_time": "2026-10-09T09:09:07+08:00",
+      "report_embedded_generation_time": null,
+      "producer": "OfflinePedestrianRestrictionPolicy source scan classification plus stored v3 relation audit",
+      "source_identity": {"source_sha256": "787cac20ecc586b754b1a464643a040566d486457c6a37bc0b11ce683bc66d4d", "snapshot": "2026-10-07T01:00:21+00:00"},
+      "graph_identity": {"schema_version": 3, "graph_fingerprint": "a0d9f1cb8289cf1f9bde3905d1ad8a57124ee41120153b4efc1f5b31e4c03ecd"},
+      "method_limit": "Source classification covers all 648 relation tags; member-form counts are available only for the 619 stored relations."
+    },
+    {
+      "id": "batch031_graph_quality_review",
+      "path": "docs/reports/batch031-cebu-graph-quality-and-member-review.json",
+      "sha256": "5756fe8f9f759f1c0f1213c3e51de7dd30a67a5bb835cd64ac53d3ddf9032aaf",
+      "format": "biyahe-cebu-graph-quality-and-member-review-v1",
+      "repository_commit": "015a73e",
+      "repository_commit_time": "2026-10-09T09:09:07+08:00",
+      "report_embedded_generation_time": null,
+      "producer": "OfflinePedestrianGraphQualityAudit and OfflinePedestrianGraphEvidenceAudit",
+      "source_identity": {"source_sha256": "787cac20ecc586b754b1a464643a040566d486457c6a37bc0b11ce683bc66d4d", "snapshot": "2026-10-07T01:00:21+00:00"},
+      "graph_identity": {"graph_sha256": "29d7aaf9c45a596f4065c44d13f983f4a7edeec5ac2ea41b718b1c52ca865bf8", "graph_fingerprint": "a0d9f1cb8289cf1f9bde3905d1ad8a57124ee41120153b4efc1f5b31e4c03ecd"},
+      "method_limit": "Long segments use graph_edges.length_meters > 250; boundary membership uses any latitude/longitude bound within 0.0005 degrees; crossing count counts graph nodes with a nonempty crossing tag. These are OSM graph diagnostics, not field safety evidence."
+    },
+    {
+      "id": "batch032_coverage_report",
+      "path": "docs/reports/batch032-cebu-coverage.json",
+      "sha256": "6caf101177904bee6fda1b12cab9c5cda36ddaf7ecc08b0d9778c0517123c81b",
+      "format": "biyahe-cebu-offline-coverage-v1",
+      "repository_commit": "90a40fc",
+      "repository_commit_time": "2026-10-09T10:13:34+08:00",
+      "report_embedded_generation_time": null,
+      "producer": "AuditOfflinePedestrianCoverage command at repository revision 90a40fc",
+      "source_identity": {"source_sha256": "787cac20ecc586b754b1a464643a040566d486457c6a37bc0b11ce683bc66d4d", "snapshot": "2026-10-07T01:00:21Z"},
+      "graph_identity": {"graph_sha256": "29d7aaf9c45a596f4065c44d13f983f4a7edeec5ac2ea41b718b1c52ca865bf8", "graph_fingerprint": "a0d9f1cb8289cf1f9bde3905d1ad8a57124ee41120153b4efc1f5b31e4c03ecd"},
+      "method_limit": "Coverage describes stored stop/place/transfer rows and the exact graph snapshot; it is not geographic, sidewalk, population, or field coverage. quality_summary was emitted before the detailed quality evidence was attached."
+    },
+    {
+      "id": "batch032_doctor_v32",
+      "path": "docs/reports/batch032-cebu-doctor-v32.json",
+      "sha256": "916086fa92b40e3080218ee53d7fe0be9054c8584a4d337dedbed0ac37b084ef",
+      "format": "biyahe-doctor-v32-static-v1",
+      "repository_commit": "90a40fc",
+      "repository_commit_time": "2026-10-09T10:13:34+08:00",
+      "report_embedded_generation_time": null,
+      "producer": "BiyaheDoctorV32 static Doctor report",
+      "source_identity": {"source_sha256": "787cac20ecc586b754b1a464643a040566d486457c6a37bc0b11ce683bc66d4d", "snapshot": "2026-10-07T01:00:21Z"},
+      "graph_identity": {"graph_sha256": "29d7aaf9c45a596f4065c44d13f983f4a7edeec5ac2ea41b718b1c52ca865bf8", "graph_fingerprint": "a0d9f1cb8289cf1f9bde3905d1ad8a57124ee41120153b4efc1f5b31e4c03ecd"},
+      "method_limit": "Static readiness evidence from pinned source/graph reports; no current PostgreSQL staging claim."
+    },
+    {
+      "id": "batch040_coverage_derivative",
+      "path": "docs/reports/batch040-coverage-diagnostics.json",
+      "sha256": "38ee5d3ce9423f7df1fd51464eb068f689cce7a5058fbe3dee3c6a87c91d083e",
+      "format": "biyahe-batch040-coverage-diagnostics-v1",
+      "repository_commit": "b723f78",
+      "repository_commit_time": "2026-10-10T00:22:15+08:00",
+      "report_embedded_generation_time": null,
+      "producer": "summarize-offline-coverage.py carried-forward report mode",
+      "source_identity": {"coverage_report_sha256": "6caf101177904bee6fda1b12cab9c5cda36ddaf7ecc08b0d9778c0517123c81b"},
+      "method_limit": "Derived summary only; it did not open the SQLite graph or PBF and repeats rather than independently resolves source discrepancies."
+    }
+  ],
+  "metric_claims": [
+    {
+      "id": "restrictions.source_relations",
+      "value": 648,
+      "unit": "OSM restriction-tagged relations",
+      "source_id": "batch031_source_restriction_scan",
+      "source_pointer": "matching_relation_count",
+      "definition": "Relations selected by the recorded type/restriction tag filter in the complete filtered PBF pass.",
+      "filters": "r/type=restriction plus pedestrian-specific restriction key expressions listed in the source scan report.",
+      "scope": "Central Visayas PBF snapshot 2026-10-07T01:00:21Z",
+      "status": "VERIFIED_HISTORICAL_SOURCE_SCAN",
+      "interpretation": "Source-level inventory, not the number of relation rows persisted in the v3 graph."
+    },
+    {
+      "id": "restrictions.source_vehicle_only_classifications",
+      "value": 648,
+      "unit": "relations classified vehicle_only",
+      "source_id": "batch031_restriction_audit",
+      "source_pointer": "source_classification_counts.vehicle_only",
+      "definition": "Mode applicability classification across the 648 tag-scanned source relations.",
+      "filters": "Same complete filtered source relation inventory; generic conditional and psv-only relation tags remain in this source-level classification.",
+      "scope": "Central Visayas PBF snapshot 2026-10-07T01:00:21Z",
+      "status": "VERIFIED_HISTORICAL_SOURCE_CLASSIFICATION",
+      "interpretation": "No source relation was classified pedestrian_applicable or ambiguous in this audit; this does not mean the router implements arbitrary pedestrian turn restrictions."
+    },
+    {
+      "id": "restrictions.source_pedestrian_applicable",
+      "value": 0,
+      "unit": "relations classified pedestrian_applicable",
+      "source_id": "batch031_restriction_audit",
+      "source_pointer": "source_classification_counts.pedestrian_applicable",
+      "definition": "Source relation tags explicitly classified as applying to pedestrian routing by the Batch031 mode policy.",
+      "filters": "All 648 complete tag-scanned source relations.",
+      "scope": "Central Visayas PBF snapshot 2026-10-07T01:00:21Z",
+      "status": "VERIFIED_HISTORICAL_SOURCE_CLASSIFICATION",
+      "interpretation": "Source-specific to this snapshot; unsupported pedestrian restrictions remain a general router limitation."
+    },
+    {
+      "id": "restrictions.source_ambiguous",
+      "value": 0,
+      "unit": "relations with ambiguous pedestrian applicability",
+      "source_id": "batch031_restriction_audit",
+      "source_pointer": "source_classification_counts.ambiguous",
+      "definition": "Source relation tags whose mode applicability could not be established by the Batch031 policy.",
+      "filters": "All 648 complete tag-scanned source relations.",
+      "scope": "Central Visayas PBF snapshot 2026-10-07T01:00:21Z",
+      "status": "VERIFIED_HISTORICAL_SOURCE_CLASSIFICATION",
+      "interpretation": "Source-specific result; no general support for unknown restriction modes is implied."
+    },
+    {
+      "id": "restrictions.source_unsupported_applicable",
+      "value": 0,
+      "unit": "unsupported applicable source restrictions",
+      "source_id": "batch031_restriction_audit",
+      "source_pointer": "source_classification_counts.unsupported_applicable",
+      "definition": "Source restrictions that apply or may apply to pedestrians but lack implemented routing semantics.",
+      "filters": "All 648 complete tag-scanned source relations.",
+      "scope": "Central Visayas PBF snapshot 2026-10-07T01:00:21Z",
+      "status": "VERIFIED_HISTORICAL_SOURCE_CLASSIFICATION",
+      "interpretation": "The zero is an audit result for this source snapshot, not a general capability claim."
+    },
+    {
+      "id": "restrictions.graph_stored_relations",
+      "value": 619,
+      "unit": "restriction relation rows in SQLite v3",
+      "source_id": "batch032_coverage_report",
+      "source_pointer": "graph_validation.restriction_relations",
+      "definition": "Relations captured by the v3 graph's stored-relation predicate and included in its validated restriction inventory.",
+      "filters": "Stored graph relation table; source scan records 29 additional conditional/psv-only relations omitted by that predicate.",
+      "scope": "Graph SHA256 29d7aaf9c45a596f4065c44d13f983f4a7edeec5ac2ea41b718b1c52ca865bf8",
+      "status": "VERIFIED_HISTORICAL_GRAPH_INVENTORY",
+      "interpretation": "619 stored plus 29 source-only relations equals 648 source relations; these values have different denominators and must not share one unlabeled metric."
+    },
+    {
+      "id": "restrictions.source_only_omitted_relations",
+      "value": 29,
+      "unit": "source relations not stored in SQLite v3",
+      "source_id": "batch031_source_restriction_scan",
+      "source_pointer": "omitted_relation_count",
+      "definition": "Source relation IDs present in the complete tag scan but not captured by the v3 stored predicate.",
+      "filters": "28 generic restriction:conditional-only and one restriction:psv-only relation.",
+      "scope": "Same source and graph snapshot identities recorded in this registry.",
+      "status": "VERIFIED_HISTORICAL_SOURCE_SCAN",
+      "interpretation": "The omitted relations are retained in the source audit sidecar; their member geometry is not represented by the v3 graph inventory."
+    },
+    {
+      "id": "quality.legacy_summary.long_edges_over_250m",
+      "value": 0,
+      "unit": "legacy summary field value",
+      "source_id": "batch032_coverage_report",
+      "source_pointer": "quality_summary.long_edges_over_250m",
+      "definition": "Legacy summary field produced by the coverage audit's metadata lookup with a zero fallback when the metadata key is absent.",
+      "filters": "No SQLite edge scan is established by this field value.",
+      "scope": "Batch032 coverage report at repository revision 90a40fc.",
+      "status": "UNMEASURED_DEFAULT_NOT_A_COUNT",
+      "interpretation": "Do not present as zero measured long edges."
+    },
+    {
+      "id": "quality.graph_evidence.long_edges_over_250m",
+      "value": 26,
+      "unit": "graph edge segments",
+      "source_id": "batch031_graph_quality_review",
+      "source_pointer": "graph_quality.long_edges_over_250m",
+      "definition": "SQLite graph_edges rows with length_meters strictly greater than 250.",
+      "filters": ">250 m; source way references and endpoint geometry reviewed; maximum recorded segment is 867 m.",
+      "scope": "Exact graph SHA256 and graph content fingerprint in this registry.",
+      "status": "VERIFIED_HISTORICAL_GRAPH_AUDIT",
+      "interpretation": "Source-backed geometry review is not field safety verification."
+    },
+    {
+      "id": "quality.legacy_summary.boundary_nodes",
+      "value": 0,
+      "unit": "legacy summary field value",
+      "source_id": "batch032_coverage_report",
+      "source_pointer": "quality_summary.boundary_nodes_within_0_0005_degrees",
+      "definition": "Legacy summary field produced with a zero fallback when metadata quality-review values were unavailable.",
+      "filters": "No SQLite boundary query is established by this field value.",
+      "scope": "Batch032 coverage report at repository revision 90a40fc.",
+      "status": "UNMEASURED_DEFAULT_NOT_A_COUNT",
+      "interpretation": "Do not present as zero measured boundary nodes."
+    },
+    {
+      "id": "quality.graph_evidence.boundary_nodes",
+      "value": 944,
+      "unit": "graph nodes",
+      "source_id": "batch031_graph_quality_review",
+      "source_pointer": "graph_quality.boundary_nodes_within_0_0005_degrees",
+      "definition": "Graph nodes where the absolute difference from any source-bounds latitude or longitude edge is at most 0.0005 degrees.",
+      "filters": "Any of min/max latitude or longitude bound; this is a coordinate tolerance, not a geodesic distance.",
+      "scope": "Exact graph SHA256 and graph content fingerprint in this registry.",
+      "status": "VERIFIED_HISTORICAL_GRAPH_AUDIT",
+      "interpretation": "Boundary review signal only; no clipping defect is implied by proximity alone."
+    },
+    {
+      "id": "quality.legacy_summary.crossing_nodes",
+      "value": 0,
+      "unit": "legacy summary field value",
+      "source_id": "batch032_coverage_report",
+      "source_pointer": "quality_summary.crossing_tagged_nodes",
+      "definition": "Legacy summary field produced with a zero fallback when metadata quality-review values were unavailable.",
+      "filters": "No SQLite crossing-tag query is established by this field value.",
+      "scope": "Batch032 coverage report at repository revision 90a40fc.",
+      "status": "UNMEASURED_DEFAULT_NOT_A_COUNT",
+      "interpretation": "Do not present as zero crossing-tagged nodes."
+    },
+    {
+      "id": "quality.graph_evidence.crossing_tagged_nodes",
+      "value": 1510,
+      "unit": "graph nodes with nonempty crossing tag",
+      "source_id": "batch031_graph_quality_review",
+      "source_pointer": "graph_quality.crossing_tagged_nodes",
+      "definition": "SQLite graph_nodes rows with crossing IS NOT NULL and crossing <> empty string.",
+      "filters": "Nonempty stored OSM crossing tag; no inference that crossing is safe or accessible.",
+      "scope": "Exact graph SHA256 and graph content fingerprint in this registry.",
+      "status": "VERIFIED_HISTORICAL_GRAPH_AUDIT",
+      "interpretation": "Tag inventory only; it is not a crossing-safety observation."
+    }
+  ],
+  "reconciliation": [
+    {
+      "id": "restriction_619_vs_648",
+      "status": "RESOLVED_DIFFERENT_DENOMINATORS",
+      "metric_ids": ["restrictions.source_relations", "restrictions.source_vehicle_only_classifications", "restrictions.graph_stored_relations", "restrictions.source_only_omitted_relations"],
+      "finding": "648 is the complete filtered source relation count/classification; 619 is the graph's stored relation count; the 29 difference is enumerated as source-only conditional/psv relations."
+    },
+    {
+      "id": "quality_legacy_zero_vs_detailed_nonzero",
+      "status": "RESOLVED_ZERO_FIELDS_ARE_UNMEASURED_DEFAULTS",
+      "metric_ids": ["quality.legacy_summary.long_edges_over_250m", "quality.graph_evidence.long_edges_over_250m", "quality.legacy_summary.boundary_nodes", "quality.graph_evidence.boundary_nodes", "quality.legacy_summary.crossing_nodes", "quality.graph_evidence.crossing_tagged_nodes"],
+      "finding": "At revision 90a40fc the summary fields used a metadata lookup with ?? 0 and were emitted before detailed quality_evidence was attached. Revision 2d1641d later made the report producer copy detailed counts into the summary. The zero values in the immutable Batch032 report are therefore not measurements; detailed graph audit counts are 26, 944 and 1510."
+    }
+  ],
+  "unresolved_conflicts": [],
+  "evidence_boundaries": [
+    "All graph quality counts are historical, source-bound audits of the exact immutable graph; no Batch041 SQLite scan or PBF rescan was performed.",
+    "Stored-record snapping is graph coverage, not geographic, sidewalk, population, boarding, or field coverage.",
+    "Graph connectivity and crossing tags do not establish pedestrian safety or a verified physical transfer."
+  ]
+}

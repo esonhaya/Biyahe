@@ -1,0 +1,439 @@
+#!/usr/bin/env python3
+"""Build the Batch044 portable verification kit v6 from the existing runner."""
+
+from __future__ import annotations
+
+import argparse
+from datetime import datetime, timezone
+import hashlib
+import json
+from pathlib import Path, PurePosixPath
+import re
+import shutil
+import subprocess
+import sys
+
+ROOT = Path(__file__).resolve().parents[2]
+DEFAULT_OUTPUT = ROOT / "docs/portable-verification-v6"
+
+FILES = [
+    "api/composer.json", "api/composer.lock", "api/app/Console/Commands/VerifyOfflineWalkingCorpus.php",
+    "api/app/Http/Controllers/Api/DevelopmentOfflineWalkingPreviewController.php",
+    "api/app/Services/Routing/OfflineJourneyWalkingPreview.php",
+    "api/app/Services/Routing/OfflineWalkingCorpusSelection.php",
+    "api/app/Services/Routing/OfflinePedestrianGraphRouter.php",
+    "api/app/Services/Routing/OfflinePedestrianRouteGeometryContract.php",
+    "api/app/Services/Routing/OfflineWalkingPreviewException.php",
+    "api/app/Http/Controllers/Api/HealthController.php", "api/app/Http/Controllers/Api/ReadinessController.php",
+    "api/app/Http/Controllers/Api/JourneyController.php", "api/app/Http/Controllers/Api/CanIRideController.php",
+    "api/app/Http/Controllers/Api/PlaceSearchController.php", "api/app/Services/DeploymentReadinessService.php",
+    "api/config/offline_walking_preview.php", "api/routes/api.php", "api/phpunit.xml",
+    "api/scripts/check-batch042-static-syntax.py", "api/scripts/check-batch043-staging-preflight.sh",
+    "api/scripts/compare-offline-corpus.py", "api/scripts/evidence_provenance.py",
+    "api/scripts/offline-evidence-smoke.py", "api/scripts/package-batch041-verification-kit.py",
+    "api/scripts/run-bounded-process.sh", "api/scripts/run-offline-corpus-verification.py",
+    "api/scripts/test_offline_corpus_verification.py", "api/scripts/run-portable-verification.py",
+    "api/scripts/test_portable_verification.py",
+    "api/scripts/run-portable-verification.sh", "api/scripts/test_offline_route_geometry_contract.php",
+    "api/scripts/test_offline_corpus_report_writer.php",
+    "api/scripts/summarize-offline-coverage.py", "api/scripts/test_compare_offline_corpus.py",
+    "api/scripts/test_evidence_provenance.py", "api/scripts/test_offline_evidence_smoke.py",
+    "api/scripts/test_summarize_offline_coverage.py", "api/scripts/test_validate_batch041_doctor.py",
+    "api/scripts/test_validate_batch042_doctor.py", "api/scripts/validate-batch041-doctor.py",
+    "api/scripts/validate-batch041-provenance.py", "api/scripts/validate-batch042-doctor.py",
+    "api/scripts/refresh-batch042-doctor.py",
+    "api/tests/Support/OfflinePedestrianGraphFixture.php",
+    "api/tests/Unit/OfflineJourneyWalkingPreviewTest.php",
+    "api/tests/Unit/OfflinePedestrianGraphRouterTest.php",
+    "api/tests/Unit/OfflinePedestrianRouteGeometryContractTest.php",
+    "api/tests/Unit/OfflineWalkingCorpusSelectionTest.php", "api/tests/Unit/BoundedProcessGuardTest.php",
+    "docs/batch040-validation-scheduler.md", "docs/batch041-test-and-resource-plan.md",
+    "docs/deployment/batch043-external-linux-staging-runbook.md",
+    "docs/offline-walking-preview-development.md",
+    "docs/reports/batch031-cebu-graph-quality-and-member-review.json",
+    "docs/reports/batch031-cebu-restriction-audit.json",
+    "docs/reports/batch031-cebu-restriction-source-scan.json",
+    "docs/reports/batch032-cebu-coverage.json", "docs/reports/batch032-cebu-doctor-v32.json",
+    "docs/reports/batch040-coverage-diagnostics.json",
+    "docs/reports/batch041-doctor-v41.json", "docs/reports/batch041-evidence-provenance.json",
+    "docs/reports/batch041-recovery-validation.json", "docs/reports/batch041-evidence-reconciliation.md",
+    "docs/reports/batch042-doctor-v42.json", "docs/reports/batch042-frontend-architecture.md",
+    "docs/reports/batch042-work-ledger.json", "docs/testing/batch042-test-plan.json",
+    "api/scripts/refresh-batch043-doctor.py", "api/scripts/validate-batch043-doctor.py",
+    "api/scripts/test_validate_batch043_doctor.py", "docs/reports/batch043-doctor-v43.json",
+    "docs/reports/batch043-work-ledger.json", "docs/testing/batch043-test-plan.json",
+    "docs/testing/batch041-test-plan.json",
+    "web/package.json", "web/package-lock.json", "web/tsconfig.json", "web/eslint.config.mjs",
+    "web/scripts/can-i-ride-harness.mjs",
+    "web/scripts/commute-card-harness.mjs", "web/scripts/offline-walking-preview-harness.mjs",
+    "web/scripts/offline-walking-preview-state-harness.mjs", "web/scripts/ride-mode-harness.mjs",
+    "web/scripts/ux-contract-harness.mjs", "web/scripts/validation-ledger-harness.mjs",
+    "web/scripts/request-gate-harness.mjs", "web/scripts/search-keyboard-harness.mjs",
+    "web/scripts/place-search-harness.mjs", "web/scripts/validation-ledger.mjs", "web/scripts/nearby-harness.mjs",
+    "web/src/app/page.tsx", "web/src/app/page.module.css", "web/src/app/globals.css",
+    "web/src/components/CommuteCard.tsx", "web/src/components/DisruptionNotice.tsx",
+    "web/src/components/MapView.tsx", "web/src/components/ReplanPanel.tsx", "web/src/components/RideMode.tsx",
+    "web/src/components/NearbyRoutes.tsx", "web/src/components/BiyahePulse.tsx",
+    "web/src/components/PersonalCommuteTools.tsx", "web/src/components/FieldMode.tsx",
+    "web/src/lib/api.ts", "web/src/lib/canIRidePresentation.ts", "web/src/lib/commuteInstructions.ts",
+    "web/src/lib/journeyExplanation.ts", "web/src/lib/journeyMapPresentation.ts",
+    "web/src/lib/latestPlaceSearch.ts", "web/src/lib/nearbyLookup.ts", "web/src/lib/offlineWalkingPreviewState.ts",
+    "web/src/lib/requestGate.ts", "web/src/lib/rideMode.ts", "web/src/lib/savedJourneys.ts",
+    "web/src/lib/searchKeyboard.ts",
+    "web/public/sw.js", "web/public/manifest.webmanifest",
+    ".dockerignore", "api/config/app.php", "api/config/database.php", "api/config/cors.php",
+    "api/scripts/staging-bootstrap.sh", "api/scripts/staging-api-smoke.py",
+    "api/scripts/test_staging_api_smoke.py", "api/scripts/validate-staging-config.py",
+    "api/scripts/test_staging_config.py", "api/scripts/test-staging-secret-config.php",
+    "api/scripts/staging-db-init-sql.py", "api/scripts/test_staging_db_init_sql.py",
+    "api/scripts/run-portable-verification.py", "api/scripts/run-offline-corpus-verification.py",
+    "api/scripts/test_portable_verification.py", "api/scripts/test_offline_corpus_verification.py",
+    "api/scripts/package-batch041-verification-kit.py",
+    "deploy/staging/.env.example", "deploy/staging/.gitignore", "deploy/staging/compose.yaml",
+    "deploy/staging/nginx.conf.template", "deploy/staging/api.Dockerfile", "deploy/staging/api-entrypoint.sh",
+    "deploy/staging/web.Dockerfile", "web/playwright.config.ts", "web/e2e/staging-journey.spec.ts",
+    "docs/deployment/batch044-linux-staging-handoff.md",
+    "docs/reports/batch044-work-ledger.json", "docs/reports/batch044-doctor-v44.json",
+    "api/scripts/refresh-batch044-doctor.py", "api/scripts/validate-batch044-doctor.py",
+    "api/scripts/test_validate_batch044_doctor.py", "docs/testing/batch044-test-plan.json",
+    ".github/workflows/ci.yml", ".github/workflows/external-cebu-corpus.yml",
+    ".github/workflows/external-staging-browser.yml",
+]
+FILES.extend(
+    path.relative_to(ROOT).as_posix()
+    for path in sorted((ROOT / "web/src").rglob("*"))
+    if path.is_file() and path.suffix in {".ts", ".tsx"}
+)
+FILES.append("web/next.config.ts")
+FILES = list(dict.fromkeys(FILES))
+
+VERIFY_SCRIPT = r'''#!/usr/bin/env bash
+set -euo pipefail
+kit_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+mode=STATIC
+suite=""
+repo_root=""
+output_root="${HOME}/.cache/biyahe/batch044/portable-verification"
+corpus_cases=""
+graph_path=""
+while (($#)); do
+  case "$1" in
+    STATIC|FRONTEND|ADAPTER|CORPUS|FULL) mode="$1"; shift ;;
+    --mode) (($# >= 2)) || { printf '%s\n' 'ERROR: --mode requires a value.' >&2; exit 2; }; mode="$2"; shift 2 ;;
+    --suite) (($# >= 2)) || { printf '%s\n' 'ERROR: --suite requires a value.' >&2; exit 2; }; suite="$2"; shift 2 ;;
+    --repo-root) (($# >= 2)) || { printf '%s\n' 'ERROR: --repo-root requires a path.' >&2; exit 2; }; repo_root="$2"; shift 2 ;;
+    --output-root) (($# >= 2)) || { printf '%s\n' 'ERROR: --output-root requires a path.' >&2; exit 2; }; output_root="$2"; shift 2 ;;
+    --corpus-cases) (($# >= 2)) || { printf '%s\n' 'ERROR: --corpus-cases requires comma-separated zero-based indices.' >&2; exit 2; }; corpus_cases="$2"; shift 2 ;;
+    --graph-path) (($# >= 2)) || { printf '%s\n' 'ERROR: --graph-path requires a SQLite graph path.' >&2; exit 2; }; graph_path="$2"; shift 2 ;;
+    --help) printf 'Usage: %s [STATIC|FRONTEND|ADAPTER|CORPUS|FULL] [--suite SUITE_ID] [--corpus-cases 0,3] [--graph-path SQLITE] [--repo-root PINNED_CHECKOUT] [--output-root DIR]\n' "$0"; exit 0 ;;
+    *) printf 'ERROR: unknown option: %s\n' "$1" >&2; exit 2 ;;
+  esac
+done
+case "$mode" in STATIC|FRONTEND|ADAPTER|CORPUS|FULL) ;; *) printf 'ERROR: unsupported mode: %s\n' "$mode" >&2; exit 2 ;; esac
+for tool in sha256sum python3; do
+  command -v "$tool" >/dev/null 2>&1 || { printf 'ERROR: missing required tool: %s\n' "$tool" >&2; exit 127; }
+done
+cd "$kit_dir"
+python3 - "$kit_dir" <<'PY'
+import hashlib, json, sys
+from pathlib import Path, PurePosixPath
+root=Path(sys.argv[1]).resolve()
+manifest=json.loads((root/'manifest.json').read_text())
+if manifest.get('format') != 'biyahe-portable-offline-verification-kit-v6' or manifest.get('batch') != 44:
+    raise SystemExit('ERROR: unsupported portable verification manifest')
+listed=set()
+for n,line in enumerate((root/'SHA256SUMS').read_text().splitlines(),1):
+    if len(line)<67 or line[64:66]!='  ': raise SystemExit(f'ERROR: malformed checksum line {n}')
+    digest,name=line[:64],line[66:]
+    p=PurePosixPath(name)
+    if len(digest)!=64 or any(c not in '0123456789abcdef' for c in digest) or p.is_absolute() or '..' in p.parts or name in listed:
+        raise SystemExit(f'ERROR: unsafe checksum entry {n}')
+    listed.add(name)
+    target=root.joinpath(*p.parts)
+    if target.is_symlink() or not target.is_file(): raise SystemExit(f'ERROR: missing or symlinked package file: {name}')
+actual={p.relative_to(root).as_posix() for p in root.rglob('*') if p.is_file() and p.name!='SHA256SUMS'}
+if actual!=listed: raise SystemExit(f'ERROR: checksum inventory mismatch unlisted={sorted(actual-listed)} missing={sorted(listed-actual)}')
+for relative in manifest.get('included_files',[]):
+    p=PurePosixPath(relative)
+    if p.is_absolute() or '..' in p.parts or not root.joinpath(*p.parts).is_file(): raise SystemExit(f'ERROR: missing or unsafe included path {relative}')
+for relative in manifest.get('required_checkout_paths',[]):
+    p=PurePosixPath(relative)
+    if p.is_absolute() or '..' in p.parts: raise SystemExit(f'ERROR: unsafe checkout path {relative}')
+for relative,digest in manifest.get('executable_source_fingerprints',{}).items():
+    p=PurePosixPath(relative)
+    if p.is_absolute() or '..' in p.parts or len(digest)!=64: raise SystemExit(f'ERROR: unsafe executable fingerprint {relative}')
+    source=root/'source-snapshot'
+    for part in p.parts: source=source/part
+    if not source.is_file() or hashlib.sha256(source.read_bytes()).hexdigest()!=digest: raise SystemExit(f'ERROR: executable source fingerprint mismatch: {relative}')
+if manifest.get('large_artifacts_included') is not False: raise SystemExit('ERROR: large source artifacts must not be bundled')
+PY
+sha256sum -c SHA256SUMS
+python3 -m json.tool manifest.json >/dev/null
+source_revision="$(python3 -c 'import json; print(json.load(open("manifest.json"))["executable_source_revision"])')"
+if [[ -z "$repo_root" ]]; then
+  repo_root="$kit_dir/source-snapshot"
+else
+  command -v git >/dev/null 2>&1 || { printf '%s\n' 'ERROR: git is required with --repo-root.' >&2; exit 127; }
+  repo_root="$(cd "$repo_root" && pwd)"
+  python3 - "$kit_dir" "$repo_root" <<'PY'
+import hashlib,json,subprocess,sys
+from pathlib import Path,PurePosixPath
+kit,repo=map(lambda s:Path(s).resolve(),sys.argv[1:])
+m=json.loads((kit/'manifest.json').read_text())
+actual=subprocess.check_output(['git','-C',str(repo),'rev-parse','HEAD'],text=True).strip()
+if actual!=m.get('repository_revision'): raise SystemExit(f'ERROR: expected source revision {m.get("repository_revision")}, got {actual}')
+source=m.get('executable_source_revision')
+if subprocess.run(['git','-C',str(repo),'merge-base','--is-ancestor',source,actual]).returncode: raise SystemExit('ERROR: executable source revision is not an ancestor of the checkout')
+normalized={row['path']:row for row in m.get('normalized_checkout_files',[])}
+for relative in m['required_checkout_paths']:
+    p=PurePosixPath(relative)
+    checkout=repo.joinpath(*p.parts)
+    packaged=kit/'source-snapshot'
+    for part in p.parts: packaged=packaged/part
+    if not checkout.is_file() or not packaged.is_file(): raise SystemExit(f'ERROR: missing checkout or snapshot file {relative}')
+    if relative in normalized:
+        record=normalized[relative]
+        committed=subprocess.check_output(['git','-C',str(repo),'show',f'{actual}:{relative}'])
+        if hashlib.sha256(committed).hexdigest()!=record.get('checkout_sha256') or hashlib.sha256(checkout.read_bytes()).hexdigest()!=record.get('checkout_sha256'):
+            raise SystemExit(f'ERROR: normalized checkout source differs from pinned Git content: {relative}')
+        if hashlib.sha256(packaged.read_bytes()).hexdigest()!=record.get('snapshot_sha256'):
+            raise SystemExit(f'ERROR: normalized package snapshot differs from manifest: {relative}')
+        if record.get('transformation')!='doctor_evidence_path_relocation':
+            raise SystemExit(f'ERROR: unsupported normalized checkout transformation: {relative}')
+        original=json.loads(committed)
+        bundled=json.loads(packaged.read_bytes())
+        evidence={(row['test'],row['kind']):row for row in m.get('packaged_test_evidence',[])}
+        expected_evidence=set()
+        for test_name,test_row in original.get('tests',{}).items():
+            for field,hash_field,kind in (('output_path','output_sha256','stdout.txt'),('resource_log','resource_log_sha256','resource.log')):
+                if test_row.get(hash_field) is None: continue
+                key=(test_name,kind)
+                expected_evidence.add(key)
+                artifact=evidence.get(key)
+                if artifact is None or artifact.get('sha256')!=test_row[hash_field]:
+                    raise SystemExit(f'ERROR: normalized Doctor evidence mapping is missing or inconsistent: {test_name}/{kind}')
+                artifact_path=PurePosixPath(artifact['path'])
+                if artifact_path.is_absolute() or '..' in artifact_path.parts or not artifact_path.parts or artifact_path.parts[0]!='source-snapshot':
+                    raise SystemExit(f'ERROR: unsafe normalized Doctor evidence path: {artifact["path"]}')
+                test_row[field]=PurePosixPath(*artifact_path.parts[1:]).as_posix()
+        if set(evidence)!=expected_evidence or original!=bundled:
+            raise SystemExit(f'ERROR: packaged Doctor differs beyond evidence path relocation: {relative}')
+        continue
+    if hashlib.sha256(checkout.read_bytes()).digest()!=hashlib.sha256(packaged.read_bytes()).digest(): raise SystemExit(f'ERROR: source snapshot differs from pinned checkout: {relative}')
+for relative,expected in m.get('executable_source_fingerprints',{}).items():
+    checkout=repo.joinpath(*PurePosixPath(relative).parts)
+    committed=subprocess.check_output(['git','-C',str(repo),'show',f'{source}:{relative}'])
+    if not checkout.is_file() or hashlib.sha256(checkout.read_bytes()).hexdigest()!=expected or hashlib.sha256(committed).hexdigest()!=expected:
+        raise SystemExit(f'ERROR: executable source differs from its pinned revision: {relative}')
+PY
+fi
+export PYTHONDONTWRITEBYTECODE=1
+runner_args=(--mode "$mode" --repo-root "$repo_root" --output-root "$output_root" --source-revision "$source_revision")
+if [[ -n "$suite" ]]; then runner_args+=(--suite "$suite"); fi
+if [[ -n "$corpus_cases" ]]; then runner_args+=(--corpus-cases "$corpus_cases"); fi
+if [[ -n "$graph_path" ]]; then runner_args+=(--graph-path "$graph_path"); fi
+exec python3 "$repo_root/api/scripts/run-portable-verification.py" "${runner_args[@]}"
+'''
+
+README = """# Biyahe Batch044 portable verification kit v6
+
+This kit pins repository revision `@REVISION@`. It includes the relevant source, fixtures, offline runner, and evidence reports. It excludes the SQLite graph, OSM PBF, PostgreSQL data, credentials, caches, and runtime dependencies.
+
+## Run a mode
+
+From this directory, run `bash verify-kit.sh MODE`. Available modes are:
+
+| Mode | Work |
+|---|---|
+| `STATIC` | Provenance, coverage, comparator, Doctor, staging config/smoke, geometry and report-writer contracts, syntax, JSON, and diff checks |
+| `FRONTEND` | Preview, commute card, Ride Mode, search, Can-I-Ride, ledger, TypeScript, and ESLint checks |
+| `ADAPTER` | Focused walking adapter PHPUnit tests |
+| `CORPUS` | Read-only replay against the pinned Cebu SQLite graph, if it is present and its SHA256 matches |
+| `FULL` | Runs the modes in order and records blocked dependencies or resource gates per suite |
+
+`verify-kit.sh` validates its manifest and every `SHA256SUMS` entry before invoking the runner. By default, commands use the included `source-snapshot`; Doctor V44 pins executable source separately from documentation checkpoints. `--repo-root CHECKOUT` is an optional exact-revision cross-check. `--output-root DIR` selects an evidence root; each run uses a unique directory and refuses to overwrite evidence.
+
+The package includes checksum-verified output and resource logs referenced by the pinned Doctor report, relocated under `source-snapshot/evidence/` so report validation works without the original host cache.
+
+Run an individual suite with `bash verify-kit.sh --mode FRONTEND --suite commute-card`. Corpus cases use zero-based indices 0–9 and can be bounded with `--corpus-cases 0` or `--corpus-cases 0,3`. External hosts may override the default graph location with `--graph-path /srv/biyahe/cebu-walk-central-visayas-20261007-v3.sqlite`. A selected subset is recorded as partial and never promoted to a full ten-case PASS. The graph path is passed through to Laravel after SHA256 verification, then SQLite `quick_check(1)` runs via a read-only immutable connection.
+
+Each run writes an atomic `run-status.json`, individual command output, source/tool/command fingerprints, resource logs for guarded work, and an evidence checksum list. Interrupted `RUNNING` records recover to `NOT_RUN`; the runner never infers PASS from partial output. Guarded suites use five samples spaced five seconds apart, the fixed 524288 KiB memory and 131072 KiB swap floors, and first-breach cancellation. No database service is started.
+
+## Dependencies and evidence boundaries
+
+Python 3, Bash, `sha256sum`, `git` (only with `--repo-root`), and the repository-defined helper tools are detected before their suites run. Node dependencies are not installed by this kit. PHP/Laravel dependencies are not bundled. Missing tools or lockfile dependencies are reported as `BLOCKED_DEPENDENCY`; a resource refusal is `BLOCKED_RESOURCE`. `FULL` is only a sequence of these statuses and does not imply every external dependency was available.
+
+The Cebu graph is expected at `~/.cache/biyahe/batch030/cebu-walk-central-visayas-20261007-v3.sqlite`, SHA256 `29d7aaf9c45a596f4065c44d13f983f4a7edeec5ac2ea41b718b1c52ca865bf8`. For corpus mode, the owned-worker guard takes five resource samples before checking graph metadata or hashing the file. A fresh read-only SHA256 must match before Laravel opens SQLite. The graph is never rebuilt or modified and the runner never scans a PBF. A historical `9 found / 1 disconnected` result is not treated as a current replay.
+
+The Linux Compose staging stack, explicit bootstrap gates, redacted API smoke tool, and external Playwright browser tests are included. Package execution itself never starts Compose or PostgreSQL. Real graph replay requires an operator-supplied graph artifact, five passing resource samples, and preinstalled PHP SQLite dependencies. The historical 9 found / 1 disconnected outcome is not a current run. Field transfer safety, private beta, and production activation remain independent evidence gates. See `docs/deployment/batch044-linux-staging-handoff.md` before any external staging action.
+
+For the external browser workflow, install the pinned npm dependencies with `npm ci`, then install Chromium with `npx playwright install chromium`. Browser installation is separate from dependency installation. Run `npm run test:browser` against an isolated staging origin; actual saved-journey/Ride Mode checks require operator-supplied canonical place queries and a real planner result.
+"""
+
+
+def sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for block in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(block)
+    return digest.hexdigest()
+
+
+def bundle_doctor_evidence(report_path: Path, snapshot_root: Path) -> list[dict[str, object]]:
+    report = json.loads(report_path.read_text(encoding="utf-8"))
+    tests = report.get("tests", {})
+    if not isinstance(tests, dict):
+        raise ValueError("Doctor V44 test evidence must be an object")
+    bundled: list[dict[str, object]] = []
+    for name, row in tests.items():
+        if not isinstance(row, dict):
+            continue
+        safe_name = re.sub(r"[^A-Za-z0-9._-]+", "-", str(name)).strip(".-") or "test"
+        for path_field, sha_field, label in (
+            ("output_path", "output_sha256", "stdout.txt"),
+            ("resource_log", "resource_log_sha256", "resource.log"),
+        ):
+            expected = row.get(sha_field)
+            if expected is None:
+                continue
+            source_value = row.get(path_field)
+            if not isinstance(source_value, str):
+                raise ValueError(f"Doctor test {name} has a hash without {path_field}")
+            source = Path(source_value)
+            if not source.is_file() or sha256(source) != expected:
+                raise ValueError(f"Doctor test {name} {path_field} evidence is missing or changed")
+            relative = PurePosixPath("evidence") / f"{safe_name}.{label}"
+            destination = snapshot_root.joinpath(*relative.parts)
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(source, destination)
+            if sha256(destination) != expected:
+                raise ValueError(f"Doctor test {name} {path_field} evidence copy changed")
+            row[path_field] = relative.as_posix()
+            bundled.append({"test": name, "kind": label, "path": f"source-snapshot/{relative.as_posix()}",
+                "sha256": expected, "size_bytes": destination.stat().st_size})
+    report_path.write_text(json.dumps(report, indent=2, ensure_ascii=False, sort_keys=True) + "\n", encoding="utf-8")
+    return bundled
+
+
+def main(argv=None) -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
+    args = parser.parse_args(argv)
+    output = args.output.resolve()
+    try:
+        if output.exists():
+            raise ValueError(f"refusing to overwrite existing package directory: {output}")
+        status = subprocess.check_output(["git", "-C", str(ROOT), "status", "--porcelain"], text=True)
+        tracked_changes = [line for line in status.splitlines() if not line.endswith(("docs/reports/batch033-doctor-v33.json", "docs/reports/batch034-doctor-v34-coverage.json", "docs/reports/batch034-doctor-v34-current.json", "docs/reports/batch034-doctor-v34-final-evidence.json", "docs/reports/batch034-doctor-v34-final.json", "docs/reports/batch034-doctor-v34.json", "docs/reports/batch039-doctor-v39.json"))]
+        if tracked_changes:
+            raise ValueError("refusing to package from a dirty tracked checkout")
+        revision = subprocess.check_output(["git", "-C", str(ROOT), "rev-parse", "HEAD"], text=True).strip()
+        if len(revision) != 40:
+            raise ValueError("Git did not return a full repository revision")
+        doctor = json.loads((ROOT / "docs/reports/batch044-doctor-v44.json").read_text(encoding="utf-8"))
+        executable_revision = doctor.get("source_revision", {}).get("executable")
+        if not isinstance(executable_revision, str) or len(executable_revision) != 40:
+            raise ValueError("Doctor V44 must pin a full executable source revision before packaging")
+        if subprocess.run(["git", "-C", str(ROOT), "merge-base", "--is-ancestor", executable_revision, revision], check=False).returncode:
+            raise ValueError("Doctor V44 executable source revision is not an ancestor of the package checkpoint")
+        executable_fingerprints = doctor.get("source_fingerprints")
+        if not isinstance(executable_fingerprints, dict) or not executable_fingerprints:
+            raise ValueError("Doctor V44 executable source fingerprints are required before packaging")
+        missing_from_kit = sorted(set(executable_fingerprints) - set(FILES))
+        if missing_from_kit:
+            raise ValueError(f"portable kit omits executable fingerprint inputs: {', '.join(missing_from_kit)}")
+        for relative, expected_digest in executable_fingerprints.items():
+            source = ROOT / relative
+            committed = subprocess.check_output(["git", "-C", str(ROOT), "show", f"{executable_revision}:{relative}"])
+            if not source.is_file() or sha256(source) != expected_digest or hashlib.sha256(committed).hexdigest() != expected_digest:
+                raise ValueError(f"executable source fingerprint is not identical to the pinned commit: {relative}")
+        missing = [relative for relative in FILES if not (ROOT / relative).is_file()]
+        if missing:
+            raise ValueError(f"required pinned source files are missing: {', '.join(missing)}")
+
+        output.mkdir(parents=True, exist_ok=False)
+        snapshot_root = output / "source-snapshot"
+        for relative in FILES:
+            source = ROOT / relative
+            destination = snapshot_root / PurePosixPath(relative)
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(source, destination)
+        packaged_test_evidence = bundle_doctor_evidence(
+            snapshot_root / "docs/reports/batch044-doctor-v44.json", snapshot_root)
+
+        manifest = {
+            "format": "biyahe-portable-offline-verification-kit-v6",
+            "batch": 44,
+            "repository_revision": revision,
+            "executable_source_revision": executable_revision,
+            "executable_source_fingerprints": executable_fingerprints,
+            "source_snapshot_created_at": datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z"),
+            "large_artifacts_included": False,
+            "verification_modes": ["STATIC", "FRONTEND", "ADAPTER", "CORPUS", "FULL"],
+            "entrypoint": "verify-kit.sh MODE",
+            "corpus_case_selection": {
+                "indices": "zero-based 0 through 9",
+                "subset_match_status": "PASS with corpus_completeness=PARTIAL; never claims complete corpus",
+                "complete_replay_required_for_full_pass": True,
+                "output_policy": "unique run directory, no-clobber output, atomic reports",
+            },
+            "artifact_references": {
+                "graph": {"name": "cebu-walk-central-visayas-20261007-v3.sqlite", "sha256": "29d7aaf9c45a596f4065c44d13f983f4a7edeec5ac2ea41b718b1c52ca865bf8"},
+                "source_pbf": {"name": "central_visayas-20261007.osm.pbf", "sha256": "787cac20ecc586b754b1a464643a040566d486457c6a37bc0b11ce683bc66d4d", "needed_for_offline_verification": False},
+                "batch024_backup": {"name": "biyahe-batch024-20261008.dump", "sha256": "e55af400fde88d0a3434b194e0625e204eb0a2726374eabb8286c152b11a4a92", "needed_for_no_database_smoke": False}
+            },
+            "evidence": {
+                "coverage_report": {"path": "docs/reports/batch032-cebu-coverage.json", "sha256": sha256(ROOT / "docs/reports/batch032-cebu-coverage.json"), "status": "HISTORICAL_SOURCE_BOUND"},
+                "provenance_registry": {"path": "docs/reports/batch041-evidence-provenance.json", "sha256": sha256(ROOT / "docs/reports/batch041-evidence-provenance.json"), "status": "HISTORICAL_SOURCE_BOUND"},
+                "graph_fingerprint": doctor.get("evidence", {}).get("graph", {}).get("expected_fingerprint", "UNKNOWN"),
+                "graph_fingerprint_status": doctor.get("evidence", {}).get("graph", {}).get("fingerprint_status", "UNKNOWN")
+            },
+            "runtime_requirements": {"python": "Python 3.10+ standard library", "bash": "required", "git": "required only with --repo-root", "sha256sum": "required", "php_laravel": "preinstalled from api/composer.lock for adapter PHPUnit and real graph replay", "node": "Node.js 24.21.0 with --experimental-strip-types for TypeScript harnesses and frontend builds", "npm_dependencies": "preinstalled from web/package-lock.json for typecheck and ESLint; install Chromium separately for browser checks", "postgresql_postgis": "external staging only; the kit never starts or connects to PostgreSQL"},
+            "verification_commands": [
+                "bash verify-kit.sh STATIC",
+                "bash verify-kit.sh FRONTEND",
+                "bash verify-kit.sh ADAPTER",
+                "bash verify-kit.sh CORPUS",
+                "bash verify-kit.sh FULL",
+                "bash verify-kit.sh --mode FRONTEND --suite commute-card",
+                "bash verify-kit.sh --mode FRONTEND --suite place-search",
+                "bash verify-kit.sh --mode FRONTEND --suite search-keyboard",
+                "bash verify-kit.sh --mode FRONTEND --suite can-i-ride",
+                "bash verify-kit.sh --mode FRONTEND --suite ux-contract",
+                "bash verify-kit.sh --mode FRONTEND --suite validation-ledger",
+                "bash verify-kit.sh --mode CORPUS --corpus-cases 0",
+                "bash verify-kit.sh --mode CORPUS --corpus-cases 0,3"
+            ],
+            "expected_output_formats": ["biyahe-offline-evidence-smoke-v1", "biyahe-evidence-provenance-validation-v1", "biyahe-doctor-v44-validation-v1", "biyahe-portable-verification-run-v1", "biyahe-offline-walking-corpus-v1", "biyahe-offline-corpus-comparison-v1", "biyahe-staging-api-smoke-v1"],
+            "expected_stored_coverage": {"stops": 503, "stops_snappable_within_25m": 436, "places": 37, "places_snappable_within_25m": 30, "transfers_unverified": 2, "historical_corpus_cases": 10, "historical_routes_found": 9, "historical_routes_disconnected": 1},
+            "resource_floors_kib": {"memavailable_minimum": 524288, "swapfree_minimum": 131072, "sustained_samples": 5, "sample_spacing_seconds": 5},
+            "required_checkout_paths": FILES,
+            "normalized_checkout_files": [{
+                "path": "docs/reports/batch044-doctor-v44.json",
+                "checkout_sha256": sha256(ROOT / "docs/reports/batch044-doctor-v44.json"),
+                "snapshot_sha256": sha256(snapshot_root / "docs/reports/batch044-doctor-v44.json"),
+                "transformation": "doctor_evidence_path_relocation"
+            }],
+            "included_files": [f"source-snapshot/{relative}" for relative in FILES] + [item["path"] for item in packaged_test_evidence],
+            "packaged_test_evidence": packaged_test_evidence,
+            "execution_claims": {"package_generation": "COMPLETED", "local_verification": "NOT_RUN_AT_PACKAGE_TIME", "real_graph_replay": "NOT_RUN", "external_host_execution": "NOT_RUN", "postgresql": "NOT_RUN", "browser": "NOT_RUN", "field_verification": "NOT_RUN", "production_activation": "NO"}
+        }
+        (output / "manifest.json").write_text(json.dumps(manifest, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+        (output / "README.md").write_text(README.replace("@REVISION@", revision), encoding="utf-8")
+        (output / "verify-kit.sh").write_text(VERIFY_SCRIPT, encoding="utf-8")
+        (output / "verify-kit.sh").chmod(0o755)
+        inventory = []
+        for path in sorted(p for p in output.rglob("*") if p.is_file() and p.name != "SHA256SUMS"):
+            inventory.append(f"{sha256(path)}  {path.relative_to(output).as_posix()}")
+        (output / "SHA256SUMS").write_text("\n".join(inventory) + "\n", encoding="utf-8")
+        print(f"PACKAGE={output}")
+        print(f"SOURCE_REVISION={revision}")
+        print(f"PACKAGE_FILES={len(inventory)}")
+        return 0
+    except (OSError, ValueError, subprocess.CalledProcessError) as error:
+        print(f"PACKAGE_ERROR={error}", file=sys.stderr)
+        return 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

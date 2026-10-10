@@ -1,0 +1,74 @@
+name: External staging frontend and browser checks (manual)
+
+on:
+  workflow_dispatch:
+    inputs:
+      staging_origin:
+        description: Loopback origin for an already running isolated staging stack, such as http://127.0.0.1:8080.
+        required: true
+        type: string
+      origin_query:
+        description: Optional real canonical staging place query for the saved-journey flow.
+        required: false
+        type: string
+      destination_query:
+        description: Optional real canonical staging place query for the saved-journey flow.
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: biyahe-external-staging-browser
+  cancel-in-progress: false
+
+jobs:
+  browser:
+    runs-on: [self-hosted, linux, biyahe-staging]
+    timeout-minutes: 35
+    env:
+      BIYAHE_STAGING_BASE_URL: ${{ inputs.staging_origin }}
+      BIYAHE_E2E_ORIGIN_QUERY: ${{ inputs.origin_query }}
+      BIYAHE_E2E_DESTINATION_QUERY: ${{ inputs.destination_query }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24.21.0'
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - name: Install locked frontend dependencies
+        working-directory: web
+        run: npm ci
+
+      - name: Install Chromium and system dependencies
+        working-directory: web
+        run: npx playwright install --with-deps chromium
+
+      - name: Validate frontend and build
+        working-directory: web
+        run: |
+          npm run typecheck
+          npm run lint
+          npm run build
+
+      - name: Run focused commuter harnesses
+        working-directory: web
+        run: |
+          npm run test:ride-mode
+          npm run test:commute-cards
+          npm run test:offline-walking-preview
+          npm run test:request-gate
+          npm run test:can-i-ride
+          npm run test:place-search
+          npm run test:search-keyboard
+          npm run test:ux
+
+      - name: Run isolated staging browser checks
+        working-directory: web
+        run: npm run test:browser

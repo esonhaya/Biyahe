@@ -1,0 +1,843 @@
+{
+  "batch": 44,
+  "branch": "main",
+  "delivery_status": "IN_PROGRESS",
+  "doctor_categories": {
+    "api_smoke_framework": {
+      "evidence": "Smoke tool contract tests passed using fixtures; live API tests and real journey calls were not run.",
+      "status": "VERIFIED"
+    },
+    "browser_automation_workflow": {
+      "evidence": "Pinned Playwright tests and manual workflow are present; no browser, staging origin, or external host was available, so execution is NOT_RUN.",
+      "status": "IMPLEMENTED_UNTESTED"
+    },
+    "ci_integration": {
+      "evidence": "Scoped CI and manual self-hosted workflows are present and YAML-validated locally; GitHub Actions was not triggered.",
+      "status": "IMPLEMENTED_UNTESTED"
+    },
+    "commuter_reliability": {
+      "evidence": "No frontend application defect was established. The guarded frontend suite did not launch because the final preflight sample was below both memory and swap floors.",
+      "status": "BLOCKED_RESOURCE"
+    },
+    "configuration_safety": {
+      "evidence": "Staging config validator passed 29 checks, staging config contract passed, and PHP secret-file configuration contract passed.",
+      "status": "VERIFIED"
+    },
+    "database_bootstrap": {
+      "evidence": "Non-mutating preflight and guarded idempotent bootstrap are implemented; SQL renderer contracts passed; no database/service access occurred.",
+      "status": "IMPLEMENTED_UNTESTED"
+    },
+    "external_corpus_workflow": {
+      "evidence": "V6 runner supports external graph path, bounded case selection, read-only checks and case evidence; contract tests passed, but no graph was accessed.",
+      "status": "IMPLEMENTED_UNTESTED"
+    },
+    "field_verification": {
+      "evidence": "Requires independent physical field evidence; both transfer locations remain unverified.",
+      "status": "BLOCKED_DEPENDENCY"
+    },
+    "frontend_build_workflow": {
+      "evidence": "External Linux dependency/typecheck/lint/build workflow is documented and configured; local frontend test preflight failed resource floors, and build/typecheck/lint were not run.",
+      "status": "IMPLEMENTED_UNTESTED"
+    },
+    "graph_identity": {
+      "evidence": "The expected SHA256 is pinned, but graph bytes were not accessed or hashed in this batch.",
+      "status": "NOT_RUN"
+    },
+    "graph_integrity": {
+      "evidence": "SQLite quick_check was not run because no graph access was performed.",
+      "status": "NOT_RUN"
+    },
+    "portable_verification": {
+      "evidence": "V6 runner, corpus workflow, and package contract suites passed on pinned executable revision; local package integrity verification follows separately.",
+      "status": "VERIFIED"
+    },
+    "postgresql_staging": {
+      "evidence": "No external Linux staging host is available in this session; Docker/PostgreSQL were not started.",
+      "status": "BLOCKED_DEPENDENCY"
+    },
+    "private_beta": {
+      "evidence": "Live graph, staging, and field-safety evidence are absent; beta remains blocked.",
+      "status": "BLOCKED_DEPENDENCY"
+    },
+    "production_deployment": {
+      "evidence": "No production access or deployment occurred; production activation remains NO.",
+      "status": "NOT_RUN"
+    },
+    "real_graph_execution": {
+      "evidence": "Current corpus cases executed 0/10; all ten cases remain NOT_RUN. Historical 9-found/1-disconnected is not a current result.",
+      "status": "NOT_RUN"
+    },
+    "staging_architecture": {
+      "evidence": "Pinned Compose/Dockerfiles and isolated internal topology are present; static structure checks passed, but Docker build/start was not run.",
+      "status": "IMPLEMENTED_UNTESTED"
+    }
+  },
+  "doctor_evidence": {
+    "deployment": {
+      "database_contacted": false,
+      "docker_started": false,
+      "postgresql_started": false,
+      "production_contacted": false
+    },
+    "evidence_reconciliation": {
+      "measured_graph_quality": {
+        "boundary_nodes": 944,
+        "crossing_tagged_nodes": 1510,
+        "long_edges": 26
+      },
+      "provenance_sha256": "882fd1ae2c7ab8f2e1edab87c9122911f62c4568513bbe6c8875263958dc1bb6",
+      "unmeasured_legacy_defaults_are_zero_facts": false,
+      "vehicle_only_restrictions": {
+        "omitted": 29,
+        "stored": 619,
+        "total": 648
+      }
+    },
+    "graph": {
+      "actual_sha256": null,
+      "expected_sha256": "29d7aaf9c45a596f4065c44d13f983f4a7edeec5ac2ea41b718b1c52ca865bf8",
+      "graph_accessed": false,
+      "modified": false,
+      "observed_at_utc": null,
+      "pbf_rescanned": false,
+      "status": "NOT_RUN",
+      "write_allowed": false
+    },
+    "graph_integrity": {
+      "method": null,
+      "result": null,
+      "status": "NOT_RUN"
+    },
+    "real_graph_corpus": {
+      "blocked": 0,
+      "case_indices_executed": [],
+      "complete": false,
+      "executed": 0,
+      "expected_cases": 10,
+      "fail": 0,
+      "historical_result_only": {
+        "current_batch": false,
+        "disconnected": 1,
+        "routes_found": 9
+      },
+      "not_run": 10,
+      "pass": 0,
+      "status": "NOT_RUN"
+    },
+    "resource_preflight": {
+      "attempt_ended_at_utc": "2026-10-10T12:20:01Z",
+      "attempt_started_at_utc": "2026-10-10T12:19:27Z",
+      "cancellation": "NOT_NEEDED_COMMAND_NOT_STARTED",
+      "minimum_memavailable_kib": 458064,
+      "minimum_swapfree_kib": 40,
+      "owned_worker_peak_rss_kib": null,
+      "owned_worker_started": false,
+      "postgresql_started": false,
+      "process_tree_rss_cap_kib": 262144,
+      "required_memavailable_kib": 524288,
+      "required_swapfree_kib": 131072,
+      "resource_log": "~/.cache/biyahe/batch044-frontend/20261010T121927Z-6447/search-and-can-i-ride.resource.log",
+      "samples": [
+        {
+          "at_utc": "2026-10-10T12:19:33Z",
+          "memavailable_kib": 562192,
+          "postgres_rss_kib": 0,
+          "swapfree_kib": 40
+        },
+        {
+          "at_utc": "2026-10-10T12:19:41Z",
+          "memavailable_kib": 606000,
+          "postgres_rss_kib": 0,
+          "swapfree_kib": 14440
+        },
+        {
+          "at_utc": "2026-10-10T12:19:47Z",
+          "memavailable_kib": 527644,
+          "postgres_rss_kib": 0,
+          "swapfree_kib": 42212
+        },
+        {
+          "at_utc": "2026-10-10T12:19:54Z",
+          "memavailable_kib": 543972,
+          "postgres_rss_kib": 0,
+          "swapfree_kib": 24784
+        },
+        {
+          "at_utc": "2026-10-10T12:20:00Z",
+          "memavailable_kib": 458064,
+          "postgres_rss_kib": 0,
+          "swapfree_kib": 8704
+        }
+      ],
+      "status": "BLOCKED_RESOURCE"
+    },
+    "stored_record_coverage": {
+      "geographic_population_sidewalk_or_field_claims": "NONE",
+      "places": {
+        "snappable_within_25m": 30,
+        "total": 37,
+        "unsnappable": 7
+      },
+      "scope": "STORED_RECORDS_ONLY",
+      "source_sha256": "6caf101177904bee6fda1b12cab9c5cda36ddaf7ecc08b0d9778c0517123c81b",
+      "stops": {
+        "snappable_within_25m": 436,
+        "total": 503,
+        "unsnappable": 67
+      }
+    },
+    "transfers": {
+      "physically_verified": false,
+      "unverified_count": 2
+    }
+  },
+  "execution_history": [
+    {
+      "at_utc": "2026-10-10T12:19:27Z",
+      "command": "python3 api/scripts/run-portable-verification.py --mode FRONTEND --suite search-and-can-i-ride --output-root $HOME/.cache/biyahe/batch044-frontend",
+      "elapsed_seconds": 34,
+      "evidence": "resource preflight log at ~/.cache/biyahe/batch044-frontend/20261010T121927Z-6447/search-and-can-i-ride.resource.log",
+      "exit_code": 4,
+      "note": "Five spaced samples; sample 5 fell below both fixed memory and swap floors. Not retried.",
+      "status": "BLOCKED_RESOURCE",
+      "worker_command_started": false
+    },
+    {
+      "at_utc": "2026-10-10T12:34:27Z",
+      "command": "Eight individual STATIC contract suites via api/scripts/run-portable-verification.py",
+      "elapsed_seconds": 33,
+      "evidence": "docs/reports/batch044-test-evidence/*.stdout.txt",
+      "exit_code": 0,
+      "source_revision": "b5a7bbf94413d89654bb706c6cab2eb26fb9f26d",
+      "status": "PASS",
+      "worker_count": 8
+    },
+    {
+      "checks": {
+        "bash": 5,
+        "git_diff_check": "PASS",
+        "javascript": 13,
+        "json": 13,
+        "php": 14,
+        "python": 28
+      },
+      "command": "python3 api/scripts/check-batch042-static-syntax.py --root .",
+      "evidence": "Command output observed after final ledger, Doctor, and test plan generation; command is low-resource and no files are modified.",
+      "exit_code": 0,
+      "status": "PASS"
+    }
+  ],
+  "final_documentation_checkpoint": null,
+  "format": "biyahe-batch044-work-ledger-v1",
+  "head_after_implementation": "b5a7bbf94413d89654bb706c6cab2eb26fb9f26d",
+  "head_at_start": "ea5f678da09c1425a19ef34f0ea739769a2bf3ae",
+  "historical_report_hashes": {
+    "docs/reports/batch033-doctor-v33.json": "ad1c85801357a6ca12ca5516c9794d7ffd98b639d5e5d99758873e1438e4b3a3",
+    "docs/reports/batch034-doctor-v34-coverage.json": "ba0f30ff386f0aee90e288b68b1531f7af4b15a7ad48b0285f7c087752dc8184",
+    "docs/reports/batch034-doctor-v34-current.json": "b20338820ac816eccab23b07d9d57c72ab4976639bf96d6d5b50bbd02d40ba3f",
+    "docs/reports/batch034-doctor-v34-final-evidence.json": "3825d69f2f03f82c090eb4f0328d03288c10deb3a78973b0fd1ac34ea8fb37c8",
+    "docs/reports/batch034-doctor-v34-final.json": "4d5c1c19b3396a4883827d62870b351ba3d5f5cf3fdc8d2116eecdc862643ed7",
+    "docs/reports/batch034-doctor-v34.json": "2cbee970d32eaf4d2b495563a94895b74ee566a8cb6a834d02b10f3e08b93aa4",
+    "docs/reports/batch039-doctor-v39.json": "102785d2fe2f87349601c884b97e10d5f308c48bcdab2e7bf07b27acc67c825b"
+  },
+  "historical_untracked_reports": [
+    "docs/reports/batch033-doctor-v33.json",
+    "docs/reports/batch034-doctor-v34-coverage.json",
+    "docs/reports/batch034-doctor-v34-current.json",
+    "docs/reports/batch034-doctor-v34-final-evidence.json",
+    "docs/reports/batch034-doctor-v34-final.json",
+    "docs/reports/batch034-doctor-v34.json",
+    "docs/reports/batch039-doctor-v39.json"
+  ],
+  "initial_tracked_worktree": "CLEAN",
+  "inventory": {
+    "browser_automation": "NO_PLAYWRIGHT_OR_CYPRESS_PACKAGE_INSTALLED",
+    "ci": "SINGLE_COMBINED_GITHUB_ACTIONS_WORKFLOW",
+    "database_secrets": "DB_PASSWORD_ENV_ONLY_AT_BASELINE",
+    "dataset_import": "TRANSACTIONAL_STABLE_ID_UPSERT_WITH_DRY_RUN",
+    "laravel_health_readiness": "EXISTS",
+    "portable_verification": "V5_BOUNDED_CASE_SELECTION_FIXED_DEFAULT_GRAPH_PATH",
+    "staging_compose": "NOT_PRESENT_AT_BASELINE",
+    "walking_adapter": "EXISTS_LOCAL_DEBUG_AND_EXPLICIT_FLAG_GATED"
+  },
+  "recovery_snapshot": {
+    "bundle": "biyahe-batch044-initial-ea5f678da09c1425a19ef34f0ea739769a2bf3ae.bundle",
+    "bundle_sha256": "5b1fa34db9482481a4a15f6f9dd41107cc0f4cf9649d3040ba0eed99e7a54aef",
+    "path": "$HOME/storage/external-1/Termux-Archive/Biyahe/Batch044-Recovery/20261010T1144Z",
+    "verified": true
+  },
+  "resource_policy": {
+    "breach_samples": 1,
+    "docker_startup_allowed": false,
+    "memavailable_minimum_kib": 524288,
+    "postgresql_startup_allowed": false,
+    "preflight_samples": 5,
+    "preflight_spacing_seconds": 5,
+    "process_tree_rss_maximum_kib": 262144,
+    "swapfree_minimum_kib": 131072
+  },
+  "started_at_utc": "2026-10-10T11:44:24Z",
+  "test_results": {
+    "corpus-verification-contract": {
+      "assertion_count": null,
+      "command": [
+        "/data/data/com.termux/files/usr/bin/python3",
+        "api/scripts/test_offline_corpus_verification.py"
+      ],
+      "command_fingerprint_sha256": "5164f28734025148b835fc42de76a261bc07f518e4a4d0f5c5966833ec329f18",
+      "cwd": "/data/data/com.termux/files/home/Biyahe",
+      "elapsed_milliseconds": 2286.349,
+      "ended_at": "2026-10-10T12:35:00Z",
+      "executed": true,
+      "exit_code": 0,
+      "failure_count": 0,
+      "fingerprint_environment": {
+        "LANG": "en_US.UTF-8",
+        "LC_ALL": "C.UTF-8",
+        "NODE_OPTIONS": "",
+        "PATH": "/data/data/com.termux/files/home/.codex/tmp/arg0/codex-arg0MWU38W:/data/data/com.termux/files/home/.codex/tmp/arg0/codex-arg0hewtZJ:/data/data/com.termux/files/usr/bin",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "TZ": ""
+      },
+      "input_files": [
+        {
+          "path": "api/scripts/run-offline-corpus-verification.py",
+          "sha256": "cad444290addc72f67cdad348cf32e7704db90e9dc920777b736abc8fcb7fdd1"
+        },
+        {
+          "path": "api/scripts/test_offline_corpus_verification.py",
+          "sha256": "831bd425fa77cc2388a0f803b7917e0f3bf8412df671448dc43a36b734c9ac5e"
+        }
+      ],
+      "output_path": "docs/reports/batch044-test-evidence/corpus-verification-contract.stdout.txt",
+      "output_sha256": "bfd1e00436604d00cc495538ad0865dc7daebdce4130d2e4368e99d10f037c71",
+      "resource_guard": "NOT_REQUIRED",
+      "run_id": "20261010T123458Z-6086",
+      "source_revision": "b5a7bbf94413d89654bb706c6cab2eb26fb9f26d",
+      "started_at": "2026-10-10T12:34:58Z",
+      "status": "VERIFIED",
+      "test_count": 5,
+      "tool_versions": {
+        "/data/data/com.termux/files/usr/bin/python3": "path=/data/data/com.termux/files/usr/bin/python3.14;sha256=4f8d78ede7fc26e96e99342dd83ce42d32c9b4d0806bc9a99ff7151396269b25",
+        "bash": "path=/data/data/com.termux/files/usr/bin/bash;sha256=0179c7b15fb3df857608ef745daa17077523ffc42b7755ccc725ad7a712698a2",
+        "composer": "MISSING",
+        "node": "path=/data/data/com.termux/files/usr/bin/node;sha256=d682000d9f5d887ec66de1ed68d9616c7a9d064bca9ae9d8c46725a00912cbc6",
+        "npm": "path=/data/data/com.termux/files/usr/lib/node_modules/npm/bin/npm-cli.js;sha256=8e5f6f3429f8cdbe693cdc29904e9d5a7b127a494bd15c804bd54c7403bfcbe7",
+        "php": "path=/data/data/com.termux/files/usr/bin/php;sha256=0d7dad516768df79137c8921d9a63c77faa7df1d89c36240aa116a346ae9ad4d",
+        "python3": "path=/data/data/com.termux/files/usr/bin/python3.14;sha256=4f8d78ede7fc26e96e99342dd83ce42d32c9b4d0806bc9a99ff7151396269b25",
+        "python_runtime": "3.14.6"
+      }
+    },
+    "doctor-v44-contract": {
+      "assertion_count": null,
+      "command": [
+        "/data/data/com.termux/files/usr/bin/python3",
+        "api/scripts/test_validate_batch044_doctor.py"
+      ],
+      "command_fingerprint_sha256": "5b0c069a6e03593f719ec2287a8af0c57569b619f75fb2ba087605bbb542dfab",
+      "cwd": "/data/data/com.termux/files/home/Biyahe",
+      "elapsed_milliseconds": 4354.614,
+      "ended_at": "2026-10-10T12:34:52Z",
+      "executed": true,
+      "exit_code": 0,
+      "failure_count": 0,
+      "fingerprint_environment": {
+        "LANG": "en_US.UTF-8",
+        "LC_ALL": "C.UTF-8",
+        "NODE_OPTIONS": "",
+        "PATH": "/data/data/com.termux/files/home/.codex/tmp/arg0/codex-arg0MWU38W:/data/data/com.termux/files/home/.codex/tmp/arg0/codex-arg0hewtZJ:/data/data/com.termux/files/usr/bin",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "TZ": ""
+      },
+      "input_files": [
+        {
+          "path": "api/scripts/refresh-batch044-doctor.py",
+          "sha256": "9a21995d4381918dda94fcd5eb3ca0929fdc876ce2da60be448fdedfe06f83c2"
+        },
+        {
+          "path": "api/scripts/test_validate_batch044_doctor.py",
+          "sha256": "c000a5cbfe69fe242f3386927cf685edcf6baecb09d41eb889de9e089b077e01"
+        },
+        {
+          "path": "api/scripts/validate-batch044-doctor.py",
+          "sha256": "116218e9e200498f1f591705eccc68ad210d4e7300efd83ebf325eda5e2a5735"
+        },
+        {
+          "path": "docs/reports/batch032-cebu-coverage.json",
+          "sha256": "6caf101177904bee6fda1b12cab9c5cda36ddaf7ecc08b0d9778c0517123c81b"
+        },
+        {
+          "path": "docs/reports/batch041-evidence-provenance.json",
+          "sha256": "882fd1ae2c7ab8f2e1edab87c9122911f62c4568513bbe6c8875263958dc1bb6"
+        }
+      ],
+      "output_path": "docs/reports/batch044-test-evidence/doctor-v44-contract.stdout.txt",
+      "output_sha256": "a850817095a023ce761e62dc4795b921fed160a1b31894f7951ea89a809bd255",
+      "resource_guard": "NOT_REQUIRED",
+      "run_id": "20261010T123447Z-5579",
+      "source_revision": "b5a7bbf94413d89654bb706c6cab2eb26fb9f26d",
+      "started_at": "2026-10-10T12:34:48Z",
+      "status": "VERIFIED",
+      "test_count": 6,
+      "tool_versions": {
+        "/data/data/com.termux/files/usr/bin/python3": "path=/data/data/com.termux/files/usr/bin/python3.14;sha256=4f8d78ede7fc26e96e99342dd83ce42d32c9b4d0806bc9a99ff7151396269b25",
+        "bash": "path=/data/data/com.termux/files/usr/bin/bash;sha256=0179c7b15fb3df857608ef745daa17077523ffc42b7755ccc725ad7a712698a2",
+        "composer": "MISSING",
+        "node": "path=/data/data/com.termux/files/usr/bin/node;sha256=d682000d9f5d887ec66de1ed68d9616c7a9d064bca9ae9d8c46725a00912cbc6",
+        "npm": "path=/data/data/com.termux/files/usr/lib/node_modules/npm/bin/npm-cli.js;sha256=8e5f6f3429f8cdbe693cdc29904e9d5a7b127a494bd15c804bd54c7403bfcbe7",
+        "php": "path=/data/data/com.termux/files/usr/bin/php;sha256=0d7dad516768df79137c8921d9a63c77faa7df1d89c36240aa116a346ae9ad4d",
+        "python3": "path=/data/data/com.termux/files/usr/bin/python3.14;sha256=4f8d78ede7fc26e96e99342dd83ce42d32c9b4d0806bc9a99ff7151396269b25",
+        "python_runtime": "3.14.6"
+      }
+    },
+    "portable-runner-contract": {
+      "assertion_count": null,
+      "command": [
+        "/data/data/com.termux/files/usr/bin/python3",
+        "api/scripts/test_portable_verification.py"
+      ],
+      "command_fingerprint_sha256": "bdd8ea504410a9766cc7ec20504c35eef737f45f052e0466c915f6bcab71e2ac",
+      "cwd": "/data/data/com.termux/files/home/Biyahe",
+      "elapsed_milliseconds": 3325.975,
+      "ended_at": "2026-10-10T12:34:57Z",
+      "executed": true,
+      "exit_code": 0,
+      "failure_count": 0,
+      "fingerprint_environment": {
+        "LANG": "en_US.UTF-8",
+        "LC_ALL": "C.UTF-8",
+        "NODE_OPTIONS": "",
+        "PATH": "/data/data/com.termux/files/home/.codex/tmp/arg0/codex-arg0MWU38W:/data/data/com.termux/files/home/.codex/tmp/arg0/codex-arg0hewtZJ:/data/data/com.termux/files/usr/bin",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "TZ": ""
+      },
+      "input_files": [
+        {
+          "path": "api/scripts/package-batch041-verification-kit.py",
+          "sha256": "4372008ff22a0111f2cce3f7d3043561d49f03f6d54e554aa5c58cda10e9208f"
+        },
+        {
+          "path": "api/scripts/run-portable-verification.py",
+          "sha256": "7d40b6444249e7b185c22b947d53477499da67e75384a075a720cb51224cfc15"
+        },
+        {
+          "path": "api/scripts/test_portable_verification.py",
+          "sha256": "8369ba298807c88b9b1c5122a3897933c20f2d8b7a006c7be19b0cc394c45f68"
+        }
+      ],
+      "output_path": "docs/reports/batch044-test-evidence/portable-runner-contract.stdout.txt",
+      "output_sha256": "8c6b4f01301b2bea9cbda201c1d9b1a09151ee5402b3398fd55e67fd69604170",
+      "resource_guard": "NOT_REQUIRED",
+      "run_id": "20261010T123453Z-5925",
+      "source_revision": "b5a7bbf94413d89654bb706c6cab2eb26fb9f26d",
+      "started_at": "2026-10-10T12:34:53Z",
+      "status": "VERIFIED",
+      "test_count": 20,
+      "tool_versions": {
+        "/data/data/com.termux/files/usr/bin/python3": "path=/data/data/com.termux/files/usr/bin/python3.14;sha256=4f8d78ede7fc26e96e99342dd83ce42d32c9b4d0806bc9a99ff7151396269b25",
+        "bash": "path=/data/data/com.termux/files/usr/bin/bash;sha256=0179c7b15fb3df857608ef745daa17077523ffc42b7755ccc725ad7a712698a2",
+        "composer": "MISSING",
+        "node": "path=/data/data/com.termux/files/usr/bin/node;sha256=d682000d9f5d887ec66de1ed68d9616c7a9d064bca9ae9d8c46725a00912cbc6",
+        "npm": "path=/data/data/com.termux/files/usr/lib/node_modules/npm/bin/npm-cli.js;sha256=8e5f6f3429f8cdbe693cdc29904e9d5a7b127a494bd15c804bd54c7403bfcbe7",
+        "php": "path=/data/data/com.termux/files/usr/bin/php;sha256=0d7dad516768df79137c8921d9a63c77faa7df1d89c36240aa116a346ae9ad4d",
+        "python3": "path=/data/data/com.termux/files/usr/bin/python3.14;sha256=4f8d78ede7fc26e96e99342dd83ce42d32c9b4d0806bc9a99ff7151396269b25",
+        "python_runtime": "3.14.6"
+      }
+    },
+    "staging-config-contract": {
+      "assertion_count": null,
+      "command": [
+        "/data/data/com.termux/files/usr/bin/python3",
+        "-m",
+        "unittest",
+        "api/scripts/test_staging_config.py"
+      ],
+      "command_fingerprint_sha256": "a34f9ae35685ed3d6999afb356ac56d21d0a8a74cbf8549c27abd47059263b30",
+      "cwd": "/data/data/com.termux/files/home/Biyahe",
+      "elapsed_milliseconds": 1973.158,
+      "ended_at": "2026-10-10T12:34:33Z",
+      "executed": true,
+      "exit_code": 0,
+      "failure_count": 0,
+      "fingerprint_environment": {
+        "LANG": "en_US.UTF-8",
+        "LC_ALL": "C.UTF-8",
+        "NODE_OPTIONS": "",
+        "PATH": "/data/data/com.termux/files/home/.codex/tmp/arg0/codex-arg0MWU38W:/data/data/com.termux/files/home/.codex/tmp/arg0/codex-arg0hewtZJ:/data/data/com.termux/files/usr/bin",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "TZ": ""
+      },
+      "input_files": [
+        {
+          "path": ".dockerignore",
+          "sha256": "4baf3760d0546b5a3df9f46b0b306f1b63412a88b3b60a06534212c1a42267a1"
+        },
+        {
+          "path": "api/config/cors.php",
+          "sha256": "2c83f4f4ebc6c7887a871bf640a2485a445425f77a305c938bda65796b683d2e"
+        },
+        {
+          "path": "api/scripts/staging-bootstrap.sh",
+          "sha256": "b6a92de6c29c4f71cd5e608f26ae419265c64639284a198b6f710b3d469c2b0a"
+        },
+        {
+          "path": "api/scripts/staging-db-init-sql.py",
+          "sha256": "7cf763cd4207e80005507732e289576b2109218775a86ce05080c79286ed3ed0"
+        },
+        {
+          "path": "api/scripts/test_staging_config.py",
+          "sha256": "05010f1b2bcd42211d03315aef91e65422bcec3cee99ef96f6d9ea9921a06109"
+        },
+        {
+          "path": "api/scripts/validate-staging-config.py",
+          "sha256": "c3220fa20307a0e526dff288b59bea65b8c245c0cd5b104b6e8d7f9dad4df8db"
+        },
+        {
+          "path": "deploy/staging/.env.example",
+          "sha256": "083d551e564f1409c6ed5335e9f0f7f64a97d4a038f4cb096e875d1a72beedce"
+        },
+        {
+          "path": "deploy/staging/api-entrypoint.sh",
+          "sha256": "8c36dc0d8faa5093277add3dfbe92faac29429468bf2e8c899edf7d4378a038f"
+        },
+        {
+          "path": "deploy/staging/api.Dockerfile",
+          "sha256": "c926a2be6c1c077f75e3c25c7725bbcff51bfb4f5b556f23087d930b956409fb"
+        },
+        {
+          "path": "deploy/staging/compose.yaml",
+          "sha256": "b5468b3e716d36e756f3f5e570980c9a3a3e0d790263e556f18641ddecf008b7"
+        },
+        {
+          "path": "deploy/staging/nginx.conf.template",
+          "sha256": "214a68ec06429d4a6c5d02bd33f07639404cec2b64569128111fb827abe70e56"
+        },
+        {
+          "path": "deploy/staging/web.Dockerfile",
+          "sha256": "291403eb1dd98e9f47ac1e964b5fbbdc4508e2ac45ae9e1cca4c707ba0f93ae2"
+        },
+        {
+          "path": "web/playwright.config.ts",
+          "sha256": "f1c7edcd543c1bd37537caff6a48c135288aa16202e3a9c5dc410196c897b88e"
+        }
+      ],
+      "output_path": "docs/reports/batch044-test-evidence/staging-config-contract.stdout.txt",
+      "output_sha256": "deb0c67af64f9caddf45fad3e31d327e93d33d56d9a219d3a5ea9a3963db4d7a",
+      "resource_guard": "NOT_REQUIRED",
+      "run_id": "20261010T123430Z-4320",
+      "source_revision": "b5a7bbf94413d89654bb706c6cab2eb26fb9f26d",
+      "started_at": "2026-10-10T12:34:31Z",
+      "status": "VERIFIED",
+      "test_count": 2,
+      "tool_versions": {
+        "/data/data/com.termux/files/usr/bin/python3": "path=/data/data/com.termux/files/usr/bin/python3.14;sha256=4f8d78ede7fc26e96e99342dd83ce42d32c9b4d0806bc9a99ff7151396269b25",
+        "bash": "path=/data/data/com.termux/files/usr/bin/bash;sha256=0179c7b15fb3df857608ef745daa17077523ffc42b7755ccc725ad7a712698a2",
+        "composer": "MISSING",
+        "node": "path=/data/data/com.termux/files/usr/bin/node;sha256=d682000d9f5d887ec66de1ed68d9616c7a9d064bca9ae9d8c46725a00912cbc6",
+        "npm": "path=/data/data/com.termux/files/usr/lib/node_modules/npm/bin/npm-cli.js;sha256=8e5f6f3429f8cdbe693cdc29904e9d5a7b127a494bd15c804bd54c7403bfcbe7",
+        "php": "path=/data/data/com.termux/files/usr/bin/php;sha256=0d7dad516768df79137c8921d9a63c77faa7df1d89c36240aa116a346ae9ad4d",
+        "python3": "path=/data/data/com.termux/files/usr/bin/python3.14;sha256=4f8d78ede7fc26e96e99342dd83ce42d32c9b4d0806bc9a99ff7151396269b25",
+        "python_runtime": "3.14.6"
+      }
+    },
+    "staging-config-validation": {
+      "assertion_count": null,
+      "command": [
+        "/data/data/com.termux/files/usr/bin/python3",
+        "api/scripts/validate-staging-config.py"
+      ],
+      "command_fingerprint_sha256": "655d542f462970a09f04aeb1e48e9b697deb0c9f94b1358412edc6f683925575",
+      "cwd": "/data/data/com.termux/files/home/Biyahe",
+      "elapsed_milliseconds": 2199.637,
+      "ended_at": "2026-10-10T12:34:29Z",
+      "executed": true,
+      "exit_code": 0,
+      "failure_count": 0,
+      "fingerprint_environment": {
+        "LANG": "en_US.UTF-8",
+        "LC_ALL": "C.UTF-8",
+        "NODE_OPTIONS": "",
+        "PATH": "/data/data/com.termux/files/home/.codex/tmp/arg0/codex-arg0MWU38W:/data/data/com.termux/files/home/.codex/tmp/arg0/codex-arg0hewtZJ:/data/data/com.termux/files/usr/bin",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "TZ": ""
+      },
+      "input_files": [
+        {
+          "path": ".dockerignore",
+          "sha256": "4baf3760d0546b5a3df9f46b0b306f1b63412a88b3b60a06534212c1a42267a1"
+        },
+        {
+          "path": "api/config/cors.php",
+          "sha256": "2c83f4f4ebc6c7887a871bf640a2485a445425f77a305c938bda65796b683d2e"
+        },
+        {
+          "path": "api/scripts/staging-bootstrap.sh",
+          "sha256": "b6a92de6c29c4f71cd5e608f26ae419265c64639284a198b6f710b3d469c2b0a"
+        },
+        {
+          "path": "api/scripts/staging-db-init-sql.py",
+          "sha256": "7cf763cd4207e80005507732e289576b2109218775a86ce05080c79286ed3ed0"
+        },
+        {
+          "path": "api/scripts/validate-staging-config.py",
+          "sha256": "c3220fa20307a0e526dff288b59bea65b8c245c0cd5b104b6e8d7f9dad4df8db"
+        },
+        {
+          "path": "deploy/staging/.env.example",
+          "sha256": "083d551e564f1409c6ed5335e9f0f7f64a97d4a038f4cb096e875d1a72beedce"
+        },
+        {
+          "path": "deploy/staging/api-entrypoint.sh",
+          "sha256": "8c36dc0d8faa5093277add3dfbe92faac29429468bf2e8c899edf7d4378a038f"
+        },
+        {
+          "path": "deploy/staging/api.Dockerfile",
+          "sha256": "c926a2be6c1c077f75e3c25c7725bbcff51bfb4f5b556f23087d930b956409fb"
+        },
+        {
+          "path": "deploy/staging/compose.yaml",
+          "sha256": "b5468b3e716d36e756f3f5e570980c9a3a3e0d790263e556f18641ddecf008b7"
+        },
+        {
+          "path": "deploy/staging/nginx.conf.template",
+          "sha256": "214a68ec06429d4a6c5d02bd33f07639404cec2b64569128111fb827abe70e56"
+        },
+        {
+          "path": "deploy/staging/web.Dockerfile",
+          "sha256": "291403eb1dd98e9f47ac1e964b5fbbdc4508e2ac45ae9e1cca4c707ba0f93ae2"
+        },
+        {
+          "path": "web/playwright.config.ts",
+          "sha256": "f1c7edcd543c1bd37537caff6a48c135288aa16202e3a9c5dc410196c897b88e"
+        }
+      ],
+      "output_path": "docs/reports/batch044-test-evidence/staging-config-validation.stdout.txt",
+      "output_sha256": "e616d854ab2d01a841a514626f061673f983146fe447425bb80033b613c22822",
+      "resource_guard": "NOT_REQUIRED",
+      "run_id": "20261010T123427Z-4027",
+      "source_revision": "b5a7bbf94413d89654bb706c6cab2eb26fb9f26d",
+      "started_at": "2026-10-10T12:34:27Z",
+      "status": "VERIFIED",
+      "test_count": null,
+      "tool_versions": {
+        "/data/data/com.termux/files/usr/bin/python3": "path=/data/data/com.termux/files/usr/bin/python3.14;sha256=4f8d78ede7fc26e96e99342dd83ce42d32c9b4d0806bc9a99ff7151396269b25",
+        "bash": "path=/data/data/com.termux/files/usr/bin/bash;sha256=0179c7b15fb3df857608ef745daa17077523ffc42b7755ccc725ad7a712698a2",
+        "composer": "MISSING",
+        "node": "path=/data/data/com.termux/files/usr/bin/node;sha256=d682000d9f5d887ec66de1ed68d9616c7a9d064bca9ae9d8c46725a00912cbc6",
+        "npm": "path=/data/data/com.termux/files/usr/lib/node_modules/npm/bin/npm-cli.js;sha256=8e5f6f3429f8cdbe693cdc29904e9d5a7b127a494bd15c804bd54c7403bfcbe7",
+        "php": "path=/data/data/com.termux/files/usr/bin/php;sha256=0d7dad516768df79137c8921d9a63c77faa7df1d89c36240aa116a346ae9ad4d",
+        "python3": "path=/data/data/com.termux/files/usr/bin/python3.14;sha256=4f8d78ede7fc26e96e99342dd83ce42d32c9b4d0806bc9a99ff7151396269b25",
+        "python_runtime": "3.14.6"
+      }
+    },
+    "staging-db-init-sql-contract": {
+      "assertion_count": null,
+      "command": [
+        "/data/data/com.termux/files/usr/bin/python3",
+        "-m",
+        "unittest",
+        "api/scripts/test_staging_db_init_sql.py"
+      ],
+      "command_fingerprint_sha256": "15f26c3b7d4fdb206d88529fef8501ed131c790875bbb1e0a2ec9de2342d5adc",
+      "cwd": "/data/data/com.termux/files/home/Biyahe",
+      "elapsed_milliseconds": 1989.284,
+      "ended_at": "2026-10-10T12:34:38Z",
+      "executed": true,
+      "exit_code": 0,
+      "failure_count": 0,
+      "fingerprint_environment": {
+        "LANG": "en_US.UTF-8",
+        "LC_ALL": "C.UTF-8",
+        "NODE_OPTIONS": "",
+        "PATH": "/data/data/com.termux/files/home/.codex/tmp/arg0/codex-arg0MWU38W:/data/data/com.termux/files/home/.codex/tmp/arg0/codex-arg0hewtZJ:/data/data/com.termux/files/usr/bin",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "TZ": ""
+      },
+      "input_files": [
+        {
+          "path": "api/scripts/staging-db-init-sql.py",
+          "sha256": "7cf763cd4207e80005507732e289576b2109218775a86ce05080c79286ed3ed0"
+        },
+        {
+          "path": "api/scripts/test_staging_db_init_sql.py",
+          "sha256": "2133045efe391b3d0a4a6b9eca9461c889a33ef06227d9455b4588df25231b12"
+        }
+      ],
+      "output_path": "docs/reports/batch044-test-evidence/staging-db-init-sql-contract.stdout.txt",
+      "output_sha256": "652295db86ebe4e3670afbf60170669e03593244866d0e1d2c30987c8d7a249e",
+      "resource_guard": "NOT_REQUIRED",
+      "run_id": "20261010T123436Z-4716",
+      "source_revision": "b5a7bbf94413d89654bb706c6cab2eb26fb9f26d",
+      "started_at": "2026-10-10T12:34:36Z",
+      "status": "VERIFIED",
+      "test_count": 4,
+      "tool_versions": {
+        "/data/data/com.termux/files/usr/bin/python3": "path=/data/data/com.termux/files/usr/bin/python3.14;sha256=4f8d78ede7fc26e96e99342dd83ce42d32c9b4d0806bc9a99ff7151396269b25",
+        "bash": "path=/data/data/com.termux/files/usr/bin/bash;sha256=0179c7b15fb3df857608ef745daa17077523ffc42b7755ccc725ad7a712698a2",
+        "composer": "MISSING",
+        "node": "path=/data/data/com.termux/files/usr/bin/node;sha256=d682000d9f5d887ec66de1ed68d9616c7a9d064bca9ae9d8c46725a00912cbc6",
+        "npm": "path=/data/data/com.termux/files/usr/lib/node_modules/npm/bin/npm-cli.js;sha256=8e5f6f3429f8cdbe693cdc29904e9d5a7b127a494bd15c804bd54c7403bfcbe7",
+        "php": "path=/data/data/com.termux/files/usr/bin/php;sha256=0d7dad516768df79137c8921d9a63c77faa7df1d89c36240aa116a346ae9ad4d",
+        "python3": "path=/data/data/com.termux/files/usr/bin/python3.14;sha256=4f8d78ede7fc26e96e99342dd83ce42d32c9b4d0806bc9a99ff7151396269b25",
+        "python_runtime": "3.14.6"
+      }
+    },
+    "staging-secret-config-contract": {
+      "assertion_count": null,
+      "command": [
+        "php",
+        "api/scripts/test-staging-secret-config.php"
+      ],
+      "command_fingerprint_sha256": "502c5c5d9328108affdb58371f46a214c83114aeacacff51cf171ba53082d078",
+      "cwd": "/data/data/com.termux/files/home/Biyahe",
+      "elapsed_milliseconds": 2928.931,
+      "ended_at": "2026-10-10T12:34:45Z",
+      "executed": true,
+      "exit_code": 0,
+      "failure_count": 0,
+      "fingerprint_environment": {
+        "LANG": "en_US.UTF-8",
+        "LC_ALL": "C.UTF-8",
+        "NODE_OPTIONS": "",
+        "PATH": "/data/data/com.termux/files/home/.codex/tmp/arg0/codex-arg0MWU38W:/data/data/com.termux/files/home/.codex/tmp/arg0/codex-arg0hewtZJ:/data/data/com.termux/files/usr/bin",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "TZ": ""
+      },
+      "input_files": [
+        {
+          "path": "api/config/app.php",
+          "sha256": "e646d7c6d27886a4159f833231c33edcc714e5fc3813be5ceeb65116b9461534"
+        },
+        {
+          "path": "api/config/database.php",
+          "sha256": "58dd2e577ba1967860436ac516cd6b2d4b2530b9bf58fcf25256bfe327acd118"
+        },
+        {
+          "path": "api/scripts/test-staging-secret-config.php",
+          "sha256": "8f7a8ecdcd064e69708f97c436891be71b546d42992cf8edb8efdd68d3f7ef53"
+        }
+      ],
+      "output_path": "docs/reports/batch044-test-evidence/staging-secret-config-contract.stdout.txt",
+      "output_sha256": "b7f35a9d9e8860c964f38a5aae954061ee95e404d1609373e1554ddfadb8f2e2",
+      "resource_guard": "NOT_REQUIRED",
+      "run_id": "20261010T123441Z-5215",
+      "source_revision": "b5a7bbf94413d89654bb706c6cab2eb26fb9f26d",
+      "started_at": "2026-10-10T12:34:42Z",
+      "status": "VERIFIED",
+      "test_count": null,
+      "tool_versions": {
+        "bash": "path=/data/data/com.termux/files/usr/bin/bash;sha256=0179c7b15fb3df857608ef745daa17077523ffc42b7755ccc725ad7a712698a2",
+        "composer": "MISSING",
+        "node": "path=/data/data/com.termux/files/usr/bin/node;sha256=d682000d9f5d887ec66de1ed68d9616c7a9d064bca9ae9d8c46725a00912cbc6",
+        "npm": "path=/data/data/com.termux/files/usr/lib/node_modules/npm/bin/npm-cli.js;sha256=8e5f6f3429f8cdbe693cdc29904e9d5a7b127a494bd15c804bd54c7403bfcbe7",
+        "php": "path=/data/data/com.termux/files/usr/bin/php;sha256=0d7dad516768df79137c8921d9a63c77faa7df1d89c36240aa116a346ae9ad4d",
+        "python3": "path=/data/data/com.termux/files/usr/bin/python3.14;sha256=4f8d78ede7fc26e96e99342dd83ce42d32c9b4d0806bc9a99ff7151396269b25",
+        "python_runtime": "3.14.6"
+      }
+    },
+    "staging-smoke-contract": {
+      "assertion_count": null,
+      "command": [
+        "/data/data/com.termux/files/usr/bin/python3",
+        "-m",
+        "unittest",
+        "api/scripts/test_staging_api_smoke.py"
+      ],
+      "command_fingerprint_sha256": "db06bdecee4331120f207b757a19586324d80c5e4f578c394a26f875e78cc68b",
+      "cwd": "/data/data/com.termux/files/home/Biyahe",
+      "elapsed_milliseconds": 1522.063,
+      "ended_at": "2026-10-10T12:34:35Z",
+      "executed": true,
+      "exit_code": 0,
+      "failure_count": 0,
+      "fingerprint_environment": {
+        "LANG": "en_US.UTF-8",
+        "LC_ALL": "C.UTF-8",
+        "NODE_OPTIONS": "",
+        "PATH": "/data/data/com.termux/files/home/.codex/tmp/arg0/codex-arg0MWU38W:/data/data/com.termux/files/home/.codex/tmp/arg0/codex-arg0hewtZJ:/data/data/com.termux/files/usr/bin",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "TZ": ""
+      },
+      "input_files": [
+        {
+          "path": "api/scripts/staging-api-smoke.py",
+          "sha256": "2438cf6a3f01a498727ca9d09fc46de553f9cdf19c2b1a25082d825d25379bdc"
+        },
+        {
+          "path": "api/scripts/test_staging_api_smoke.py",
+          "sha256": "3c6e59a88ace0abed4fcbb2b084c074fa1bce6cb5902c19f5f7d7978f571ab90"
+        }
+      ],
+      "output_path": "docs/reports/batch044-test-evidence/staging-smoke-contract.stdout.txt",
+      "output_sha256": "e9b2098ef7192fe54778d2f2f5a7310282866227a3a224c64832ca1b9aeeb8ef",
+      "resource_guard": "NOT_REQUIRED",
+      "run_id": "20261010T123434Z-4526",
+      "source_revision": "b5a7bbf94413d89654bb706c6cab2eb26fb9f26d",
+      "started_at": "2026-10-10T12:34:34Z",
+      "status": "VERIFIED",
+      "test_count": 6,
+      "tool_versions": {
+        "/data/data/com.termux/files/usr/bin/python3": "path=/data/data/com.termux/files/usr/bin/python3.14;sha256=4f8d78ede7fc26e96e99342dd83ce42d32c9b4d0806bc9a99ff7151396269b25",
+        "bash": "path=/data/data/com.termux/files/usr/bin/bash;sha256=0179c7b15fb3df857608ef745daa17077523ffc42b7755ccc725ad7a712698a2",
+        "composer": "MISSING",
+        "node": "path=/data/data/com.termux/files/usr/bin/node;sha256=d682000d9f5d887ec66de1ed68d9616c7a9d064bca9ae9d8c46725a00912cbc6",
+        "npm": "path=/data/data/com.termux/files/usr/lib/node_modules/npm/bin/npm-cli.js;sha256=8e5f6f3429f8cdbe693cdc29904e9d5a7b127a494bd15c804bd54c7403bfcbe7",
+        "php": "path=/data/data/com.termux/files/usr/bin/php;sha256=0d7dad516768df79137c8921d9a63c77faa7df1d89c36240aa116a346ae9ad4d",
+        "python3": "path=/data/data/com.termux/files/usr/bin/python3.14;sha256=4f8d78ede7fc26e96e99342dd83ce42d32c9b4d0806bc9a99ff7151396269b25",
+        "python_runtime": "3.14.6"
+      }
+    }
+  },
+  "workstreams": [
+    {
+      "evidence": "Compose, pinned images, internal-only service network, persistent PostGIS volume, loopback gateway, service resource limits; YAML and structural checks passed. Docker build/start intentionally not run on Termux.",
+      "id": "LINUX_COMPOSE",
+      "status": "IMPLEMENTED_UNTESTED"
+    },
+    {
+      "evidence": "File-based APP_KEY/DB password configuration, secret-copy permissions, disabled walking adapter, host/CORS boundaries; staging static validator and PHP secret-config contract passed.",
+      "id": "SECRET_CONFIG",
+      "status": "VERIFIED"
+    },
+    {
+      "evidence": "Default preflight/inspection is non-mutating; startup, role initialization, migrations, import, and restore require explicit confirmations and backups. SQL renderer contracts passed; no database was contacted.",
+      "id": "DATABASE_BOOTSTRAP",
+      "status": "IMPLEMENTED_UNTESTED"
+    },
+    {
+      "evidence": "Machine-readable read-only smoke framework and mock contract tests pass. No live API or successful route response was claimed.",
+      "id": "API_SMOKE",
+      "status": "VERIFIED"
+    },
+    {
+      "evidence": "V6 packager and runner contract tests pass; package generation and kit checksum verification are pending delivery step. Corpus replay was not run.",
+      "id": "PORTABLE_V6",
+      "status": "VERIFIED"
+    },
+    {
+      "evidence": "Pinned Playwright config/spec and external workflow are implemented. No browser or staging origin is available here; browser execution NOT_RUN.",
+      "id": "BROWSER_HANDOFF",
+      "status": "IMPLEMENTED_UNTESTED"
+    },
+    {
+      "evidence": "Scoped static CI plus manual external corpus/browser workflows added. No remote CI was triggered.",
+      "id": "CI",
+      "status": "IMPLEMENTED_UNTESTED"
+    },
+    {
+      "evidence": "No application defect was established. Focused frontend harness command was blocked by five-sample resource preflight before worker launch; no application logic was changed.",
+      "id": "COMMUTER_RELIABILITY",
+      "status": "BLOCKED"
+    },
+    {
+      "evidence": "Generator, validator, and contract tests are committed. Final report is being generated against executable revision b5a7bbf94413d89654bb706c6cab2eb26fb9f26d.",
+      "id": "DOCTOR_V44",
+      "status": "IMPLEMENTED_UNTESTED"
+    },
+    {
+      "evidence": "Documentation evidence, portable kit, final bundle, and report are still being prepared.",
+      "id": "DELIVERY",
+      "status": "NOT_STARTED"
+    }
+  ]
+}

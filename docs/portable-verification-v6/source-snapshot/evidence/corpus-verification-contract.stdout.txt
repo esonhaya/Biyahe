@@ -1,0 +1,12 @@
+test_case_selection_is_sorted_and_rejects_duplicates_or_malformed_values (__main__.OfflineCorpusVerificationTests.test_case_selection_is_sorted_and_rejects_duplicates_or_malformed_values) ... ok
+test_no_clobber_output_is_rejected_before_graph_access (__main__.OfflineCorpusVerificationTests.test_no_clobber_output_is_rejected_before_graph_access) ... OUTPUT_NOT_WRITABLE_OR_NO_CLOBBER=/data/data/com.termux/files/usr/tmp/tmpy__6q36b/actual.json
+ok
+test_preflight_requires_five_samples_fixed_floors_and_first_breach (__main__.OfflineCorpusVerificationTests.test_preflight_requires_five_samples_fixed_floors_and_first_breach) ... ok
+test_resource_gate_precedes_graph_identity_access (__main__.OfflineCorpusVerificationTests.test_resource_gate_precedes_graph_identity_access) ... BLOCKED_RESOURCE=guarded resource preflight evidence is missing or differs: BIYAHE_RESOURCE_GUARD_PREFLIGHT
+ok
+test_sqlite_integrity_probe_is_read_only_and_timed (__main__.OfflineCorpusVerificationTests.test_sqlite_integrity_probe_is_read_only_and_timed) ... ok
+
+----------------------------------------------------------------------
+Ran 5 tests in 0.083s
+
+OK

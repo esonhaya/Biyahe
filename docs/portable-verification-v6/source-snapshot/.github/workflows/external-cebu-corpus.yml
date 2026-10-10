@@ -1,0 +1,41 @@
+name: External Cebu graph corpus (manual)
+
+on:
+  workflow_dispatch:
+    inputs:
+      case_indices:
+        description: Optional zero-based subset, for example 0,3. Leave empty for all ten cases.
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: biyahe-external-cebu-corpus
+  cancel-in-progress: false
+
+jobs:
+  replay:
+    runs-on: [self-hosted, linux, biyahe-staging]
+    timeout-minutes: 45
+    env:
+      BIYAHE_CEBU_GRAPH_PATH: ${{ vars.BIYAHE_CEBU_GRAPH_PATH }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Verify the pinned graph with the owned resource guard
+        shell: bash
+        env:
+          CASE_INDICES: ${{ inputs.case_indices }}
+        run: |
+          set -euo pipefail
+          if [[ -z "${BIYAHE_CEBU_GRAPH_PATH:-}" ]]; then
+            echo 'BLOCKED_DEPENDENCY=Configure the pinned graph path on the self-hosted staging runner.' >&2
+            exit 20
+          fi
+          output_root="${RUNNER_TEMP}/biyahe-batch044-corpus-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          args=(--mode CORPUS --graph-path "$BIYAHE_CEBU_GRAPH_PATH" --output-root "$output_root")
+          if [[ -n "${CASE_INDICES:-}" ]]; then args+=(--corpus-cases "$CASE_INDICES"); fi
+          python3 api/scripts/run-portable-verification.py "${args[@]}"

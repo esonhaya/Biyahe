@@ -1,0 +1,11 @@
+test_historical_nine_routes_cannot_be_claimed_as_a_current_replay (__main__.DoctorV44ContractTests.test_historical_nine_routes_cannot_be_claimed_as_a_current_replay) ... ok
+test_nonverified_graph_cannot_contain_actual_hash (__main__.DoctorV44ContractTests.test_nonverified_graph_cannot_contain_actual_hash) ... ok
+test_not_run_graph_and_historical_evidence_are_accepted (__main__.DoctorV44ContractTests.test_not_run_graph_and_historical_evidence_are_accepted) ... ok
+test_report_writer_never_overwrites (__main__.DoctorV44ContractTests.test_report_writer_never_overwrites) ... ok
+test_verified_test_rejects_a_missing_input_fingerprint (__main__.DoctorV44ContractTests.test_verified_test_rejects_a_missing_input_fingerprint) ... ok
+test_verified_test_requires_matching_output_and_command_fingerprint (__main__.DoctorV44ContractTests.test_verified_test_requires_matching_output_and_command_fingerprint) ... ok
+
+----------------------------------------------------------------------
+Ran 6 tests in 0.222s
+
+OK
