@@ -2,6 +2,7 @@
 """Fail-closed regression fixtures for the Doctor V42 evidence contract."""
 
 import copy
+import hashlib
 import importlib.util
 import json
 from pathlib import Path
@@ -54,8 +55,20 @@ class DoctorV42Tests(unittest.TestCase):
 
     def test_changed_command_fingerprint_invalidates_current_pass(self):
         document = copy.deepcopy(DOCTOR)
-        result = document["tests"]["provenance_fixtures"]
-        result["command_fingerprint_sha256"] = "0" * 64
+        document["source_fingerprints"]["api/scripts/test_validate_batch042_doctor.py"] = VALIDATOR.sha256(SCRIPT)
+        output_path = ROOT / "docs/reports/batch042-doctor-v42.json"
+        command = ["python3", "api/scripts/test_evidence_provenance.py"]
+        cwd = str(ROOT)
+        environment = {"PYTHONDONTWRITEBYTECODE": "1"}
+        tools = {"python3": "fixture-python"}
+        document["tests"]["provenance_fixtures"] = {
+            "status": "VERIFIED", "executed": True,
+            "command_fingerprint_sha256": "0" * 64,
+            "command": command, "cwd": cwd, "input_files": [],
+            "fingerprint_environment": environment, "tool_versions": tools,
+            "output_path": str(output_path),
+            "output_sha256": hashlib.sha256(output_path.read_bytes()).hexdigest(),
+        }
         with self.assertRaisesRegex(VALIDATOR.DoctorError, "command fingerprint does not match"):
             VALIDATOR.validate_doctor(document, ROOT)
 
