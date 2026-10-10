@@ -41,7 +41,7 @@ case "$operation" in
     commute-cards)
         (($# == 0)) || { usage >&2; exit 2; }
         command_argv=(node --experimental-strip-types scripts/commute-card-harness.mjs)
-        fingerprint_inputs=(web/package.json web/scripts/commute-card-harness.mjs web/src/lib/commuteInstructions.ts web/src/lib/journeyMapPresentation.ts web/src/lib/journeyExplanation.ts web/src/lib/savedJourneys.ts)
+        fingerprint_inputs=(web/package.json web/scripts/commute-card-harness.mjs web/src/app/page.tsx web/src/lib/commuteInstructions.ts web/src/lib/journeyMapPresentation.ts web/src/lib/journeyExplanation.ts web/src/lib/journeyComparison.ts web/src/lib/rideMode.ts web/src/lib/savedJourneys.ts)
         ;;
     ride-mode)
         (($# == 0)) || { usage >&2; exit 2; }
@@ -56,17 +56,27 @@ case "$operation" in
     place-search)
         (($# == 0)) || { usage >&2; exit 2; }
         command_argv=(node --experimental-strip-types scripts/place-search-harness.mjs)
-        fingerprint_inputs=(web/package.json web/scripts/place-search-harness.mjs web/src/lib/placeSearch.ts web/src/lib/requestGate.ts)
+        fingerprint_inputs=(web/package.json web/scripts/place-search-harness.mjs web/src/lib/latestPlaceSearch.ts web/src/lib/requestGate.ts)
         ;;
     search-keyboard)
         (($# == 0)) || { usage >&2; exit 2; }
         command_argv=(node --experimental-strip-types scripts/search-keyboard-harness.mjs)
-        fingerprint_inputs=(web/package.json web/scripts/search-keyboard-harness.mjs web/src/lib/searchKeyboard.ts)
+        fingerprint_inputs=(web/package.json web/scripts/search-keyboard-harness.mjs web/src/app/page.tsx web/src/lib/searchKeyboard.ts)
         ;;
     can-i-ride)
         (($# == 0)) || { usage >&2; exit 2; }
         command_argv=(node --experimental-strip-types scripts/can-i-ride-harness.mjs)
-        fingerprint_inputs=(web/package.json web/scripts/can-i-ride-harness.mjs web/src/lib/api.ts web/src/lib/fetchWithTimeout.ts)
+        fingerprint_inputs=(web/package.json web/scripts/can-i-ride-harness.mjs web/src/lib/api.ts web/src/lib/fetchWithTimeout.ts web/src/lib/canIRidePresentation.ts web/src/app/page.tsx)
+        ;;
+    offline-walking-preview)
+        (($# == 0)) || { usage >&2; exit 2; }
+        command_argv=(node --experimental-strip-types scripts/offline-walking-preview-harness.mjs)
+        fingerprint_inputs=(web/package.json web/scripts/offline-walking-preview-harness.mjs web/src/lib/journeyExplanation.ts web/src/lib/journeyMapPresentation.ts web/src/lib/rideMode.ts web/src/lib/savedJourneys.ts)
+        ;;
+    offline-walking-preview-state)
+        (($# == 0)) || { usage >&2; exit 2; }
+        command_argv=(node --experimental-strip-types scripts/offline-walking-preview-state-harness.mjs)
+        fingerprint_inputs=(web/package.json web/scripts/offline-walking-preview-state-harness.mjs web/src/lib/offlineWalkingPreviewState.ts web/src/components/CommuteCard.tsx)
         ;;
     bundle)
         (($# == 2)) || { usage >&2; exit 2; }

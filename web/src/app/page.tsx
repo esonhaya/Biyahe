@@ -20,6 +20,7 @@ import { isRequestCurrentForIdentity, RequestGate, type RequestTicket } from "@/
 import { LatestPlaceSearch } from "@/lib/latestPlaceSearch";
 import { moveSuggestionSelection, selectedSuggestionIndex } from "@/lib/searchKeyboard";
 import { journeyGeometryDisclosure } from "@/lib/journeyMapPresentation";
+import { journeyOptionState } from "@/lib/journeyComparison";
 import { canIRidePresentation } from "@/lib/canIRidePresentation";
 import { loadRecentCommutes, persistRecentCommutes, recordRecentCommute } from "@/lib/commuterTools";
 import {
@@ -92,7 +93,7 @@ function SearchField({ id, label, value, selectedPlace, onChange, options, onPic
           role="combobox"
           aria-autocomplete="list"
           aria-busy={loading}
-          aria-expanded={hasQuery}
+          aria-expanded={hasSuggestions}
           aria-controls={hasSuggestions ? menuId : undefined}
           aria-activedescendant={hasSuggestions && options[selectedIndex] ? `${id}-option-${options[selectedIndex].id}` : undefined}
           aria-describedby={selectedPlace ? selectionContextId : undefined}
@@ -999,6 +1000,9 @@ export default function Home() {
     const transfers = journey.legs.filter((leg) => leg.type === "TRANSFER_WALK").length;
     return journeyFilter === "DIRECT" ? transfers === 0 : journeyFilter === "ONE_TRANSFER" ? transfers === 1 : transfers === 2;
   });
+  const plannerRecommendationIdentity = journeys[0]
+    ? offlineWalkingRequestIdentity(journeys[0])
+    : null;
   const visibleRoutes = routes.filter((route) => {
     const query = routeQuery.trim().toLowerCase();
     return !query || route.code.toLowerCase().includes(query) || route.name.toLowerCase().includes(query);
@@ -1086,14 +1090,21 @@ export default function Home() {
           <p className={styles.emptyState}>No journey matches this comparison filter. <button type="button" className={styles.textButton} onClick={() => setJourneyFilter("ALL")}>Show all journeys</button></p>
         ) : (
           <div className={styles.journeyGrid}>
-            {visibleJourneys.map((journey, index) => <JourneyCard
-              key={journey.id}
-              journey={journey}
-              recommended={index === 0}
-              selected={selectedJourney?.id === journey.id}
-              onSelect={() => selectJourney(journey)}
-              onInstructionFocus={(instruction) => focusInstructionOnMap(journey, instruction)}
-            />)}
+            {visibleJourneys.map((journey) => {
+              const optionState = journeyOptionState(
+                offlineWalkingRequestIdentity(journey),
+                plannerRecommendationIdentity,
+                selectedJourneyIdentity,
+              );
+              return <JourneyCard
+                key={journey.id}
+                journey={journey}
+                recommended={optionState.recommended}
+                selected={optionState.selected}
+                onSelect={() => selectJourney(journey)}
+                onInstructionFocus={(instruction) => focusInstructionOnMap(journey, instruction)}
+              />;
+            })}
           </div>
         )}
       </section>

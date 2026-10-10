@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
 import { performance } from "node:perf_hooks";
 import {
   buildShareText,
@@ -7,6 +8,8 @@ import {
 } from "../src/lib/commuteInstructions.ts";
 import { journeyGeometryDisclosure, journeyPointFeatures, journeyRouteFeatures } from "../src/lib/journeyMapPresentation.ts";
 import { explainJourney } from "../src/lib/journeyExplanation.ts";
+import { journeyOptionState } from "../src/lib/journeyComparison.ts";
+import { offlineWalkingRequestIdentity } from "../src/lib/rideMode.ts";
 import {
   isJourneySnapshot,
   parseSavedJourneys,
@@ -130,6 +133,31 @@ function syntheticJourney(transfers) {
     provenance: [],
   };
 }
+
+const rankedOptions = [syntheticJourney(2), syntheticJourney(0), syntheticJourney(1)];
+const recommendationIdentity = offlineWalkingRequestIdentity(rankedOptions[0]);
+const selectedAlternativeIdentity = offlineWalkingRequestIdentity(rankedOptions[1]);
+assert.deepEqual(
+  journeyOptionState(selectedAlternativeIdentity, recommendationIdentity, selectedAlternativeIdentity),
+  { recommended: false, selected: true },
+  "filtering to a non-top-ranked direct option must not label it as recommended",
+);
+assert.deepEqual(
+  journeyOptionState(recommendationIdentity, recommendationIdentity, selectedAlternativeIdentity),
+  { recommended: true, selected: false },
+  "planner recommendation and current selection remain independent",
+);
+const recommendationWithLocalPreview = {
+  ...rankedOptions[0],
+  offline_walking_preview: { mode: "DEVELOPMENT_ONLY", status: "COMPLETE", graph_sha256: "fixture" },
+};
+assert.equal(offlineWalkingRequestIdentity(recommendationWithLocalPreview), recommendationIdentity,
+  "adding a local preview does not change the planner option identity");
+assert.equal(journeyOptionState(recommendationIdentity, recommendationIdentity, selectedAlternativeIdentity).recommended, true);
+const pageSource = await readFile(new URL("../src/app/page.tsx", import.meta.url), "utf8");
+assert.match(pageSource, /journeyOptionState\(\s*offlineWalkingRequestIdentity\(journey\),\s*plannerRecommendationIdentity,\s*selectedJourneyIdentity/,
+  "journey cards use stable planner and selected journey identities");
+assert.ok(!pageSource.includes("recommended={index === 0}"), "active filters must not recalculate the planner recommendation");
 
 function expectedTypes(transfers) {
   const types = ["ACCESS_WALK"];
@@ -372,4 +400,5 @@ console.log("CORRUPT_STORAGE_PRESERVED=PASS SAFE_V1_WRITE=PASS");
 console.log("WALKING_EVIDENCE_LABELS=PASS ESTIMATE_NOT_PRESENTED_AS_PATH=PASS MISSING_GEOMETRY=PASS");
 console.log("MAP_GEOMETRY_FAIL_CLOSED=PASS ESTIMATE_ONLY_CONNECTOR_NOT_DRAWN=PASS");
 console.log("MAP_BOARDING_AND_TRANSFER_UNCERTAINTY_LABELS=PASS");
+console.log("COMPARISON_RANKING_STABLE=PASS SELECTED_VERSION_IDENTITY=PASS");
 console.log("SHARE_TEXT=PASS NO_COORDINATES=PASS NO_INTERNAL_IDS=PASS");
