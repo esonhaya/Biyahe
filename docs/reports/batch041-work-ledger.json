@@ -21,7 +21,7 @@
     "swap_free": 131072,
     "mem_available": 524288
   },
-  "recovery_snapshot": "$HOME/storage/external-1/Termux-Archive/Biyahe/Batch041-Recovery/20261009T182057Z",
+  "recovery_snapshot": "$HOME/storage/external-1/Termux-Archive/Biyahe/Batch041-Recovery/20261009T234810Z",
   "tasks": [
     {
       "id": "R1",
@@ -31,7 +31,7 @@
       "files_changed": [
         "docs/reports/batch041-work-ledger.json"
       ],
-      "evidence": "HEAD, branch, graph hash, seven untracked Doctor reports, B040 SD bundle, and timestamped SD recovery snapshot verified."
+      "evidence": "Recovery began at 08ca129ea14911eb02b4ea022b916bb081033ca1 (expected HEAD). Seven historical Doctor reports and existing recovery archives remain intact. A verified full-history bundle and historical-report archive were saved on SD before tracked edits."
     },
     {
       "id": "E1",
@@ -70,14 +70,14 @@
       "dependencies": [
         "R1"
       ],
-      "status": "IMPLEMENTED_UNTESTED",
+      "status": "VERIFIED",
       "files_changed": [
         "api/app/Services/Routing/OfflinePedestrianRouteGeometryContract.php",
         "api/app/Services/Routing/OfflinePedestrianGraphRouter.php",
         "api/app/Services/Routing/OfflineJourneyWalkingPreview.php",
         "api/tests/Unit/OfflinePedestrianRouteGeometryContractTest.php"
       ],
-      "evidence": "Reusable source-bound geometry/direction/distance contract added; PHP syntax passes. PHPUnit functional execution blocked by sustained SwapFree floor failure. Standalone pure-PHP contract smoke passes 7 cases; full router/preview PHPUnit remains blocked."
+      "evidence": "Focused guarded PHPUnit rerun passed 22 tests and 75 assertions, with peak worker-tree RSS 154092 KiB; live MemAvailable and SwapFree stayed above floors. Pure PHP smoke passed 7 cases. Real graph replay remains unverified."
     },
     {
       "id": "C2",
@@ -118,7 +118,7 @@
         "web/src/lib/savedJourneys.ts",
         "web/src/app/page.tsx"
       ],
-      "evidence": "Static inspection confirms preview identity, cancellation, save exclusion, and uncertainty UI exist. Ride Mode, saved journey, map/mobile regression execution was not attempted after swap preflight failed."
+      "evidence": "Static inspection found identity binding, cancellation, uncertainty disclosures, graph geometry filtering, and save exclusion. The six-harness group was withheld by its five-sample resource preflight (min SwapFree 18964 KiB). No frontend harness ran."
     },
     {
       "id": "V1",
@@ -126,12 +126,12 @@
       "dependencies": [
         "R1"
       ],
-      "status": "IMPLEMENTED_UNTESTED",
+      "status": "BLOCKED",
       "files_changed": [
         "web/scripts/validation-ledger.mjs",
         "docs/batch040-validation-scheduler.md"
       ],
-      "evidence": "Reviewed fingerprint/evidence binding, atomic write, interruption precedence, and owned-process scheduler contracts. Batch041 did not rerun the Node harness due the swap floor."
+      "evidence": "Fingerprint binding and interrupted RUNNING precedence were inspected statically. The Node validation-ledger harness did not execute because the grouped frontend preflight failed."
     },
     {
       "id": "P1",
@@ -144,7 +144,7 @@
         "api/scripts/package-batch041-verification-kit.py",
         "docs/portable-verification-v2"
       ],
-      "evidence": "58-file portable v2 package pinned to 3ec11b5; source snapshot and SHA256SUMS verified; static no-database smoke passed; SD copy checksums pass. External host, graph replay, and PostgreSQL remain unrun."
+      "evidence": "Portable v2: 58 package hashes and 55 required Git-blob paths verified; its static smoke passed. This recovery adds a v3 kit after the source and validation documents are pinned. No external host execution."
     },
     {
       "id": "D1",
@@ -163,7 +163,7 @@
         "api/scripts/validate-batch041-doctor.py",
         "api/scripts/test_validate_batch041_doctor.py"
       ],
-      "evidence": "Thirteen categories validated against the provenance registry; four fail-closed fixtures pass. Portable v2 static verification recorded; beta, staging, field safety, and activation remain blocked."
+      "evidence": "Thirteen Doctor categories validate against the provenance registry; six fail-closed fixtures pass. Report pins tested executable source revision 2850683120fd04bef25d926f9d9ed5655e5ca6f0, not later documentation-only revisions."
     },
     {
       "id": "T1",
@@ -178,7 +178,7 @@
       "files_changed": [
         "docs/testing/batch041-test-plan.json"
       ],
-      "evidence": "Four Python fixture groups passed (6+11+2+4), five PHP lint checks passed, Doctor fixtures pass (4). Moderate PHP/Node tests and real corpus replay are blocked after two of three spaced SwapFree samples fell below 131072 KiB. After the failed gate, one pure-PHP contract smoke ran as a lightweight check (7 cases, no Laravel or graph); it did not bypass the gate for moderate/heavy suites."
+      "evidence": "Provenance (6), coverage (11), smoke fixtures (2), comparator (4), Doctor (6), geometry smoke (7), and guarded adapter PHPUnit (22 tests/75 assertions) passed. Frontend preflight blocked at SwapFree 18964 KiB. Corpus worker was canceled by its owned-group guard after live SwapFree crossed the floor (64988 then 27184 KiB); no replay result was produced. Resource floors stayed unchanged."
     },
     {
       "id": "G1",
@@ -193,33 +193,55 @@
         "docs/reports/batch041-doctor-v41.json",
         "docs/reports/batch041-work-ledger.json"
       ],
-      "evidence": "Three coherent commits are present. Batch041-Delivery/20261009T184249Z contains a verified c3 bundle and v2 kit; source/destination bundle SHA256 matched and git bundle verify passed. Final report and clipboard operation remain. A standalone PHP geometry contract smoke was added and passed; the final bundle/report must be refreshed for this commit."
+      "evidence": "Recovery source/test correction committed at 2850683120fd04bef25d926f9d9ed5655e5ca6f0. Current Doctor, test plan and recovery validation record are being committed as documentation; portable v3 verification and final SD bundle/report/clipboard remain."
+    },
+    {
+      "id": "RR1",
+      "scope": "interrupted Batch041 recovery, truthful validation evidence, source pin and portable refresh",
+      "dependencies": [
+        "R1",
+        "A1",
+        "T1"
+      ],
+      "status": "IN_PROGRESS",
+      "files_changed": [
+        "api/tests/Unit/OfflineJourneyWalkingPreviewTest.php",
+        "api/scripts/validate-batch041-doctor.py",
+        "api/scripts/test_validate_batch041_doctor.py",
+        "api/scripts/package-batch041-verification-kit.py",
+        "docs/reports/batch041-doctor-v41.json",
+        "docs/reports/batch041-recovery-validation.json",
+        "docs/testing/batch041-test-plan.json"
+      ],
+      "evidence": "Recovery snapshot is verified. Source correction commit 2850683120fd04bef25d926f9d9ed5655e5ca6f0 has passed focused light tests; final documentation, v3 kit, bundle and report are in progress."
     }
   ],
   "queues": {
-    "A_resource_independent": [
-      "P1 package generation and static verifier",
-      "update Doctor after package verification",
-      "final ledger/report review"
+    "A_verified_local": [
+      "evidence reconciliation and provenance validator",
+      "pinned stored-record coverage checks",
+      "adapter/geometry PHPUnit fixtures",
+      "pure PHP geometry smoke",
+      "Doctor contract fixtures",
+      "portable v2 static source/checksum verification"
     ],
-    "B_lightweight_validation": [
-      "evidence/coverage/comparator/Doctor Python fixtures PASS",
-      "PHP syntax and static JSON checks PASS",
-      "portable kit checksum and no-database smoke pending"
+    "B_blocked_resource": [
+      "frontend preview/Ride Mode/saved journey harnesses",
+      "real ten-case SQLite replay (worker canceled; do not repeat under same resource conditions)",
+      "typecheck, lint, formatting, focused frontend build"
     ],
-    "C_resource_gated_execution": [
-      "Node/PHP harnesses BLOCKED by three-sample SwapFree preflight (2 below 131072 KiB)",
-      "ten-case SQLite graph replay BLOCKED; not attempted"
+    "C_not_run": [
+      "SQLite integrity_check",
+      "browser viewport and accessibility suite"
     ],
     "D_external_host": [
-      "full Linux PostgreSQL staging and route parity"
+      "PostgreSQL staging, live API integration and production route parity"
     ],
     "E_field_dependent": [
-      "transfer verification",
-      "walking safety, crossing and accessibility observations"
+      "transfer safety, crossings, sidewalk and boarding access evidence"
     ]
   },
-  "next_safe_action": "Commit the pure PHP geometry smoke and its evidence update; create a fresh final-HEAD SD bundle, then refresh the report and clipboard status.",
+  "next_safe_action": "Finish low-resource documentation and v3 kit verification; commit coherent docs/package checkpoints; verify final SD bundle and emit complete report/clipboard.",
   "commits": [
     {
       "hash": "122a717fd9ccf603d31718144ce4c7e567581fc5",
@@ -232,7 +254,14 @@
     {
       "hash": "ef9ce2268d68cb75d307a44d6a00103dade4aab8",
       "subject": "build(portable): add Batch041 offline verification kit"
+    },
+    {
+      "hash": "2850683120fd04bef25d926f9d9ed5655e5ca6f0",
+      "subject": "Batch 041 recover adapter and Doctor contracts",
+      "kind": "executable-source-and-test-correction"
     }
   ],
-  "last_safe_checkpoint": "ef9ce2268d68cb75d307a44d6a00103dade4aab8; portable v2 and c3 bundle verified on SD at Batch041-Delivery/20261009T184249Z."
+  "last_safe_checkpoint": "2850683120fd04bef25d926f9d9ed5655e5ca6f0 source commit; updated final evidence and v3 kit pending.",
+  "recovery_started_at_utc": "2026-10-09T23:47:07Z",
+  "recovery_head_at_start": "08ca129ea14911eb02b4ea022b916bb081033ca1"
 }
