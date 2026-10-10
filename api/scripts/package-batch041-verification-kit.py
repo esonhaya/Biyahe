@@ -95,7 +95,7 @@ for tool in sha256sum python3; do
 done
 cd "$kit_dir"
 python3 - "$kit_dir" <<'PY'
-import json, sys
+import hashlib, json, sys
 from pathlib import Path, PurePosixPath
 root=Path(sys.argv[1]).resolve()
 manifest=json.loads((root/'manifest.json').read_text())

@@ -24,6 +24,9 @@ PACKAGER_SPEC.loader.exec_module(PACKAGER)
 
 
 class PortableRunnerTests(unittest.TestCase):
+    def test_packaged_verifier_imports_checksum_dependency(self):
+        self.assertIn("import hashlib, json, sys", PACKAGER.VERIFY_SCRIPT)
+
     def test_child_command_results_accept_guard_worker_prefix(self):
         output = "\n".join([
             "2026-10-10T03:51:01Z worker: CHILD_COMMAND=['node', 'one.mjs'] EXIT=0",
