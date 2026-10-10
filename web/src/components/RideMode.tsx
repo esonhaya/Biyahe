@@ -18,10 +18,10 @@ import {
   createRideModeSession,
   currentRideModeLeg,
   evaluateRideModeLocation,
+  inspectRideModeSession,
   isUsableLocationQuality,
   journeyPatternIds,
   offlineWalkingRequestIdentity,
-  parseRideModeSession,
   replaceSessionJourney,
   RIDE_MODE_STORAGE_KEY,
   serializeRideModeSession,
@@ -145,6 +145,7 @@ function trustWarning(leg: JourneyLeg): string | null {
 export default function RideMode({ selectedJourney, offlineSnapshot = false, allowPatternFetch = true, activeAdvisories = [], onRefreshAdvisories, onReplan, onRestoreJourney, onMapStateChange }: RideModeProps) {
   const [session, setSession] = useState<RideModeSession | null>(null);
   const [hydrated, setHydrated] = useState(false);
+  const [rideModeStorageProblem, setRideModeStorageProblem] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [locationMode, setLocationMode] = useState<LocationMode>("OFF");
   const [locationError, setLocationError] = useState<string | null>(null);
@@ -202,13 +203,19 @@ export default function RideMode({ selectedJourney, offlineSnapshot = false, all
     hydratedRef.current = true;
     const timer = window.setTimeout(() => {
       let stored: string | null = null;
+      let storageReadable = true;
       try {
         stored = window.localStorage.getItem(RIDE_MODE_STORAGE_KEY);
       } catch {
-        // Private browsing/storage restrictions must not block manual mode.
+        storageReadable = false;
       }
-      const restored = parseRideModeSession(stored);
-      if (restored && restored.status !== "CANCELLED") {
+      const inspected = inspectRideModeSession(stored);
+      if (!storageReadable) {
+        setRideModeStorageProblem("Ride Mode storage could not be read. Existing local data was left untouched; back it up before starting a replacement session.");
+      } else if (!inspected.writable) {
+        setRideModeStorageProblem(inspected.problem);
+      } else if (inspected.session && inspected.session.status !== "CANCELLED") {
+        const restored = inspected.session;
         setSession(restored);
         onRestoreJourney(restored.journey);
       }
@@ -218,7 +225,7 @@ export default function RideMode({ selectedJourney, offlineSnapshot = false, all
   }, [onRestoreJourney]);
 
   useEffect(() => {
-    if (!hydrated) return;
+    if (!hydrated || rideModeStorageProblem) return;
     try {
       if (session && (session.status === "ACTIVE" || session.status === "PLANNED")) {
         window.localStorage.setItem(RIDE_MODE_STORAGE_KEY, serializeRideModeSession(session));
@@ -228,7 +235,7 @@ export default function RideMode({ selectedJourney, offlineSnapshot = false, all
     } catch {
       // The session remains usable in memory when browser storage is blocked.
     }
-  }, [hydrated, session]);
+  }, [hydrated, rideModeStorageProblem, session]);
 
   useEffect(() => {
     if (session?.status !== "ACTIVE") {
@@ -336,6 +343,10 @@ export default function RideMode({ selectedJourney, offlineSnapshot = false, all
   }, [allowPatternFetch, session]);
 
   function startSelectedJourney() {
+    if (rideModeStorageProblem) {
+      setActionError("Existing Ride Mode data could not be read, so it was preserved. Back it up before starting a replacement session.");
+      return;
+    }
     if (!selectedJourney) {
       setActionError("Choose a journey before starting Ride Mode.");
       return;
@@ -451,6 +462,7 @@ export default function RideMode({ selectedJourney, offlineSnapshot = false, all
     return (
       <section className={styles.rideModeSection} id="ride-mode" aria-labelledby="ride-mode-heading">
         <div className={styles.sectionHeading}><div><p className={styles.eyebrow}>Foreground trip guidance</p><h2 id="ride-mode-heading">Ride Mode</h2></div></div>
+        {rideModeStorageProblem && <div className={styles.rideNotice} role="alert"><strong>Previous Ride Mode data was not changed.</strong><span>{rideModeStorageProblem}</span></div>}
         <p className={styles.sectionCopy}>Select a journey above to start a local, manual trip guide. Foreground location is optional and is never saved as a movement trail.</p>
       </section>
     );
@@ -462,10 +474,11 @@ export default function RideMode({ selectedJourney, offlineSnapshot = false, all
         <div><p className={styles.eyebrow}>Foreground trip guidance</p><h2 id="ride-mode-heading">Ride Mode</h2></div>
         {session && <span className={styles.fixtureBadge}>{statusLabel(session.status)}</span>}
       </div>
+      {rideModeStorageProblem && <div className={styles.rideNotice} role="alert"><strong>Previous Ride Mode data was not changed.</strong><span>{rideModeStorageProblem}</span></div>}
       {!session && selectedJourney && (
         <div className={styles.rideStartCard}>
           <p className={styles.sectionCopy}>{offlineSnapshot ? "This is a saved journey snapshot. Manual Ride Mode can start without the journey API; live replanning needs connectivity." : "Already on this planned journey? Ride Mode keeps progress on this device, supports manual confirmations, and can optionally use foreground location while this page is open."}</p>
-          <button type="button" className={styles.primaryButton} onClick={startSelectedJourney}>Start Ride Mode</button>
+          <button type="button" className={styles.primaryButton} onClick={startSelectedJourney} disabled={Boolean(rideModeStorageProblem)}>Start Ride Mode</button>
         </div>
       )}
       {session && (

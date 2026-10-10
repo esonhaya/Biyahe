@@ -30,3 +30,13 @@ export class RequestGate {
     this.controller = null;
   }
 }
+
+/** A response may update a detail view only while its request and selected entity still match. */
+export function isRequestCurrentForIdentity(
+  gate: RequestGate,
+  ticket: RequestTicket,
+  requestIdentity: string,
+  selectedIdentity: string | null,
+): boolean {
+  return gate.isCurrent(ticket) && selectedIdentity !== null && requestIdentity === selectedIdentity;
+}

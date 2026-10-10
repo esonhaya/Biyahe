@@ -455,6 +455,21 @@ export function parseRideModeSession(raw: string | null): RideModeSession | null
   }
 }
 
+export function inspectRideModeSession(raw: string | null): {
+  session: RideModeSession | null;
+  writable: boolean;
+  problem: string | null;
+} {
+  if (raw === null) return { session: null, writable: true, problem: null };
+  const session = parseRideModeSession(raw);
+  if (session) return { session, writable: true, problem: null };
+  return {
+    session: null,
+    writable: false,
+    problem: "Saved Ride Mode progress could not be read safely. Existing local data was preserved; a new session cannot replace it.",
+  };
+}
+
 export function hasActiveRideModeSession(storage: Pick<Storage, "getItem">): boolean {
   try {
     const session = parseRideModeSession(storage.getItem(RIDE_MODE_STORAGE_KEY));

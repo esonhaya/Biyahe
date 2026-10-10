@@ -10,6 +10,10 @@ import { explainJourney } from "../src/lib/journeyExplanation.ts";
 import {
   isJourneySnapshot,
   parseSavedJourneys,
+  persistSavedJourneys,
+  readSavedJourneyStore,
+  removeSavedJourney,
+  SAVED_JOURNEYS_STORAGE_KEY,
   savedSnapshotAgeLabel,
   serializeSavedJourneys,
   upsertSavedJourney,
@@ -248,10 +252,63 @@ const restored = parseSavedJourneys(serialized);
 assert.equal(restored.length, 1);
 assert.equal(restored[0].journey.id, "synthetic-2");
 assert.equal(isJourneySnapshot(restored[0].journey), true);
+assert.equal(restored[0].version, 1, "snapshot-v1 remains the persisted format");
 assert.equal(serialized.includes("currentLocation"), false);
 assert.equal(serialized.includes("locationSamples"), false);
 assert.deepEqual(parseSavedJourneys(JSON.stringify({ version: 999, journeys: saved })), []);
 assert.deepEqual(parseSavedJourneys(JSON.stringify({ version: 1, journeys: [{ ...saved[0], journey: { ...saved[0].journey, currentLocation: { lat: 10.3, lng: 123.9 } } }] })), []);
+assert.deepEqual(parseSavedJourneys("{broken local data"), [], "corrupt local JSON is ignored without throwing");
+const corruptRaw = "{broken local data";
+const corruptStorageData = new Map([[SAVED_JOURNEYS_STORAGE_KEY, corruptRaw]]);
+const corruptStorage = {
+  getItem: (key) => corruptStorageData.get(key) ?? null,
+  setItem: (key, value) => corruptStorageData.set(key, value),
+  removeItem: (key) => corruptStorageData.delete(key),
+};
+const corruptRead = readSavedJourneyStore(corruptStorage);
+assert.equal(corruptRead.writable, false);
+assert.match(corruptRead.problem ?? "", /preserved/);
+assert.throws(() => persistSavedJourneys(corruptStorage, saved), /could not be parsed/);
+assert.equal(corruptStorageData.get(SAVED_JOURNEYS_STORAGE_KEY), corruptRaw,
+  "a new save cannot silently overwrite unreadable existing journey data");
+const emptyCorruptData = new Map([[SAVED_JOURNEYS_STORAGE_KEY, ""]]);
+const emptyCorruptStorage = {
+  getItem: (key) => emptyCorruptData.get(key) ?? null,
+  setItem: (key, value) => emptyCorruptData.set(key, value),
+  removeItem: (key) => emptyCorruptData.delete(key),
+};
+assert.equal(readSavedJourneyStore(emptyCorruptStorage).writable, false,
+  "an existing empty storage value is treated as unreadable data, not an absent store");
+assert.throws(() => persistSavedJourneys(emptyCorruptStorage, saved), /unreadable format/);
+assert.equal(emptyCorruptData.get(SAVED_JOURNEYS_STORAGE_KEY), "",
+  "an empty unreadable store is preserved until the user backs it up");
+assert.deepEqual(parseSavedJourneys(JSON.stringify({ version: 1, journeys: [{
+  ...saved[0],
+  journey: { ...saved[0].journey, legs: [{ type: "RIDE", origin: saved[0].journey.origin, destination: saved[0].journey.destination }] },
+}] })), [], "incomplete v1 leg data is rejected before instruction rendering");
+assert.deepEqual(parseSavedJourneys(JSON.stringify({ version: 1, journeys: [{
+  ...saved[0],
+  journey: { ...saved[0].journey, legs: saved[0].journey.legs.map((leg) => ({ ...leg, telemetry: [{ rawGps: { lat: 10.3, lng: 123.9 } }] })) },
+}] })), [], "private location data nested inside arrays is rejected");
+const duplicateSaved = upsertSavedJourney(saved, { ...syntheticJourney(2), fare: { ...syntheticJourney(2).fare, label: "Updated saved fixture" } }, "2026-10-08T00:00:00.000Z");
+assert.equal(duplicateSaved.length, 1, "saving the same journey replaces its prior snapshot");
+assert.equal(duplicateSaved[0].savedAt, "2026-10-08T00:00:00.000Z");
+assert.deepEqual(removeSavedJourney(duplicateSaved, duplicateSaved[0].id), [], "deleting a saved journey removes it from local state");
+assert.equal(parseSavedJourneys(JSON.stringify({ version: 1, journeys: saved }))[0]?.journey.id, "synthetic-2",
+  "a valid older snapshot-v1 record can reopen without migration");
+const olderSnapshotV1 = { ...saved[0], journey: { ...saved[0].journey } };
+delete olderSnapshotV1.journey.provenance;
+assert.equal(parseSavedJourneys(JSON.stringify({ version: 1, journeys: [olderSnapshotV1] }))[0]?.journey.id, "synthetic-2",
+  "an older v1 snapshot may omit optional provenance metadata");
+const validStorageData = new Map([[SAVED_JOURNEYS_STORAGE_KEY, serialized]]);
+const validStorage = {
+  getItem: (key) => validStorageData.get(key) ?? null,
+  setItem: (key, value) => validStorageData.set(key, value),
+  removeItem: (key) => validStorageData.delete(key),
+};
+assert.equal(readSavedJourneyStore(validStorage).writable, true, "valid v1 snapshots remain writable without migration");
+persistSavedJourneys(validStorage, restored);
+assert.equal(JSON.parse(validStorageData.get(SAVED_JOURNEYS_STORAGE_KEY)).version, 1);
 
 let backendRequests = 0;
 const offlineModel = generateCommuteInstructions(restored[0].journey);
@@ -273,6 +330,7 @@ console.log("DIRECT=PASS ONE_TRANSFER=PASS TWO_TRANSFER=PASS");
 console.log(`JOURNEYS_TRANSFORMED=${transformed} INSTRUCTIONS_GENERATED=${generated} INSTRUCTION_GENERATION_TIME_MS=${generationMs.toFixed(2)}`);
 console.log("PRECISION_TRUST_FARE=PASS FALLBACK_TRANSFER=PASS DRIVER_PHRASE_ONLY_WHEN_SUPPORTED=PASS");
 console.log("SNAPSHOT_VALIDATION=PASS OFFLINE_CORE_BACKEND_REQUESTS=0 GPS_PERSISTENCE=0");
+console.log("CORRUPT_STORAGE_PRESERVED=PASS SAFE_V1_WRITE=PASS");
 console.log("WALKING_EVIDENCE_LABELS=PASS ESTIMATE_NOT_PRESENTED_AS_PATH=PASS MISSING_GEOMETRY=PASS");
 console.log("MAP_GEOMETRY_FAIL_CLOSED=PASS ESTIMATE_ONLY_CONNECTOR_NOT_DRAWN=PASS");
 console.log("MAP_BOARDING_AND_TRANSFER_UNCERTAINTY_LABELS=PASS");

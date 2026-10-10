@@ -1,0 +1,68 @@
+{
+  "format": "biyahe-batch042-test-plan-v1",
+  "batch": 42,
+  "expected_start_revision": "41d3798e8b7a7646dcc3270b6a6869d83db0cfd9",
+  "expected_branch": "main",
+  "resource_floors_kib": {
+    "memavailable_minimum": 524288,
+    "swapfree_minimum": 131072,
+    "preflight_samples": 5,
+    "sample_spacing_seconds": 5,
+    "breach_samples": 1,
+    "maximum_owned_worker_tree_rss": 262144,
+    "postgresql_start_allowed": false
+  },
+  "verification_modes": {
+    "STATIC": [
+      "provenance fixtures",
+      "stored-record coverage fixtures",
+      "static evidence smoke",
+      "synthetic corpus comparator fixtures",
+      "Doctor V42 contract fixtures",
+      "portable runner fingerprint, no-clobber, and interrupted-run fixtures",
+      "pure PHP geometry smoke",
+      "Python AST, Bash, PHP and JavaScript syntax",
+      "JSON parsing and git diff --check"
+    ],
+    "FRONTEND": [
+      "preview state transitions and request identity",
+      "walking preview contract",
+      "commute card and saved snapshot v1",
+      "manual Ride Mode",
+      "request gate",
+      "debounced place search and keyboard selection",
+      "Can-I-Ride presentation and UX contract",
+      "validation ledger fingerprints and interruption recovery",
+      "TypeScript typecheck and focused ESLint when dependencies are installed"
+    ],
+    "ADAPTER": ["focused OfflineJourneyWalkingPreview, OfflinePedestrianGraphRouter, and OfflinePedestrianRouteGeometryContract PHPUnit tests"],
+    "CORPUS": ["verify pinned SQLite SHA256", "bounded read-only ten-case corpus replay to a new path"],
+    "FULL": ["STATIC", "FRONTEND", "ADAPTER", "CORPUS in deterministic order; blocked suites do not suppress independent later suites"]
+  },
+  "graph": {
+    "path": "$HOME/.cache/biyahe/batch030/cebu-walk-central-visayas-20261007-v3.sqlite",
+    "expected_sha256": "29d7aaf9c45a596f4065c44d13f983f4a7edeec5ac2ea41b718b1c52ca865bf8",
+    "open_or_modify_allowed": false,
+    "rebuild_allowed": false,
+    "pbf_rescan_allowed": false
+  },
+  "historical_expectations_not_current_results": {
+    "stored_stops": {"total": 503, "snappable_within_25m": 436, "unsnappable": 67},
+    "stored_places": {"total": 37, "snappable_within_25m": 30, "unsnappable": 7},
+    "historical_corpus": {"cases": 10, "routes_found": 9, "disconnected": 1}
+  },
+  "evidence_contract": {
+    "required_statuses": ["VERIFIED", "IMPLEMENTED_UNTESTED", "BLOCKED_RESOURCE", "BLOCKED_DEPENDENCY", "NOT_RUN", "FAILED"],
+    "interrupted_run_status": "NOT_RUN",
+    "pass_reuse_requires": ["source hashes", "test hashes", "configuration hashes", "tool versions", "argv and cwd", "resource policy", "evidence file SHA256"],
+    "output_policy": "unique run directory; refuse clobber; atomic status JSON; SHA256SUMS over produced evidence",
+    "browser_visual_verification": "NOT_RUN unless an actual browser executes all target viewports"
+  },
+  "release_gates": {
+    "live_production_graph_integration": "BLOCKED",
+    "postgresql_staging": "BLOCKED",
+    "field_safety": "BLOCKED",
+    "private_beta": "BLOCKED",
+    "production_activation": "NO"
+  }
+}

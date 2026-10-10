@@ -96,10 +96,21 @@ const identity = offlineWalkingRequestIdentity(baseJourney);
 const enrichedPreview = {
   ...baseJourney,
   offline_walking_preview: { graph_sha256: "a".repeat(64) },
-  legs: baseJourney.legs.map((leg) => ({ ...leg, distance_meters: 999, geometry: graphLine,
-    offline_walking_preview: { status: "ROUTE_FOUND" } })),
+  legs: baseJourney.legs.map((leg) => leg.type === "RIDE" ? leg : ({
+    ...leg,
+    distance_meters: 999,
+    geometry: graphLine,
+    offline_walking_preview: { status: "ROUTE_FOUND" },
+  })),
 };
 assert.equal(offlineWalkingRequestIdentity(enrichedPreview), identity, "preview evidence cannot invalidate its own request identity");
+assert.notEqual(offlineWalkingRequestIdentity({
+  ...baseJourney,
+  legs: baseJourney.legs.map((leg) => leg.type === "RIDE" ? {
+    ...leg,
+    route: { ...leg.route, code: "changed-transit-route" },
+  } : leg),
+}), identity, "a changed transit leg must invalidate an in-flight preview identity");
 assert.equal(offlineWalkingRequestIdentity({ ...baseJourney, legs: baseJourney.legs.map((leg, index) => index === 0
   ? { ...leg, destination: { ...leg.destination, location: { lat: 10.32, lng: 123.89 } } } : leg) }) === identity, false,
 "changed route endpoints receive a different request identity");

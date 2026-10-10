@@ -6,6 +6,7 @@ import {
   classifyLocation,
   createRideModeSession,
   evaluateRideModeLocation,
+  inspectRideModeSession,
   offlineWalkingRequestIdentity,
   serializeRideModeSession,
   parseRideModeSession,
@@ -240,6 +241,12 @@ assert.equal(classifyLocation(null, 10_000), "UNAVAILABLE");
 
 const restored = parseRideModeSession(serializeRideModeSession(active));
 assert.equal(restored?.sessionId, active.sessionId);
+assert.equal(inspectRideModeSession(serializeRideModeSession(active)).writable, true);
+const corruptRideModeRaw = "{corrupt ride data";
+const inspectedCorruptRide = inspectRideModeSession(corruptRideModeRaw);
+assert.equal(inspectedCorruptRide.session, null);
+assert.equal(inspectedCorruptRide.writable, false);
+assert.match(inspectedCorruptRide.problem ?? "", /preserved/);
 assert.equal(Object.prototype.hasOwnProperty.call(JSON.parse(serializeRideModeSession(active)), "location"), false);
 assert.equal(parseRideModeSession(JSON.stringify({ ...active, currentLocation: { lat: 10.3, lng: 123.9 } })), null);
 assert.equal(parseRideModeSession(JSON.stringify({ ...active, currentLegState: "RIDING" })), null, "persisted progress must match the current walking leg");
@@ -255,4 +262,5 @@ console.log("RIDE_MODE_HARNESS=PASS");
 console.log("DIRECT=PASS ONE_TRANSFER=PASS TWO_TRANSFER=PASS");
 console.log("QUALITY=GOOD/USABLE_ACCEPTED POOR/STALE_REJECTED OFF_ROUTE_CONSERVATIVE");
 console.log("HYSTERESIS=PASS PERSISTENCE_NO_RAW_GPS=PASS SYNTHETIC_EVIDENCE_PROMOTION=0");
+console.log("CORRUPT_SESSION_WRITE_GUARD=PASS EXISTING_DATA_PRESERVED=PASS");
 console.log("RESULT_DETAIL_MAP_RIDE_MODE_HANDOFF=PASS boarding_uncertainty=preserved alighting_uncertainty=preserved");

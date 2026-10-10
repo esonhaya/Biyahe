@@ -1,0 +1,59 @@
+{
+  "format": "biyahe-batch042-work-ledger-v1",
+  "batch": 42,
+  "started_at_utc": "2026-10-10T00:56:56Z",
+  "branch": "main",
+  "head_at_start": "41d3798e8b7a7646dcc3270b6a6869d83db0cfd9",
+  "initial_tracked_worktree": "CLEAN",
+  "historical_untracked_reports": [
+    "docs/reports/batch033-doctor-v33.json",
+    "docs/reports/batch034-doctor-v34-coverage.json",
+    "docs/reports/batch034-doctor-v34-current.json",
+    "docs/reports/batch034-doctor-v34-final-evidence.json",
+    "docs/reports/batch034-doctor-v34-final.json",
+    "docs/reports/batch034-doctor-v34.json",
+    "docs/reports/batch039-doctor-v39.json"
+  ],
+  "recovery_snapshot": "$HOME/storage/external-1/Termux-Archive/Biyahe/Batch042-Recovery/20261010T005738Z",
+  "protected_graph": {
+    "path": "$HOME/.cache/biyahe/batch030/cebu-walk-central-visayas-20261007-v3.sqlite",
+    "sha256": "29d7aaf9c45a596f4065c44d13f983f4a7edeec5ac2ea41b718b1c52ca865bf8",
+    "write_allowed": false
+  },
+  "resource_floors_kib": {"memavailable": 524288, "swapfree": 131072},
+  "tasks": [
+    {"id": "RECOVERY", "scope": "baseline and SD recovery bundle", "status": "VERIFIED", "evidence": "Expected branch and HEAD matched. Tracked tree was clean. Seven historical reports were hash-checked. Recovery bundle contains the expected HEAD and passed bundle verification before edits."},
+    {"id": "ARCHITECTURE", "scope": "trace search through saved journey and Ride Mode ownership", "status": "VERIFIED", "evidence": "Static architecture map recorded in batch042-frontend-architecture.md. No browser execution is claimed."},
+    {"id": "PREVIEW_STATE", "scope": "development-only walking preview state and identity transitions", "status": "IMPLEMENTED_UNTESTED", "evidence": "Reducer, current identity gate, source response match, cancellation, retry, removal, partial/unavailable states, and harness added. Current harness group has not completed."},
+    {"id": "JOURNEY_SELECTION", "scope": "selected journey identity for alternatives and preview responses", "status": "IMPLEMENTED_UNTESTED", "evidence": "Replan request now uses RequestGate and selected identity. Preview eligibility changes cancel owned work. Deterministic request-gate tests added but not yet completed in the guarded run."},
+    {"id": "SAVED_V1", "scope": "backward-compatible snapshot parsing and duplicate/delete behavior", "status": "IMPLEMENTED_UNTESTED", "evidence": "Parser validates nested forbidden fields, point/leg shapes, coordinates, and optional older-v1 provenance. Corruption, duplicate replacement, deletion, and compatibility fixtures added; guarded suite pending."},
+    {"id": "CAN_I_RIDE", "scope": "pure status presentation and evidence contract", "status": "IMPLEMENTED_UNTESTED", "evidence": "Existing engine reused; pure presentation helper and yes/no/unknown fixture added. Guarded suite pending."},
+    {"id": "VALIDATION_LEDGER", "scope": "complete source/test/config/tool/command/evidence binding and recovery", "status": "IMPLEMENTED_UNTESTED", "evidence": "Added file-set and scheduled-command fingerprints, fixed resource policy, missing/changed evidence invalidation, and atomic interrupted RUNNING to NOT_RUN recovery. Harness pending."},
+    {"id": "PORTABLE_RUNNER", "scope": "STATIC/FRONTEND/ADAPTER/CORPUS/FULL runner and no-clobber evidence", "status": "IMPLEMENTED_UNTESTED", "evidence": "Runner separates suites, records source/tool/command fingerprints, fixed resource environment, worker logs, output hashes, atomic RUNNING state, interruption recovery, and dependency blocks. Static self-validation pending."},
+    {"id": "REAL_CEBU_CORPUS", "scope": "current ten-case replay against expected read-only graph", "status": "NOT_STARTED", "evidence": "No current replay result. Historical 9/1 result remains historical only."},
+    {"id": "MOBILE_BROWSER", "scope": "320/360/390 pixel visual and keyboard/touch checks", "status": "NOT_STARTED", "evidence": "No browser environment has been established; static CSS review only."},
+    {"id": "RELEASE_GATES", "scope": "live integration, PostgreSQL, transfer field safety, beta, production", "status": "BLOCKED", "evidence": "No PostgreSQL startup/contact, no field evidence, and no production graph activation."}
+  ],
+  "execution_attempts": [
+    {
+      "id": "frontend-group-first-attempt",
+      "status": "FAILED_FIXTURE_DEFECT",
+      "command": "node --experimental-strip-types scripts/offline-walking-preview-harness.mjs",
+      "evidence": "The fixture changed the RIDE route when constructing its walking-preview result. The identity contract correctly rejected that change. Fixture now preserves transit legs and separately asserts that a changed RIDE identity is rejected. This result is not a PASS."
+    },
+    {
+      "id": "frontend-group-resource-retry",
+      "status": "BLOCKED_RESOURCE",
+      "command_started": false,
+      "resource_log": "$HOME/.cache/biyahe/batch042/evidence/frontend-focused-20261010T010230Z.guard.log",
+      "evidence": "The five-sample owned-worker preflight observed SwapFree 123792 KiB at sample 4, below the unchanged 131072 KiB floor. A later sample recovered, but the guard blocked launch. The command was not run."
+    }
+  ],
+  "queues": {
+    "verified": ["expected baseline and SD snapshot", "static frontend ownership review"],
+    "implemented_untested": ["preview reducer", "journey identity cancellation", "saved v1 parser hardening", "Can-I-Ride presentation fixtures", "validation-ledger hardening", "portable runner"],
+    "blocked_resource": ["frontend guarded group after its last five-sample preflight refusal", "real corpus if its bounded replay preflight refuses"],
+    "external_host_required": ["PostgreSQL staging", "external live API integration"],
+    "field_evidence_required": ["transfer walking safety", "boarding/alighting verification", "sidewalk and crossing observations"]
+  }
+}

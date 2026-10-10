@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { CanIRideResponse, DisruptionSummary, Journey, JourneyResponse, PedestrianAccessLeg, Place, PulseResponse, Route, RoutePattern, Stop } from "@/lib/api";
 import { canIRide, getPulse, getRoutePattern, listPlaces, listRoutes, listStops, planJourney, replanJourney, searchPlaces } from "@/lib/api";
 import BiyahePulse from "@/components/BiyahePulse";
@@ -16,14 +16,16 @@ import FieldMode from "@/components/FieldMode";
 import type { CommuteInstruction } from "@/lib/commuteInstructions";
 import { hasActiveRideModeSession, offlineWalkingRequestIdentity } from "@/lib/rideMode";
 import type { RideModeMapOverlay } from "@/lib/rideMode";
-import { RequestGate, type RequestTicket } from "@/lib/requestGate";
+import { isRequestCurrentForIdentity, RequestGate, type RequestTicket } from "@/lib/requestGate";
 import { LatestPlaceSearch } from "@/lib/latestPlaceSearch";
 import { moveSuggestionSelection, selectedSuggestionIndex } from "@/lib/searchKeyboard";
 import { journeyGeometryDisclosure } from "@/lib/journeyMapPresentation";
+import { canIRidePresentation } from "@/lib/canIRidePresentation";
 import { loadRecentCommutes, persistRecentCommutes, recordRecentCommute } from "@/lib/commuterTools";
 import {
   loadSavedJourneys,
   persistSavedJourneys,
+  readSavedJourneyStore,
   removeSavedJourney,
   upsertSavedJourney,
   type SavedJourney,
@@ -245,40 +247,15 @@ function JourneyCard({ journey, recommended, selected, onSelect, onInstructionFo
 
 function CanIRideResultCard({ result }: { result: CanIRideResponse["data"] }) {
   const option = result.option ?? result.opposite_direction;
-  const tone = result.status === "YES"
-    ? styles.decisionYes
-    : result.status === "YES_BUT_AFFECTED"
-      ? styles.decisionAffected
-      : result.status === "TEMPORARILY_UNAVAILABLE"
-        ? styles.decisionNo
-        : result.status === "UNCERTAIN_DUE_TO_REPORT"
-          ? styles.decisionUncertain
-    : result.status === "DIRECTION_DEPENDENT"
-      ? styles.decisionDirection
-      : result.status === "NO"
-        ? styles.decisionNo
-        : styles.decisionUnknown;
+  const presentation = canIRidePresentation(result.status, result.route?.code ?? null);
+  const tone = styles[presentation.tone];
 
   return (
     <div className={styles.decisionResult + " " + tone} role="status">
       <div className={styles.decisionHeader}>
         <div>
           <p className={styles.cardKicker}>CAN I RIDE THIS?</p>
-          <h3>
-            {result.status === "YES"
-              ? "YES — ride " + (result.route?.code ?? "this route")
-              : result.status === "YES_BUT_AFFECTED"
-                ? "YES, BUT CHECK THE ADVISORY"
-                : result.status === "TEMPORARILY_UNAVAILABLE"
-                  ? "TEMPORARILY UNAVAILABLE"
-                  : result.status === "UNCERTAIN_DUE_TO_REPORT"
-                    ? "UNCERTAIN — REPORT UNDER REVIEW"
-              : result.status === "DIRECTION_DEPENDENT"
-                ? "NOT THIS DIRECTION"
-                : result.status === "NO"
-                  ? "NOT A KNOWN RIDE"
-                  : "NOT ENOUGH INFORMATION YET"}
-          </h3>
+          <h3>{presentation.headline}</h3>
         </div>
         <span className={styles.trustBadge}>{trustLabel(result.trust)}</span>
       </div>
@@ -319,6 +296,12 @@ export default function Home() {
   const [destinationSearchRetryToken, setDestinationSearchRetryToken] = useState(0);
   const [journeys, setJourneys] = useState<Journey[]>([]);
   const [selectedJourney, setSelectedJourney] = useState<Journey | null>(null);
+  const selectedJourneyIdentity = useMemo(
+    () => selectedJourney ? offlineWalkingRequestIdentity(selectedJourney) : null,
+    [selectedJourney],
+  );
+  const selectedJourneyIdentityRef = useRef<string | null>(selectedJourneyIdentity);
+  selectedJourneyIdentityRef.current = selectedJourneyIdentity;
   const offlinePreviewBaselineRef = useRef<{ requestIdentity: string; journey: Journey } | null>(null);
   const [selectedPattern, setSelectedPattern] = useState<RoutePattern | null>(null);
   const [selectedStop, setSelectedStop] = useState<Stop | null>(null);
@@ -335,6 +318,7 @@ export default function Home() {
   const [rideMapState, setRideMapState] = useState<RideModeMapOverlay | null>(null);
   const [instructionFocus, setInstructionFocus] = useState<CommuteInstruction | null>(null);
   const [savedJourneys, setSavedJourneys] = useState<SavedJourney[]>([]);
+  const [savedJourneyProblem, setSavedJourneyProblem] = useState<string | null>(null);
   const [offlineSavedJourneyId, setOfflineSavedJourneyId] = useState<string | null>(null);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
   const [activeAdvisories, setActiveAdvisories] = useState<DisruptionSummary[]>([]);
@@ -346,7 +330,7 @@ export default function Home() {
   const [pulseReloadToken, setPulseReloadToken] = useState(0);
   const [loadingPattern, setLoadingPattern] = useState(false);
   const [patternLoadError, setPatternLoadError] = useState(false);
-  const [replanResult, setReplanResult] = useState<JourneyResponse | null>(null);
+  const [replanResult, setReplanResult] = useState<{ journeyIdentity: string; response: JourneyResponse } | null>(null);
   const [replanError, setReplanError] = useState<string | null>(null);
   const [loadingReplan, setLoadingReplan] = useState(false);
   const [online, setOnline] = useState(true);
@@ -362,11 +346,13 @@ export default function Home() {
   const activeJourneyRequestRef = useRef<RequestTicket | null>(null);
   const patternRequestGateRef = useRef(new RequestGate());
   const canRideRequestGateRef = useRef(new RequestGate());
+  const replanRequestGateRef = useRef(new RequestGate());
 
   useEffect(() => () => {
     journeyRequestGateRef.current.cancel();
     patternRequestGateRef.current.cancel();
     canRideRequestGateRef.current.cancel();
+    replanRequestGateRef.current.cancel();
   }, []);
 
   useEffect(() => {
@@ -476,6 +462,13 @@ export default function Home() {
     setLoadingCanRide(false);
   }
 
+  function resetReplan() {
+    replanRequestGateRef.current.cancel();
+    setLoadingReplan(false);
+    setReplanResult(null);
+    setReplanError(null);
+  }
+
   function cancelPatternRequest() {
     patternRequestGateRef.current.cancel();
     setLoadingPattern(false);
@@ -497,20 +490,30 @@ export default function Home() {
 
   async function requestReplan(journey: Journey | null = selectedJourney) {
     if (!journey) return;
+    const journeyIdentity = offlineWalkingRequestIdentity(journey);
     if (offlineSavedJourneyId === journey.id) {
+      resetReplan();
       setReplanError("New route search requires connectivity. The saved snapshot remains available offline.");
       return;
     }
+    const request = replanRequestGateRef.current.begin();
     setLoadingReplan(true);
     setReplanError(null);
+    setReplanResult(null);
     try {
-      const response = await replanJourney(journey.origin.id, journey.destination.id);
-      setReplanResult(response);
+      const response = await replanJourney(journey.origin.id, journey.destination.id, request.signal);
+      if (!isRequestCurrentForIdentity(replanRequestGateRef.current, request, journeyIdentity, selectedJourneyIdentityRef.current)) return;
+      setReplanResult({ journeyIdentity, response });
     } catch {
-      setReplanError("A current alternative could not be loaded. Your existing journey remains selected.");
-      setReplanResult(null);
+      if (isRequestCurrentForIdentity(replanRequestGateRef.current, request, journeyIdentity, selectedJourneyIdentityRef.current)) {
+        setReplanError("A current alternative could not be loaded. Your existing journey remains selected.");
+        setReplanResult(null);
+      }
     } finally {
-      setLoadingReplan(false);
+      if (replanRequestGateRef.current.isCurrent(request)) {
+        replanRequestGateRef.current.finish(request);
+        setLoadingReplan(false);
+      }
     }
   }
 
@@ -524,9 +527,12 @@ export default function Home() {
   useEffect(() => {
     const timer = window.setTimeout(() => {
       try {
-        setSavedJourneys(loadSavedJourneys(window.localStorage));
+        const savedStore = readSavedJourneyStore(window.localStorage);
+        setSavedJourneys(savedStore.journeys);
+        setSavedJourneyProblem(savedStore.problem);
       } catch {
         setSavedJourneys([]);
+        setSavedJourneyProblem("Saved journey storage could not be read. Existing local data was preserved; saves and deletes are disabled.");
       }
     }, 0);
     return () => window.clearTimeout(timer);
@@ -589,6 +595,7 @@ export default function Home() {
     cancelJourneySearch();
     cancelPatternRequest();
     cancelCanIRideCheck();
+    resetReplan();
     setOrigin(null);
     setOriginText(value);
     setOriginOptions([]);
@@ -610,6 +617,7 @@ export default function Home() {
     cancelJourneySearch();
     cancelPatternRequest();
     cancelCanIRideCheck();
+    resetReplan();
     setDestination(null);
     setDestinationText(value);
     setDestinationOptions([]);
@@ -631,6 +639,7 @@ export default function Home() {
     cancelJourneySearch();
     cancelPatternRequest();
     cancelCanIRideCheck();
+    resetReplan();
     setOrigin(place);
     setOriginText(place.name);
     setOriginOptions([]);
@@ -652,6 +661,7 @@ export default function Home() {
     cancelJourneySearch();
     cancelPatternRequest();
     cancelCanIRideCheck();
+    resetReplan();
     setDestination(place);
     setDestinationText(place.name);
     setDestinationOptions([]);
@@ -680,6 +690,7 @@ export default function Home() {
     cancelJourneySearch();
     cancelPatternRequest();
     cancelCanIRideCheck();
+    resetReplan();
     const nextOrigin = destination;
     const nextDestination = origin;
     setOrigin(nextOrigin);
@@ -705,6 +716,7 @@ export default function Home() {
   }
 
   async function searchJourney(from: Place, to: Place) {
+    resetReplan();
     const request = journeyRequestGateRef.current.begin();
     activeJourneyRequestRef.current = request;
     setJourneyRequestActive(true);
@@ -783,6 +795,7 @@ export default function Home() {
   async function showPattern(pattern: RoutePattern) {
     cancelJourneySearch();
     cancelPatternRequest();
+    resetReplan();
     const request = patternRequestGateRef.current.begin();
     setLoadingPattern(true);
     setSelectedJourney(null);
@@ -844,7 +857,9 @@ export default function Home() {
     }
   }
 
-  function selectJourney(journey: Journey, offlineSnapshot = false) {
+  function selectJourney(journey: Journey, offlineSnapshot = false, preserveJourneyRequest?: RequestTicket) {
+    if (!preserveJourneyRequest || !journeyRequestGateRef.current.isCurrent(preserveJourneyRequest)) cancelJourneySearch();
+    resetReplan();
     offlinePreviewBaselineRef.current = null;
     cancelPatternRequest();
     setSelectedPattern(null);
@@ -879,19 +894,41 @@ export default function Home() {
     setSelectedJourney(baseline.journey);
   }
 
+  function currentSavedJourneyStorageProblem(): string | null {
+    try {
+      return readSavedJourneyStore(window.localStorage).problem;
+    } catch {
+      return "Saved journey storage could not be read. Existing local data was preserved; saves and deletes are disabled.";
+    }
+  }
+
   function saveCurrentJourney() {
     if (!selectedJourney) return;
+    if (savedJourneyProblem) {
+      setSaveMessage(savedJourneyProblem);
+      return;
+    }
     try {
       const next = upsertSavedJourney(savedJourneys, selectedJourney);
       persistSavedJourneys(window.localStorage, next);
       setSavedJourneys(next);
       setSaveMessage("Journey saved on this device.");
     } catch {
-      setSaveMessage("This journey could not be saved; browser storage may be full.");
+      const problem = currentSavedJourneyStorageProblem();
+      if (problem) {
+        setSavedJourneyProblem(problem);
+        setSaveMessage(problem);
+      } else {
+        setSaveMessage("This journey could not be saved; browser storage may be full.");
+      }
     }
   }
 
   function deleteSavedJourney(id: string) {
+    if (savedJourneyProblem) {
+      setSaveMessage(savedJourneyProblem);
+      return;
+    }
     const next = removeSavedJourney(savedJourneys, id);
     try {
       persistSavedJourneys(window.localStorage, next);
@@ -899,7 +936,13 @@ export default function Home() {
       if (offlineSavedJourneyId === id) setOfflineSavedJourneyId(null);
       setSaveMessage("Saved journey removed.");
     } catch {
-      setSaveMessage("The saved journey could not be removed from browser storage.");
+      const problem = currentSavedJourneyStorageProblem();
+      if (problem) {
+        setSavedJourneyProblem(problem);
+        setSaveMessage(problem);
+      } else {
+        setSaveMessage("The saved journey could not be removed from browser storage.");
+      }
     }
   }
 
@@ -910,6 +953,7 @@ export default function Home() {
   }
 
   async function refreshSavedJourney(saved: SavedJourney) {
+    resetReplan();
     const request = journeyRequestGateRef.current.begin();
     activeJourneyRequestRef.current = request;
     setJourneyRequestActive(true);
@@ -921,11 +965,11 @@ export default function Home() {
       setJourneys(response.data);
       if (response.data[0]) {
         setStatus(`${response.data.length} current journey${response.data.length === 1 ? "" : "s"} found.`);
-        selectJourney(response.data[0]);
+        selectJourney(response.data[0], false, request);
       } else {
         setNoRouteMessage(response.meta.no_route?.message ?? "No supported current journey was returned.");
         setStatus("No current route was found. Your saved snapshot remains available below.");
-        selectJourney(saved.journey, true);
+        selectJourney(saved.journey, true, request);
       }
     } catch {
       if (journeyRequestGateRef.current.isCurrent(request)) {
@@ -1016,6 +1060,11 @@ export default function Home() {
         onSelectCommute={chooseLocalCommute}
       />
 
+      {savedJourneyProblem && <div className={styles.rideNotice} role="alert" aria-label="Saved journey data needs attention">
+        <strong>Saved journey data was not changed.</strong>
+        <span>{savedJourneyProblem} Back up this browser’s local data before clearing or repairing it.</span>
+      </div>}
+
       <section className={styles.resultsSection} id="journeys" aria-labelledby="results-heading">
         <div className={styles.sectionHeading}>
           <div><p className={styles.eyebrow}>What to do next</p><h2 id="results-heading">Journey results</h2></div>
@@ -1071,7 +1120,7 @@ export default function Home() {
           {selectedJourney.disruptions?.some((impact) => impact.impact_level !== "INFORMATIONAL") && (
             <ReplanPanel
               currentJourney={selectedJourney}
-              result={replanResult}
+              result={replanResult?.journeyIdentity === selectedJourneyIdentity ? replanResult.response : null}
               loading={loadingReplan}
               error={replanError}
               onRequest={() => { void requestReplan(selectedJourney); }}
@@ -1127,13 +1176,13 @@ export default function Home() {
         onReplan={selectedJourney && selectedJourney.disruptions?.some((impact) => impact.impact_level !== "INFORMATIONAL") ? () => { void requestReplan(selectedJourney); } : undefined}
         onRestoreJourney={(journey) => {
           setActiveRideResume(true);
-          setSelectedJourney(journey);
+          let restoredIsSaved = false;
           try {
-            const restoredIsSaved = loadSavedJourneys(window.localStorage).some((saved) => saved.id === journey.id);
-            setOfflineSavedJourneyId(restoredIsSaved ? journey.id : null);
+            restoredIsSaved = loadSavedJourneys(window.localStorage).some((saved) => saved.id === journey.id);
           } catch {
-            setOfflineSavedJourneyId(null);
+            restoredIsSaved = false;
           }
+          selectJourney(journey, restoredIsSaved);
         }}
         onMapStateChange={setRideMapState}
       />

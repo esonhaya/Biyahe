@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useReducer, useRef, useState } from "react";
 import { canUseOfflineWalkingPreview, previewJourneyWalkingOffline, type Journey } from "@/lib/api";
 import DisruptionNotice from "@/components/DisruptionNotice";
 import {
@@ -11,6 +11,11 @@ import {
   type CommuteInstructionType,
 } from "@/lib/commuteInstructions";
 import { explainJourney } from "@/lib/journeyExplanation";
+import {
+  createOfflineWalkingPreviewState,
+  offlineWalkingPreviewRequestIsCurrent,
+  transitionOfflineWalkingPreview,
+} from "@/lib/offlineWalkingPreviewState";
 import { offlineWalkingRequestIdentity } from "@/lib/rideMode";
 import { savedSnapshotAgeLabel } from "@/lib/savedJourneys";
 import styles from "@/app/page.module.css";
@@ -95,8 +100,6 @@ export default function CommuteCard({
   const model = useMemo(() => generateCommuteInstructions(journey), [journey]);
   const explanation = useMemo(() => explainJourney(journey), [journey]);
   const [shareStatus, setShareStatus] = useState<string | null>(null);
-  const [offlinePreviewBusy, setOfflinePreviewBusy] = useState(false);
-  const [offlinePreviewMessage, setOfflinePreviewMessage] = useState<string | null>(null);
   const offlinePreviewRequest = useRef<AbortController | null>(null);
   const requestIdentity = useMemo(() => offlineWalkingRequestIdentity(journey), [journey]);
   const currentRequestIdentity = useRef(requestIdentity);
@@ -112,40 +115,82 @@ export default function CommuteCard({
   const routeCodes = Array.from(new Set(rideInstructions.map((instruction) => instruction.routeCode).filter((code): code is string => Boolean(code))));
   const canPreviewOfflineWalking = canUseOfflineWalkingPreview()
     && variant === "detail" && !offlineSnapshot && onOfflinePreview !== undefined;
+  const currentPreviewEnabled = useRef(canPreviewOfflineWalking);
+  currentPreviewEnabled.current = canPreviewOfflineWalking;
+  const [offlinePreviewState, dispatchOfflinePreview] = useReducer(
+    transitionOfflineWalkingPreview,
+    { identity: requestIdentity, enabled: canPreviewOfflineWalking },
+    ({ identity, enabled }) => createOfflineWalkingPreviewState(identity, enabled),
+  );
 
   useEffect(() => {
-    offlinePreviewRequest.current?.abort();
-    setOfflinePreviewBusy(false);
-    setOfflinePreviewMessage(null);
+    dispatchOfflinePreview({ type: "SELECTED_JOURNEY", identity: requestIdentity, enabled: canPreviewOfflineWalking });
     return () => {
       offlinePreviewRequest.current?.abort();
       offlinePreviewRequest.current = null;
     };
-  }, [requestIdentity]);
+  }, [requestIdentity, canPreviewOfflineWalking]);
 
   async function previewOfflineWalking() {
+    if (!canPreviewOfflineWalking) return;
     offlinePreviewRequest.current?.abort();
     const request = new AbortController();
     offlinePreviewRequest.current = request;
-    setOfflinePreviewBusy(true);
-    setOfflinePreviewMessage(null);
+    dispatchOfflinePreview({ type: "REQUEST_STARTED", identity: requestIdentity });
     try {
       const result = await previewJourneyWalkingOffline(journey, request.signal);
-      if (request.signal.aborted || currentRequestIdentity.current !== requestIdentity) return;
+      if (request.signal.aborted) return;
+      const selectedIdentity = currentRequestIdentity.current;
+      if (!offlineWalkingPreviewRequestIsCurrent(requestIdentity, selectedIdentity, currentPreviewEnabled.current, request.signal)) {
+        dispatchOfflinePreview({ type: "STALE_RESPONSE_DISCARDED", requestIdentity, selectedIdentity });
+        return;
+      }
+      const responseIdentity = offlineWalkingRequestIdentity(result.journey);
+      const responseSummary = result.journey.offline_walking_preview;
+      const sourceMatches = responseIdentity === requestIdentity
+        && responseSummary?.mode === "DEVELOPMENT_ONLY"
+        && responseSummary.status === result.preview.status
+        && responseSummary.source_sha256 === result.preview.source_sha256
+        && responseSummary.source_snapshot === result.preview.source_snapshot
+        && responseSummary.graph_sha256 === result.preview.graph_sha256
+        && responseSummary.graph_fingerprint === result.preview.graph_fingerprint;
+      dispatchOfflinePreview({
+        type: "RESPONSE_RECEIVED",
+        identity: requestIdentity,
+        responseIdentity,
+        status: result.preview.status,
+        sourceMatches,
+      });
+      if (!sourceMatches) return;
       onOfflinePreview?.(result.journey, requestIdentity);
-      setOfflinePreviewMessage(result.preview.status === "COMPLETE"
-        ? `Local preview routed ${result.preview.routes_found} walking leg${result.preview.routes_found === 1 ? "" : "s"}. Field access remains unverified.`
-        : result.preview.status === "PARTIAL"
-          ? `Local preview routed ${result.preview.routes_found} of ${result.preview.walking_legs} walking legs. Unavailable legs remain without a route line.`
-          : result.preview.status === "UNAVAILABLE"
-            ? "The local graph could not route these walking legs. Their reason codes are shown in the leg details."
-            : "This journey has no separate walking legs to preview.");
     } catch (previewError) {
-      if (request.signal.aborted || currentRequestIdentity.current !== requestIdentity) return;
-      setOfflinePreviewMessage(previewError instanceof Error ? previewError.message : "The local graph preview could not be completed.");
+      if (request.signal.aborted) return;
+      const selectedIdentity = currentRequestIdentity.current;
+      if (!offlineWalkingPreviewRequestIsCurrent(requestIdentity, selectedIdentity, currentPreviewEnabled.current, request.signal)) {
+        dispatchOfflinePreview({ type: "STALE_RESPONSE_DISCARDED", requestIdentity, selectedIdentity });
+        return;
+      }
+      dispatchOfflinePreview({
+        type: "REQUEST_FAILED",
+        identity: requestIdentity,
+        message: previewError instanceof Error ? previewError.message : "The local graph preview could not be completed.",
+      });
     } finally {
-      if (offlinePreviewRequest.current === request) setOfflinePreviewBusy(false);
+      if (offlinePreviewRequest.current === request) offlinePreviewRequest.current = null;
     }
+  }
+
+  function cancelOfflineWalkingPreview() {
+    const request = offlinePreviewRequest.current;
+    if (!request) return;
+    request.abort();
+    offlinePreviewRequest.current = null;
+    dispatchOfflinePreview({ type: "REQUEST_CANCELLED", identity: requestIdentity });
+  }
+
+  function removeOfflineWalkingPreview() {
+    onClearOfflinePreview?.(requestIdentity);
+    dispatchOfflinePreview({ type: "PREVIEW_REMOVED", identity: requestIdentity });
   }
 
   async function share() {
@@ -274,8 +319,9 @@ export default function CommuteCard({
         {onSelect && <button type="button" onClick={onSelect} className={styles.secondaryButton}>{compact ? "Open this journey" : "Show on map"}</button>}
         {onOpen && <button type="button" onClick={onOpen} className={styles.primaryButton}>Open saved journey</button>}
         {onSave && !isSaved && !journey.offline_walking_preview && <button type="button" onClick={onSave} className={styles.secondaryButton}>Save journey</button>}
-        {canPreviewOfflineWalking && <button type="button" onClick={() => { void previewOfflineWalking(); }} className={styles.secondaryButton} disabled={offlinePreviewBusy} aria-describedby="offline-walking-preview-note">{offlinePreviewBusy ? "Checking local walking graph…" : journey.offline_walking_preview ? "Refresh local walking preview" : "Preview walking from local graph"}</button>}
-        {canPreviewOfflineWalking && journey.offline_walking_preview && onClearOfflinePreview && <button type="button" onClick={() => onClearOfflinePreview(requestIdentity)} className={styles.secondaryButton}>Remove local preview</button>}
+        {canPreviewOfflineWalking && <button type="button" onClick={() => { void previewOfflineWalking(); }} className={styles.secondaryButton} disabled={offlinePreviewState.status === "LOADING"} aria-describedby="offline-walking-preview-note">{offlinePreviewState.status === "LOADING" ? "Checking local walking graph…" : journey.offline_walking_preview ? "Refresh local walking preview" : "Preview walking from local graph"}</button>}
+        {canPreviewOfflineWalking && offlinePreviewState.status === "LOADING" && <button type="button" onClick={cancelOfflineWalkingPreview} className={styles.secondaryButton}>Cancel walking preview</button>}
+        {canPreviewOfflineWalking && journey.offline_walking_preview && onClearOfflinePreview && <button type="button" onClick={removeOfflineWalkingPreview} className={styles.secondaryButton}>Remove local preview</button>}
         {onRefresh && <button type="button" onClick={onRefresh} className={styles.secondaryButton}>Refresh journey online</button>}
         {onReplan && <button type="button" onClick={onReplan} className={styles.secondaryButton}>Find another way</button>}
         {onRemove && <button type="button" onClick={onRemove} className={styles.secondaryButton}>Remove saved</button>}
@@ -283,7 +329,7 @@ export default function CommuteCard({
         {!compact && <button type="button" onClick={copy} className={styles.secondaryButton}>Copy</button>}
       </div>
       {canPreviewOfflineWalking && <p id="offline-walking-preview-note" className={styles.status}>Development preview only. Uses the pinned 25 m graph snapshot; it does not change transit routing or ranking.</p>}
-      {canPreviewOfflineWalking && offlinePreviewMessage && <p className={styles.status} role="status">{offlinePreviewMessage}</p>}
+      {canPreviewOfflineWalking && offlinePreviewState.message && <p className={styles.status} role="status" data-preview-state={offlinePreviewState.status}>{offlinePreviewState.message}</p>}
       {isSaved && !onRemove && <p className={styles.savedState}>Saved on this device.</p>}
       {shareStatus && <p className={styles.status} role="status">{shareStatus}</p>}
     </article>

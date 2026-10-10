@@ -37,6 +37,62 @@ export async function fingerprintFile(filePath) {
   return hash.digest("hex");
 }
 
+/** Hash file identity as well as contents so different suites cannot share a source fingerprint accidentally. */
+export async function fingerprintFileSet(filePaths) {
+  if (!Array.isArray(filePaths) || filePaths.length === 0
+    || filePaths.some((filePath) => typeof filePath !== "string" || filePath.trim() === "")) {
+    throw new Error("A file fingerprint requires a non-empty list of file paths.");
+  }
+  const paths = [...new Set(filePaths.map((filePath) => resolve(filePath)))].sort();
+  const files = [];
+  for (const filePath of paths) files.push({ path: filePath, sha256: await fingerprintFile(filePath) });
+  return fingerprintConfig(files);
+}
+
+export async function fingerprintValidationInputs({ sourceFiles, testFiles, configurationFiles }) {
+  if (!Array.isArray(sourceFiles) || sourceFiles.length === 0
+    || !Array.isArray(testFiles) || testFiles.length === 0
+    || !Array.isArray(configurationFiles)) {
+    throw new Error("Validation fingerprints require source files, test files, and a configuration file list.");
+  }
+  return fingerprintConfig({
+    sourceFiles: await fingerprintFileSet(sourceFiles),
+    testFiles: await fingerprintFileSet(testFiles),
+    configurationFiles: configurationFiles.length ? await fingerprintFileSet(configurationFiles) : "NO_CONFIGURATION_FILES",
+  });
+}
+
+export function fingerprintScheduledCommand(command) {
+  if (!command || !Array.isArray(command.argv) || command.argv.length === 0) {
+    throw new Error("A scheduled command fingerprint requires a non-empty argv array.");
+  }
+  const environment = command.environment ?? {};
+  if (!environment || typeof environment !== "object" || Array.isArray(environment)
+    || Object.entries(environment).some(([key, value]) => key.trim() === "" || typeof value !== "string" || value.includes("\u0000"))) {
+    throw new Error("A scheduled command environment must be a string map without null bytes.");
+  }
+  return fingerprintConfig({
+    argv: command.argv,
+    cwd: resolve(command.cwd ?? process.cwd()),
+    environment: Object.fromEntries(Object.entries(environment).sort(([left], [right]) => left.localeCompare(right))),
+  });
+}
+
+export function resourceGuardEnvironment(baseEnvironment = process.env, declaredEnvironment = {}) {
+  return {
+    ...baseEnvironment,
+    ...declaredEnvironment,
+    BIYAHE_RESOURCE_MIN_MEMAVAILABLE_KB: "524288",
+    BIYAHE_RESOURCE_MIN_DISKFREE_KB: "1048576",
+    BIYAHE_RESOURCE_MIN_SWAPFREE_KB: "131072",
+    BIYAHE_RESOURCE_MAX_PROCESS_TREE_RSS_KB: "262144",
+    BIYAHE_RESOURCE_PREFLIGHT_SAMPLES: "5",
+    BIYAHE_RESOURCE_PREFLIGHT_INTERVAL_SECONDS: "5",
+    BIYAHE_RESOURCE_BREACH_SAMPLES: "1",
+    BIYAHE_RESOURCE_MEMINFO_PATH: "/proc/meminfo",
+  };
+}
+
 function validateIdentity(identity) {
   for (const key of ["checkId", "sourceFingerprint", "configFingerprint", "toolVersion", "runtimeVersion", "commandFingerprint"]) {
     if (typeof identity?.[key] !== "string" || identity[key].trim() === "") {
@@ -189,6 +245,47 @@ export async function appendValidationResult(record, ledgerPath = defaultLedgerP
   }
 }
 
+/** Explicitly closes a latest interrupted RUNNING entry as NOT_RUN; it never upgrades prior evidence. */
+export async function recoverInterruptedRun(identity, ledgerPath = defaultLedgerPath()) {
+  validateIdentity(identity);
+  await mkdir(dirname(ledgerPath), { recursive: true });
+  const lockPath = `${ledgerPath}.write.lock`;
+  let lockHandle;
+  try {
+    lockHandle = await open(lockPath, "wx", 0o600);
+  } catch (error) {
+    if (error?.code === "EEXIST") throw new Error(`Validation ledger is being updated by another process: ${ledgerPath}`);
+    throw error;
+  }
+  try {
+    const ledger = await readValidationLedger(ledgerPath);
+    const latest = [...ledger.entries].reverse().find((entry) => sameIdentity(entry, identity));
+    if (!latest || latest.status !== "RUNNING" || latest.executionStatus !== "STARTED") {
+      return { recovered: false, reason: "latest_matching_entry_is_not_running", entry: latest ?? null };
+    }
+    const entry = {
+      checkId: identity.checkId,
+      sourceFingerprint: identity.sourceFingerprint,
+      configFingerprint: identity.configFingerprint,
+      toolVersion: identity.toolVersion,
+      runtimeVersion: identity.runtimeVersion,
+      commandFingerprint: identity.commandFingerprint,
+      executionStatus: "NOT_EXECUTED",
+      status: "NOT_RUN",
+      result: "An interrupted RUNNING entry was explicitly closed as NOT_RUN; no test outcome was inferred.",
+      evidencePath: null,
+      evidenceSha256: null,
+      resourceGuard: "NOT_RUN",
+      recordedAt: new Date().toISOString(),
+    };
+    await writeAtomic(ledgerPath, { ...ledger, entries: [...ledger.entries, entry] });
+    return { recovered: true, reason: "interrupted_run_closed_as_not_run", entry };
+  } finally {
+    await lockHandle.close().catch(() => {});
+    await unlink(lockPath).catch(() => {});
+  }
+}
+
 export function validateScheduledCheck(input) {
   validateIdentity(input);
   const command = input.command;
@@ -196,8 +293,12 @@ export function validateScheduledCheck(input) {
     || command.argv.some((part) => typeof part !== "string" || part.includes("\u0000"))) {
     throw new Error("Scheduled checks require a non-empty argv array of strings.");
   }
-  if (fingerprintConfig(command.argv) !== input.commandFingerprint) {
-    throw new Error("commandFingerprint does not match the exact argv array.");
+  if ((command.cwd !== undefined && (typeof command.cwd !== "string" || command.cwd.trim() === ""))
+    || (command.environment !== undefined && (!command.environment || typeof command.environment !== "object" || Array.isArray(command.environment)))) {
+    throw new Error("Scheduled checks require a valid working directory and environment map.");
+  }
+  if (fingerprintScheduledCommand(command) !== input.commandFingerprint) {
+    throw new Error("commandFingerprint does not match argv, working directory, and declared environment.");
   }
   for (const key of ["operation", "diskPath", "cancelPidFile", "cancelMatch", "logPath"]) {
     if (typeof command[key] !== "string" || command[key].trim() === "") throw new Error(`Scheduled check command requires ${key}.`);
@@ -236,19 +337,9 @@ async function runGuardedCheck(input, ledgerPath) {
     const args = [guardPath, "--operation", command.operation, "--disk-path", command.diskPath,
       "--cancel-pid-file", command.cancelPidFile, "--cancel-match", command.cancelMatch,
       "--log", command.logPath, "--", ...command.argv];
-    const environment = {
-      ...process.env,
-      BIYAHE_RESOURCE_MIN_MEMAVAILABLE_KB: "524288",
-      BIYAHE_RESOURCE_MIN_DISKFREE_KB: "1048576",
-      BIYAHE_RESOURCE_MIN_SWAPFREE_KB: "131072",
-      BIYAHE_RESOURCE_MAX_PROCESS_TREE_RSS_KB: "262144",
-      BIYAHE_RESOURCE_PREFLIGHT_SAMPLES: "3",
-      BIYAHE_RESOURCE_PREFLIGHT_INTERVAL_SECONDS: "5",
-      BIYAHE_RESOURCE_BREACH_SAMPLES: "2",
-      BIYAHE_RESOURCE_MEMINFO_PATH: "/proc/meminfo",
-    };
+    const environment = resourceGuardEnvironment(process.env, command.environment);
     const result = await new Promise((resolvePromise, rejectPromise) => {
-      const child = spawn("bash", args, { stdio: "inherit", env: environment, shell: false });
+      const child = spawn("bash", args, { stdio: "inherit", env: environment, cwd: resolve(command.cwd ?? process.cwd()), shell: false });
       child.once("error", rejectPromise);
       child.once("close", (code, signal) => resolvePromise({ code: code ?? 1, signal }));
       const forwards = new Map([["SIGINT", () => child.kill("SIGINT")], ["SIGTERM", () => child.kill("SIGTERM")], ["SIGHUP", () => child.kill("SIGHUP")]]);
@@ -274,11 +365,15 @@ async function runGuardedCheck(input, ledgerPath) {
 
 async function cli() {
   const [command, inputPath, requestedLedgerPath] = process.argv.slice(2);
-  if (!new Set(["record", "check", "run"]).has(command) || !inputPath) {
-    throw new Error("Usage: node validation-ledger.mjs <record|check|run> <identity.json> [ledger-path]");
+  if (!new Set(["record", "check", "run", "recover-interrupted"]).has(command) || !inputPath) {
+    throw new Error("Usage: node validation-ledger.mjs <record|check|run|recover-interrupted> <identity.json> [ledger-path]");
   }
   const input = JSON.parse(await readFile(inputPath, "utf8"));
   const ledgerPath = requestedLedgerPath ? resolve(requestedLedgerPath) : defaultLedgerPath();
+  if (command === "recover-interrupted") {
+    console.log(JSON.stringify(await recoverInterruptedRun(input, ledgerPath), null, 2));
+    return;
+  }
   if (command === "run") {
     process.exitCode = await runGuardedCheck(input, ledgerPath);
     return;
