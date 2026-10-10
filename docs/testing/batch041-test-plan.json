@@ -360,6 +360,23 @@
       "source_revision": "2850683120fd04bef25d926f9d9ed5655e5ca6f0",
       "command_fingerprint_scope": "canonical argv + working directory + tested source revision",
       "command_fingerprint_sha256": "6070b9eb9cdc8fa3be0fd67d1f047d58f42c8e49e43189217ea064a1c93e8e76"
+    },
+    {
+      "id": "portable-kit-v3-verifier",
+      "cost": "LIGHT",
+      "command": [
+        "bash",
+        "verify-kit.sh",
+        "--repo-root",
+        "/data/data/com.termux/files/home/Biyahe"
+      ],
+      "working_directory": "docs/portable-verification-v3",
+      "status": "VERIFIED",
+      "result": "PASS; 61 files hash-checked, 58 required paths match pinned Git revision, no-database smoke PASS_STATIC_EVIDENCE_ONLY",
+      "reason": "Run from the kit directory against the exact pinned source checkout; graph replay, PostgreSQL, field evidence and external host execution were not run.",
+      "source_revision": "0bd2324cdcdbd9d5146e00a8020bb913dada572c",
+      "command_fingerprint_scope": "canonical argv + working directory + tested kit source revision",
+      "command_fingerprint_sha256": "45ce75d787839d0409d94c10a7ced570a8848663bda942a21994a3d44b3a73cf"
     }
   ],
   "policy": {

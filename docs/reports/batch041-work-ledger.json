@@ -142,9 +142,10 @@
       "status": "VERIFIED",
       "files_changed": [
         "api/scripts/package-batch041-verification-kit.py",
-        "docs/portable-verification-v2"
+        "docs/portable-verification-v2",
+        "docs/portable-verification-v3"
       ],
-      "evidence": "Portable v2: 58 package hashes and 55 required Git-blob paths verified; its static smoke passed. This recovery adds a v3 kit after the source and validation documents are pinned. No external host execution."
+      "evidence": "Portable v2: 58 checksums, 55 required Git-blob paths and static smoke verified. Portable v3 pins 0bd2324; local verifier passed 61 file checksums, 58 source-blob comparisons and the no-database static smoke. No external host, database, graph replay or field execution."
     },
     {
       "id": "D1",
@@ -191,9 +192,10 @@
       "files_changed": [
         "docs/portable-verification-v2",
         "docs/reports/batch041-doctor-v41.json",
-        "docs/reports/batch041-work-ledger.json"
+        "docs/reports/batch041-work-ledger.json",
+        "docs/portable-verification-v3"
       ],
-      "evidence": "Recovery source/test correction committed at 2850683120fd04bef25d926f9d9ed5655e5ca6f0. Current Doctor, test plan and recovery validation record are being committed as documentation; portable v3 verification and final SD bundle/report/clipboard remain."
+      "evidence": "Source correction committed at 2850683120fd04bef25d926f9d9ed5655e5ca6f0; report/evidence checkpoint at 0bd2324; portable v3 package committed at 90d32255c2912abc6d249d727ceb4c14265535e2 and passed the pinned local verifier. Final SD bundle/report/clipboard remain."
     },
     {
       "id": "RR1",
@@ -259,9 +261,14 @@
       "hash": "2850683120fd04bef25d926f9d9ed5655e5ca6f0",
       "subject": "Batch 041 recover adapter and Doctor contracts",
       "kind": "executable-source-and-test-correction"
+    },
+    {
+      "hash": "90d32255c2912abc6d249d727ceb4c14265535e2",
+      "subject": "build(portable): refresh Batch 041 verification kit",
+      "kind": "documentation-only-portable-kit"
     }
   ],
-  "last_safe_checkpoint": "2850683120fd04bef25d926f9d9ed5655e5ca6f0 source commit; updated final evidence and v3 kit pending.",
+  "last_safe_checkpoint": "Portable v3 at 90d32255c2912abc6d249d727ceb4c14265535e2; verified against pinned source/documentation revision 0bd2324.",
   "recovery_started_at_utc": "2026-10-09T23:47:07Z",
   "recovery_head_at_start": "08ca129ea14911eb02b4ea022b916bb081033ca1"
 }
