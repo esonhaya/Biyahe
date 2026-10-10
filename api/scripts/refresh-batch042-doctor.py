@@ -424,9 +424,14 @@ def main() -> int:
     args = parser.parse_args()
     try:
         runs = [json.loads(path.read_text(encoding="utf-8")) for path in args.run_status]
-        revision = args.executable_revision or subprocess.check_output(["git", "-C", str(ROOT), "rev-parse", "HEAD"], text=True).strip()
+        repository_head = subprocess.check_output(["git", "-C", str(ROOT), "rev-parse", "HEAD"], text=True).strip()
+        revision = args.executable_revision or repository_head
         if len(revision) != 40 or any(char not in "0123456789abcdef" for char in revision):
             raise ValueError("executable source revision must be a full lowercase Git commit hash")
+        if subprocess.run(["git", "-C", str(ROOT), "cat-file", "-e", f"{revision}^{{commit}}"], check=False).returncode:
+            raise ValueError(f"executable source revision is not an available Git commit: {revision}")
+        if subprocess.run(["git", "-C", str(ROOT), "merge-base", "--is-ancestor", revision, repository_head], check=False).returncode:
+            raise ValueError(f"executable source revision is not an ancestor of repository HEAD: {revision}")
         for run in runs:
             executed_revision = run.get("executable_source_revision", run.get("source_revision"))
             if executed_revision is not None and (len(executed_revision) != 40 or any(char not in "0123456789abcdef" for char in executed_revision)):
