@@ -69,6 +69,35 @@
       "status": "BLOCKED_RESOURCE"
     }
   ],
+  "portable_v6_package_check": {
+    "checksum_entries": 167,
+    "command": [
+      "bash",
+      "docs/portable-verification-v6/verify-kit.sh",
+      "--mode",
+      "STATIC",
+      "--suite",
+      "staging-config-validation",
+      "--repo-root",
+      "/data/data/com.termux/files/home/Biyahe",
+      "--output-root",
+      "/data/data/com.termux/files/home/.cache/biyahe/batch044-kit-verify"
+    ],
+    "elapsed_milliseconds": 666.73,
+    "ended_at": "2026-10-10T12:39:50Z",
+    "evidence_path": "/data/data/com.termux/files/home/.cache/biyahe/batch044-kit-verify/20261010T123949Z-11332/run-status.json",
+    "exit_code": 0,
+    "graph_cases_executed": 0,
+    "graph_included": false,
+    "included_files": 164,
+    "input_fingerprint_sha256": "655d542f462970a09f04aeb1e48e9b697deb0c9f94b1358412edc6f683925575",
+    "manifest_sha256": "39b5241c4daf06c8a544d20b9a5fdf727aed07a94783f736e01da8168ca5254",
+    "output_sha256": "e616d854ab2d01a841a514626f061673f983146fe447425bb80033b613c22822",
+    "repository_revision": "0697cca967af424a80afea046a7f0ab48581b597",
+    "started_at": "2026-10-10T12:39:49Z",
+    "status": "PASS",
+    "tested_executable_revision": "b5a7bbf94413d89654bb706c6cab2eb26fb9f26d"
+  },
   "post_commit_contract_runs": [
     {
       "command": [

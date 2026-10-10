@@ -1,7 +1,7 @@
 {
   "batch": 44,
   "branch": "main",
-  "delivery_status": "IN_PROGRESS",
+  "delivery_status": "IN_PROGRESS_FINAL_BUNDLE_PENDING",
   "doctor_categories": {
     "api_smoke_framework": {
       "evidence": "Smoke tool contract tests passed using fixtures; live API tests and real journey calls were not run.",
@@ -225,6 +225,20 @@
       "evidence": "Command output observed after final ledger, Doctor, and test plan generation; command is low-resource and no files are modified.",
       "exit_code": 0,
       "status": "PASS"
+    },
+    {
+      "command": "bash docs/portable-verification-v6/verify-kit.sh --mode STATIC --suite staging-config-validation --repo-root \"$PWD\" --output-root \"$HOME/.cache/biyahe/batch044-kit-verify\"",
+      "elapsed_milliseconds": 666.73,
+      "ended_at": "2026-10-10T12:39:50Z",
+      "evidence": "/data/data/com.termux/files/home/.cache/biyahe/batch044-kit-verify/20261010T123949Z-11332/run-status.json",
+      "executable_source_revision": "b5a7bbf94413d89654bb706c6cab2eb26fb9f26d",
+      "exit_code": 0,
+      "input_fingerprint_sha256": "655d542f462970a09f04aeb1e48e9b697deb0c9f94b1358412edc6f683925575",
+      "note": "Manifest, 167 checksum entries, packaged Doctor evidence relocation, pinned source and repo-root cross-check passed; only staging-config-validation executed.",
+      "output_sha256": "e616d854ab2d01a841a514626f061673f983146fe447425bb80033b613c22822",
+      "source_revision": "0697cca967af424a80afea046a7f0ab48581b597",
+      "started_at": "2026-10-10T12:39:49Z",
+      "status": "PASS"
     }
   ],
   "final_documentation_checkpoint": null,
@@ -259,6 +273,28 @@
     "portable_verification": "V5_BOUNDED_CASE_SELECTION_FIXED_DEFAULT_GRAPH_PATH",
     "staging_compose": "NOT_PRESENT_AT_BASELINE",
     "walking_adapter": "EXISTS_LOCAL_DEBUG_AND_EXPLICIT_FLAG_GATED"
+  },
+  "portable_kit": {
+    "checksum_entries": 167,
+    "checksum_file_sha256": "c83dea2ee315fb047c401a5ca2733a3d427984fa0ea2c8fd9cfa0befe60a48a9",
+    "executable_source_revision": "b5a7bbf94413d89654bb706c6cab2eb26fb9f26d",
+    "graph_included": false,
+    "included_files": 164,
+    "local_crosscheck": {
+      "elapsed_milliseconds": 666.73,
+      "ended_at": "2026-10-10T12:39:50Z",
+      "evidence_path": "/data/data/com.termux/files/home/.cache/biyahe/batch044-kit-verify/20261010T123949Z-11332/run-status.json",
+      "exit_code": 0,
+      "input_fingerprint_sha256": "655d542f462970a09f04aeb1e48e9b697deb0c9f94b1358412edc6f683925575",
+      "mode": "STATIC",
+      "output_sha256": "e616d854ab2d01a841a514626f061673f983146fe447425bb80033b613c22822",
+      "started_at": "2026-10-10T12:39:49Z",
+      "status": "PASS",
+      "suite": "staging-config-validation"
+    },
+    "manifest_sha256": "39b5241c4daf06c8a544d20b9a5fdf727aed07a94783f736e01da8168ca5254",
+    "path": "docs/portable-verification-v6",
+    "repository_revision": "0697cca967af424a80afea046a7f0ab48581b597"
   },
   "recovery_snapshot": {
     "bundle": "biyahe-batch044-initial-ea5f678da09c1425a19ef34f0ea739769a2bf3ae.bundle",
@@ -810,7 +846,7 @@
       "status": "VERIFIED"
     },
     {
-      "evidence": "V6 packager and runner contract tests pass; package generation and kit checksum verification are pending delivery step. Corpus replay was not run.",
+      "evidence": "V6 package generated (167 checksum entries; 164 included source/evidence files; 5.0 MiB); manifest and all package hashes passed. Cross-check against the committed checkout passed staging-config-validation (exit 0, 666.73 ms, input SHA256 655d542f462970a09f04aeb1e48e9b697deb0c9f94b1358412edc6f683925575). This verifies packaging and one static config suite only; graph replay remains NOT_RUN.",
       "id": "PORTABLE_V6",
       "status": "VERIFIED"
     },
@@ -835,9 +871,9 @@
       "status": "IMPLEMENTED_UNTESTED"
     },
     {
-      "evidence": "Documentation evidence, portable kit, final bundle, and report are still being prepared.",
+      "evidence": "Implementation and documentation checkpoints committed; final SD Git bundle, checksum sidecar, and external report are being produced and verified.",
       "id": "DELIVERY",
-      "status": "NOT_STARTED"
+      "status": "IMPLEMENTED_UNTESTED"
     }
   ]
 }
