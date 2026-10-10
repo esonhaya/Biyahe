@@ -1,0 +1,2 @@
+docs/portable-verification-v4/source-snapshot/evidence/*.log -whitespace
+docs/portable-verification-v4/source-snapshot/evidence/*.txt -whitespace

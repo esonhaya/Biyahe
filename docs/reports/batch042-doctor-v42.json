@@ -1,5 +1,5 @@
 {
-  "assessed_at_utc": "2026-10-10T04:45:45Z",
+  "assessed_at_utc": "2026-10-10T04:47:15Z",
   "batch": 42,
   "categories": [
     {
@@ -75,7 +75,7 @@
     {
       "evidence": "The runner contract fixtures and any supplied local STATIC package execution are independently fingerprinted. No external Linux host execution is claimed.",
       "name": "portable_kit",
-      "status": "IMPLEMENTED_UNTESTED"
+      "status": "VERIFIED"
     },
     {
       "evidence": "PostgreSQL was not started or contacted; real staging needs a separate controlled host.",
@@ -104,13 +104,13 @@
         },
         {
           "method": "read_only_sha256",
-          "observed_at_utc": "2026-10-10T04:45:45Z",
+          "observed_at_utc": "2026-10-10T04:47:15Z",
           "path": "/data/data/com.termux/files/home/.cache/biyahe/batch030/cebu-walk-central-visayas-20261007-v3.sqlite",
           "sha256": "29d7aaf9c45a596f4065c44d13f983f4a7edeec5ac2ea41b718b1c52ca865bf8",
           "size_bytes": 41013248
         }
       ],
-      "observed_at_utc": "2026-10-10T04:45:45Z",
+      "observed_at_utc": "2026-10-10T04:47:15Z",
       "path": "$HOME/.cache/biyahe/batch030/cebu-walk-central-visayas-20261007-v3.sqlite",
       "pbf_rescanned": false,
       "status": "VERIFIED"
@@ -449,7 +449,7 @@
       ],
       "command_fingerprint_sha256": "41763fb49657fdcf64915d9c3bb7df08959a5c79968628087c2e5c50f526d544",
       "cwd": "/data/data/com.termux/files/home/Biyahe",
-      "ended_at": "2026-10-10T04:43:09Z",
+      "ended_at": "2026-10-10T04:46:23Z",
       "executed": true,
       "exit_code": 0,
       "failure_count": 0,
@@ -476,15 +476,15 @@
         }
       ],
       "memavailable_floor_kib": 524288,
-      "output_path": "/data/data/com.termux/files/home/.cache/biyahe/batch042/portable-verification/20261010T044304Z-15419/corpus-comparator-fixtures.stdout.txt",
-      "output_sha256": "03e2ce7efb78ca7222db4c9a68781f9953dd3bd674b491cc52a8a4986d74e6f4",
+      "output_path": "/data/data/com.termux/files/home/.cache/biyahe/batch042/portable-verification/20261010T044618Z-16777/corpus-comparator-fixtures.stdout.txt",
+      "output_sha256": "0292b91377e3f5de5fc72b83a91ddacbecbc2c226b761793f9b4babe85f7ad63",
       "reported_check_markers": 0,
       "resource_guard": "NOT_REQUIRED",
       "resource_log": null,
       "resource_log_sha256": null,
-      "run_directory": "/data/data/com.termux/files/home/.cache/biyahe/batch042/portable-verification/20261010T044304Z-15419",
-      "run_source_revision": "049cf77225b522fe272baa6166400c5262b59f52",
-      "started_at": "2026-10-10T04:43:08Z",
+      "run_directory": "/data/data/com.termux/files/home/.cache/biyahe/batch042/portable-verification/20261010T044618Z-16777",
+      "run_source_revision": "2fba3141170cc3406c532623a433257610ff726e",
+      "started_at": "2026-10-10T04:46:22Z",
       "status": "VERIFIED",
       "swapfree_floor_kib": 131072,
       "test_count": 4,
@@ -511,7 +511,7 @@
       ],
       "command_fingerprint_sha256": "956f19bd9b9dfe7ad455d2f80225fd840512e7bb76735ab14163f4b7e5a79638",
       "cwd": "/data/data/com.termux/files/home/Biyahe",
-      "ended_at": "2026-10-10T04:43:07Z",
+      "ended_at": "2026-10-10T04:46:20Z",
       "executed": true,
       "exit_code": 0,
       "failure_count": 0,
@@ -538,15 +538,15 @@
         }
       ],
       "memavailable_floor_kib": 524288,
-      "output_path": "/data/data/com.termux/files/home/.cache/biyahe/batch042/portable-verification/20261010T044304Z-15419/coverage-fixtures.stdout.txt",
-      "output_sha256": "2f391a658d1ea88299e6eb1e9cec6856632952a06773579be580d7c4828bc131",
+      "output_path": "/data/data/com.termux/files/home/.cache/biyahe/batch042/portable-verification/20261010T044618Z-16777/coverage-fixtures.stdout.txt",
+      "output_sha256": "08b3cad696a35c99eb5d4fcf04d5b257f2520d2b7d42499d4430a8b2bb191684",
       "reported_check_markers": 0,
       "resource_guard": "NOT_REQUIRED",
       "resource_log": null,
       "resource_log_sha256": null,
-      "run_directory": "/data/data/com.termux/files/home/.cache/biyahe/batch042/portable-verification/20261010T044304Z-15419",
-      "run_source_revision": "049cf77225b522fe272baa6166400c5262b59f52",
-      "started_at": "2026-10-10T04:43:06Z",
+      "run_directory": "/data/data/com.termux/files/home/.cache/biyahe/batch042/portable-verification/20261010T044618Z-16777",
+      "run_source_revision": "2fba3141170cc3406c532623a433257610ff726e",
+      "started_at": "2026-10-10T04:46:20Z",
       "status": "VERIFIED",
       "swapfree_floor_kib": 131072,
       "test_count": 11,
@@ -571,11 +571,11 @@
         "/data/data/com.termux/files/usr/bin/python3",
         "api/scripts/summarize-offline-coverage.py",
         "--output-dir",
-        "/data/data/com.termux/files/home/.cache/biyahe/batch042/portable-verification/20261010T044304Z-15419/coverage-pinned-summary"
+        "/data/data/com.termux/files/home/.cache/biyahe/batch042/portable-verification/20261010T044618Z-16777/coverage-pinned-summary"
       ],
-      "command_fingerprint_sha256": "2c4215d2d1ca70f9e3f57ff91eed5e291c18eeff440889fe2da73fde05230c8c",
+      "command_fingerprint_sha256": "7766751c32759fca86dd37b2b8889fc709059f36eb670a7e5392b53e3fc540bb",
       "cwd": "/data/data/com.termux/files/home/Biyahe",
-      "ended_at": "2026-10-10T04:43:07Z",
+      "ended_at": "2026-10-10T04:46:21Z",
       "executed": true,
       "exit_code": 0,
       "failure_count": 0,
@@ -610,15 +610,15 @@
         }
       ],
       "memavailable_floor_kib": 524288,
-      "output_path": "/data/data/com.termux/files/home/.cache/biyahe/batch042/portable-verification/20261010T044304Z-15419/coverage-pinned-summary.stdout.txt",
-      "output_sha256": "ed859453d0b4008f1edeb4bb622a7902c8e99f3288b4318ce50d44c954d72981",
+      "output_path": "/data/data/com.termux/files/home/.cache/biyahe/batch042/portable-verification/20261010T044618Z-16777/coverage-pinned-summary.stdout.txt",
+      "output_sha256": "776fc5781ef6126ff32a604c4bd3f81be605ab28d40d0250168dfda7edf062b8",
       "reported_check_markers": 0,
       "resource_guard": "NOT_REQUIRED",
       "resource_log": null,
       "resource_log_sha256": null,
-      "run_directory": "/data/data/com.termux/files/home/.cache/biyahe/batch042/portable-verification/20261010T044304Z-15419",
-      "run_source_revision": "049cf77225b522fe272baa6166400c5262b59f52",
-      "started_at": "2026-10-10T04:43:07Z",
+      "run_directory": "/data/data/com.termux/files/home/.cache/biyahe/batch042/portable-verification/20261010T044618Z-16777",
+      "run_source_revision": "2fba3141170cc3406c532623a433257610ff726e",
+      "started_at": "2026-10-10T04:46:20Z",
       "status": "VERIFIED",
       "swapfree_floor_kib": 131072,
       "test_count": null,
@@ -770,7 +770,7 @@
       ],
       "command_fingerprint_sha256": "b48a5cae0e7d1c66cc209d9bbe288e0a9835c7f2feab1fc43b2c884044b0069c",
       "cwd": "/data/data/com.termux/files/home/Biyahe",
-      "ended_at": "2026-10-10T04:43:12Z",
+      "ended_at": "2026-10-10T04:46:26Z",
       "executed": true,
       "exit_code": 0,
       "failure_count": 0,
@@ -797,15 +797,15 @@
         }
       ],
       "memavailable_floor_kib": 524288,
-      "output_path": "/data/data/com.termux/files/home/.cache/biyahe/batch042/portable-verification/20261010T044304Z-15419/php-geometry-contract.stdout.txt",
+      "output_path": "/data/data/com.termux/files/home/.cache/biyahe/batch042/portable-verification/20261010T044618Z-16777/php-geometry-contract.stdout.txt",
       "output_sha256": "9e87ca6809f8bdb977918e23a41b43a16fae2ca89c3d3504a5e8d0f83573bd32",
       "reported_check_markers": 1,
       "resource_guard": "NOT_REQUIRED",
       "resource_log": null,
       "resource_log_sha256": null,
-      "run_directory": "/data/data/com.termux/files/home/.cache/biyahe/batch042/portable-verification/20261010T044304Z-15419",
-      "run_source_revision": "049cf77225b522fe272baa6166400c5262b59f52",
-      "started_at": "2026-10-10T04:43:12Z",
+      "run_directory": "/data/data/com.termux/files/home/.cache/biyahe/batch042/portable-verification/20261010T044618Z-16777",
+      "run_source_revision": "2fba3141170cc3406c532623a433257610ff726e",
+      "started_at": "2026-10-10T04:46:26Z",
       "status": "VERIFIED",
       "swapfree_floor_kib": 131072,
       "test_count": null,
@@ -909,9 +909,573 @@
       "worker_peak_rss_kib": 68304
     },
     "portable_kit": {
-      "executed": false,
-      "reason": "kit verification output was not supplied",
-      "status": "NOT_RUN"
+      "command": [
+        "bash",
+        "verify-kit.sh",
+        "STATIC"
+      ],
+      "command_fingerprint_sha256": "0563012c236383c14966ecef695e3e3aa04101f63d8af9a94d74b4b153a8660b",
+      "cwd": "/data/data/com.termux/files/home/Biyahe/docs/portable-verification-v4",
+      "executed": true,
+      "fingerprint_environment": {
+        "LANG": "en_US.UTF-8",
+        "LC_ALL": "C.UTF-8",
+        "PATH": "/data/data/com.termux/files/home/.codex/tmp/arg0/codex-arg0MWU38W:/data/data/com.termux/files/home/.codex/tmp/arg0/codex-arg0hewtZJ:/data/data/com.termux/files/usr/bin",
+        "TZ": ""
+      },
+      "historical_only": false,
+      "input_files": [
+        {
+          "path": "docs/portable-verification-v4/README.md",
+          "sha256": "41791cd0e7e700cc797d801321902a9076bab405c311de39730f815030340d74"
+        },
+        {
+          "path": "docs/portable-verification-v4/SHA256SUMS",
+          "sha256": "0ecdb4233dbb38c305e1d2d018a741111eda7698e0fe8a75a8f30561c2768243"
+        },
+        {
+          "path": "docs/portable-verification-v4/manifest.json",
+          "sha256": "ea8f2f0695f02e2a8fddc1a39f572004aa2878163216d82e8d3e416a281521d5"
+        },
+        {
+          "path": "docs/portable-verification-v4/source-snapshot/api/app/Console/Commands/VerifyOfflineWalkingCorpus.php",
+          "sha256": "e84e3a816a06eb2d81730121d85f405021d67bf5228cb63a3d0a62baa9518b68"
+        },
+        {
+          "path": "docs/portable-verification-v4/source-snapshot/api/app/Http/Controllers/Api/DevelopmentOfflineWalkingPreviewController.php",
+          "sha256": "85fda4c65d9469f11a01283cce3beaf6feabc9ad52df1f13df1065d17bbd423b"
+        },
+        {
+          "path": "docs/portable-verification-v4/source-snapshot/api/app/Services/Routing/OfflineJourneyWalkingPreview.php",
+          "sha256": "06f5d4e9e49b1f67649bee7c66271462c4cbf94b3774e2691cd7eade8f91d226"
+        },
+        {
+          "path": "docs/portable-verification-v4/source-snapshot/api/app/Services/Routing/OfflinePedestrianGraphRouter.php",
+          "sha256": "ea6ade5790e6754f8bebaaedf11a1d2bd10c2e2df523c407d27f191ed8ffd224"
+        },
+        {
+          "path": "docs/portable-verification-v4/source-snapshot/api/app/Services/Routing/OfflinePedestrianRouteGeometryContract.php",
+          "sha256": "4f9ef2483c2cf4fa8cbc91d4a9407242d44fea6ae7889da07833560c1613b4f4"
+        },
+        {
+          "path": "docs/portable-verification-v4/source-snapshot/api/app/Services/Routing/OfflineWalkingPreviewException.php",
+          "sha256": "3b88942528597b587b8793bb353f78f547a18c7305b0446d62a14dc2fcb469b7"
+        },
+        {
+          "path": "docs/portable-verification-v4/source-snapshot/api/composer.json",
+          "sha256": "b161ab8e20fd56b00d784c5611c3722213c92171cfd1e0f28a90a7d14b2621e7"
+        },
+        {
+          "path": "docs/portable-verification-v4/source-snapshot/api/composer.lock",
+          "sha256": "d705a772f93cfe6d1b374e3896eaa3b4ee919aa6b222e2daab86dd31db99b4be"
+        },
+        {
+          "path": "docs/portable-verification-v4/source-snapshot/api/config/offline_walking_preview.php",
+          "sha256": "04799421e49cfb35295012530329a12ab7605a5694bc4366126707d563fc667a"
+        },
+        {
+          "path": "docs/portable-verification-v4/source-snapshot/api/phpunit.xml",
+          "sha256": "493369cfb7feea104da4bec214c2cc6526ca2f1b9d937c50a2961fc59cb61aaf"
+        },
+        {
+          "path": "docs/portable-verification-v4/source-snapshot/api/routes/api.php",
+          "sha256": "49615c13ce22488e5b752bd29b4980cfbaae04b958434e3db7fd9609c3d143f2"
+        },
+        {
+          "path": "docs/portable-verification-v4/source-snapshot/api/scripts/check-batch042-static-syntax.py",
+          "sha256": "816b0a9c90e171afa5878e8704cb651bc8e53578053ec55ccdd516d4fbe3afcf"
+        },
+        {
+          "path": "docs/portable-verification-v4/source-snapshot/api/scripts/compare-offline-corpus.py",
+          "sha256": "32bfc2a535ec1fa0f062f3d9bc17de5cd49964286e0cdabf1250371ece320e1e"
+        },
+        {
+          "path": "docs/portable-verification-v4/source-snapshot/api/scripts/evidence_provenance.py",
+          "sha256": "e17d63dda770595880842a5e93a96e87020cae71ba3384f76b854e10dc9ef46d"
+        },
+        {
+          "path": "docs/portable-verification-v4/source-snapshot/api/scripts/offline-evidence-smoke.py",
+          "sha256": "01450f3bd284a6f965784475d8de025f0a4f42306e561a06b329f3b1251dd9a3"
+        },
+        {
+          "path": "docs/portable-verification-v4/source-snapshot/api/scripts/package-batch041-verification-kit.py",
+          "sha256": "276b95845ace4a5b9a44d19835ae33316b49c4a3cbbd140fb26260fdaede645d"
+        },
+        {
+          "path": "docs/portable-verification-v4/source-snapshot/api/scripts/refresh-batch042-doctor.py",
+          "sha256": "d8900e69cb8c4a7a428ef93571e43dd417a08ec8c798ffef44d14a7110d0291a"
+        },
+        {
+          "path": "docs/portable-verification-v4/source-snapshot/api/scripts/run-bounded-process.sh",
+          "sha256": "322b6dede24c1c1af290495ff820b19448d5027cef0f4cb05302fa7f174e2d0f"
+        },
+        {
+          "path": "docs/portable-verification-v4/source-snapshot/api/scripts/run-portable-verification.py",
+          "sha256": "ffed6d088642c502544ac70e02b35c39df7ab6c4cecae8f1eea4f9ab9411c1a6"
+        },
+        {
+          "path": "docs/portable-verification-v4/source-snapshot/api/scripts/run-portable-verification.sh",
+          "sha256": "9609cfd4a4a6df924ba6b071f744d77e8e571fe947988ff6864cc28c6b2e0e25"
+        },
+        {
+          "path": "docs/portable-verification-v4/source-snapshot/api/scripts/summarize-offline-coverage.py",
+          "sha256": "73ce4efc2a6ebca72af14a26bf1eb545781e9c41b09c4de210bcd0014b3aa719"
+        },
+        {
+          "path": "docs/portable-verification-v4/source-snapshot/api/scripts/test_compare_offline_corpus.py",
+          "sha256": "7afd370485d2636733c775285c05d0d615b89ca0a3ba95da505d7907de9af9c5"
+        },
+        {
+          "path": "docs/portable-verification-v4/source-snapshot/api/scripts/test_evidence_provenance.py",
+          "sha256": "a9e64eae5df4afe8124cfee44a95d3df89f0b0ea26beb8b65d5a22462476d9d2"
+        },
+        {
+          "path": "docs/portable-verification-v4/source-snapshot/api/scripts/test_offline_evidence_smoke.py",
+          "sha256": "893cf0881b8b415ac21b606dd1a7c0b6d6f529f24dbaed97dd092577352d2681"
+        },
+        {
+          "path": "docs/portable-verification-v4/source-snapshot/api/scripts/test_offline_route_geometry_contract.php",
+          "sha256": "8d13c3451ba15758bbcc28e21068f1e17e547dece5cb95dbbbfc3cfc154bba80"
+        },
+        {
+          "path": "docs/portable-verification-v4/source-snapshot/api/scripts/test_portable_verification.py",
+          "sha256": "a2ae70066ba41a188a58a84692445f90a1261961dceffcb81caee7020ca696af"
+        },
+        {
+          "path": "docs/portable-verification-v4/source-snapshot/api/scripts/test_summarize_offline_coverage.py",
+          "sha256": "474ca9c077d5e98a52a67ce892305e5358968bcd703c282a42017d328d31d372"
+        },
+        {
+          "path": "docs/portable-verification-v4/source-snapshot/api/scripts/test_validate_batch041_doctor.py",
+          "sha256": "3ca002f506a09fc28a66a131fa3cbbbb3f09da526c70e9839a57bc7443d7900f"
+        },
+        {
+          "path": "docs/portable-verification-v4/source-snapshot/api/scripts/test_validate_batch042_doctor.py",
+          "sha256": "a4aeadb7ad9504d0e3a478cb185560ade87d15541538805637892b910ac7e0d4"
+        },
+        {
+          "path": "docs/portable-verification-v4/source-snapshot/api/scripts/validate-batch041-doctor.py",
+          "sha256": "f990c433b1ff3e524ac5b53c23c2390d789bb1e1a283be48bba7f4d186eb17b2"
+        },
+        {
+          "path": "docs/portable-verification-v4/source-snapshot/api/scripts/validate-batch041-provenance.py",
+          "sha256": "b31085fa0c2c190d48c2b1dc1e0cd72b9c4210efc4843fbc346361cfdd3ac6de"
+        },
+        {
+          "path": "docs/portable-verification-v4/source-snapshot/api/scripts/validate-batch042-doctor.py",
+          "sha256": "04188edb1e3b652b0cbf94525a75afd3b85c66d4cd7b0cb659170bffbe7205ce"
+        },
+        {
+          "path": "docs/portable-verification-v4/source-snapshot/api/tests/Support/OfflinePedestrianGraphFixture.php",
+          "sha256": "b93f2ad0e0bddd1d81891c71f268e424eb1987c1d05b5463cc0b4392f6e2032f"
+        },
+        {
+          "path": "docs/portable-verification-v4/source-snapshot/api/tests/Unit/OfflineJourneyWalkingPreviewTest.php",
+          "sha256": "d0b16605f5e35275afe4bf77aff43ae2e664655c06e8852f8d52c14b27c2be4d"
+        },
+        {
+          "path": "docs/portable-verification-v4/source-snapshot/api/tests/Unit/OfflinePedestrianGraphRouterTest.php",
+          "sha256": "4073acf41436030d557a221a19312488cea441723e820910acee373867a04fff"
+        },
+        {
+          "path": "docs/portable-verification-v4/source-snapshot/api/tests/Unit/OfflinePedestrianRouteGeometryContractTest.php",
+          "sha256": "c7331e1213249f6608717c9ae3273f269272cd5e7d6bc2c4c1985d853f46c610"
+        },
+        {
+          "path": "docs/portable-verification-v4/source-snapshot/docs/batch040-validation-scheduler.md",
+          "sha256": "22fd88b4f19fed4c7b5c22277666d7aa23b93166d23d45d035cda46753c8f2bf"
+        },
+        {
+          "path": "docs/portable-verification-v4/source-snapshot/docs/batch041-test-and-resource-plan.md",
+          "sha256": "320c723e4d83843a6fe7e9d0afafb044613d7b807a46f30045bd4fb872c15dab"
+        },
+        {
+          "path": "docs/portable-verification-v4/source-snapshot/docs/offline-walking-preview-development.md",
+          "sha256": "ce89eea9dce41ab7fcc0731506d58b1b283ce1cf2f6c402e9a63f89e44f8a46d"
+        },
+        {
+          "path": "docs/portable-verification-v4/source-snapshot/docs/reports/batch031-cebu-graph-quality-and-member-review.json",
+          "sha256": "5756fe8f9f759f1c0f1213c3e51de7dd30a67a5bb835cd64ac53d3ddf9032aaf"
+        },
+        {
+          "path": "docs/portable-verification-v4/source-snapshot/docs/reports/batch031-cebu-restriction-audit.json",
+          "sha256": "14671f5cfed2c816dff7986b251d85acb2fae6e816670f9925b67b58cf3a7e6c"
+        },
+        {
+          "path": "docs/portable-verification-v4/source-snapshot/docs/reports/batch031-cebu-restriction-source-scan.json",
+          "sha256": "ba04117fcfeb9ec05c6833536987714edd27b224604795e50d0e30c919ff0ea6"
+        },
+        {
+          "path": "docs/portable-verification-v4/source-snapshot/docs/reports/batch032-cebu-coverage.json",
+          "sha256": "6caf101177904bee6fda1b12cab9c5cda36ddaf7ecc08b0d9778c0517123c81b"
+        },
+        {
+          "path": "docs/portable-verification-v4/source-snapshot/docs/reports/batch032-cebu-doctor-v32.json",
+          "sha256": "916086fa92b40e3080218ee53d7fe0be9054c8584a4d337dedbed0ac37b084ef"
+        },
+        {
+          "path": "docs/portable-verification-v4/source-snapshot/docs/reports/batch040-coverage-diagnostics.json",
+          "sha256": "38ee5d3ce9423f7df1fd51464eb068f689cce7a5058fbe3dee3c6a87c91d083e"
+        },
+        {
+          "path": "docs/portable-verification-v4/source-snapshot/docs/reports/batch041-doctor-v41.json",
+          "sha256": "fbffdae044a687569d0e8df708b6be6428e9bc8c36a3b9da0d776e20a5061c07"
+        },
+        {
+          "path": "docs/portable-verification-v4/source-snapshot/docs/reports/batch041-evidence-provenance.json",
+          "sha256": "882fd1ae2c7ab8f2e1edab87c9122911f62c4568513bbe6c8875263958dc1bb6"
+        },
+        {
+          "path": "docs/portable-verification-v4/source-snapshot/docs/reports/batch041-evidence-reconciliation.md",
+          "sha256": "bfca264f02dbe3e11b9d62f4ac60be0e46fa8a4523b3e119c7ac7a62c4d877f9"
+        },
+        {
+          "path": "docs/portable-verification-v4/source-snapshot/docs/reports/batch041-recovery-validation.json",
+          "sha256": "7376aa4ee175d37331fa29533412a7565951df0b4cd9fe3e049de9a7982a281d"
+        },
+        {
+          "path": "docs/portable-verification-v4/source-snapshot/docs/reports/batch042-doctor-v42.json",
+          "sha256": "d94e3b581834037b96cbc4712616d037724f5ae3a7e70a5572cbdee0c51d1991"
+        },
+        {
+          "path": "docs/portable-verification-v4/source-snapshot/docs/reports/batch042-frontend-architecture.md",
+          "sha256": "b78418b90c6359780a0599da48a0203008acfcf04d609114c5e097f26dd55061"
+        },
+        {
+          "path": "docs/portable-verification-v4/source-snapshot/docs/reports/batch042-work-ledger.json",
+          "sha256": "b70d3c9875ab1262e5334dda31c3910b87d141f20743353bd2730a85943c51e7"
+        },
+        {
+          "path": "docs/portable-verification-v4/source-snapshot/docs/testing/batch041-test-plan.json",
+          "sha256": "c10fcf269e17d42cb0dbd0b648b7ba9c943079cac2b4e5997e0e6645511f591a"
+        },
+        {
+          "path": "docs/portable-verification-v4/source-snapshot/docs/testing/batch042-test-plan.json",
+          "sha256": "db3f1b6c24dd756e1b571b8ee9de3906f0e8f40c8d792efcfdac0f8c5064f64d"
+        },
+        {
+          "path": "docs/portable-verification-v4/source-snapshot/evidence/can_i_ride.resource.log",
+          "sha256": "ecd2ca6301a8ad66c6ce25c7933fc96784df9d1a36b995e96226616d66cadaee"
+        },
+        {
+          "path": "docs/portable-verification-v4/source-snapshot/evidence/can_i_ride.stdout.txt",
+          "sha256": "ecd2ca6301a8ad66c6ce25c7933fc96784df9d1a36b995e96226616d66cadaee"
+        },
+        {
+          "path": "docs/portable-verification-v4/source-snapshot/evidence/commute_cards_and_saved_v1.resource.log",
+          "sha256": "d1405b51ee8d31ba4d9444125c089749fad99db37caceac3c07b06a98be8d3a4"
+        },
+        {
+          "path": "docs/portable-verification-v4/source-snapshot/evidence/commute_cards_and_saved_v1.stdout.txt",
+          "sha256": "d1405b51ee8d31ba4d9444125c089749fad99db37caceac3c07b06a98be8d3a4"
+        },
+        {
+          "path": "docs/portable-verification-v4/source-snapshot/evidence/corpus_comparator.stdout.txt",
+          "sha256": "03e2ce7efb78ca7222db4c9a68781f9953dd3bd674b491cc52a8a4986d74e6f4"
+        },
+        {
+          "path": "docs/portable-verification-v4/source-snapshot/evidence/coverage_fixtures.stdout.txt",
+          "sha256": "2f391a658d1ea88299e6eb1e9cec6856632952a06773579be580d7c4828bc131"
+        },
+        {
+          "path": "docs/portable-verification-v4/source-snapshot/evidence/coverage_pinned_summary.stdout.txt",
+          "sha256": "ed859453d0b4008f1edeb4bb622a7902c8e99f3288b4318ce50d44c954d72981"
+        },
+        {
+          "path": "docs/portable-verification-v4/source-snapshot/evidence/eslint.resource.log",
+          "sha256": "00f264e283f3b158464f8dca8cd437b43549a83f39a5c2821e8d0b050e13afc3"
+        },
+        {
+          "path": "docs/portable-verification-v4/source-snapshot/evidence/eslint.stdout.txt",
+          "sha256": "00f264e283f3b158464f8dca8cd437b43549a83f39a5c2821e8d0b050e13afc3"
+        },
+        {
+          "path": "docs/portable-verification-v4/source-snapshot/evidence/php_geometry_smoke.stdout.txt",
+          "sha256": "9e87ca6809f8bdb977918e23a41b43a16fae2ca89c3d3504a5e8d0f83573bd32"
+        },
+        {
+          "path": "docs/portable-verification-v4/source-snapshot/evidence/place_search.resource.log",
+          "sha256": "440b55ffeac29b7b2d7a655f36faf80245e4309babfc030cb31d2dd41939da65"
+        },
+        {
+          "path": "docs/portable-verification-v4/source-snapshot/evidence/place_search.stdout.txt",
+          "sha256": "440b55ffeac29b7b2d7a655f36faf80245e4309babfc030cb31d2dd41939da65"
+        },
+        {
+          "path": "docs/portable-verification-v4/source-snapshot/evidence/portable_runner_contract.stdout.txt",
+          "sha256": "b5fc2789a6fc54d763a8f236920789c6824b8996dee9ab78d37fb54257051816"
+        },
+        {
+          "path": "docs/portable-verification-v4/source-snapshot/evidence/preview_contract.resource.log",
+          "sha256": "e12d4be4f490e677b5262f5838aa5c49c435b64b653504f8c69a30444d13cb82"
+        },
+        {
+          "path": "docs/portable-verification-v4/source-snapshot/evidence/preview_contract.stdout.txt",
+          "sha256": "e12d4be4f490e677b5262f5838aa5c49c435b64b653504f8c69a30444d13cb82"
+        },
+        {
+          "path": "docs/portable-verification-v4/source-snapshot/evidence/preview_state.resource.log",
+          "sha256": "e8c06d415a9739a9cd7c96c9713573099775e9edf2a4c4824a6ce85022875b95"
+        },
+        {
+          "path": "docs/portable-verification-v4/source-snapshot/evidence/preview_state.stdout.txt",
+          "sha256": "e8c06d415a9739a9cd7c96c9713573099775e9edf2a4c4824a6ce85022875b95"
+        },
+        {
+          "path": "docs/portable-verification-v4/source-snapshot/evidence/provenance_fixtures.stdout.txt",
+          "sha256": "cfd9759413c8fe6c0c1ebf634e325c719e10d899b6993fe4a9650db889b97bc4"
+        },
+        {
+          "path": "docs/portable-verification-v4/source-snapshot/evidence/real_cebu_corpus.resource.log",
+          "sha256": "93ab0038e7103079b489a98f04976ad20cb513dba3a42102d654237f9f80f89e"
+        },
+        {
+          "path": "docs/portable-verification-v4/source-snapshot/evidence/real_cebu_corpus.stdout.txt",
+          "sha256": "93ab0038e7103079b489a98f04976ad20cb513dba3a42102d654237f9f80f89e"
+        },
+        {
+          "path": "docs/portable-verification-v4/source-snapshot/evidence/request_gate.resource.log",
+          "sha256": "c3577eaa5f9bf4c692d88aba8a29e5b87c80f6f861b598d6b6af88651bdfda91"
+        },
+        {
+          "path": "docs/portable-verification-v4/source-snapshot/evidence/request_gate.stdout.txt",
+          "sha256": "c3577eaa5f9bf4c692d88aba8a29e5b87c80f6f861b598d6b6af88651bdfda91"
+        },
+        {
+          "path": "docs/portable-verification-v4/source-snapshot/evidence/ride_mode.resource.log",
+          "sha256": "02a19de30d0beac891d7500f48f553d9d712cf3cca415d52a2fe61de0022f8b0"
+        },
+        {
+          "path": "docs/portable-verification-v4/source-snapshot/evidence/ride_mode.stdout.txt",
+          "sha256": "02a19de30d0beac891d7500f48f553d9d712cf3cca415d52a2fe61de0022f8b0"
+        },
+        {
+          "path": "docs/portable-verification-v4/source-snapshot/evidence/search_keyboard.resource.log",
+          "sha256": "440b55ffeac29b7b2d7a655f36faf80245e4309babfc030cb31d2dd41939da65"
+        },
+        {
+          "path": "docs/portable-verification-v4/source-snapshot/evidence/search_keyboard.stdout.txt",
+          "sha256": "440b55ffeac29b7b2d7a655f36faf80245e4309babfc030cb31d2dd41939da65"
+        },
+        {
+          "path": "docs/portable-verification-v4/source-snapshot/evidence/source_provenance_validator.stdout.txt",
+          "sha256": "f34abe4053f2b55655260063cc2776bdcb015540af26b170bc66c74577804d2e"
+        },
+        {
+          "path": "docs/portable-verification-v4/source-snapshot/evidence/static_evidence_smoke.stdout.txt",
+          "sha256": "daffdff478715fe5d23d896584f5078ceb0151c29b81d7521b6b5099eebd3ade"
+        },
+        {
+          "path": "docs/portable-verification-v4/source-snapshot/evidence/typescript.resource.log",
+          "sha256": "ef288c5dc455f3e232402af810d9f4bd94524c15934fc4a017ae016be46d9865"
+        },
+        {
+          "path": "docs/portable-verification-v4/source-snapshot/evidence/typescript.stdout.txt",
+          "sha256": "ef288c5dc455f3e232402af810d9f4bd94524c15934fc4a017ae016be46d9865"
+        },
+        {
+          "path": "docs/portable-verification-v4/source-snapshot/evidence/ux_contract.resource.log",
+          "sha256": "8ff57a33c26e7749255b4432c64f09f1c70eccf2f2ea7bf1d218b008c32f3d12"
+        },
+        {
+          "path": "docs/portable-verification-v4/source-snapshot/evidence/ux_contract.stdout.txt",
+          "sha256": "8ff57a33c26e7749255b4432c64f09f1c70eccf2f2ea7bf1d218b008c32f3d12"
+        },
+        {
+          "path": "docs/portable-verification-v4/source-snapshot/evidence/validation_ledger.resource.log",
+          "sha256": "ba846d12cdfe4ceeae3036b50e8ccef6948412f5c54600aeaf9fdd58a627dd28"
+        },
+        {
+          "path": "docs/portable-verification-v4/source-snapshot/evidence/validation_ledger.stdout.txt",
+          "sha256": "ba846d12cdfe4ceeae3036b50e8ccef6948412f5c54600aeaf9fdd58a627dd28"
+        },
+        {
+          "path": "docs/portable-verification-v4/source-snapshot/web/eslint.config.mjs",
+          "sha256": "870f1adccecf3051cbcd9fd307cef51d7633cf510979c181a81f4b1797273493"
+        },
+        {
+          "path": "docs/portable-verification-v4/source-snapshot/web/package-lock.json",
+          "sha256": "c322173fac697aeaa86bacbae4adcf8d9d29a1d931cebca0fb8d14fff83a5df6"
+        },
+        {
+          "path": "docs/portable-verification-v4/source-snapshot/web/package.json",
+          "sha256": "d982e7e18eb53cd945b525a08496ccbaaba594ead7c8dfbe60fa12430f2077de"
+        },
+        {
+          "path": "docs/portable-verification-v4/source-snapshot/web/public/manifest.webmanifest",
+          "sha256": "f0b0210e7b2bef98c92fcfb0019e45c2dbe542523ed1a875a6ac8948836f7d9c"
+        },
+        {
+          "path": "docs/portable-verification-v4/source-snapshot/web/public/sw.js",
+          "sha256": "3faa75a400aa5455ad548f2dd129da7357ee5c275dcbd30c36c678f1d0844838"
+        },
+        {
+          "path": "docs/portable-verification-v4/source-snapshot/web/scripts/can-i-ride-harness.mjs",
+          "sha256": "c0845b8d37cc25661bcde0010c8c4e17f39c192814171bf46384ff2dfc0e42c5"
+        },
+        {
+          "path": "docs/portable-verification-v4/source-snapshot/web/scripts/commute-card-harness.mjs",
+          "sha256": "73268894b0f0a9a398459a64727a8d8b82854d2044dc8b7c44e6af2a6660b756"
+        },
+        {
+          "path": "docs/portable-verification-v4/source-snapshot/web/scripts/nearby-harness.mjs",
+          "sha256": "1dfead1c7b55e5507a176be8dff1400db33a03ffef0fb9047fb6a45d4fd55f41"
+        },
+        {
+          "path": "docs/portable-verification-v4/source-snapshot/web/scripts/offline-walking-preview-harness.mjs",
+          "sha256": "67ccf5bc9999272e7fe5c403d321ec1e41ee8d5985cba38d2d7d01f7dc9dda9f"
+        },
+        {
+          "path": "docs/portable-verification-v4/source-snapshot/web/scripts/offline-walking-preview-state-harness.mjs",
+          "sha256": "d35334c68c94f2d7b5b3471174bf4758f01ab73854db5cf828960209f963c89a"
+        },
+        {
+          "path": "docs/portable-verification-v4/source-snapshot/web/scripts/place-search-harness.mjs",
+          "sha256": "7b3a4eee80f9ff6e083480d027a7ebc2d0914191e608999832f7a295d2191268"
+        },
+        {
+          "path": "docs/portable-verification-v4/source-snapshot/web/scripts/request-gate-harness.mjs",
+          "sha256": "43324c506f9be07ff3f73bd1ef31976cfb1ea2ce030624da0c35f9a37c99c1af"
+        },
+        {
+          "path": "docs/portable-verification-v4/source-snapshot/web/scripts/ride-mode-harness.mjs",
+          "sha256": "bd6c8a9ee5fc6d876aa30221bf587c90239f507a032f8c4c0fd3153b43169ac6"
+        },
+        {
+          "path": "docs/portable-verification-v4/source-snapshot/web/scripts/search-keyboard-harness.mjs",
+          "sha256": "547a421bc7f689cf579244925e605a25e23be56a26c9e1ccff03f513d85ea377"
+        },
+        {
+          "path": "docs/portable-verification-v4/source-snapshot/web/scripts/ux-contract-harness.mjs",
+          "sha256": "59093894fb8dc9c9f0fe5b6f883d09e9b56c65ea9870685138ad150e19405e3d"
+        },
+        {
+          "path": "docs/portable-verification-v4/source-snapshot/web/scripts/validation-ledger-harness.mjs",
+          "sha256": "9f56a9b0426b8439447617ca418d87ccfba51cf27a6be81f4720df1633e5566b"
+        },
+        {
+          "path": "docs/portable-verification-v4/source-snapshot/web/scripts/validation-ledger.mjs",
+          "sha256": "62124ac048bb7dcf760b72ce59ea977baded3869aea84bfe93e3aa9e7b73c712"
+        },
+        {
+          "path": "docs/portable-verification-v4/source-snapshot/web/src/app/globals.css",
+          "sha256": "6c0c4b0461774ca080d78a7a4878b7aef9668578498cf46ac88a11cf62f510b1"
+        },
+        {
+          "path": "docs/portable-verification-v4/source-snapshot/web/src/app/page.module.css",
+          "sha256": "3f68c7fc6f5cf59c033063682ab3b7f3562b9b50f040604f0dd2691edb1cb6dc"
+        },
+        {
+          "path": "docs/portable-verification-v4/source-snapshot/web/src/app/page.tsx",
+          "sha256": "b3c62dd3ca6d5a8072f9e50762d8c24c90df1d7a014e1e10a0e334d6e18bbc4a"
+        },
+        {
+          "path": "docs/portable-verification-v4/source-snapshot/web/src/components/BiyahePulse.tsx",
+          "sha256": "97cc62cbf99fb5fdb93765969a7d04ffd07e9510f3ed4ec4662f7294ed724cfc"
+        },
+        {
+          "path": "docs/portable-verification-v4/source-snapshot/web/src/components/CommuteCard.tsx",
+          "sha256": "8c08cf4fddeba340e541288722deda32acf488304b537ec85668696faa11a612"
+        },
+        {
+          "path": "docs/portable-verification-v4/source-snapshot/web/src/components/DisruptionNotice.tsx",
+          "sha256": "fc8968602ffc82f46af832e83e92866bf266491f545d1096ffdeda36b8e15d22"
+        },
+        {
+          "path": "docs/portable-verification-v4/source-snapshot/web/src/components/FieldMode.tsx",
+          "sha256": "8a6ab3e175f753ec3df6ff23db62f1e97189c440ed33e81be74fceffdaf714a2"
+        },
+        {
+          "path": "docs/portable-verification-v4/source-snapshot/web/src/components/MapView.tsx",
+          "sha256": "5816743ec6ef76d1ddf140b0fbda8b31398e81afccde0b91f7a5921fb1c88df0"
+        },
+        {
+          "path": "docs/portable-verification-v4/source-snapshot/web/src/components/NearbyRoutes.tsx",
+          "sha256": "f627565c36d50ee6181dae6797fbcaf4d1727c4d764d43eae854c1d627942494"
+        },
+        {
+          "path": "docs/portable-verification-v4/source-snapshot/web/src/components/PersonalCommuteTools.tsx",
+          "sha256": "7689086e4fe199f60bd9899abf11ddef830a9928c51014b8b66d7c690fd9cc96"
+        },
+        {
+          "path": "docs/portable-verification-v4/source-snapshot/web/src/components/ReplanPanel.tsx",
+          "sha256": "8669ee5affea68bca3c686cb243845170002b4b00558c348024f0c18a8e5be4d"
+        },
+        {
+          "path": "docs/portable-verification-v4/source-snapshot/web/src/components/RideMode.tsx",
+          "sha256": "ca9635ce3ae39ddb139c0c1ed54078865a45f218505b698d342463628fc802d5"
+        },
+        {
+          "path": "docs/portable-verification-v4/source-snapshot/web/src/lib/api.ts",
+          "sha256": "220c10e11551ffdd7213c9eeb16b06fc300d44ae0f868c426742d233b6450fe4"
+        },
+        {
+          "path": "docs/portable-verification-v4/source-snapshot/web/src/lib/canIRidePresentation.ts",
+          "sha256": "0ff5efc42be4c679d49652d6811920f397108a2b51a68df863de63046694d3d8"
+        },
+        {
+          "path": "docs/portable-verification-v4/source-snapshot/web/src/lib/commuteInstructions.ts",
+          "sha256": "0ee449fd4f131e134e58b778e1bcf33d40ff070955005b7f61f6855010c4facf"
+        },
+        {
+          "path": "docs/portable-verification-v4/source-snapshot/web/src/lib/journeyExplanation.ts",
+          "sha256": "95cea1a05da1b64a6ad6570684b8f68739cca5ada35548cf9e3fd13011677849"
+        },
+        {
+          "path": "docs/portable-verification-v4/source-snapshot/web/src/lib/journeyMapPresentation.ts",
+          "sha256": "d4c82f0676aadecfe98b07a729220cc4a0ae44a9744db38ad99b7c55696c960c"
+        },
+        {
+          "path": "docs/portable-verification-v4/source-snapshot/web/src/lib/latestPlaceSearch.ts",
+          "sha256": "339747fef19b777d0d3e7d8ed58fe981cfec73e06a0b97acbbbc48ad836684c0"
+        },
+        {
+          "path": "docs/portable-verification-v4/source-snapshot/web/src/lib/nearbyLookup.ts",
+          "sha256": "0593fe531bc16e3bbbc1ec4c09237282e1bde387d8c0a5577a81ad6ada7cfdb6"
+        },
+        {
+          "path": "docs/portable-verification-v4/source-snapshot/web/src/lib/offlineWalkingPreviewState.ts",
+          "sha256": "ffdd52885fbcf4fb93c6392b902e6b17f38ea12e2c9d235ac624b70af6a0b168"
+        },
+        {
+          "path": "docs/portable-verification-v4/source-snapshot/web/src/lib/requestGate.ts",
+          "sha256": "ec30066db794892358ec5461e79e1a6cc7f07e548c4f6c6c4b69b0c0fa27d926"
+        },
+        {
+          "path": "docs/portable-verification-v4/source-snapshot/web/src/lib/rideMode.ts",
+          "sha256": "18babd485317b02a7c59c830d3316d52c1b0c9aae3e86e4475b99e258d0dbcc3"
+        },
+        {
+          "path": "docs/portable-verification-v4/source-snapshot/web/src/lib/savedJourneys.ts",
+          "sha256": "82533b4ad35a5101cd70ec740b68f8d73c864c04833fdad9f8a400713e0a190c"
+        },
+        {
+          "path": "docs/portable-verification-v4/source-snapshot/web/src/lib/searchKeyboard.ts",
+          "sha256": "695f812113a3862ecd660399b56e995de35155900e3f4b9450b330962d6126d8"
+        },
+        {
+          "path": "docs/portable-verification-v4/source-snapshot/web/tsconfig.json",
+          "sha256": "5c51df4c59f4510d8c7dadf07a5c32132228826a3b331da5e286207b4df7ef9c"
+        },
+        {
+          "path": "docs/portable-verification-v4/verify-kit.sh",
+          "sha256": "5024438fb917bc7fd50f86f9c000b3c09a7f851bea88a55667dcf378179fdc65"
+        }
+      ],
+      "manifest_path": "/data/data/com.termux/files/home/Biyahe/docs/portable-verification-v4/manifest.json",
+      "manifest_sha256": "ea8f2f0695f02e2a8fddc1a39f572004aa2878163216d82e8d3e416a281521d5",
+      "output_path": "/data/data/com.termux/files/home/.cache/biyahe/batch042/evidence/portable-v4-final-static-20261010T044614Z.stdout.txt",
+      "output_sha256": "13eb5eafff353d78da1f7d85f48ad58d8d1528315ec159ef47078e293d90a7e2",
+      "resource_guard": "NOT_REQUIRED_STATIC_ONLY",
+      "run_status_path": "/data/data/com.termux/files/home/.cache/biyahe/batch042/portable-verification/20261010T044618Z-16777/run-status.json",
+      "run_status_sha256": "9eba59527aa82093decbe8e5b4126597b1985d912f10924f36591e652e28d58c",
+      "source_revision": "a91dabe1996f5809d25ebd6b57cfd4bab024a493",
+      "status": "VERIFIED",
+      "tool_versions": {
+        "bash": "path=/data/data/com.termux/files/usr/bin/bash;sha256=0179c7b15fb3df857608ef745daa17077523ffc42b7755ccc725ad7a712698a2",
+        "python3": "path=/data/data/com.termux/files/usr/bin/python3.14;sha256=4f8d78ede7fc26e96e99342dd83ce42d32c9b4d0806bc9a99ff7151396269b25",
+        "sha256sum": "path=/data/data/com.termux/files/usr/bin/coreutils;sha256=7ca2521aeb5cd41448e811ca71b4544db627d35a8f26d791718c822f3c93a330"
+      }
     },
     "portable_runner_contract": {
       "assertion_count": null,
@@ -921,7 +1485,7 @@
       ],
       "command_fingerprint_sha256": "8ad6a9b8a83df6250b8012f3fb5edbb6b9960bb72f0b5f1ea716b5ddb26145fc",
       "cwd": "/data/data/com.termux/files/home/Biyahe",
-      "ended_at": "2026-10-10T04:43:12Z",
+      "ended_at": "2026-10-10T04:46:26Z",
       "executed": true,
       "exit_code": 0,
       "failure_count": 0,
@@ -952,15 +1516,15 @@
         }
       ],
       "memavailable_floor_kib": 524288,
-      "output_path": "/data/data/com.termux/files/home/.cache/biyahe/batch042/portable-verification/20261010T044304Z-15419/portable-runner-contract.stdout.txt",
-      "output_sha256": "b5fc2789a6fc54d763a8f236920789c6824b8996dee9ab78d37fb54257051816",
+      "output_path": "/data/data/com.termux/files/home/.cache/biyahe/batch042/portable-verification/20261010T044618Z-16777/portable-runner-contract.stdout.txt",
+      "output_sha256": "7a99b5178571cb86c632f001b5ed47b4d8a6f1b31f5ab9d62a2a9a1ed2502096",
       "reported_check_markers": 0,
       "resource_guard": "NOT_REQUIRED",
       "resource_log": null,
       "resource_log_sha256": null,
-      "run_directory": "/data/data/com.termux/files/home/.cache/biyahe/batch042/portable-verification/20261010T044304Z-15419",
-      "run_source_revision": "049cf77225b522fe272baa6166400c5262b59f52",
-      "started_at": "2026-10-10T04:43:11Z",
+      "run_directory": "/data/data/com.termux/files/home/.cache/biyahe/batch042/portable-verification/20261010T044618Z-16777",
+      "run_source_revision": "2fba3141170cc3406c532623a433257610ff726e",
+      "started_at": "2026-10-10T04:46:25Z",
       "status": "VERIFIED",
       "swapfree_floor_kib": 131072,
       "test_count": 10,
@@ -1155,7 +1719,7 @@
       ],
       "command_fingerprint_sha256": "d7e4ab391416e4cccef591e1312c6852526a92500c5669f919d65ff785330000",
       "cwd": "/data/data/com.termux/files/home/Biyahe",
-      "ended_at": "2026-10-10T04:43:06Z",
+      "ended_at": "2026-10-10T04:46:20Z",
       "executed": true,
       "exit_code": 0,
       "failure_count": 0,
@@ -1190,15 +1754,15 @@
         }
       ],
       "memavailable_floor_kib": 524288,
-      "output_path": "/data/data/com.termux/files/home/.cache/biyahe/batch042/portable-verification/20261010T044304Z-15419/provenance-fixtures.stdout.txt",
-      "output_sha256": "cfd9759413c8fe6c0c1ebf634e325c719e10d899b6993fe4a9650db889b97bc4",
+      "output_path": "/data/data/com.termux/files/home/.cache/biyahe/batch042/portable-verification/20261010T044618Z-16777/provenance-fixtures.stdout.txt",
+      "output_sha256": "105b13512e7c6c80f48d51a16eb744cd969b20cb317789f635587e0e824b426e",
       "reported_check_markers": 0,
       "resource_guard": "NOT_REQUIRED",
       "resource_log": null,
       "resource_log_sha256": null,
-      "run_directory": "/data/data/com.termux/files/home/.cache/biyahe/batch042/portable-verification/20261010T044304Z-15419",
-      "run_source_revision": "049cf77225b522fe272baa6166400c5262b59f52",
-      "started_at": "2026-10-10T04:43:05Z",
+      "run_directory": "/data/data/com.termux/files/home/.cache/biyahe/batch042/portable-verification/20261010T044618Z-16777",
+      "run_source_revision": "2fba3141170cc3406c532623a433257610ff726e",
+      "started_at": "2026-10-10T04:46:19Z",
       "status": "VERIFIED",
       "swapfree_floor_kib": 131072,
       "test_count": 6,
@@ -1557,7 +2121,7 @@
       ],
       "command_fingerprint_sha256": "1003096d56f302f5ff6708210347b7726d85d69197342f7a23cd6e238d97a4dc",
       "cwd": "/data/data/com.termux/files/home/Biyahe",
-      "ended_at": "2026-10-10T04:43:05Z",
+      "ended_at": "2026-10-10T04:46:19Z",
       "executed": true,
       "exit_code": 0,
       "failure_count": 0,
@@ -1588,15 +2152,15 @@
         }
       ],
       "memavailable_floor_kib": 524288,
-      "output_path": "/data/data/com.termux/files/home/.cache/biyahe/batch042/portable-verification/20261010T044304Z-15419/source-provenance.stdout.txt",
+      "output_path": "/data/data/com.termux/files/home/.cache/biyahe/batch042/portable-verification/20261010T044618Z-16777/source-provenance.stdout.txt",
       "output_sha256": "f34abe4053f2b55655260063cc2776bdcb015540af26b170bc66c74577804d2e",
       "reported_check_markers": 1,
       "resource_guard": "NOT_REQUIRED",
       "resource_log": null,
       "resource_log_sha256": null,
-      "run_directory": "/data/data/com.termux/files/home/.cache/biyahe/batch042/portable-verification/20261010T044304Z-15419",
-      "run_source_revision": "049cf77225b522fe272baa6166400c5262b59f52",
-      "started_at": "2026-10-10T04:43:04Z",
+      "run_directory": "/data/data/com.termux/files/home/.cache/biyahe/batch042/portable-verification/20261010T044618Z-16777",
+      "run_source_revision": "2fba3141170cc3406c532623a433257610ff726e",
+      "started_at": "2026-10-10T04:46:18Z",
       "status": "VERIFIED",
       "swapfree_floor_kib": 131072,
       "test_count": null,
@@ -1623,7 +2187,7 @@
       ],
       "command_fingerprint_sha256": "457962f78157a03ceec8663b8379c85b7861c3740e70c608d697acedbcc05045",
       "cwd": "/data/data/com.termux/files/home/Biyahe",
-      "ended_at": "2026-10-10T04:43:08Z",
+      "ended_at": "2026-10-10T04:46:22Z",
       "executed": true,
       "exit_code": 0,
       "failure_count": 0,
@@ -1654,15 +2218,15 @@
         }
       ],
       "memavailable_floor_kib": 524288,
-      "output_path": "/data/data/com.termux/files/home/.cache/biyahe/batch042/portable-verification/20261010T044304Z-15419/static-evidence-smoke.stdout.txt",
-      "output_sha256": "daffdff478715fe5d23d896584f5078ceb0151c29b81d7521b6b5099eebd3ade",
+      "output_path": "/data/data/com.termux/files/home/.cache/biyahe/batch042/portable-verification/20261010T044618Z-16777/static-evidence-smoke.stdout.txt",
+      "output_sha256": "321d49adbfb352c29bfb55aa6b0040baeb9ae584efe2e2a2d92fbf8b9d00bbf1",
       "reported_check_markers": 0,
       "resource_guard": "NOT_REQUIRED",
       "resource_log": null,
       "resource_log_sha256": null,
-      "run_directory": "/data/data/com.termux/files/home/.cache/biyahe/batch042/portable-verification/20261010T044304Z-15419",
-      "run_source_revision": "049cf77225b522fe272baa6166400c5262b59f52",
-      "started_at": "2026-10-10T04:43:07Z",
+      "run_directory": "/data/data/com.termux/files/home/.cache/biyahe/batch042/portable-verification/20261010T044618Z-16777",
+      "run_source_revision": "2fba3141170cc3406c532623a433257610ff726e",
+      "started_at": "2026-10-10T04:46:21Z",
       "status": "VERIFIED",
       "swapfree_floor_kib": 131072,
       "test_count": 2,

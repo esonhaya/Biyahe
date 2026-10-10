@@ -1,0 +1,2112 @@
+{
+  "assessed_at_utc": "2026-10-10T04:45:45Z",
+  "batch": 42,
+  "categories": [
+    {
+      "evidence": "Current Batch042 registry validator and provenance fixtures determine this status; the registry itself binds historical source artifacts.",
+      "name": "source_provenance",
+      "status": "VERIFIED"
+    },
+    {
+      "evidence": "A current read-only SHA256 observation identifies the immutable SQLite file. Identity does not assert SQLite integrity or routing success.",
+      "name": "graph_identity",
+      "status": "VERIFIED"
+    },
+    {
+      "evidence": "SQLite integrity_check was not run; graph identity alone does not establish internal integrity.",
+      "name": "graph_integrity",
+      "status": "NOT_RUN"
+    },
+    {
+      "evidence": "Pinned 503/436/67 stops and 37/30/7 places are stored-record counts only; no geographic, population, sidewalk, or field coverage is claimed.",
+      "name": "coverage",
+      "status": "VERIFIED"
+    },
+    {
+      "evidence": "Status reflects the current focused adapter PHPUnit result. Pure geometry smoke is listed separately.",
+      "name": "adapter_contract",
+      "status": "IMPLEMENTED_UNTESTED"
+    },
+    {
+      "evidence": "Current bounded replay only; the historical 9 found / 1 disconnected result is not reused.",
+      "name": "real_cebu_corpus",
+      "status": "BLOCKED_RESOURCE"
+    },
+    {
+      "evidence": "Current state-transition and component request-contract harnesses; unavailable browser behavior remains unverified.",
+      "name": "journey_preview",
+      "status": "VERIFIED"
+    },
+    {
+      "evidence": "Current manual-progress harness only; no GPS or field arrival claim.",
+      "name": "ride_mode",
+      "status": "VERIFIED"
+    },
+    {
+      "evidence": "Current snapshot-v1 and commute-card harness, including corruption and preview persistence exclusion.",
+      "name": "saved_journeys",
+      "status": "VERIFIED"
+    },
+    {
+      "evidence": "Current request cancellation and keyboard-selection harnesses using the existing search engine.",
+      "name": "search",
+      "status": "VERIFIED"
+    },
+    {
+      "evidence": "Current yes/no/unknown presentation fixture using the existing decision engine.",
+      "name": "can_i_ride",
+      "status": "VERIFIED"
+    },
+    {
+      "evidence": "Static CSS and map-source inspection only. Browser viewports 320, 360, and 390 px were not executed.",
+      "name": "map_mobile",
+      "status": "IMPLEMENTED_UNTESTED"
+    },
+    {
+      "evidence": "Current TypeScript compiler result from the guarded frontend runner.",
+      "name": "typescript",
+      "status": "BLOCKED_RESOURCE"
+    },
+    {
+      "evidence": "Current focused ESLint result from the guarded frontend runner.",
+      "name": "lint",
+      "status": "BLOCKED_RESOURCE"
+    },
+    {
+      "evidence": "The runner contract fixtures and any supplied local STATIC package execution are independently fingerprinted. No external Linux host execution is claimed.",
+      "name": "portable_kit",
+      "status": "IMPLEMENTED_UNTESTED"
+    },
+    {
+      "evidence": "PostgreSQL was not started or contacted; real staging needs a separate controlled host.",
+      "name": "postgresql_staging",
+      "status": "BLOCKED_DEPENDENCY"
+    },
+    {
+      "evidence": "No field evidence was collected; both transfer records remain unverified for physical interchange.",
+      "name": "field_safety",
+      "status": "BLOCKED_DEPENDENCY"
+    }
+  ],
+  "evidence": {
+    "graph": {
+      "actual_sha256": "29d7aaf9c45a596f4065c44d13f983f4a7edeec5ac2ea41b718b1c52ca865bf8",
+      "expected_fingerprint": "a0d9f1cb8289cf1f9bde3905d1ad8a57124ee41120153b4efc1f5b31e4c03ecd",
+      "expected_sha256": "29d7aaf9c45a596f4065c44d13f983f4a7edeec5ac2ea41b718b1c52ca865bf8",
+      "fingerprint_status": "HISTORICAL_EXPECTATION_NOT_RECOMPUTED",
+      "graph_modified": false,
+      "observations": [
+        {
+          "method": "corpus_preflight_sha256",
+          "observed_at_utc": "2026-10-10T04:32:46Z",
+          "path": "/data/data/com.termux/files/home/.cache/biyahe/batch030/cebu-walk-central-visayas-20261007-v3.sqlite",
+          "sha256": "29d7aaf9c45a596f4065c44d13f983f4a7edeec5ac2ea41b718b1c52ca865bf8"
+        },
+        {
+          "method": "read_only_sha256",
+          "observed_at_utc": "2026-10-10T04:45:45Z",
+          "path": "/data/data/com.termux/files/home/.cache/biyahe/batch030/cebu-walk-central-visayas-20261007-v3.sqlite",
+          "sha256": "29d7aaf9c45a596f4065c44d13f983f4a7edeec5ac2ea41b718b1c52ca865bf8",
+          "size_bytes": 41013248
+        }
+      ],
+      "observed_at_utc": "2026-10-10T04:45:45Z",
+      "path": "$HOME/.cache/biyahe/batch030/cebu-walk-central-visayas-20261007-v3.sqlite",
+      "pbf_rescanned": false,
+      "status": "VERIFIED"
+    },
+    "graph_integrity": {
+      "method": null,
+      "status": "NOT_RUN"
+    },
+    "historical_results_only": {
+      "batch041_corpus": {
+        "cases": 10,
+        "current_replay": false,
+        "disconnected": 1,
+        "routes_found": 9
+      }
+    },
+    "reconciliation": {
+      "graph_quality": {
+        "measured_values": {
+          "boundary_nodes": 944,
+          "crossing_tagged_nodes": 1510,
+          "long_edges": 26
+        },
+        "unmeasured_legacy_defaults_are_zero_facts": false
+      },
+      "provenance_registry_sha256": "882fd1ae2c7ab8f2e1edab87c9122911f62c4568513bbe6c8875263958dc1bb6",
+      "vehicle_only_restrictions": {
+        "omitted": 29,
+        "stored": 619,
+        "total": 648
+      }
+    },
+    "stored_record_coverage": {
+      "geographic_population_sidewalk_field_claims": "NONE",
+      "places": {
+        "current_batch_replay": "NOT_RUN",
+        "scope": "STORED_RECORDS_ONLY",
+        "snappable_within_25m": 30,
+        "total": 37,
+        "unsnappable": 7
+      },
+      "source_report": "docs/reports/batch032-cebu-coverage.json",
+      "source_report_sha256": "6caf101177904bee6fda1b12cab9c5cda36ddaf7ecc08b0d9778c0517123c81b",
+      "stops": {
+        "current_batch_replay": "NOT_RUN",
+        "scope": "STORED_RECORDS_ONLY",
+        "snappable_within_25m": 436,
+        "total": 503,
+        "unsnappable": 67
+      },
+      "validation_status": "VERIFIED_CURRENT_FIXTURES"
+    },
+    "transfer_verification": {
+      "evidence_scope": "stored graph connectivity does not establish physical transfer safety",
+      "field_verified": false,
+      "status": "BLOCKED_DEPENDENCY",
+      "unverified_count": 2
+    }
+  },
+  "format": "biyahe-doctor-v42-evidence-v1",
+  "release_gates": {
+    "field_safety": "BLOCKED",
+    "live_production_graph_integration": "BLOCKED",
+    "postgresql_staging": "BLOCKED",
+    "private_beta": "BLOCKED",
+    "production_activation": "NO"
+  },
+  "source_fingerprints": {
+    "api/app/Console/Commands/VerifyOfflineWalkingCorpus.php": "e84e3a816a06eb2d81730121d85f405021d67bf5228cb63a3d0a62baa9518b68",
+    "api/app/Http/Controllers/Api/DevelopmentOfflineWalkingPreviewController.php": "85fda4c65d9469f11a01283cce3beaf6feabc9ad52df1f13df1065d17bbd423b",
+    "api/app/Services/Routing/OfflineJourneyWalkingPreview.php": "06f5d4e9e49b1f67649bee7c66271462c4cbf94b3774e2691cd7eade8f91d226",
+    "api/app/Services/Routing/OfflinePedestrianGraphRouter.php": "ea6ade5790e6754f8bebaaedf11a1d2bd10c2e2df523c407d27f191ed8ffd224",
+    "api/app/Services/Routing/OfflinePedestrianRouteGeometryContract.php": "4f9ef2483c2cf4fa8cbc91d4a9407242d44fea6ae7889da07833560c1613b4f4",
+    "api/app/Services/Routing/OfflineWalkingPreviewException.php": "3b88942528597b587b8793bb353f78f547a18c7305b0446d62a14dc2fcb469b7",
+    "api/composer.json": "b161ab8e20fd56b00d784c5611c3722213c92171cfd1e0f28a90a7d14b2621e7",
+    "api/composer.lock": "d705a772f93cfe6d1b374e3896eaa3b4ee919aa6b222e2daab86dd31db99b4be",
+    "api/config/offline_walking_preview.php": "04799421e49cfb35295012530329a12ab7605a5694bc4366126707d563fc667a",
+    "api/phpunit.xml": "493369cfb7feea104da4bec214c2cc6526ca2f1b9d937c50a2961fc59cb61aaf",
+    "api/routes/api.php": "49615c13ce22488e5b752bd29b4980cfbaae04b958434e3db7fd9609c3d143f2",
+    "api/scripts/check-batch042-static-syntax.py": "816b0a9c90e171afa5878e8704cb651bc8e53578053ec55ccdd516d4fbe3afcf",
+    "api/scripts/compare-offline-corpus.py": "32bfc2a535ec1fa0f062f3d9bc17de5cd49964286e0cdabf1250371ece320e1e",
+    "api/scripts/evidence_provenance.py": "e17d63dda770595880842a5e93a96e87020cae71ba3384f76b854e10dc9ef46d",
+    "api/scripts/offline-evidence-smoke.py": "01450f3bd284a6f965784475d8de025f0a4f42306e561a06b329f3b1251dd9a3",
+    "api/scripts/package-batch041-verification-kit.py": "276b95845ace4a5b9a44d19835ae33316b49c4a3cbbd140fb26260fdaede645d",
+    "api/scripts/refresh-batch042-doctor.py": "d8900e69cb8c4a7a428ef93571e43dd417a08ec8c798ffef44d14a7110d0291a",
+    "api/scripts/run-bounded-process.sh": "322b6dede24c1c1af290495ff820b19448d5027cef0f4cb05302fa7f174e2d0f",
+    "api/scripts/run-portable-verification.py": "ffed6d088642c502544ac70e02b35c39df7ab6c4cecae8f1eea4f9ab9411c1a6",
+    "api/scripts/summarize-offline-coverage.py": "73ce4efc2a6ebca72af14a26bf1eb545781e9c41b09c4de210bcd0014b3aa719",
+    "api/scripts/test_compare_offline_corpus.py": "7afd370485d2636733c775285c05d0d615b89ca0a3ba95da505d7907de9af9c5",
+    "api/scripts/test_evidence_provenance.py": "a9e64eae5df4afe8124cfee44a95d3df89f0b0ea26beb8b65d5a22462476d9d2",
+    "api/scripts/test_offline_evidence_smoke.py": "893cf0881b8b415ac21b606dd1a7c0b6d6f529f24dbaed97dd092577352d2681",
+    "api/scripts/test_offline_route_geometry_contract.php": "8d13c3451ba15758bbcc28e21068f1e17e547dece5cb95dbbbfc3cfc154bba80",
+    "api/scripts/test_portable_verification.py": "a2ae70066ba41a188a58a84692445f90a1261961dceffcb81caee7020ca696af",
+    "api/scripts/test_summarize_offline_coverage.py": "474ca9c077d5e98a52a67ce892305e5358968bcd703c282a42017d328d31d372",
+    "api/scripts/test_validate_batch042_doctor.py": "a4aeadb7ad9504d0e3a478cb185560ade87d15541538805637892b910ac7e0d4",
+    "api/scripts/validate-batch041-provenance.py": "b31085fa0c2c190d48c2b1dc1e0cd72b9c4210efc4843fbc346361cfdd3ac6de",
+    "api/scripts/validate-batch042-doctor.py": "04188edb1e3b652b0cbf94525a75afd3b85c66d4cd7b0cb659170bffbe7205ce",
+    "api/tests/Support/OfflinePedestrianGraphFixture.php": "b93f2ad0e0bddd1d81891c71f268e424eb1987c1d05b5463cc0b4392f6e2032f",
+    "api/tests/Unit/OfflineJourneyWalkingPreviewTest.php": "d0b16605f5e35275afe4bf77aff43ae2e664655c06e8852f8d52c14b27c2be4d",
+    "api/tests/Unit/OfflinePedestrianGraphRouterTest.php": "4073acf41436030d557a221a19312488cea441723e820910acee373867a04fff",
+    "api/tests/Unit/OfflinePedestrianRouteGeometryContractTest.php": "c7331e1213249f6608717c9ae3273f269272cd5e7d6bc2c4c1985d853f46c610",
+    "docs/testing/batch041-test-plan.json": "c10fcf269e17d42cb0dbd0b648b7ba9c943079cac2b4e5997e0e6645511f591a",
+    "docs/testing/batch042-test-plan.json": "db3f1b6c24dd756e1b571b8ee9de3906f0e8f40c8d792efcfdac0f8c5064f64d",
+    "web/eslint.config.mjs": "870f1adccecf3051cbcd9fd307cef51d7633cf510979c181a81f4b1797273493",
+    "web/package-lock.json": "c322173fac697aeaa86bacbae4adcf8d9d29a1d931cebca0fb8d14fff83a5df6",
+    "web/package.json": "d982e7e18eb53cd945b525a08496ccbaaba594ead7c8dfbe60fa12430f2077de",
+    "web/public/manifest.webmanifest": "f0b0210e7b2bef98c92fcfb0019e45c2dbe542523ed1a875a6ac8948836f7d9c",
+    "web/public/sw.js": "3faa75a400aa5455ad548f2dd129da7357ee5c275dcbd30c36c678f1d0844838",
+    "web/scripts/can-i-ride-harness.mjs": "c0845b8d37cc25661bcde0010c8c4e17f39c192814171bf46384ff2dfc0e42c5",
+    "web/scripts/commute-card-harness.mjs": "73268894b0f0a9a398459a64727a8d8b82854d2044dc8b7c44e6af2a6660b756",
+    "web/scripts/nearby-harness.mjs": "1dfead1c7b55e5507a176be8dff1400db33a03ffef0fb9047fb6a45d4fd55f41",
+    "web/scripts/offline-walking-preview-harness.mjs": "67ccf5bc9999272e7fe5c403d321ec1e41ee8d5985cba38d2d7d01f7dc9dda9f",
+    "web/scripts/offline-walking-preview-state-harness.mjs": "d35334c68c94f2d7b5b3471174bf4758f01ab73854db5cf828960209f963c89a",
+    "web/scripts/place-search-harness.mjs": "7b3a4eee80f9ff6e083480d027a7ebc2d0914191e608999832f7a295d2191268",
+    "web/scripts/request-gate-harness.mjs": "43324c506f9be07ff3f73bd1ef31976cfb1ea2ce030624da0c35f9a37c99c1af",
+    "web/scripts/ride-mode-harness.mjs": "bd6c8a9ee5fc6d876aa30221bf587c90239f507a032f8c4c0fd3153b43169ac6",
+    "web/scripts/search-keyboard-harness.mjs": "547a421bc7f689cf579244925e605a25e23be56a26c9e1ccff03f513d85ea377",
+    "web/scripts/ux-contract-harness.mjs": "59093894fb8dc9c9f0fe5b6f883d09e9b56c65ea9870685138ad150e19405e3d",
+    "web/scripts/validation-ledger-harness.mjs": "9f56a9b0426b8439447617ca418d87ccfba51cf27a6be81f4720df1633e5566b",
+    "web/scripts/validation-ledger.mjs": "62124ac048bb7dcf760b72ce59ea977baded3869aea84bfe93e3aa9e7b73c712",
+    "web/src/app/globals.css": "6c0c4b0461774ca080d78a7a4878b7aef9668578498cf46ac88a11cf62f510b1",
+    "web/src/app/page.module.css": "3f68c7fc6f5cf59c033063682ab3b7f3562b9b50f040604f0dd2691edb1cb6dc",
+    "web/src/app/page.tsx": "b3c62dd3ca6d5a8072f9e50762d8c24c90df1d7a014e1e10a0e334d6e18bbc4a",
+    "web/src/components/BiyahePulse.tsx": "97cc62cbf99fb5fdb93765969a7d04ffd07e9510f3ed4ec4662f7294ed724cfc",
+    "web/src/components/CommuteCard.tsx": "8c08cf4fddeba340e541288722deda32acf488304b537ec85668696faa11a612",
+    "web/src/components/DisruptionNotice.tsx": "fc8968602ffc82f46af832e83e92866bf266491f545d1096ffdeda36b8e15d22",
+    "web/src/components/FieldMode.tsx": "8a6ab3e175f753ec3df6ff23db62f1e97189c440ed33e81be74fceffdaf714a2",
+    "web/src/components/MapView.tsx": "5816743ec6ef76d1ddf140b0fbda8b31398e81afccde0b91f7a5921fb1c88df0",
+    "web/src/components/NearbyRoutes.tsx": "f627565c36d50ee6181dae6797fbcaf4d1727c4d764d43eae854c1d627942494",
+    "web/src/components/PersonalCommuteTools.tsx": "7689086e4fe199f60bd9899abf11ddef830a9928c51014b8b66d7c690fd9cc96",
+    "web/src/components/ReplanPanel.tsx": "8669ee5affea68bca3c686cb243845170002b4b00558c348024f0c18a8e5be4d",
+    "web/src/components/RideMode.tsx": "ca9635ce3ae39ddb139c0c1ed54078865a45f218505b698d342463628fc802d5",
+    "web/src/lib/api.ts": "220c10e11551ffdd7213c9eeb16b06fc300d44ae0f868c426742d233b6450fe4",
+    "web/src/lib/canIRidePresentation.ts": "0ff5efc42be4c679d49652d6811920f397108a2b51a68df863de63046694d3d8",
+    "web/src/lib/commuteInstructions.ts": "0ee449fd4f131e134e58b778e1bcf33d40ff070955005b7f61f6855010c4facf",
+    "web/src/lib/journeyExplanation.ts": "95cea1a05da1b64a6ad6570684b8f68739cca5ada35548cf9e3fd13011677849",
+    "web/src/lib/journeyMapPresentation.ts": "d4c82f0676aadecfe98b07a729220cc4a0ae44a9744db38ad99b7c55696c960c",
+    "web/src/lib/latestPlaceSearch.ts": "339747fef19b777d0d3e7d8ed58fe981cfec73e06a0b97acbbbc48ad836684c0",
+    "web/src/lib/nearbyLookup.ts": "0593fe531bc16e3bbbc1ec4c09237282e1bde387d8c0a5577a81ad6ada7cfdb6",
+    "web/src/lib/offlineWalkingPreviewState.ts": "ffdd52885fbcf4fb93c6392b902e6b17f38ea12e2c9d235ac624b70af6a0b168",
+    "web/src/lib/requestGate.ts": "ec30066db794892358ec5461e79e1a6cc7f07e548c4f6c6c4b69b0c0fa27d926",
+    "web/src/lib/rideMode.ts": "18babd485317b02a7c59c830d3316d52c1b0c9aae3e86e4475b99e258d0dbcc3",
+    "web/src/lib/savedJourneys.ts": "82533b4ad35a5101cd70ec740b68f8d73c864c04833fdad9f8a400713e0a190c",
+    "web/src/lib/searchKeyboard.ts": "695f812113a3862ecd660399b56e995de35155900e3f4b9450b330962d6126d8",
+    "web/tsconfig.json": "5c51df4c59f4510d8c7dadf07a5c32132228826a3b331da5e286207b4df7ef9c"
+  },
+  "source_revision": {
+    "documentation_checkpoint_note": "Later report and portable-kit commits are documentation-only and are identified by the Batch042 final report; this report does not pin its own commit.",
+    "executable": "2fba3141170cc3406c532623a433257610ff726e",
+    "tested": "2fba3141170cc3406c532623a433257610ff726e"
+  },
+  "tests": {
+    "adapter_phpunit": {
+      "executed": false,
+      "reason": "no current runner record was supplied",
+      "status": "NOT_RUN"
+    },
+    "browser_visual": {
+      "executed": false,
+      "reason": "no browser execution recorded",
+      "status": "NOT_RUN"
+    },
+    "can_i_ride": {
+      "assertion_count": null,
+      "command": [
+        "node",
+        "--experimental-strip-types",
+        "scripts/can-i-ride-harness.mjs"
+      ],
+      "command_fingerprint_sha256": "9138100882735e6d2f3782c12e5e974ada2cf7058d904a4501fdcc2b47595c71",
+      "cwd": "/data/data/com.termux/files/home/Biyahe/web",
+      "ended_at": "2026-10-10T04:31:41Z",
+      "executed": true,
+      "exit_code": 0,
+      "failure_count": 0,
+      "fingerprint_environment": {
+        "BIYAHE_RESOURCE_BREACH_SAMPLES": "1",
+        "BIYAHE_RESOURCE_MAX_DURATION_SECONDS": "1800",
+        "BIYAHE_RESOURCE_MAX_PROCESS_TREE_RSS_KB": "262144",
+        "BIYAHE_RESOURCE_MIN_MEMAVAILABLE_KB": "524288",
+        "BIYAHE_RESOURCE_MIN_SWAPFREE_KB": "131072",
+        "BIYAHE_RESOURCE_POLL_SECONDS": "1",
+        "BIYAHE_RESOURCE_PREFLIGHT_INTERVAL_SECONDS": "5",
+        "BIYAHE_RESOURCE_PREFLIGHT_SAMPLES": "5",
+        "LANG": "en_US.UTF-8",
+        "LC_ALL": "C.UTF-8",
+        "NODE_OPTIONS": "",
+        "PATH": "/data/data/com.termux/files/home/.codex/tmp/arg0/codex-arg0MWU38W:/data/data/com.termux/files/home/.codex/tmp/arg0/codex-arg0hewtZJ:/data/data/com.termux/files/usr/bin",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "TZ": ""
+      },
+      "guard_environment": {
+        "BIYAHE_RESOURCE_BREACH_SAMPLES": "1",
+        "BIYAHE_RESOURCE_MAX_DURATION_SECONDS": "1800",
+        "BIYAHE_RESOURCE_MAX_PROCESS_TREE_RSS_KB": "262144",
+        "BIYAHE_RESOURCE_MIN_MEMAVAILABLE_KB": "524288",
+        "BIYAHE_RESOURCE_MIN_SWAPFREE_KB": "131072",
+        "BIYAHE_RESOURCE_POLL_SECONDS": "1",
+        "BIYAHE_RESOURCE_PREFLIGHT_INTERVAL_SECONDS": "5",
+        "BIYAHE_RESOURCE_PREFLIGHT_SAMPLES": "5",
+        "PYTHONDONTWRITEBYTECODE": "1"
+      },
+      "historical_only": false,
+      "input_files": [
+        {
+          "path": "web/scripts/can-i-ride-harness.mjs",
+          "sha256": "c0845b8d37cc25661bcde0010c8c4e17f39c192814171bf46384ff2dfc0e42c5"
+        },
+        {
+          "path": "web/src/app/page.tsx",
+          "sha256": "b3c62dd3ca6d5a8072f9e50762d8c24c90df1d7a014e1e10a0e334d6e18bbc4a"
+        },
+        {
+          "path": "web/src/lib/canIRidePresentation.ts",
+          "sha256": "0ff5efc42be4c679d49652d6811920f397108a2b51a68df863de63046694d3d8"
+        }
+      ],
+      "memavailable_floor_kib": 524288,
+      "output_path": "evidence/can_i_ride.stdout.txt",
+      "output_sha256": "ecd2ca6301a8ad66c6ce25c7933fc96784df9d1a36b995e96226616d66cadaee",
+      "reported_check_markers": 9,
+      "resource_guard": "PASS",
+      "resource_log": "evidence/can_i_ride.resource.log",
+      "resource_log_sha256": "ecd2ca6301a8ad66c6ce25c7933fc96784df9d1a36b995e96226616d66cadaee",
+      "run_directory": "/data/data/com.termux/files/home/.cache/biyahe/batch042/portable-verification/20261010T043115Z-10082",
+      "run_source_revision": "1015874d95e3d6dc93241cbe3a7ad5645e62dcd5",
+      "started_at": "2026-10-10T04:31:15Z",
+      "status": "VERIFIED",
+      "swapfree_floor_kib": 131072,
+      "test_count": null,
+      "tool_versions": {
+        "bash": "path=/data/data/com.termux/files/usr/bin/bash;sha256=0179c7b15fb3df857608ef745daa17077523ffc42b7755ccc725ad7a712698a2",
+        "composer": "MISSING",
+        "locked:eslint": "9.39.5",
+        "locked:typescript": "5.9.3",
+        "node": "path=/data/data/com.termux/files/usr/bin/node;sha256=d682000d9f5d887ec66de1ed68d9616c7a9d064bca9ae9d8c46725a00912cbc6",
+        "npm": "path=/data/data/com.termux/files/usr/lib/node_modules/npm/bin/npm-cli.js;sha256=8e5f6f3429f8cdbe693cdc29904e9d5a7b127a494bd15c804bd54c7403bfcbe7",
+        "php": "path=/data/data/com.termux/files/usr/bin/php;sha256=0d7dad516768df79137c8921d9a63c77faa7df1d89c36240aa116a346ae9ad4d",
+        "python3": "path=/data/data/com.termux/files/usr/bin/python3.14;sha256=4f8d78ede7fc26e96e99342dd83ce42d32c9b4d0806bc9a99ff7151396269b25",
+        "python_runtime": "3.14.6"
+      },
+      "worker_min_memavailable_kib": 813232,
+      "worker_min_swapfree_kib": 255448,
+      "worker_peak_postgres_rss_kib": 0,
+      "worker_peak_rss_kib": 60592
+    },
+    "commute_cards_and_saved_v1": {
+      "assertion_count": null,
+      "command": [
+        "node",
+        "--experimental-strip-types",
+        "scripts/commute-card-harness.mjs"
+      ],
+      "command_fingerprint_sha256": "bf70aa8bde1fad1c8311aaba9ef7c3be454f57e8f719a23f0faad65f32e8c78a",
+      "cwd": "/data/data/com.termux/files/home/Biyahe/web",
+      "ended_at": "2026-10-10T03:39:44Z",
+      "executed": true,
+      "exit_code": 0,
+      "failure_count": 0,
+      "fingerprint_environment": {
+        "BIYAHE_RESOURCE_BREACH_SAMPLES": "1",
+        "BIYAHE_RESOURCE_MAX_DURATION_SECONDS": "1800",
+        "BIYAHE_RESOURCE_MAX_PROCESS_TREE_RSS_KB": "262144",
+        "BIYAHE_RESOURCE_MIN_MEMAVAILABLE_KB": "524288",
+        "BIYAHE_RESOURCE_MIN_SWAPFREE_KB": "131072",
+        "BIYAHE_RESOURCE_POLL_SECONDS": "1",
+        "BIYAHE_RESOURCE_PREFLIGHT_INTERVAL_SECONDS": "5",
+        "BIYAHE_RESOURCE_PREFLIGHT_SAMPLES": "5",
+        "LANG": "en_US.UTF-8",
+        "LC_ALL": "C.UTF-8",
+        "NODE_OPTIONS": "",
+        "PATH": "/data/data/com.termux/files/home/.codex/tmp/arg0/codex-arg0MWU38W:/data/data/com.termux/files/home/.codex/tmp/arg0/codex-arg0hewtZJ:/data/data/com.termux/files/usr/bin",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "TZ": ""
+      },
+      "guard_environment": {
+        "BIYAHE_RESOURCE_BREACH_SAMPLES": "1",
+        "BIYAHE_RESOURCE_MAX_DURATION_SECONDS": "1800",
+        "BIYAHE_RESOURCE_MAX_PROCESS_TREE_RSS_KB": "262144",
+        "BIYAHE_RESOURCE_MIN_MEMAVAILABLE_KB": "524288",
+        "BIYAHE_RESOURCE_MIN_SWAPFREE_KB": "131072",
+        "BIYAHE_RESOURCE_POLL_SECONDS": "1",
+        "BIYAHE_RESOURCE_PREFLIGHT_INTERVAL_SECONDS": "5",
+        "BIYAHE_RESOURCE_PREFLIGHT_SAMPLES": "5",
+        "PYTHONDONTWRITEBYTECODE": "1"
+      },
+      "historical_only": false,
+      "input_files": [
+        {
+          "path": "web/scripts/commute-card-harness.mjs",
+          "sha256": "73268894b0f0a9a398459a64727a8d8b82854d2044dc8b7c44e6af2a6660b756"
+        },
+        {
+          "path": "web/src/lib/commuteInstructions.ts",
+          "sha256": "0ee449fd4f131e134e58b778e1bcf33d40ff070955005b7f61f6855010c4facf"
+        },
+        {
+          "path": "web/src/lib/savedJourneys.ts",
+          "sha256": "82533b4ad35a5101cd70ec740b68f8d73c864c04833fdad9f8a400713e0a190c"
+        }
+      ],
+      "memavailable_floor_kib": 524288,
+      "output_path": "evidence/commute_cards_and_saved_v1.stdout.txt",
+      "output_sha256": "d1405b51ee8d31ba4d9444125c089749fad99db37caceac3c07b06a98be8d3a4",
+      "reported_check_markers": 19,
+      "resource_guard": "PASS",
+      "resource_log": "evidence/commute_cards_and_saved_v1.resource.log",
+      "resource_log_sha256": "d1405b51ee8d31ba4d9444125c089749fad99db37caceac3c07b06a98be8d3a4",
+      "run_directory": "/data/data/com.termux/files/home/.cache/biyahe/batch042/portable-verification/20261010T033532Z-19047",
+      "run_source_revision": "db843f7acd191f7803793989ab7fd27a74860839",
+      "started_at": "2026-10-10T03:35:32Z",
+      "status": "VERIFIED",
+      "swapfree_floor_kib": 131072,
+      "test_count": null,
+      "tool_versions": {
+        "bash": "path=/data/data/com.termux/files/usr/bin/bash;sha256=0179c7b15fb3df857608ef745daa17077523ffc42b7755ccc725ad7a712698a2",
+        "composer": "MISSING",
+        "locked:eslint": "9.39.5",
+        "locked:typescript": "5.9.3",
+        "node": "path=/data/data/com.termux/files/usr/bin/node;sha256=d682000d9f5d887ec66de1ed68d9616c7a9d064bca9ae9d8c46725a00912cbc6",
+        "npm": "path=/data/data/com.termux/files/usr/lib/node_modules/npm/bin/npm-cli.js;sha256=8e5f6f3429f8cdbe693cdc29904e9d5a7b127a494bd15c804bd54c7403bfcbe7",
+        "php": "path=/data/data/com.termux/files/usr/bin/php;sha256=0d7dad516768df79137c8921d9a63c77faa7df1d89c36240aa116a346ae9ad4d",
+        "python3": "path=/data/data/com.termux/files/usr/bin/python3.14;sha256=4f8d78ede7fc26e96e99342dd83ce42d32c9b4d0806bc9a99ff7151396269b25",
+        "python_runtime": "3.14.6"
+      },
+      "worker_min_memavailable_kib": 888764,
+      "worker_min_swapfree_kib": 151468,
+      "worker_peak_postgres_rss_kib": 0,
+      "worker_peak_rss_kib": 73396
+    },
+    "corpus_comparator": {
+      "assertion_count": null,
+      "command": [
+        "/data/data/com.termux/files/usr/bin/python3",
+        "api/scripts/test_compare_offline_corpus.py"
+      ],
+      "command_fingerprint_sha256": "41763fb49657fdcf64915d9c3bb7df08959a5c79968628087c2e5c50f526d544",
+      "cwd": "/data/data/com.termux/files/home/Biyahe",
+      "ended_at": "2026-10-10T04:43:09Z",
+      "executed": true,
+      "exit_code": 0,
+      "failure_count": 0,
+      "fingerprint_environment": {
+        "LANG": "en_US.UTF-8",
+        "LC_ALL": "C.UTF-8",
+        "NODE_OPTIONS": "",
+        "PATH": "/data/data/com.termux/files/home/.codex/tmp/arg0/codex-arg0MWU38W:/data/data/com.termux/files/home/.codex/tmp/arg0/codex-arg0hewtZJ:/data/data/com.termux/files/usr/bin",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "TZ": ""
+      },
+      "guard_environment": {
+        "PYTHONDONTWRITEBYTECODE": "1"
+      },
+      "historical_only": false,
+      "input_files": [
+        {
+          "path": "api/scripts/compare-offline-corpus.py",
+          "sha256": "32bfc2a535ec1fa0f062f3d9bc17de5cd49964286e0cdabf1250371ece320e1e"
+        },
+        {
+          "path": "api/scripts/test_compare_offline_corpus.py",
+          "sha256": "7afd370485d2636733c775285c05d0d615b89ca0a3ba95da505d7907de9af9c5"
+        }
+      ],
+      "memavailable_floor_kib": 524288,
+      "output_path": "evidence/corpus_comparator.stdout.txt",
+      "output_sha256": "03e2ce7efb78ca7222db4c9a68781f9953dd3bd674b491cc52a8a4986d74e6f4",
+      "reported_check_markers": 0,
+      "resource_guard": "NOT_REQUIRED",
+      "resource_log": null,
+      "resource_log_sha256": null,
+      "run_directory": "/data/data/com.termux/files/home/.cache/biyahe/batch042/portable-verification/20261010T044304Z-15419",
+      "run_source_revision": "049cf77225b522fe272baa6166400c5262b59f52",
+      "started_at": "2026-10-10T04:43:08Z",
+      "status": "VERIFIED",
+      "swapfree_floor_kib": 131072,
+      "test_count": 4,
+      "tool_versions": {
+        "/data/data/com.termux/files/usr/bin/python3": "path=/data/data/com.termux/files/usr/bin/python3.14;sha256=4f8d78ede7fc26e96e99342dd83ce42d32c9b4d0806bc9a99ff7151396269b25",
+        "bash": "path=/data/data/com.termux/files/usr/bin/bash;sha256=0179c7b15fb3df857608ef745daa17077523ffc42b7755ccc725ad7a712698a2",
+        "composer": "MISSING",
+        "node": "path=/data/data/com.termux/files/usr/bin/node;sha256=d682000d9f5d887ec66de1ed68d9616c7a9d064bca9ae9d8c46725a00912cbc6",
+        "npm": "path=/data/data/com.termux/files/usr/lib/node_modules/npm/bin/npm-cli.js;sha256=8e5f6f3429f8cdbe693cdc29904e9d5a7b127a494bd15c804bd54c7403bfcbe7",
+        "php": "path=/data/data/com.termux/files/usr/bin/php;sha256=0d7dad516768df79137c8921d9a63c77faa7df1d89c36240aa116a346ae9ad4d",
+        "python3": "path=/data/data/com.termux/files/usr/bin/python3.14;sha256=4f8d78ede7fc26e96e99342dd83ce42d32c9b4d0806bc9a99ff7151396269b25",
+        "python_runtime": "3.14.6"
+      },
+      "worker_min_memavailable_kib": null,
+      "worker_min_swapfree_kib": null,
+      "worker_peak_postgres_rss_kib": null,
+      "worker_peak_rss_kib": null
+    },
+    "coverage_fixtures": {
+      "assertion_count": null,
+      "command": [
+        "/data/data/com.termux/files/usr/bin/python3",
+        "api/scripts/test_summarize_offline_coverage.py"
+      ],
+      "command_fingerprint_sha256": "956f19bd9b9dfe7ad455d2f80225fd840512e7bb76735ab14163f4b7e5a79638",
+      "cwd": "/data/data/com.termux/files/home/Biyahe",
+      "ended_at": "2026-10-10T04:43:07Z",
+      "executed": true,
+      "exit_code": 0,
+      "failure_count": 0,
+      "fingerprint_environment": {
+        "LANG": "en_US.UTF-8",
+        "LC_ALL": "C.UTF-8",
+        "NODE_OPTIONS": "",
+        "PATH": "/data/data/com.termux/files/home/.codex/tmp/arg0/codex-arg0MWU38W:/data/data/com.termux/files/home/.codex/tmp/arg0/codex-arg0hewtZJ:/data/data/com.termux/files/usr/bin",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "TZ": ""
+      },
+      "guard_environment": {
+        "PYTHONDONTWRITEBYTECODE": "1"
+      },
+      "historical_only": false,
+      "input_files": [
+        {
+          "path": "api/scripts/summarize-offline-coverage.py",
+          "sha256": "73ce4efc2a6ebca72af14a26bf1eb545781e9c41b09c4de210bcd0014b3aa719"
+        },
+        {
+          "path": "api/scripts/test_summarize_offline_coverage.py",
+          "sha256": "474ca9c077d5e98a52a67ce892305e5358968bcd703c282a42017d328d31d372"
+        }
+      ],
+      "memavailable_floor_kib": 524288,
+      "output_path": "evidence/coverage_fixtures.stdout.txt",
+      "output_sha256": "2f391a658d1ea88299e6eb1e9cec6856632952a06773579be580d7c4828bc131",
+      "reported_check_markers": 0,
+      "resource_guard": "NOT_REQUIRED",
+      "resource_log": null,
+      "resource_log_sha256": null,
+      "run_directory": "/data/data/com.termux/files/home/.cache/biyahe/batch042/portable-verification/20261010T044304Z-15419",
+      "run_source_revision": "049cf77225b522fe272baa6166400c5262b59f52",
+      "started_at": "2026-10-10T04:43:06Z",
+      "status": "VERIFIED",
+      "swapfree_floor_kib": 131072,
+      "test_count": 11,
+      "tool_versions": {
+        "/data/data/com.termux/files/usr/bin/python3": "path=/data/data/com.termux/files/usr/bin/python3.14;sha256=4f8d78ede7fc26e96e99342dd83ce42d32c9b4d0806bc9a99ff7151396269b25",
+        "bash": "path=/data/data/com.termux/files/usr/bin/bash;sha256=0179c7b15fb3df857608ef745daa17077523ffc42b7755ccc725ad7a712698a2",
+        "composer": "MISSING",
+        "node": "path=/data/data/com.termux/files/usr/bin/node;sha256=d682000d9f5d887ec66de1ed68d9616c7a9d064bca9ae9d8c46725a00912cbc6",
+        "npm": "path=/data/data/com.termux/files/usr/lib/node_modules/npm/bin/npm-cli.js;sha256=8e5f6f3429f8cdbe693cdc29904e9d5a7b127a494bd15c804bd54c7403bfcbe7",
+        "php": "path=/data/data/com.termux/files/usr/bin/php;sha256=0d7dad516768df79137c8921d9a63c77faa7df1d89c36240aa116a346ae9ad4d",
+        "python3": "path=/data/data/com.termux/files/usr/bin/python3.14;sha256=4f8d78ede7fc26e96e99342dd83ce42d32c9b4d0806bc9a99ff7151396269b25",
+        "python_runtime": "3.14.6"
+      },
+      "worker_min_memavailable_kib": null,
+      "worker_min_swapfree_kib": null,
+      "worker_peak_postgres_rss_kib": null,
+      "worker_peak_rss_kib": null
+    },
+    "coverage_pinned_summary": {
+      "assertion_count": null,
+      "command": [
+        "/data/data/com.termux/files/usr/bin/python3",
+        "api/scripts/summarize-offline-coverage.py",
+        "--output-dir",
+        "/data/data/com.termux/files/home/.cache/biyahe/batch042/portable-verification/20261010T044304Z-15419/coverage-pinned-summary"
+      ],
+      "command_fingerprint_sha256": "2c4215d2d1ca70f9e3f57ff91eed5e291c18eeff440889fe2da73fde05230c8c",
+      "cwd": "/data/data/com.termux/files/home/Biyahe",
+      "ended_at": "2026-10-10T04:43:07Z",
+      "executed": true,
+      "exit_code": 0,
+      "failure_count": 0,
+      "fingerprint_environment": {
+        "LANG": "en_US.UTF-8",
+        "LC_ALL": "C.UTF-8",
+        "NODE_OPTIONS": "",
+        "PATH": "/data/data/com.termux/files/home/.codex/tmp/arg0/codex-arg0MWU38W:/data/data/com.termux/files/home/.codex/tmp/arg0/codex-arg0hewtZJ:/data/data/com.termux/files/usr/bin",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "TZ": ""
+      },
+      "guard_environment": {
+        "PYTHONDONTWRITEBYTECODE": "1"
+      },
+      "historical_only": false,
+      "input_files": [
+        {
+          "path": "api/scripts/evidence_provenance.py",
+          "sha256": "e17d63dda770595880842a5e93a96e87020cae71ba3384f76b854e10dc9ef46d"
+        },
+        {
+          "path": "api/scripts/summarize-offline-coverage.py",
+          "sha256": "73ce4efc2a6ebca72af14a26bf1eb545781e9c41b09c4de210bcd0014b3aa719"
+        },
+        {
+          "path": "docs/reports/batch032-cebu-coverage.json",
+          "sha256": "6caf101177904bee6fda1b12cab9c5cda36ddaf7ecc08b0d9778c0517123c81b"
+        },
+        {
+          "path": "docs/reports/batch041-evidence-provenance.json",
+          "sha256": "882fd1ae2c7ab8f2e1edab87c9122911f62c4568513bbe6c8875263958dc1bb6"
+        }
+      ],
+      "memavailable_floor_kib": 524288,
+      "output_path": "evidence/coverage_pinned_summary.stdout.txt",
+      "output_sha256": "ed859453d0b4008f1edeb4bb622a7902c8e99f3288b4318ce50d44c954d72981",
+      "reported_check_markers": 0,
+      "resource_guard": "NOT_REQUIRED",
+      "resource_log": null,
+      "resource_log_sha256": null,
+      "run_directory": "/data/data/com.termux/files/home/.cache/biyahe/batch042/portable-verification/20261010T044304Z-15419",
+      "run_source_revision": "049cf77225b522fe272baa6166400c5262b59f52",
+      "started_at": "2026-10-10T04:43:07Z",
+      "status": "VERIFIED",
+      "swapfree_floor_kib": 131072,
+      "test_count": null,
+      "tool_versions": {
+        "/data/data/com.termux/files/usr/bin/python3": "path=/data/data/com.termux/files/usr/bin/python3.14;sha256=4f8d78ede7fc26e96e99342dd83ce42d32c9b4d0806bc9a99ff7151396269b25",
+        "bash": "path=/data/data/com.termux/files/usr/bin/bash;sha256=0179c7b15fb3df857608ef745daa17077523ffc42b7755ccc725ad7a712698a2",
+        "composer": "MISSING",
+        "node": "path=/data/data/com.termux/files/usr/bin/node;sha256=d682000d9f5d887ec66de1ed68d9616c7a9d064bca9ae9d8c46725a00912cbc6",
+        "npm": "path=/data/data/com.termux/files/usr/lib/node_modules/npm/bin/npm-cli.js;sha256=8e5f6f3429f8cdbe693cdc29904e9d5a7b127a494bd15c804bd54c7403bfcbe7",
+        "php": "path=/data/data/com.termux/files/usr/bin/php;sha256=0d7dad516768df79137c8921d9a63c77faa7df1d89c36240aa116a346ae9ad4d",
+        "python3": "path=/data/data/com.termux/files/usr/bin/python3.14;sha256=4f8d78ede7fc26e96e99342dd83ce42d32c9b4d0806bc9a99ff7151396269b25",
+        "python_runtime": "3.14.6"
+      },
+      "worker_min_memavailable_kib": null,
+      "worker_min_swapfree_kib": null,
+      "worker_peak_postgres_rss_kib": null,
+      "worker_peak_rss_kib": null
+    },
+    "eslint": {
+      "assertion_count": null,
+      "command": [
+        "npm",
+        "run",
+        "lint",
+        "--",
+        "src/app/page.tsx",
+        "src/components/CommuteCard.tsx",
+        "src/components/RideMode.tsx",
+        "src/lib/offlineWalkingPreviewState.ts",
+        "src/lib/requestGate.ts",
+        "src/lib/savedJourneys.ts",
+        "src/lib/rideMode.ts",
+        "src/lib/canIRidePresentation.ts"
+      ],
+      "command_fingerprint_sha256": "7659d9adccf16313d8b12371d905caf603c124c5a588762c6faf509e2c48bd16",
+      "cwd": "/data/data/com.termux/files/home/Biyahe/web",
+      "ended_at": "2026-10-10T02:58:07Z",
+      "executed": false,
+      "exit_code": 4,
+      "failure_count": null,
+      "fingerprint_environment": {
+        "BIYAHE_RESOURCE_BREACH_SAMPLES": "1",
+        "BIYAHE_RESOURCE_MAX_DURATION_SECONDS": "1800",
+        "BIYAHE_RESOURCE_MAX_PROCESS_TREE_RSS_KB": "262144",
+        "BIYAHE_RESOURCE_MIN_MEMAVAILABLE_KB": "524288",
+        "BIYAHE_RESOURCE_MIN_SWAPFREE_KB": "131072",
+        "BIYAHE_RESOURCE_POLL_SECONDS": "1",
+        "BIYAHE_RESOURCE_PREFLIGHT_INTERVAL_SECONDS": "5",
+        "BIYAHE_RESOURCE_PREFLIGHT_SAMPLES": "5",
+        "LANG": "en_US.UTF-8",
+        "LC_ALL": "C.UTF-8",
+        "NODE_OPTIONS": "",
+        "PATH": "/data/data/com.termux/files/home/.codex/tmp/arg0/codex-arg0MWU38W:/data/data/com.termux/files/home/.codex/tmp/arg0/codex-arg0hewtZJ:/data/data/com.termux/files/usr/bin",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "TZ": ""
+      },
+      "guard_environment": {
+        "BIYAHE_RESOURCE_BREACH_SAMPLES": "1",
+        "BIYAHE_RESOURCE_MAX_DURATION_SECONDS": "1800",
+        "BIYAHE_RESOURCE_MAX_PROCESS_TREE_RSS_KB": "262144",
+        "BIYAHE_RESOURCE_MIN_MEMAVAILABLE_KB": "524288",
+        "BIYAHE_RESOURCE_MIN_SWAPFREE_KB": "131072",
+        "BIYAHE_RESOURCE_POLL_SECONDS": "1",
+        "BIYAHE_RESOURCE_PREFLIGHT_INTERVAL_SECONDS": "5",
+        "BIYAHE_RESOURCE_PREFLIGHT_SAMPLES": "5",
+        "PYTHONDONTWRITEBYTECODE": "1"
+      },
+      "historical_only": false,
+      "input_files": [
+        {
+          "path": "web/eslint.config.mjs",
+          "sha256": "870f1adccecf3051cbcd9fd307cef51d7633cf510979c181a81f4b1797273493"
+        },
+        {
+          "path": "web/package-lock.json",
+          "sha256": "c322173fac697aeaa86bacbae4adcf8d9d29a1d931cebca0fb8d14fff83a5df6"
+        },
+        {
+          "path": "web/package.json",
+          "sha256": "d982e7e18eb53cd945b525a08496ccbaaba594ead7c8dfbe60fa12430f2077de"
+        },
+        {
+          "path": "web/src/app/page.tsx",
+          "sha256": "b3c62dd3ca6d5a8072f9e50762d8c24c90df1d7a014e1e10a0e334d6e18bbc4a"
+        },
+        {
+          "path": "web/src/components/CommuteCard.tsx",
+          "sha256": "8c08cf4fddeba340e541288722deda32acf488304b537ec85668696faa11a612"
+        },
+        {
+          "path": "web/src/components/RideMode.tsx",
+          "sha256": "ca9635ce3ae39ddb139c0c1ed54078865a45f218505b698d342463628fc802d5"
+        },
+        {
+          "path": "web/src/lib/canIRidePresentation.ts",
+          "sha256": "0ff5efc42be4c679d49652d6811920f397108a2b51a68df863de63046694d3d8"
+        },
+        {
+          "path": "web/src/lib/offlineWalkingPreviewState.ts",
+          "sha256": "ffdd52885fbcf4fb93c6392b902e6b17f38ea12e2c9d235ac624b70af6a0b168"
+        },
+        {
+          "path": "web/src/lib/requestGate.ts",
+          "sha256": "ec30066db794892358ec5461e79e1a6cc7f07e548c4f6c6c4b69b0c0fa27d926"
+        },
+        {
+          "path": "web/src/lib/rideMode.ts",
+          "sha256": "18babd485317b02a7c59c830d3316d52c1b0c9aae3e86e4475b99e258d0dbcc3"
+        },
+        {
+          "path": "web/src/lib/savedJourneys.ts",
+          "sha256": "82533b4ad35a5101cd70ec740b68f8d73c864c04833fdad9f8a400713e0a190c"
+        }
+      ],
+      "memavailable_floor_kib": 524288,
+      "output_path": "evidence/eslint.stdout.txt",
+      "output_sha256": "00f264e283f3b158464f8dca8cd437b43549a83f39a5c2821e8d0b050e13afc3",
+      "reported_check_markers": 0,
+      "resource_guard": "BLOCKED",
+      "resource_log": "evidence/eslint.resource.log",
+      "resource_log_sha256": "00f264e283f3b158464f8dca8cd437b43549a83f39a5c2821e8d0b050e13afc3",
+      "run_directory": "/data/data/com.termux/files/home/.cache/biyahe/batch042/portable-verification/20261010T025502Z-14217",
+      "run_source_revision": "3eecb655a69f0740e75d0f137c0f8b9e50dd12d6",
+      "started_at": "2026-10-10T02:55:03Z",
+      "status": "BLOCKED_RESOURCE",
+      "swapfree_floor_kib": 131072,
+      "test_count": null,
+      "tool_versions": {
+        "bash": "path=/data/data/com.termux/files/usr/bin/bash;sha256=0179c7b15fb3df857608ef745daa17077523ffc42b7755ccc725ad7a712698a2",
+        "composer": "MISSING",
+        "locked:eslint": "9.39.5",
+        "locked:typescript": "5.9.3",
+        "node": "path=/data/data/com.termux/files/usr/bin/node;sha256=d682000d9f5d887ec66de1ed68d9616c7a9d064bca9ae9d8c46725a00912cbc6",
+        "npm": "path=/data/data/com.termux/files/usr/lib/node_modules/npm/bin/npm-cli.js;sha256=8e5f6f3429f8cdbe693cdc29904e9d5a7b127a494bd15c804bd54c7403bfcbe7",
+        "php": "path=/data/data/com.termux/files/usr/bin/php;sha256=0d7dad516768df79137c8921d9a63c77faa7df1d89c36240aa116a346ae9ad4d",
+        "python3": "path=/data/data/com.termux/files/usr/bin/python3.14;sha256=4f8d78ede7fc26e96e99342dd83ce42d32c9b4d0806bc9a99ff7151396269b25",
+        "python_runtime": "3.14.6"
+      },
+      "worker_min_memavailable_kib": 1006404,
+      "worker_min_swapfree_kib": 27248,
+      "worker_peak_postgres_rss_kib": null,
+      "worker_peak_rss_kib": null
+    },
+    "php_geometry_smoke": {
+      "assertion_count": null,
+      "command": [
+        "php",
+        "api/scripts/test_offline_route_geometry_contract.php"
+      ],
+      "command_fingerprint_sha256": "b48a5cae0e7d1c66cc209d9bbe288e0a9835c7f2feab1fc43b2c884044b0069c",
+      "cwd": "/data/data/com.termux/files/home/Biyahe",
+      "ended_at": "2026-10-10T04:43:12Z",
+      "executed": true,
+      "exit_code": 0,
+      "failure_count": 0,
+      "fingerprint_environment": {
+        "LANG": "en_US.UTF-8",
+        "LC_ALL": "C.UTF-8",
+        "NODE_OPTIONS": "",
+        "PATH": "/data/data/com.termux/files/home/.codex/tmp/arg0/codex-arg0MWU38W:/data/data/com.termux/files/home/.codex/tmp/arg0/codex-arg0hewtZJ:/data/data/com.termux/files/usr/bin",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "TZ": ""
+      },
+      "guard_environment": {
+        "PYTHONDONTWRITEBYTECODE": "1"
+      },
+      "historical_only": false,
+      "input_files": [
+        {
+          "path": "api/app/Services/Routing/OfflinePedestrianRouteGeometryContract.php",
+          "sha256": "4f9ef2483c2cf4fa8cbc91d4a9407242d44fea6ae7889da07833560c1613b4f4"
+        },
+        {
+          "path": "api/scripts/test_offline_route_geometry_contract.php",
+          "sha256": "8d13c3451ba15758bbcc28e21068f1e17e547dece5cb95dbbbfc3cfc154bba80"
+        }
+      ],
+      "memavailable_floor_kib": 524288,
+      "output_path": "evidence/php_geometry_smoke.stdout.txt",
+      "output_sha256": "9e87ca6809f8bdb977918e23a41b43a16fae2ca89c3d3504a5e8d0f83573bd32",
+      "reported_check_markers": 1,
+      "resource_guard": "NOT_REQUIRED",
+      "resource_log": null,
+      "resource_log_sha256": null,
+      "run_directory": "/data/data/com.termux/files/home/.cache/biyahe/batch042/portable-verification/20261010T044304Z-15419",
+      "run_source_revision": "049cf77225b522fe272baa6166400c5262b59f52",
+      "started_at": "2026-10-10T04:43:12Z",
+      "status": "VERIFIED",
+      "swapfree_floor_kib": 131072,
+      "test_count": null,
+      "tool_versions": {
+        "bash": "path=/data/data/com.termux/files/usr/bin/bash;sha256=0179c7b15fb3df857608ef745daa17077523ffc42b7755ccc725ad7a712698a2",
+        "composer": "MISSING",
+        "node": "path=/data/data/com.termux/files/usr/bin/node;sha256=d682000d9f5d887ec66de1ed68d9616c7a9d064bca9ae9d8c46725a00912cbc6",
+        "npm": "path=/data/data/com.termux/files/usr/lib/node_modules/npm/bin/npm-cli.js;sha256=8e5f6f3429f8cdbe693cdc29904e9d5a7b127a494bd15c804bd54c7403bfcbe7",
+        "php": "path=/data/data/com.termux/files/usr/bin/php;sha256=0d7dad516768df79137c8921d9a63c77faa7df1d89c36240aa116a346ae9ad4d",
+        "python3": "path=/data/data/com.termux/files/usr/bin/python3.14;sha256=4f8d78ede7fc26e96e99342dd83ce42d32c9b4d0806bc9a99ff7151396269b25",
+        "python_runtime": "3.14.6"
+      },
+      "worker_min_memavailable_kib": null,
+      "worker_min_swapfree_kib": null,
+      "worker_peak_postgres_rss_kib": null,
+      "worker_peak_rss_kib": null
+    },
+    "place_search": {
+      "child_command": [
+        "node",
+        "--experimental-strip-types",
+        "scripts/place-search-harness.mjs"
+      ],
+      "child_result_recorded": true,
+      "command": [
+        "node",
+        "--experimental-strip-types",
+        "scripts/place-search-harness.mjs"
+      ],
+      "command_fingerprint_sha256": "2a83e596a732b7e7d7a12715f955431fb737d72b49cccb311f9f08aa83463a59",
+      "cwd": "/data/data/com.termux/files/home/Biyahe/web",
+      "ended_at": "2026-10-10T03:51:02Z",
+      "executed": true,
+      "execution_observed_status": "PASS",
+      "exit_code": 0,
+      "fingerprint_environment": {
+        "BIYAHE_RESOURCE_BREACH_SAMPLES": "1",
+        "BIYAHE_RESOURCE_MAX_DURATION_SECONDS": "1800",
+        "BIYAHE_RESOURCE_MAX_PROCESS_TREE_RSS_KB": "262144",
+        "BIYAHE_RESOURCE_MIN_MEMAVAILABLE_KB": "524288",
+        "BIYAHE_RESOURCE_MIN_SWAPFREE_KB": "131072",
+        "BIYAHE_RESOURCE_POLL_SECONDS": "1",
+        "BIYAHE_RESOURCE_PREFLIGHT_INTERVAL_SECONDS": "5",
+        "BIYAHE_RESOURCE_PREFLIGHT_SAMPLES": "5",
+        "LANG": "en_US.UTF-8",
+        "LC_ALL": "C.UTF-8",
+        "NODE_OPTIONS": "",
+        "PATH": "/data/data/com.termux/files/home/.codex/tmp/arg0/codex-arg0MWU38W:/data/data/com.termux/files/home/.codex/tmp/arg0/codex-arg0hewtZJ:/data/data/com.termux/files/usr/bin",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "TZ": ""
+      },
+      "guard_environment": {
+        "BIYAHE_RESOURCE_BREACH_SAMPLES": "1",
+        "BIYAHE_RESOURCE_MAX_DURATION_SECONDS": "1800",
+        "BIYAHE_RESOURCE_MAX_PROCESS_TREE_RSS_KB": "262144",
+        "BIYAHE_RESOURCE_MIN_MEMAVAILABLE_KB": "524288",
+        "BIYAHE_RESOURCE_MIN_SWAPFREE_KB": "131072",
+        "BIYAHE_RESOURCE_POLL_SECONDS": "1",
+        "BIYAHE_RESOURCE_PREFLIGHT_INTERVAL_SECONDS": "5",
+        "BIYAHE_RESOURCE_PREFLIGHT_SAMPLES": "5",
+        "PYTHONDONTWRITEBYTECODE": "1"
+      },
+      "historical_only": false,
+      "input_files": [
+        {
+          "path": "web/scripts/place-search-harness.mjs",
+          "sha256": "7b3a4eee80f9ff6e083480d027a7ebc2d0914191e608999832f7a295d2191268"
+        },
+        {
+          "path": "web/src/lib/latestPlaceSearch.ts",
+          "sha256": "339747fef19b777d0d3e7d8ed58fe981cfec73e06a0b97acbbbc48ad836684c0"
+        }
+      ],
+      "memavailable_floor_kib": 524288,
+      "output_path": "evidence/place_search.stdout.txt",
+      "output_sha256": "440b55ffeac29b7b2d7a655f36faf80245e4309babfc030cb31d2dd41939da65",
+      "parent_exit_code": 6,
+      "parent_status": "BLOCKED_RESOURCE",
+      "resource_guard": "BLOCKED",
+      "resource_log": "evidence/place_search.resource.log",
+      "resource_log_sha256": "440b55ffeac29b7b2d7a655f36faf80245e4309babfc030cb31d2dd41939da65",
+      "run_directory": "/data/data/com.termux/files/home/.cache/biyahe/batch042/portable-verification/20261010T033954Z-19642",
+      "run_source_revision": "db843f7acd191f7803793989ab7fd27a74860839",
+      "started_at": "2026-10-10T03:39:59Z",
+      "status": "VERIFIED",
+      "swapfree_floor_kib": 131072,
+      "tool_versions": {
+        "bash": "path=/data/data/com.termux/files/usr/bin/bash;sha256=0179c7b15fb3df857608ef745daa17077523ffc42b7755ccc725ad7a712698a2",
+        "composer": "MISSING",
+        "locked:eslint": "9.39.5",
+        "locked:typescript": "5.9.3",
+        "node": "path=/data/data/com.termux/files/usr/bin/node;sha256=d682000d9f5d887ec66de1ed68d9616c7a9d064bca9ae9d8c46725a00912cbc6",
+        "npm": "path=/data/data/com.termux/files/usr/lib/node_modules/npm/bin/npm-cli.js;sha256=8e5f6f3429f8cdbe693cdc29904e9d5a7b127a494bd15c804bd54c7403bfcbe7",
+        "php": "path=/data/data/com.termux/files/usr/bin/php;sha256=0d7dad516768df79137c8921d9a63c77faa7df1d89c36240aa116a346ae9ad4d",
+        "python3": "path=/data/data/com.termux/files/usr/bin/python3.14;sha256=4f8d78ede7fc26e96e99342dd83ce42d32c9b4d0806bc9a99ff7151396269b25",
+        "python_runtime": "3.14.6"
+      },
+      "worker_min_memavailable_kib": 854672,
+      "worker_min_swapfree_kib": 113960,
+      "worker_peak_postgres_rss_kib": 0,
+      "worker_peak_rss_kib": 68304
+    },
+    "portable_kit": {
+      "executed": false,
+      "reason": "kit verification output was not supplied",
+      "status": "NOT_RUN"
+    },
+    "portable_runner_contract": {
+      "assertion_count": null,
+      "command": [
+        "/data/data/com.termux/files/usr/bin/python3",
+        "api/scripts/test_portable_verification.py"
+      ],
+      "command_fingerprint_sha256": "8ad6a9b8a83df6250b8012f3fb5edbb6b9960bb72f0b5f1ea716b5ddb26145fc",
+      "cwd": "/data/data/com.termux/files/home/Biyahe",
+      "ended_at": "2026-10-10T04:43:12Z",
+      "executed": true,
+      "exit_code": 0,
+      "failure_count": 0,
+      "fingerprint_environment": {
+        "LANG": "en_US.UTF-8",
+        "LC_ALL": "C.UTF-8",
+        "NODE_OPTIONS": "",
+        "PATH": "/data/data/com.termux/files/home/.codex/tmp/arg0/codex-arg0MWU38W:/data/data/com.termux/files/home/.codex/tmp/arg0/codex-arg0hewtZJ:/data/data/com.termux/files/usr/bin",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "TZ": ""
+      },
+      "guard_environment": {
+        "PYTHONDONTWRITEBYTECODE": "1"
+      },
+      "historical_only": false,
+      "input_files": [
+        {
+          "path": "api/scripts/package-batch041-verification-kit.py",
+          "sha256": "276b95845ace4a5b9a44d19835ae33316b49c4a3cbbd140fb26260fdaede645d"
+        },
+        {
+          "path": "api/scripts/run-portable-verification.py",
+          "sha256": "ffed6d088642c502544ac70e02b35c39df7ab6c4cecae8f1eea4f9ab9411c1a6"
+        },
+        {
+          "path": "api/scripts/test_portable_verification.py",
+          "sha256": "a2ae70066ba41a188a58a84692445f90a1261961dceffcb81caee7020ca696af"
+        }
+      ],
+      "memavailable_floor_kib": 524288,
+      "output_path": "evidence/portable_runner_contract.stdout.txt",
+      "output_sha256": "b5fc2789a6fc54d763a8f236920789c6824b8996dee9ab78d37fb54257051816",
+      "reported_check_markers": 0,
+      "resource_guard": "NOT_REQUIRED",
+      "resource_log": null,
+      "resource_log_sha256": null,
+      "run_directory": "/data/data/com.termux/files/home/.cache/biyahe/batch042/portable-verification/20261010T044304Z-15419",
+      "run_source_revision": "049cf77225b522fe272baa6166400c5262b59f52",
+      "started_at": "2026-10-10T04:43:11Z",
+      "status": "VERIFIED",
+      "swapfree_floor_kib": 131072,
+      "test_count": 10,
+      "tool_versions": {
+        "/data/data/com.termux/files/usr/bin/python3": "path=/data/data/com.termux/files/usr/bin/python3.14;sha256=4f8d78ede7fc26e96e99342dd83ce42d32c9b4d0806bc9a99ff7151396269b25",
+        "bash": "path=/data/data/com.termux/files/usr/bin/bash;sha256=0179c7b15fb3df857608ef745daa17077523ffc42b7755ccc725ad7a712698a2",
+        "composer": "MISSING",
+        "node": "path=/data/data/com.termux/files/usr/bin/node;sha256=d682000d9f5d887ec66de1ed68d9616c7a9d064bca9ae9d8c46725a00912cbc6",
+        "npm": "path=/data/data/com.termux/files/usr/lib/node_modules/npm/bin/npm-cli.js;sha256=8e5f6f3429f8cdbe693cdc29904e9d5a7b127a494bd15c804bd54c7403bfcbe7",
+        "php": "path=/data/data/com.termux/files/usr/bin/php;sha256=0d7dad516768df79137c8921d9a63c77faa7df1d89c36240aa116a346ae9ad4d",
+        "python3": "path=/data/data/com.termux/files/usr/bin/python3.14;sha256=4f8d78ede7fc26e96e99342dd83ce42d32c9b4d0806bc9a99ff7151396269b25",
+        "python_runtime": "3.14.6"
+      },
+      "worker_min_memavailable_kib": null,
+      "worker_min_swapfree_kib": null,
+      "worker_peak_postgres_rss_kib": null,
+      "worker_peak_rss_kib": null
+    },
+    "preview_contract": {
+      "assertion_count": null,
+      "command": [
+        "node",
+        "--experimental-strip-types",
+        "scripts/offline-walking-preview-harness.mjs"
+      ],
+      "command_fingerprint_sha256": "7ce541c9ab0d43d6d448d84ea23fe61d7d3f5dcf16b70d69aa854f3abcd4d596",
+      "cwd": "/data/data/com.termux/files/home/Biyahe/web",
+      "ended_at": "2026-10-10T02:18:39Z",
+      "executed": true,
+      "exit_code": 0,
+      "failure_count": 0,
+      "fingerprint_environment": {
+        "BIYAHE_RESOURCE_BREACH_SAMPLES": "1",
+        "BIYAHE_RESOURCE_MAX_DURATION_SECONDS": "1800",
+        "BIYAHE_RESOURCE_MAX_PROCESS_TREE_RSS_KB": "262144",
+        "BIYAHE_RESOURCE_MIN_MEMAVAILABLE_KB": "524288",
+        "BIYAHE_RESOURCE_MIN_SWAPFREE_KB": "131072",
+        "BIYAHE_RESOURCE_POLL_SECONDS": "1",
+        "BIYAHE_RESOURCE_PREFLIGHT_INTERVAL_SECONDS": "5",
+        "BIYAHE_RESOURCE_PREFLIGHT_SAMPLES": "5",
+        "LANG": "en_US.UTF-8",
+        "LC_ALL": "C.UTF-8",
+        "NODE_OPTIONS": "",
+        "PATH": "/data/data/com.termux/files/home/.codex/tmp/arg0/codex-arg0MWU38W:/data/data/com.termux/files/home/.codex/tmp/arg0/codex-arg0hewtZJ:/data/data/com.termux/files/usr/bin",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "TZ": ""
+      },
+      "guard_environment": {
+        "BIYAHE_RESOURCE_BREACH_SAMPLES": "1",
+        "BIYAHE_RESOURCE_MAX_DURATION_SECONDS": "1800",
+        "BIYAHE_RESOURCE_MAX_PROCESS_TREE_RSS_KB": "262144",
+        "BIYAHE_RESOURCE_MIN_MEMAVAILABLE_KB": "524288",
+        "BIYAHE_RESOURCE_MIN_SWAPFREE_KB": "131072",
+        "BIYAHE_RESOURCE_POLL_SECONDS": "1",
+        "BIYAHE_RESOURCE_PREFLIGHT_INTERVAL_SECONDS": "5",
+        "BIYAHE_RESOURCE_PREFLIGHT_SAMPLES": "5",
+        "PYTHONDONTWRITEBYTECODE": "1"
+      },
+      "historical_only": false,
+      "input_files": [
+        {
+          "path": "web/scripts/offline-walking-preview-harness.mjs",
+          "sha256": "67ccf5bc9999272e7fe5c403d321ec1e41ee8d5985cba38d2d7d01f7dc9dda9f"
+        },
+        {
+          "path": "web/src/components/CommuteCard.tsx",
+          "sha256": "8c08cf4fddeba340e541288722deda32acf488304b537ec85668696faa11a612"
+        },
+        {
+          "path": "web/src/lib/offlineWalkingPreviewState.ts",
+          "sha256": "ffdd52885fbcf4fb93c6392b902e6b17f38ea12e2c9d235ac624b70af6a0b168"
+        }
+      ],
+      "memavailable_floor_kib": 524288,
+      "output_path": "evidence/preview_contract.stdout.txt",
+      "output_sha256": "e12d4be4f490e677b5262f5838aa5c49c435b64b653504f8c69a30444d13cb82",
+      "reported_check_markers": 6,
+      "resource_guard": "PASS",
+      "resource_log": "evidence/preview_contract.resource.log",
+      "resource_log_sha256": "e12d4be4f490e677b5262f5838aa5c49c435b64b653504f8c69a30444d13cb82",
+      "run_directory": "/data/data/com.termux/files/home/.cache/biyahe/batch042/portable-verification/20261010T021146Z-2203",
+      "run_source_revision": "39417b17ac9447dd2d1866682ed57e37c8e7fc0b",
+      "started_at": "2026-10-10T02:16:20Z",
+      "status": "VERIFIED",
+      "swapfree_floor_kib": 131072,
+      "test_count": null,
+      "tool_versions": {
+        "bash": "path=/data/data/com.termux/files/usr/bin/bash;sha256=0179c7b15fb3df857608ef745daa17077523ffc42b7755ccc725ad7a712698a2",
+        "composer": "MISSING",
+        "locked:eslint": "9.39.5",
+        "locked:typescript": "5.9.3",
+        "node": "path=/data/data/com.termux/files/usr/bin/node;sha256=d682000d9f5d887ec66de1ed68d9616c7a9d064bca9ae9d8c46725a00912cbc6",
+        "npm": "path=/data/data/com.termux/files/usr/lib/node_modules/npm/bin/npm-cli.js;sha256=8e5f6f3429f8cdbe693cdc29904e9d5a7b127a494bd15c804bd54c7403bfcbe7",
+        "php": "path=/data/data/com.termux/files/usr/bin/php;sha256=0d7dad516768df79137c8921d9a63c77faa7df1d89c36240aa116a346ae9ad4d",
+        "python3": "path=/data/data/com.termux/files/usr/bin/python3.14;sha256=4f8d78ede7fc26e96e99342dd83ce42d32c9b4d0806bc9a99ff7151396269b25",
+        "python_runtime": "3.14.6"
+      },
+      "worker_min_memavailable_kib": 969504,
+      "worker_min_swapfree_kib": 228356,
+      "worker_peak_postgres_rss_kib": 0,
+      "worker_peak_rss_kib": 74152
+    },
+    "preview_state": {
+      "assertion_count": null,
+      "command": [
+        "node",
+        "--experimental-strip-types",
+        "scripts/offline-walking-preview-state-harness.mjs"
+      ],
+      "command_fingerprint_sha256": "67906ad70abb31df9cafe5254f03245eeb3eee7a685272dc33ee56b4d2f5b685",
+      "cwd": "/data/data/com.termux/files/home/Biyahe/web",
+      "ended_at": "2026-10-10T02:16:20Z",
+      "executed": true,
+      "exit_code": 0,
+      "failure_count": 0,
+      "fingerprint_environment": {
+        "BIYAHE_RESOURCE_BREACH_SAMPLES": "1",
+        "BIYAHE_RESOURCE_MAX_DURATION_SECONDS": "1800",
+        "BIYAHE_RESOURCE_MAX_PROCESS_TREE_RSS_KB": "262144",
+        "BIYAHE_RESOURCE_MIN_MEMAVAILABLE_KB": "524288",
+        "BIYAHE_RESOURCE_MIN_SWAPFREE_KB": "131072",
+        "BIYAHE_RESOURCE_POLL_SECONDS": "1",
+        "BIYAHE_RESOURCE_PREFLIGHT_INTERVAL_SECONDS": "5",
+        "BIYAHE_RESOURCE_PREFLIGHT_SAMPLES": "5",
+        "LANG": "en_US.UTF-8",
+        "LC_ALL": "C.UTF-8",
+        "NODE_OPTIONS": "",
+        "PATH": "/data/data/com.termux/files/home/.codex/tmp/arg0/codex-arg0MWU38W:/data/data/com.termux/files/home/.codex/tmp/arg0/codex-arg0hewtZJ:/data/data/com.termux/files/usr/bin",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "TZ": ""
+      },
+      "guard_environment": {
+        "BIYAHE_RESOURCE_BREACH_SAMPLES": "1",
+        "BIYAHE_RESOURCE_MAX_DURATION_SECONDS": "1800",
+        "BIYAHE_RESOURCE_MAX_PROCESS_TREE_RSS_KB": "262144",
+        "BIYAHE_RESOURCE_MIN_MEMAVAILABLE_KB": "524288",
+        "BIYAHE_RESOURCE_MIN_SWAPFREE_KB": "131072",
+        "BIYAHE_RESOURCE_POLL_SECONDS": "1",
+        "BIYAHE_RESOURCE_PREFLIGHT_INTERVAL_SECONDS": "5",
+        "BIYAHE_RESOURCE_PREFLIGHT_SAMPLES": "5",
+        "PYTHONDONTWRITEBYTECODE": "1"
+      },
+      "historical_only": false,
+      "input_files": [
+        {
+          "path": "web/scripts/offline-walking-preview-state-harness.mjs",
+          "sha256": "d35334c68c94f2d7b5b3471174bf4758f01ab73854db5cf828960209f963c89a"
+        },
+        {
+          "path": "web/src/lib/api.ts",
+          "sha256": "220c10e11551ffdd7213c9eeb16b06fc300d44ae0f868c426742d233b6450fe4"
+        },
+        {
+          "path": "web/src/lib/offlineWalkingPreviewState.ts",
+          "sha256": "ffdd52885fbcf4fb93c6392b902e6b17f38ea12e2c9d235ac624b70af6a0b168"
+        }
+      ],
+      "memavailable_floor_kib": 524288,
+      "output_path": "evidence/preview_state.stdout.txt",
+      "output_sha256": "e8c06d415a9739a9cd7c96c9713573099775e9edf2a4c4824a6ce85022875b95",
+      "reported_check_markers": 8,
+      "resource_guard": "PASS",
+      "resource_log": "evidence/preview_state.resource.log",
+      "resource_log_sha256": "e8c06d415a9739a9cd7c96c9713573099775e9edf2a4c4824a6ce85022875b95",
+      "run_directory": "/data/data/com.termux/files/home/.cache/biyahe/batch042/portable-verification/20261010T021146Z-2203",
+      "run_source_revision": "39417b17ac9447dd2d1866682ed57e37c8e7fc0b",
+      "started_at": "2026-10-10T02:11:47Z",
+      "status": "VERIFIED",
+      "swapfree_floor_kib": 131072,
+      "test_count": null,
+      "tool_versions": {
+        "bash": "path=/data/data/com.termux/files/usr/bin/bash;sha256=0179c7b15fb3df857608ef745daa17077523ffc42b7755ccc725ad7a712698a2",
+        "composer": "MISSING",
+        "locked:eslint": "9.39.5",
+        "locked:typescript": "5.9.3",
+        "node": "path=/data/data/com.termux/files/usr/bin/node;sha256=d682000d9f5d887ec66de1ed68d9616c7a9d064bca9ae9d8c46725a00912cbc6",
+        "npm": "path=/data/data/com.termux/files/usr/lib/node_modules/npm/bin/npm-cli.js;sha256=8e5f6f3429f8cdbe693cdc29904e9d5a7b127a494bd15c804bd54c7403bfcbe7",
+        "php": "path=/data/data/com.termux/files/usr/bin/php;sha256=0d7dad516768df79137c8921d9a63c77faa7df1d89c36240aa116a346ae9ad4d",
+        "python3": "path=/data/data/com.termux/files/usr/bin/python3.14;sha256=4f8d78ede7fc26e96e99342dd83ce42d32c9b4d0806bc9a99ff7151396269b25",
+        "python_runtime": "3.14.6"
+      },
+      "worker_min_memavailable_kib": 1052928,
+      "worker_min_swapfree_kib": 301588,
+      "worker_peak_postgres_rss_kib": 0,
+      "worker_peak_rss_kib": 0
+    },
+    "provenance_fixtures": {
+      "assertion_count": null,
+      "command": [
+        "/data/data/com.termux/files/usr/bin/python3",
+        "api/scripts/test_evidence_provenance.py"
+      ],
+      "command_fingerprint_sha256": "d7e4ab391416e4cccef591e1312c6852526a92500c5669f919d65ff785330000",
+      "cwd": "/data/data/com.termux/files/home/Biyahe",
+      "ended_at": "2026-10-10T04:43:06Z",
+      "executed": true,
+      "exit_code": 0,
+      "failure_count": 0,
+      "fingerprint_environment": {
+        "LANG": "en_US.UTF-8",
+        "LC_ALL": "C.UTF-8",
+        "NODE_OPTIONS": "",
+        "PATH": "/data/data/com.termux/files/home/.codex/tmp/arg0/codex-arg0MWU38W:/data/data/com.termux/files/home/.codex/tmp/arg0/codex-arg0hewtZJ:/data/data/com.termux/files/usr/bin",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "TZ": ""
+      },
+      "guard_environment": {
+        "PYTHONDONTWRITEBYTECODE": "1"
+      },
+      "historical_only": false,
+      "input_files": [
+        {
+          "path": "api/scripts/evidence_provenance.py",
+          "sha256": "e17d63dda770595880842a5e93a96e87020cae71ba3384f76b854e10dc9ef46d"
+        },
+        {
+          "path": "api/scripts/test_evidence_provenance.py",
+          "sha256": "a9e64eae5df4afe8124cfee44a95d3df89f0b0ea26beb8b65d5a22462476d9d2"
+        },
+        {
+          "path": "docs/reports/batch041-evidence-provenance.json",
+          "sha256": "882fd1ae2c7ab8f2e1edab87c9122911f62c4568513bbe6c8875263958dc1bb6"
+        },
+        {
+          "path": "docs/reports/batch041-evidence-reconciliation.md",
+          "sha256": "bfca264f02dbe3e11b9d62f4ac60be0e46fa8a4523b3e119c7ac7a62c4d877f9"
+        }
+      ],
+      "memavailable_floor_kib": 524288,
+      "output_path": "evidence/provenance_fixtures.stdout.txt",
+      "output_sha256": "cfd9759413c8fe6c0c1ebf634e325c719e10d899b6993fe4a9650db889b97bc4",
+      "reported_check_markers": 0,
+      "resource_guard": "NOT_REQUIRED",
+      "resource_log": null,
+      "resource_log_sha256": null,
+      "run_directory": "/data/data/com.termux/files/home/.cache/biyahe/batch042/portable-verification/20261010T044304Z-15419",
+      "run_source_revision": "049cf77225b522fe272baa6166400c5262b59f52",
+      "started_at": "2026-10-10T04:43:05Z",
+      "status": "VERIFIED",
+      "swapfree_floor_kib": 131072,
+      "test_count": 6,
+      "tool_versions": {
+        "/data/data/com.termux/files/usr/bin/python3": "path=/data/data/com.termux/files/usr/bin/python3.14;sha256=4f8d78ede7fc26e96e99342dd83ce42d32c9b4d0806bc9a99ff7151396269b25",
+        "bash": "path=/data/data/com.termux/files/usr/bin/bash;sha256=0179c7b15fb3df857608ef745daa17077523ffc42b7755ccc725ad7a712698a2",
+        "composer": "MISSING",
+        "node": "path=/data/data/com.termux/files/usr/bin/node;sha256=d682000d9f5d887ec66de1ed68d9616c7a9d064bca9ae9d8c46725a00912cbc6",
+        "npm": "path=/data/data/com.termux/files/usr/lib/node_modules/npm/bin/npm-cli.js;sha256=8e5f6f3429f8cdbe693cdc29904e9d5a7b127a494bd15c804bd54c7403bfcbe7",
+        "php": "path=/data/data/com.termux/files/usr/bin/php;sha256=0d7dad516768df79137c8921d9a63c77faa7df1d89c36240aa116a346ae9ad4d",
+        "python3": "path=/data/data/com.termux/files/usr/bin/python3.14;sha256=4f8d78ede7fc26e96e99342dd83ce42d32c9b4d0806bc9a99ff7151396269b25",
+        "python_runtime": "3.14.6"
+      },
+      "worker_min_memavailable_kib": null,
+      "worker_min_swapfree_kib": null,
+      "worker_peak_postgres_rss_kib": null,
+      "worker_peak_rss_kib": null
+    },
+    "real_cebu_corpus": {
+      "assertion_count": null,
+      "command": [
+        "php",
+        "artisan",
+        "biyahe:pedestrian:verify-offline-corpus",
+        "--output=/data/data/com.termux/files/home/.cache/biyahe/batch042/portable-verification/20261010T043245Z-11286/real-cebu-corpus.json"
+      ],
+      "command_fingerprint_sha256": "3c58c29bdd341a0621b43e0653265f59f1a1050e93215d9425579f5bc392cbc5",
+      "cwd": "/data/data/com.termux/files/home/Biyahe/api",
+      "ended_at": "2026-10-10T04:33:10Z",
+      "executed": false,
+      "exit_code": 4,
+      "failure_count": null,
+      "fingerprint_environment": {
+        "BIYAHE_RESOURCE_BREACH_SAMPLES": "1",
+        "BIYAHE_RESOURCE_MAX_DURATION_SECONDS": "1800",
+        "BIYAHE_RESOURCE_MAX_PROCESS_TREE_RSS_KB": "262144",
+        "BIYAHE_RESOURCE_MIN_MEMAVAILABLE_KB": "524288",
+        "BIYAHE_RESOURCE_MIN_SWAPFREE_KB": "131072",
+        "BIYAHE_RESOURCE_POLL_SECONDS": "1",
+        "BIYAHE_RESOURCE_PREFLIGHT_INTERVAL_SECONDS": "5",
+        "BIYAHE_RESOURCE_PREFLIGHT_SAMPLES": "5",
+        "LANG": "en_US.UTF-8",
+        "LC_ALL": "C.UTF-8",
+        "NODE_OPTIONS": "",
+        "PATH": "/data/data/com.termux/files/home/.codex/tmp/arg0/codex-arg0MWU38W:/data/data/com.termux/files/home/.codex/tmp/arg0/codex-arg0hewtZJ:/data/data/com.termux/files/usr/bin",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "TZ": ""
+      },
+      "guard_environment": {
+        "BIYAHE_RESOURCE_BREACH_SAMPLES": "1",
+        "BIYAHE_RESOURCE_MAX_DURATION_SECONDS": "1800",
+        "BIYAHE_RESOURCE_MAX_PROCESS_TREE_RSS_KB": "262144",
+        "BIYAHE_RESOURCE_MIN_MEMAVAILABLE_KB": "524288",
+        "BIYAHE_RESOURCE_MIN_SWAPFREE_KB": "131072",
+        "BIYAHE_RESOURCE_POLL_SECONDS": "1",
+        "BIYAHE_RESOURCE_PREFLIGHT_INTERVAL_SECONDS": "5",
+        "BIYAHE_RESOURCE_PREFLIGHT_SAMPLES": "5",
+        "PYTHONDONTWRITEBYTECODE": "1"
+      },
+      "historical_only": false,
+      "input_files": [
+        {
+          "path": "api/app/Console/Commands/VerifyOfflineWalkingCorpus.php",
+          "sha256": "e84e3a816a06eb2d81730121d85f405021d67bf5228cb63a3d0a62baa9518b68"
+        },
+        {
+          "path": "api/composer.lock",
+          "sha256": "d705a772f93cfe6d1b374e3896eaa3b4ee919aa6b222e2daab86dd31db99b4be"
+        },
+        {
+          "path": "api/scripts/compare-offline-corpus.py",
+          "sha256": "32bfc2a535ec1fa0f062f3d9bc17de5cd49964286e0cdabf1250371ece320e1e"
+        },
+        {
+          "path": "docs/testing/batch041-test-plan.json",
+          "sha256": "c10fcf269e17d42cb0dbd0b648b7ba9c943079cac2b4e5997e0e6645511f591a"
+        }
+      ],
+      "memavailable_floor_kib": 524288,
+      "output_path": "evidence/real_cebu_corpus.stdout.txt",
+      "output_sha256": "93ab0038e7103079b489a98f04976ad20cb513dba3a42102d654237f9f80f89e",
+      "reported_check_markers": 0,
+      "resource_guard": "BLOCKED",
+      "resource_log": "evidence/real_cebu_corpus.resource.log",
+      "resource_log_sha256": "93ab0038e7103079b489a98f04976ad20cb513dba3a42102d654237f9f80f89e",
+      "run_directory": "/data/data/com.termux/files/home/.cache/biyahe/batch042/portable-verification/20261010T043245Z-11286",
+      "run_source_revision": "1015874d95e3d6dc93241cbe3a7ad5645e62dcd5",
+      "started_at": "2026-10-10T04:32:45Z",
+      "status": "BLOCKED_RESOURCE",
+      "swapfree_floor_kib": 131072,
+      "test_count": null,
+      "tool_versions": {
+        "bash": "path=/data/data/com.termux/files/usr/bin/bash;sha256=0179c7b15fb3df857608ef745daa17077523ffc42b7755ccc725ad7a712698a2",
+        "composer": "MISSING",
+        "node": "path=/data/data/com.termux/files/usr/bin/node;sha256=d682000d9f5d887ec66de1ed68d9616c7a9d064bca9ae9d8c46725a00912cbc6",
+        "npm": "path=/data/data/com.termux/files/usr/lib/node_modules/npm/bin/npm-cli.js;sha256=8e5f6f3429f8cdbe693cdc29904e9d5a7b127a494bd15c804bd54c7403bfcbe7",
+        "php": "path=/data/data/com.termux/files/usr/bin/php;sha256=0d7dad516768df79137c8921d9a63c77faa7df1d89c36240aa116a346ae9ad4d",
+        "python3": "path=/data/data/com.termux/files/usr/bin/python3.14;sha256=4f8d78ede7fc26e96e99342dd83ce42d32c9b4d0806bc9a99ff7151396269b25",
+        "python_runtime": "3.14.6"
+      },
+      "worker_min_memavailable_kib": 746720,
+      "worker_min_swapfree_kib": 59924,
+      "worker_peak_postgres_rss_kib": null,
+      "worker_peak_rss_kib": null
+    },
+    "request_gate": {
+      "assertion_count": null,
+      "command": [
+        "node",
+        "--experimental-strip-types",
+        "scripts/request-gate-harness.mjs"
+      ],
+      "command_fingerprint_sha256": "a26db3111d69aa20bf96f5a2b5ad2594ec1d520049f80d98504f05baedf975f6",
+      "cwd": "/data/data/com.termux/files/home/Biyahe/web",
+      "ended_at": "2026-10-10T02:27:25Z",
+      "executed": true,
+      "exit_code": 0,
+      "failure_count": 0,
+      "fingerprint_environment": {
+        "BIYAHE_RESOURCE_BREACH_SAMPLES": "1",
+        "BIYAHE_RESOURCE_MAX_DURATION_SECONDS": "1800",
+        "BIYAHE_RESOURCE_MAX_PROCESS_TREE_RSS_KB": "262144",
+        "BIYAHE_RESOURCE_MIN_MEMAVAILABLE_KB": "524288",
+        "BIYAHE_RESOURCE_MIN_SWAPFREE_KB": "131072",
+        "BIYAHE_RESOURCE_POLL_SECONDS": "1",
+        "BIYAHE_RESOURCE_PREFLIGHT_INTERVAL_SECONDS": "5",
+        "BIYAHE_RESOURCE_PREFLIGHT_SAMPLES": "5",
+        "LANG": "en_US.UTF-8",
+        "LC_ALL": "C.UTF-8",
+        "NODE_OPTIONS": "",
+        "PATH": "/data/data/com.termux/files/home/.codex/tmp/arg0/codex-arg0MWU38W:/data/data/com.termux/files/home/.codex/tmp/arg0/codex-arg0hewtZJ:/data/data/com.termux/files/usr/bin",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "TZ": ""
+      },
+      "guard_environment": {
+        "BIYAHE_RESOURCE_BREACH_SAMPLES": "1",
+        "BIYAHE_RESOURCE_MAX_DURATION_SECONDS": "1800",
+        "BIYAHE_RESOURCE_MAX_PROCESS_TREE_RSS_KB": "262144",
+        "BIYAHE_RESOURCE_MIN_MEMAVAILABLE_KB": "524288",
+        "BIYAHE_RESOURCE_MIN_SWAPFREE_KB": "131072",
+        "BIYAHE_RESOURCE_POLL_SECONDS": "1",
+        "BIYAHE_RESOURCE_PREFLIGHT_INTERVAL_SECONDS": "5",
+        "BIYAHE_RESOURCE_PREFLIGHT_SAMPLES": "5",
+        "PYTHONDONTWRITEBYTECODE": "1"
+      },
+      "historical_only": false,
+      "input_files": [
+        {
+          "path": "web/scripts/request-gate-harness.mjs",
+          "sha256": "43324c506f9be07ff3f73bd1ef31976cfb1ea2ce030624da0c35f9a37c99c1af"
+        },
+        {
+          "path": "web/src/lib/requestGate.ts",
+          "sha256": "ec30066db794892358ec5461e79e1a6cc7f07e548c4f6c6c4b69b0c0fa27d926"
+        }
+      ],
+      "memavailable_floor_kib": 524288,
+      "output_path": "evidence/request_gate.stdout.txt",
+      "output_sha256": "c3577eaa5f9bf4c692d88aba8a29e5b87c80f6f861b598d6b6af88651bdfda91",
+      "reported_check_markers": 2,
+      "resource_guard": "PASS",
+      "resource_log": "evidence/request_gate.resource.log",
+      "resource_log_sha256": "c3577eaa5f9bf4c692d88aba8a29e5b87c80f6f861b598d6b6af88651bdfda91",
+      "run_directory": "/data/data/com.termux/files/home/.cache/biyahe/batch042/portable-verification/20261010T021146Z-2203",
+      "run_source_revision": "39417b17ac9447dd2d1866682ed57e37c8e7fc0b",
+      "started_at": "2026-10-10T02:23:47Z",
+      "status": "VERIFIED",
+      "swapfree_floor_kib": 131072,
+      "test_count": null,
+      "tool_versions": {
+        "bash": "path=/data/data/com.termux/files/usr/bin/bash;sha256=0179c7b15fb3df857608ef745daa17077523ffc42b7755ccc725ad7a712698a2",
+        "composer": "MISSING",
+        "locked:eslint": "9.39.5",
+        "locked:typescript": "5.9.3",
+        "node": "path=/data/data/com.termux/files/usr/bin/node;sha256=d682000d9f5d887ec66de1ed68d9616c7a9d064bca9ae9d8c46725a00912cbc6",
+        "npm": "path=/data/data/com.termux/files/usr/lib/node_modules/npm/bin/npm-cli.js;sha256=8e5f6f3429f8cdbe693cdc29904e9d5a7b127a494bd15c804bd54c7403bfcbe7",
+        "php": "path=/data/data/com.termux/files/usr/bin/php;sha256=0d7dad516768df79137c8921d9a63c77faa7df1d89c36240aa116a346ae9ad4d",
+        "python3": "path=/data/data/com.termux/files/usr/bin/python3.14;sha256=4f8d78ede7fc26e96e99342dd83ce42d32c9b4d0806bc9a99ff7151396269b25",
+        "python_runtime": "3.14.6"
+      },
+      "worker_min_memavailable_kib": 947796,
+      "worker_min_swapfree_kib": 206648,
+      "worker_peak_postgres_rss_kib": 0,
+      "worker_peak_rss_kib": 58488
+    },
+    "ride_mode": {
+      "assertion_count": null,
+      "command": [
+        "node",
+        "--experimental-strip-types",
+        "scripts/ride-mode-harness.mjs"
+      ],
+      "command_fingerprint_sha256": "eb8b8b09fc374d9317dfc8ee96e1227cb0fae34291242b0126d080e58bcaf42e",
+      "cwd": "/data/data/com.termux/files/home/Biyahe/web",
+      "ended_at": "2026-10-10T03:34:59Z",
+      "executed": true,
+      "exit_code": 0,
+      "failure_count": 0,
+      "fingerprint_environment": {
+        "BIYAHE_RESOURCE_BREACH_SAMPLES": "1",
+        "BIYAHE_RESOURCE_MAX_DURATION_SECONDS": "1800",
+        "BIYAHE_RESOURCE_MAX_PROCESS_TREE_RSS_KB": "262144",
+        "BIYAHE_RESOURCE_MIN_MEMAVAILABLE_KB": "524288",
+        "BIYAHE_RESOURCE_MIN_SWAPFREE_KB": "131072",
+        "BIYAHE_RESOURCE_POLL_SECONDS": "1",
+        "BIYAHE_RESOURCE_PREFLIGHT_INTERVAL_SECONDS": "5",
+        "BIYAHE_RESOURCE_PREFLIGHT_SAMPLES": "5",
+        "LANG": "en_US.UTF-8",
+        "LC_ALL": "C.UTF-8",
+        "NODE_OPTIONS": "",
+        "PATH": "/data/data/com.termux/files/home/.codex/tmp/arg0/codex-arg0MWU38W:/data/data/com.termux/files/home/.codex/tmp/arg0/codex-arg0hewtZJ:/data/data/com.termux/files/usr/bin",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "TZ": ""
+      },
+      "guard_environment": {
+        "BIYAHE_RESOURCE_BREACH_SAMPLES": "1",
+        "BIYAHE_RESOURCE_MAX_DURATION_SECONDS": "1800",
+        "BIYAHE_RESOURCE_MAX_PROCESS_TREE_RSS_KB": "262144",
+        "BIYAHE_RESOURCE_MIN_MEMAVAILABLE_KB": "524288",
+        "BIYAHE_RESOURCE_MIN_SWAPFREE_KB": "131072",
+        "BIYAHE_RESOURCE_POLL_SECONDS": "1",
+        "BIYAHE_RESOURCE_PREFLIGHT_INTERVAL_SECONDS": "5",
+        "BIYAHE_RESOURCE_PREFLIGHT_SAMPLES": "5",
+        "PYTHONDONTWRITEBYTECODE": "1"
+      },
+      "historical_only": false,
+      "input_files": [
+        {
+          "path": "web/scripts/ride-mode-harness.mjs",
+          "sha256": "bd6c8a9ee5fc6d876aa30221bf587c90239f507a032f8c4c0fd3153b43169ac6"
+        },
+        {
+          "path": "web/src/lib/rideMode.ts",
+          "sha256": "18babd485317b02a7c59c830d3316d52c1b0c9aae3e86e4475b99e258d0dbcc3"
+        }
+      ],
+      "memavailable_floor_kib": 524288,
+      "output_path": "evidence/ride_mode.stdout.txt",
+      "output_sha256": "02a19de30d0beac891d7500f48f553d9d712cf3cca415d52a2fe61de0022f8b0",
+      "reported_check_markers": 9,
+      "resource_guard": "PASS",
+      "resource_log": "evidence/ride_mode.resource.log",
+      "resource_log_sha256": "02a19de30d0beac891d7500f48f553d9d712cf3cca415d52a2fe61de0022f8b0",
+      "run_directory": "/data/data/com.termux/files/home/.cache/biyahe/batch042/portable-verification/20261010T033144Z-18467",
+      "run_source_revision": "db843f7acd191f7803793989ab7fd27a74860839",
+      "started_at": "2026-10-10T03:31:44Z",
+      "status": "VERIFIED",
+      "swapfree_floor_kib": 131072,
+      "test_count": null,
+      "tool_versions": {
+        "bash": "path=/data/data/com.termux/files/usr/bin/bash;sha256=0179c7b15fb3df857608ef745daa17077523ffc42b7755ccc725ad7a712698a2",
+        "composer": "MISSING",
+        "locked:eslint": "9.39.5",
+        "locked:typescript": "5.9.3",
+        "node": "path=/data/data/com.termux/files/usr/bin/node;sha256=d682000d9f5d887ec66de1ed68d9616c7a9d064bca9ae9d8c46725a00912cbc6",
+        "npm": "path=/data/data/com.termux/files/usr/lib/node_modules/npm/bin/npm-cli.js;sha256=8e5f6f3429f8cdbe693cdc29904e9d5a7b127a494bd15c804bd54c7403bfcbe7",
+        "php": "path=/data/data/com.termux/files/usr/bin/php;sha256=0d7dad516768df79137c8921d9a63c77faa7df1d89c36240aa116a346ae9ad4d",
+        "python3": "path=/data/data/com.termux/files/usr/bin/python3.14;sha256=4f8d78ede7fc26e96e99342dd83ce42d32c9b4d0806bc9a99ff7151396269b25",
+        "python_runtime": "3.14.6"
+      },
+      "worker_min_memavailable_kib": 910688,
+      "worker_min_swapfree_kib": 147444,
+      "worker_peak_postgres_rss_kib": 0,
+      "worker_peak_rss_kib": 76960
+    },
+    "search_keyboard": {
+      "child_command": [
+        "node",
+        "--experimental-strip-types",
+        "scripts/search-keyboard-harness.mjs"
+      ],
+      "child_result_recorded": true,
+      "command": [
+        "node",
+        "--experimental-strip-types",
+        "scripts/search-keyboard-harness.mjs"
+      ],
+      "command_fingerprint_sha256": "508e4f22ce1486da6c55fc2d14471bc6b932fd90ccb6a4c5c1718caefd22e23b",
+      "cwd": "/data/data/com.termux/files/home/Biyahe/web",
+      "ended_at": "2026-10-10T03:51:02Z",
+      "executed": true,
+      "execution_observed_status": "PASS",
+      "exit_code": 0,
+      "fingerprint_environment": {
+        "BIYAHE_RESOURCE_BREACH_SAMPLES": "1",
+        "BIYAHE_RESOURCE_MAX_DURATION_SECONDS": "1800",
+        "BIYAHE_RESOURCE_MAX_PROCESS_TREE_RSS_KB": "262144",
+        "BIYAHE_RESOURCE_MIN_MEMAVAILABLE_KB": "524288",
+        "BIYAHE_RESOURCE_MIN_SWAPFREE_KB": "131072",
+        "BIYAHE_RESOURCE_POLL_SECONDS": "1",
+        "BIYAHE_RESOURCE_PREFLIGHT_INTERVAL_SECONDS": "5",
+        "BIYAHE_RESOURCE_PREFLIGHT_SAMPLES": "5",
+        "LANG": "en_US.UTF-8",
+        "LC_ALL": "C.UTF-8",
+        "NODE_OPTIONS": "",
+        "PATH": "/data/data/com.termux/files/home/.codex/tmp/arg0/codex-arg0MWU38W:/data/data/com.termux/files/home/.codex/tmp/arg0/codex-arg0hewtZJ:/data/data/com.termux/files/usr/bin",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "TZ": ""
+      },
+      "guard_environment": {
+        "BIYAHE_RESOURCE_BREACH_SAMPLES": "1",
+        "BIYAHE_RESOURCE_MAX_DURATION_SECONDS": "1800",
+        "BIYAHE_RESOURCE_MAX_PROCESS_TREE_RSS_KB": "262144",
+        "BIYAHE_RESOURCE_MIN_MEMAVAILABLE_KB": "524288",
+        "BIYAHE_RESOURCE_MIN_SWAPFREE_KB": "131072",
+        "BIYAHE_RESOURCE_POLL_SECONDS": "1",
+        "BIYAHE_RESOURCE_PREFLIGHT_INTERVAL_SECONDS": "5",
+        "BIYAHE_RESOURCE_PREFLIGHT_SAMPLES": "5",
+        "PYTHONDONTWRITEBYTECODE": "1"
+      },
+      "historical_only": false,
+      "input_files": [
+        {
+          "path": "web/scripts/search-keyboard-harness.mjs",
+          "sha256": "547a421bc7f689cf579244925e605a25e23be56a26c9e1ccff03f513d85ea377"
+        },
+        {
+          "path": "web/src/lib/searchKeyboard.ts",
+          "sha256": "695f812113a3862ecd660399b56e995de35155900e3f4b9450b330962d6126d8"
+        }
+      ],
+      "memavailable_floor_kib": 524288,
+      "output_path": "evidence/search_keyboard.stdout.txt",
+      "output_sha256": "440b55ffeac29b7b2d7a655f36faf80245e4309babfc030cb31d2dd41939da65",
+      "parent_exit_code": 6,
+      "parent_status": "BLOCKED_RESOURCE",
+      "resource_guard": "BLOCKED",
+      "resource_log": "evidence/search_keyboard.resource.log",
+      "resource_log_sha256": "440b55ffeac29b7b2d7a655f36faf80245e4309babfc030cb31d2dd41939da65",
+      "run_directory": "/data/data/com.termux/files/home/.cache/biyahe/batch042/portable-verification/20261010T033954Z-19642",
+      "run_source_revision": "db843f7acd191f7803793989ab7fd27a74860839",
+      "started_at": "2026-10-10T03:39:59Z",
+      "status": "VERIFIED",
+      "swapfree_floor_kib": 131072,
+      "tool_versions": {
+        "bash": "path=/data/data/com.termux/files/usr/bin/bash;sha256=0179c7b15fb3df857608ef745daa17077523ffc42b7755ccc725ad7a712698a2",
+        "composer": "MISSING",
+        "locked:eslint": "9.39.5",
+        "locked:typescript": "5.9.3",
+        "node": "path=/data/data/com.termux/files/usr/bin/node;sha256=d682000d9f5d887ec66de1ed68d9616c7a9d064bca9ae9d8c46725a00912cbc6",
+        "npm": "path=/data/data/com.termux/files/usr/lib/node_modules/npm/bin/npm-cli.js;sha256=8e5f6f3429f8cdbe693cdc29904e9d5a7b127a494bd15c804bd54c7403bfcbe7",
+        "php": "path=/data/data/com.termux/files/usr/bin/php;sha256=0d7dad516768df79137c8921d9a63c77faa7df1d89c36240aa116a346ae9ad4d",
+        "python3": "path=/data/data/com.termux/files/usr/bin/python3.14;sha256=4f8d78ede7fc26e96e99342dd83ce42d32c9b4d0806bc9a99ff7151396269b25",
+        "python_runtime": "3.14.6"
+      },
+      "worker_min_memavailable_kib": 854672,
+      "worker_min_swapfree_kib": 113960,
+      "worker_peak_postgres_rss_kib": 0,
+      "worker_peak_rss_kib": 68304
+    },
+    "source_provenance_validator": {
+      "assertion_count": null,
+      "command": [
+        "/data/data/com.termux/files/usr/bin/python3",
+        "api/scripts/validate-batch041-provenance.py"
+      ],
+      "command_fingerprint_sha256": "1003096d56f302f5ff6708210347b7726d85d69197342f7a23cd6e238d97a4dc",
+      "cwd": "/data/data/com.termux/files/home/Biyahe",
+      "ended_at": "2026-10-10T04:43:05Z",
+      "executed": true,
+      "exit_code": 0,
+      "failure_count": 0,
+      "fingerprint_environment": {
+        "LANG": "en_US.UTF-8",
+        "LC_ALL": "C.UTF-8",
+        "NODE_OPTIONS": "",
+        "PATH": "/data/data/com.termux/files/home/.codex/tmp/arg0/codex-arg0MWU38W:/data/data/com.termux/files/home/.codex/tmp/arg0/codex-arg0hewtZJ:/data/data/com.termux/files/usr/bin",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "TZ": ""
+      },
+      "guard_environment": {
+        "PYTHONDONTWRITEBYTECODE": "1"
+      },
+      "historical_only": false,
+      "input_files": [
+        {
+          "path": "api/scripts/evidence_provenance.py",
+          "sha256": "e17d63dda770595880842a5e93a96e87020cae71ba3384f76b854e10dc9ef46d"
+        },
+        {
+          "path": "api/scripts/validate-batch041-provenance.py",
+          "sha256": "b31085fa0c2c190d48c2b1dc1e0cd72b9c4210efc4843fbc346361cfdd3ac6de"
+        },
+        {
+          "path": "docs/reports/batch041-evidence-provenance.json",
+          "sha256": "882fd1ae2c7ab8f2e1edab87c9122911f62c4568513bbe6c8875263958dc1bb6"
+        }
+      ],
+      "memavailable_floor_kib": 524288,
+      "output_path": "evidence/source_provenance_validator.stdout.txt",
+      "output_sha256": "f34abe4053f2b55655260063cc2776bdcb015540af26b170bc66c74577804d2e",
+      "reported_check_markers": 1,
+      "resource_guard": "NOT_REQUIRED",
+      "resource_log": null,
+      "resource_log_sha256": null,
+      "run_directory": "/data/data/com.termux/files/home/.cache/biyahe/batch042/portable-verification/20261010T044304Z-15419",
+      "run_source_revision": "049cf77225b522fe272baa6166400c5262b59f52",
+      "started_at": "2026-10-10T04:43:04Z",
+      "status": "VERIFIED",
+      "swapfree_floor_kib": 131072,
+      "test_count": null,
+      "tool_versions": {
+        "/data/data/com.termux/files/usr/bin/python3": "path=/data/data/com.termux/files/usr/bin/python3.14;sha256=4f8d78ede7fc26e96e99342dd83ce42d32c9b4d0806bc9a99ff7151396269b25",
+        "bash": "path=/data/data/com.termux/files/usr/bin/bash;sha256=0179c7b15fb3df857608ef745daa17077523ffc42b7755ccc725ad7a712698a2",
+        "composer": "MISSING",
+        "node": "path=/data/data/com.termux/files/usr/bin/node;sha256=d682000d9f5d887ec66de1ed68d9616c7a9d064bca9ae9d8c46725a00912cbc6",
+        "npm": "path=/data/data/com.termux/files/usr/lib/node_modules/npm/bin/npm-cli.js;sha256=8e5f6f3429f8cdbe693cdc29904e9d5a7b127a494bd15c804bd54c7403bfcbe7",
+        "php": "path=/data/data/com.termux/files/usr/bin/php;sha256=0d7dad516768df79137c8921d9a63c77faa7df1d89c36240aa116a346ae9ad4d",
+        "python3": "path=/data/data/com.termux/files/usr/bin/python3.14;sha256=4f8d78ede7fc26e96e99342dd83ce42d32c9b4d0806bc9a99ff7151396269b25",
+        "python_runtime": "3.14.6"
+      },
+      "worker_min_memavailable_kib": null,
+      "worker_min_swapfree_kib": null,
+      "worker_peak_postgres_rss_kib": null,
+      "worker_peak_rss_kib": null
+    },
+    "static_evidence_smoke": {
+      "assertion_count": null,
+      "command": [
+        "/data/data/com.termux/files/usr/bin/python3",
+        "api/scripts/test_offline_evidence_smoke.py"
+      ],
+      "command_fingerprint_sha256": "457962f78157a03ceec8663b8379c85b7861c3740e70c608d697acedbcc05045",
+      "cwd": "/data/data/com.termux/files/home/Biyahe",
+      "ended_at": "2026-10-10T04:43:08Z",
+      "executed": true,
+      "exit_code": 0,
+      "failure_count": 0,
+      "fingerprint_environment": {
+        "LANG": "en_US.UTF-8",
+        "LC_ALL": "C.UTF-8",
+        "NODE_OPTIONS": "",
+        "PATH": "/data/data/com.termux/files/home/.codex/tmp/arg0/codex-arg0MWU38W:/data/data/com.termux/files/home/.codex/tmp/arg0/codex-arg0hewtZJ:/data/data/com.termux/files/usr/bin",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "TZ": ""
+      },
+      "guard_environment": {
+        "PYTHONDONTWRITEBYTECODE": "1"
+      },
+      "historical_only": false,
+      "input_files": [
+        {
+          "path": "api/scripts/offline-evidence-smoke.py",
+          "sha256": "01450f3bd284a6f965784475d8de025f0a4f42306e561a06b329f3b1251dd9a3"
+        },
+        {
+          "path": "api/scripts/test_offline_evidence_smoke.py",
+          "sha256": "893cf0881b8b415ac21b606dd1a7c0b6d6f529f24dbaed97dd092577352d2681"
+        },
+        {
+          "path": "docs/reports/batch041-evidence-provenance.json",
+          "sha256": "882fd1ae2c7ab8f2e1edab87c9122911f62c4568513bbe6c8875263958dc1bb6"
+        }
+      ],
+      "memavailable_floor_kib": 524288,
+      "output_path": "evidence/static_evidence_smoke.stdout.txt",
+      "output_sha256": "daffdff478715fe5d23d896584f5078ceb0151c29b81d7521b6b5099eebd3ade",
+      "reported_check_markers": 0,
+      "resource_guard": "NOT_REQUIRED",
+      "resource_log": null,
+      "resource_log_sha256": null,
+      "run_directory": "/data/data/com.termux/files/home/.cache/biyahe/batch042/portable-verification/20261010T044304Z-15419",
+      "run_source_revision": "049cf77225b522fe272baa6166400c5262b59f52",
+      "started_at": "2026-10-10T04:43:07Z",
+      "status": "VERIFIED",
+      "swapfree_floor_kib": 131072,
+      "test_count": 2,
+      "tool_versions": {
+        "/data/data/com.termux/files/usr/bin/python3": "path=/data/data/com.termux/files/usr/bin/python3.14;sha256=4f8d78ede7fc26e96e99342dd83ce42d32c9b4d0806bc9a99ff7151396269b25",
+        "bash": "path=/data/data/com.termux/files/usr/bin/bash;sha256=0179c7b15fb3df857608ef745daa17077523ffc42b7755ccc725ad7a712698a2",
+        "composer": "MISSING",
+        "node": "path=/data/data/com.termux/files/usr/bin/node;sha256=d682000d9f5d887ec66de1ed68d9616c7a9d064bca9ae9d8c46725a00912cbc6",
+        "npm": "path=/data/data/com.termux/files/usr/lib/node_modules/npm/bin/npm-cli.js;sha256=8e5f6f3429f8cdbe693cdc29904e9d5a7b127a494bd15c804bd54c7403bfcbe7",
+        "php": "path=/data/data/com.termux/files/usr/bin/php;sha256=0d7dad516768df79137c8921d9a63c77faa7df1d89c36240aa116a346ae9ad4d",
+        "python3": "path=/data/data/com.termux/files/usr/bin/python3.14;sha256=4f8d78ede7fc26e96e99342dd83ce42d32c9b4d0806bc9a99ff7151396269b25",
+        "python_runtime": "3.14.6"
+      },
+      "worker_min_memavailable_kib": null,
+      "worker_min_swapfree_kib": null,
+      "worker_peak_postgres_rss_kib": null,
+      "worker_peak_rss_kib": null
+    },
+    "typescript": {
+      "assertion_count": null,
+      "command": [
+        "/data/data/com.termux/files/usr/bin/python3",
+        "-c",
+        "import subprocess,sys; cs=[['npm','run','typecheck'],['npm','run','lint','--','src/app/page.tsx','src/components/CommuteCard.tsx','src/components/RideMode.tsx','src/lib/offlineWalkingPreviewState.ts','src/lib/requestGate.ts','src/lib/savedJourneys.ts','src/lib/rideMode.ts','src/lib/canIRidePresentation.ts']]; failed=0\nfor c in cs:\n p=subprocess.run(c); print('CHILD_COMMAND='+repr(c)+' EXIT='+str(p.returncode), flush=True); failed |= p.returncode != 0\nsys.exit(1 if failed else 0)"
+      ],
+      "command_fingerprint_sha256": "d90e8e9a8ed5449e27c93b6f29c778b618c34b5c14ffbe0e62190064c4b91c3a",
+      "cwd": "/data/data/com.termux/files/home/Biyahe/web",
+      "ended_at": "2026-10-10T02:36:45Z",
+      "executed": false,
+      "exit_code": 6,
+      "failure_count": null,
+      "fingerprint_environment": {
+        "BIYAHE_RESOURCE_BREACH_SAMPLES": "1",
+        "BIYAHE_RESOURCE_MAX_DURATION_SECONDS": "1800",
+        "BIYAHE_RESOURCE_MAX_PROCESS_TREE_RSS_KB": "262144",
+        "BIYAHE_RESOURCE_MIN_MEMAVAILABLE_KB": "524288",
+        "BIYAHE_RESOURCE_MIN_SWAPFREE_KB": "131072",
+        "BIYAHE_RESOURCE_POLL_SECONDS": "1",
+        "BIYAHE_RESOURCE_PREFLIGHT_INTERVAL_SECONDS": "5",
+        "BIYAHE_RESOURCE_PREFLIGHT_SAMPLES": "5",
+        "LANG": "en_US.UTF-8",
+        "LC_ALL": "C.UTF-8",
+        "NODE_OPTIONS": "",
+        "PATH": "/data/data/com.termux/files/home/.codex/tmp/arg0/codex-arg0MWU38W:/data/data/com.termux/files/home/.codex/tmp/arg0/codex-arg0hewtZJ:/data/data/com.termux/files/usr/bin",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "TZ": ""
+      },
+      "guard_environment": {
+        "BIYAHE_RESOURCE_BREACH_SAMPLES": "1",
+        "BIYAHE_RESOURCE_MAX_DURATION_SECONDS": "1800",
+        "BIYAHE_RESOURCE_MAX_PROCESS_TREE_RSS_KB": "262144",
+        "BIYAHE_RESOURCE_MIN_MEMAVAILABLE_KB": "524288",
+        "BIYAHE_RESOURCE_MIN_SWAPFREE_KB": "131072",
+        "BIYAHE_RESOURCE_POLL_SECONDS": "1",
+        "BIYAHE_RESOURCE_PREFLIGHT_INTERVAL_SECONDS": "5",
+        "BIYAHE_RESOURCE_PREFLIGHT_SAMPLES": "5",
+        "PYTHONDONTWRITEBYTECODE": "1"
+      },
+      "historical_only": false,
+      "input_files": [
+        {
+          "path": "web/eslint.config.mjs",
+          "sha256": "870f1adccecf3051cbcd9fd307cef51d7633cf510979c181a81f4b1797273493"
+        },
+        {
+          "path": "web/package-lock.json",
+          "sha256": "c322173fac697aeaa86bacbae4adcf8d9d29a1d931cebca0fb8d14fff83a5df6"
+        },
+        {
+          "path": "web/package.json",
+          "sha256": "d982e7e18eb53cd945b525a08496ccbaaba594ead7c8dfbe60fa12430f2077de"
+        },
+        {
+          "path": "web/src/app/page.tsx",
+          "sha256": "b3c62dd3ca6d5a8072f9e50762d8c24c90df1d7a014e1e10a0e334d6e18bbc4a"
+        },
+        {
+          "path": "web/src/components/CommuteCard.tsx",
+          "sha256": "8c08cf4fddeba340e541288722deda32acf488304b537ec85668696faa11a612"
+        },
+        {
+          "path": "web/src/components/RideMode.tsx",
+          "sha256": "ca9635ce3ae39ddb139c0c1ed54078865a45f218505b698d342463628fc802d5"
+        },
+        {
+          "path": "web/src/lib/canIRidePresentation.ts",
+          "sha256": "0ff5efc42be4c679d49652d6811920f397108a2b51a68df863de63046694d3d8"
+        },
+        {
+          "path": "web/src/lib/offlineWalkingPreviewState.ts",
+          "sha256": "ffdd52885fbcf4fb93c6392b902e6b17f38ea12e2c9d235ac624b70af6a0b168"
+        },
+        {
+          "path": "web/src/lib/requestGate.ts",
+          "sha256": "ec30066db794892358ec5461e79e1a6cc7f07e548c4f6c6c4b69b0c0fa27d926"
+        },
+        {
+          "path": "web/src/lib/rideMode.ts",
+          "sha256": "6f94b8547a0d638fb6951b88c1dd4d720288a56609a58341623fbef4a63bef4d"
+        },
+        {
+          "path": "web/src/lib/savedJourneys.ts",
+          "sha256": "82533b4ad35a5101cd70ec740b68f8d73c864c04833fdad9f8a400713e0a190c"
+        },
+        {
+          "path": "web/tsconfig.json",
+          "sha256": "5c51df4c59f4510d8c7dadf07a5c32132228826a3b331da5e286207b4df7ef9c"
+        }
+      ],
+      "memavailable_floor_kib": 524288,
+      "output_path": "evidence/typescript.stdout.txt",
+      "output_sha256": "ef288c5dc455f3e232402af810d9f4bd94524c15934fc4a017ae016be46d9865",
+      "reported_check_markers": 0,
+      "resource_guard": "BLOCKED",
+      "resource_log": "evidence/typescript.resource.log",
+      "resource_log_sha256": "ef288c5dc455f3e232402af810d9f4bd94524c15934fc4a017ae016be46d9865",
+      "run_directory": "/data/data/com.termux/files/home/.cache/biyahe/batch042/portable-verification/20261010T021146Z-2203",
+      "run_source_revision": "39417b17ac9447dd2d1866682ed57e37c8e7fc0b",
+      "started_at": "2026-10-10T02:30:50Z",
+      "status": "BLOCKED_RESOURCE",
+      "swapfree_floor_kib": 131072,
+      "test_count": null,
+      "tool_versions": {
+        "/data/data/com.termux/files/usr/bin/python3": "path=/data/data/com.termux/files/usr/bin/python3.14;sha256=4f8d78ede7fc26e96e99342dd83ce42d32c9b4d0806bc9a99ff7151396269b25",
+        "bash": "path=/data/data/com.termux/files/usr/bin/bash;sha256=0179c7b15fb3df857608ef745daa17077523ffc42b7755ccc725ad7a712698a2",
+        "composer": "MISSING",
+        "locked:eslint": "9.39.5",
+        "locked:typescript": "5.9.3",
+        "node": "path=/data/data/com.termux/files/usr/bin/node;sha256=d682000d9f5d887ec66de1ed68d9616c7a9d064bca9ae9d8c46725a00912cbc6",
+        "npm": "path=/data/data/com.termux/files/usr/lib/node_modules/npm/bin/npm-cli.js;sha256=8e5f6f3429f8cdbe693cdc29904e9d5a7b127a494bd15c804bd54c7403bfcbe7",
+        "php": "path=/data/data/com.termux/files/usr/bin/php;sha256=0d7dad516768df79137c8921d9a63c77faa7df1d89c36240aa116a346ae9ad4d",
+        "python3": "path=/data/data/com.termux/files/usr/bin/python3.14;sha256=4f8d78ede7fc26e96e99342dd83ce42d32c9b4d0806bc9a99ff7151396269b25",
+        "python_runtime": "3.14.6"
+      },
+      "worker_min_memavailable_kib": 771592,
+      "worker_min_swapfree_kib": 131100,
+      "worker_peak_postgres_rss_kib": 0,
+      "worker_peak_rss_kib": 291600
+    },
+    "ux_contract": {
+      "assertion_count": null,
+      "command": [
+        "node",
+        "scripts/ux-contract-harness.mjs"
+      ],
+      "command_fingerprint_sha256": "c5cea441b23b271d4a3f13d3e897590e5a4c082f920c7dd5118850190f4bd0b7",
+      "cwd": "/data/data/com.termux/files/home/Biyahe/web",
+      "ended_at": "2026-10-10T04:32:13Z",
+      "executed": false,
+      "exit_code": 4,
+      "failure_count": null,
+      "fingerprint_environment": {
+        "BIYAHE_RESOURCE_BREACH_SAMPLES": "1",
+        "BIYAHE_RESOURCE_MAX_DURATION_SECONDS": "1800",
+        "BIYAHE_RESOURCE_MAX_PROCESS_TREE_RSS_KB": "262144",
+        "BIYAHE_RESOURCE_MIN_MEMAVAILABLE_KB": "524288",
+        "BIYAHE_RESOURCE_MIN_SWAPFREE_KB": "131072",
+        "BIYAHE_RESOURCE_POLL_SECONDS": "1",
+        "BIYAHE_RESOURCE_PREFLIGHT_INTERVAL_SECONDS": "5",
+        "BIYAHE_RESOURCE_PREFLIGHT_SAMPLES": "5",
+        "LANG": "en_US.UTF-8",
+        "LC_ALL": "C.UTF-8",
+        "NODE_OPTIONS": "",
+        "PATH": "/data/data/com.termux/files/home/.codex/tmp/arg0/codex-arg0MWU38W:/data/data/com.termux/files/home/.codex/tmp/arg0/codex-arg0hewtZJ:/data/data/com.termux/files/usr/bin",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "TZ": ""
+      },
+      "guard_environment": {
+        "BIYAHE_RESOURCE_BREACH_SAMPLES": "1",
+        "BIYAHE_RESOURCE_MAX_DURATION_SECONDS": "1800",
+        "BIYAHE_RESOURCE_MAX_PROCESS_TREE_RSS_KB": "262144",
+        "BIYAHE_RESOURCE_MIN_MEMAVAILABLE_KB": "524288",
+        "BIYAHE_RESOURCE_MIN_SWAPFREE_KB": "131072",
+        "BIYAHE_RESOURCE_POLL_SECONDS": "1",
+        "BIYAHE_RESOURCE_PREFLIGHT_INTERVAL_SECONDS": "5",
+        "BIYAHE_RESOURCE_PREFLIGHT_SAMPLES": "5",
+        "PYTHONDONTWRITEBYTECODE": "1"
+      },
+      "historical_only": false,
+      "input_files": [
+        {
+          "path": "api/app/Http/Controllers/Api/DevelopmentOfflineWalkingPreviewController.php",
+          "sha256": "85fda4c65d9469f11a01283cce3beaf6feabc9ad52df1f13df1065d17bbd423b"
+        },
+        {
+          "path": "api/app/Services/Routing/OfflineJourneyWalkingPreview.php",
+          "sha256": "06f5d4e9e49b1f67649bee7c66271462c4cbf94b3774e2691cd7eade8f91d226"
+        },
+        {
+          "path": "api/routes/api.php",
+          "sha256": "49615c13ce22488e5b752bd29b4980cfbaae04b958434e3db7fd9609c3d143f2"
+        },
+        {
+          "path": "web/public/manifest.webmanifest",
+          "sha256": "f0b0210e7b2bef98c92fcfb0019e45c2dbe542523ed1a875a6ac8948836f7d9c"
+        },
+        {
+          "path": "web/public/sw.js",
+          "sha256": "3faa75a400aa5455ad548f2dd129da7357ee5c275dcbd30c36c678f1d0844838"
+        },
+        {
+          "path": "web/scripts/can-i-ride-harness.mjs",
+          "sha256": "c0845b8d37cc25661bcde0010c8c4e17f39c192814171bf46384ff2dfc0e42c5"
+        },
+        {
+          "path": "web/scripts/commute-card-harness.mjs",
+          "sha256": "73268894b0f0a9a398459a64727a8d8b82854d2044dc8b7c44e6af2a6660b756"
+        },
+        {
+          "path": "web/scripts/nearby-harness.mjs",
+          "sha256": "1dfead1c7b55e5507a176be8dff1400db33a03ffef0fb9047fb6a45d4fd55f41"
+        },
+        {
+          "path": "web/scripts/offline-walking-preview-harness.mjs",
+          "sha256": "67ccf5bc9999272e7fe5c403d321ec1e41ee8d5985cba38d2d7d01f7dc9dda9f"
+        },
+        {
+          "path": "web/scripts/offline-walking-preview-state-harness.mjs",
+          "sha256": "d35334c68c94f2d7b5b3471174bf4758f01ab73854db5cf828960209f963c89a"
+        },
+        {
+          "path": "web/scripts/place-search-harness.mjs",
+          "sha256": "7b3a4eee80f9ff6e083480d027a7ebc2d0914191e608999832f7a295d2191268"
+        },
+        {
+          "path": "web/scripts/request-gate-harness.mjs",
+          "sha256": "43324c506f9be07ff3f73bd1ef31976cfb1ea2ce030624da0c35f9a37c99c1af"
+        },
+        {
+          "path": "web/scripts/search-keyboard-harness.mjs",
+          "sha256": "547a421bc7f689cf579244925e605a25e23be56a26c9e1ccff03f513d85ea377"
+        },
+        {
+          "path": "web/scripts/ux-contract-harness.mjs",
+          "sha256": "59093894fb8dc9c9f0fe5b6f883d09e9b56c65ea9870685138ad150e19405e3d"
+        },
+        {
+          "path": "web/scripts/validation-ledger-harness.mjs",
+          "sha256": "9f56a9b0426b8439447617ca418d87ccfba51cf27a6be81f4720df1633e5566b"
+        },
+        {
+          "path": "web/scripts/validation-ledger.mjs",
+          "sha256": "62124ac048bb7dcf760b72ce59ea977baded3869aea84bfe93e3aa9e7b73c712"
+        },
+        {
+          "path": "web/src/app/globals.css",
+          "sha256": "6c0c4b0461774ca080d78a7a4878b7aef9668578498cf46ac88a11cf62f510b1"
+        },
+        {
+          "path": "web/src/app/page.module.css",
+          "sha256": "3f68c7fc6f5cf59c033063682ab3b7f3562b9b50f040604f0dd2691edb1cb6dc"
+        },
+        {
+          "path": "web/src/app/page.tsx",
+          "sha256": "b3c62dd3ca6d5a8072f9e50762d8c24c90df1d7a014e1e10a0e334d6e18bbc4a"
+        },
+        {
+          "path": "web/src/components/BiyahePulse.tsx",
+          "sha256": "97cc62cbf99fb5fdb93765969a7d04ffd07e9510f3ed4ec4662f7294ed724cfc"
+        },
+        {
+          "path": "web/src/components/CommuteCard.tsx",
+          "sha256": "8c08cf4fddeba340e541288722deda32acf488304b537ec85668696faa11a612"
+        },
+        {
+          "path": "web/src/components/FieldMode.tsx",
+          "sha256": "8a6ab3e175f753ec3df6ff23db62f1e97189c440ed33e81be74fceffdaf714a2"
+        },
+        {
+          "path": "web/src/components/MapView.tsx",
+          "sha256": "5816743ec6ef76d1ddf140b0fbda8b31398e81afccde0b91f7a5921fb1c88df0"
+        },
+        {
+          "path": "web/src/components/NearbyRoutes.tsx",
+          "sha256": "f627565c36d50ee6181dae6797fbcaf4d1727c4d764d43eae854c1d627942494"
+        },
+        {
+          "path": "web/src/components/PersonalCommuteTools.tsx",
+          "sha256": "7689086e4fe199f60bd9899abf11ddef830a9928c51014b8b66d7c690fd9cc96"
+        },
+        {
+          "path": "web/src/components/RideMode.tsx",
+          "sha256": "ca9635ce3ae39ddb139c0c1ed54078865a45f218505b698d342463628fc802d5"
+        },
+        {
+          "path": "web/src/lib/api.ts",
+          "sha256": "220c10e11551ffdd7213c9eeb16b06fc300d44ae0f868c426742d233b6450fe4"
+        },
+        {
+          "path": "web/src/lib/canIRidePresentation.ts",
+          "sha256": "0ff5efc42be4c679d49652d6811920f397108a2b51a68df863de63046694d3d8"
+        },
+        {
+          "path": "web/src/lib/commuteInstructions.ts",
+          "sha256": "0ee449fd4f131e134e58b778e1bcf33d40ff070955005b7f61f6855010c4facf"
+        },
+        {
+          "path": "web/src/lib/journeyExplanation.ts",
+          "sha256": "95cea1a05da1b64a6ad6570684b8f68739cca5ada35548cf9e3fd13011677849"
+        },
+        {
+          "path": "web/src/lib/journeyMapPresentation.ts",
+          "sha256": "d4c82f0676aadecfe98b07a729220cc4a0ae44a9744db38ad99b7c55696c960c"
+        },
+        {
+          "path": "web/src/lib/latestPlaceSearch.ts",
+          "sha256": "339747fef19b777d0d3e7d8ed58fe981cfec73e06a0b97acbbbc48ad836684c0"
+        },
+        {
+          "path": "web/src/lib/nearbyLookup.ts",
+          "sha256": "0593fe531bc16e3bbbc1ec4c09237282e1bde387d8c0a5577a81ad6ada7cfdb6"
+        },
+        {
+          "path": "web/src/lib/offlineWalkingPreviewState.ts",
+          "sha256": "ffdd52885fbcf4fb93c6392b902e6b17f38ea12e2c9d235ac624b70af6a0b168"
+        },
+        {
+          "path": "web/src/lib/requestGate.ts",
+          "sha256": "ec30066db794892358ec5461e79e1a6cc7f07e548c4f6c6c4b69b0c0fa27d926"
+        },
+        {
+          "path": "web/src/lib/rideMode.ts",
+          "sha256": "18babd485317b02a7c59c830d3316d52c1b0c9aae3e86e4475b99e258d0dbcc3"
+        },
+        {
+          "path": "web/src/lib/savedJourneys.ts",
+          "sha256": "82533b4ad35a5101cd70ec740b68f8d73c864c04833fdad9f8a400713e0a190c"
+        },
+        {
+          "path": "web/src/lib/searchKeyboard.ts",
+          "sha256": "695f812113a3862ecd660399b56e995de35155900e3f4b9450b330962d6126d8"
+        }
+      ],
+      "memavailable_floor_kib": 524288,
+      "output_path": "evidence/ux_contract.stdout.txt",
+      "output_sha256": "8ff57a33c26e7749255b4432c64f09f1c70eccf2f2ea7bf1d218b008c32f3d12",
+      "reported_check_markers": 0,
+      "resource_guard": "BLOCKED",
+      "resource_log": "evidence/ux_contract.resource.log",
+      "resource_log_sha256": "8ff57a33c26e7749255b4432c64f09f1c70eccf2f2ea7bf1d218b008c32f3d12",
+      "run_directory": "/data/data/com.termux/files/home/.cache/biyahe/batch042/portable-verification/20261010T043149Z-10673",
+      "run_source_revision": "1015874d95e3d6dc93241cbe3a7ad5645e62dcd5",
+      "started_at": "2026-10-10T04:31:49Z",
+      "status": "BLOCKED_RESOURCE",
+      "swapfree_floor_kib": 131072,
+      "test_count": null,
+      "tool_versions": {
+        "bash": "path=/data/data/com.termux/files/usr/bin/bash;sha256=0179c7b15fb3df857608ef745daa17077523ffc42b7755ccc725ad7a712698a2",
+        "composer": "MISSING",
+        "locked:eslint": "9.39.5",
+        "locked:typescript": "5.9.3",
+        "node": "path=/data/data/com.termux/files/usr/bin/node;sha256=d682000d9f5d887ec66de1ed68d9616c7a9d064bca9ae9d8c46725a00912cbc6",
+        "npm": "path=/data/data/com.termux/files/usr/lib/node_modules/npm/bin/npm-cli.js;sha256=8e5f6f3429f8cdbe693cdc29904e9d5a7b127a494bd15c804bd54c7403bfcbe7",
+        "php": "path=/data/data/com.termux/files/usr/bin/php;sha256=0d7dad516768df79137c8921d9a63c77faa7df1d89c36240aa116a346ae9ad4d",
+        "python3": "path=/data/data/com.termux/files/usr/bin/python3.14;sha256=4f8d78ede7fc26e96e99342dd83ce42d32c9b4d0806bc9a99ff7151396269b25",
+        "python_runtime": "3.14.6"
+      },
+      "worker_min_memavailable_kib": 746816,
+      "worker_min_swapfree_kib": 129320,
+      "worker_peak_postgres_rss_kib": null,
+      "worker_peak_rss_kib": null
+    },
+    "validation_ledger": {
+      "child_command": [
+        "node",
+        "scripts/validation-ledger-harness.mjs"
+      ],
+      "child_result_recorded": true,
+      "command": [
+        "node",
+        "scripts/validation-ledger-harness.mjs"
+      ],
+      "command_fingerprint_sha256": "8ce52898e7d7a75687edd05b0b0f92145a6032c4f0be224581f15b56d4fb6a7b",
+      "cwd": "/data/data/com.termux/files/home/Biyahe/web",
+      "ended_at": "2026-10-10T02:30:40Z",
+      "executed": true,
+      "execution_observed_status": "PASS",
+      "exit_code": 0,
+      "fingerprint_environment": {
+        "BIYAHE_RESOURCE_BREACH_SAMPLES": "1",
+        "BIYAHE_RESOURCE_MAX_DURATION_SECONDS": "1800",
+        "BIYAHE_RESOURCE_MAX_PROCESS_TREE_RSS_KB": "262144",
+        "BIYAHE_RESOURCE_MIN_MEMAVAILABLE_KB": "524288",
+        "BIYAHE_RESOURCE_MIN_SWAPFREE_KB": "131072",
+        "BIYAHE_RESOURCE_POLL_SECONDS": "1",
+        "BIYAHE_RESOURCE_PREFLIGHT_INTERVAL_SECONDS": "5",
+        "BIYAHE_RESOURCE_PREFLIGHT_SAMPLES": "5",
+        "LANG": "en_US.UTF-8",
+        "LC_ALL": "C.UTF-8",
+        "NODE_OPTIONS": "",
+        "PATH": "/data/data/com.termux/files/home/.codex/tmp/arg0/codex-arg0MWU38W:/data/data/com.termux/files/home/.codex/tmp/arg0/codex-arg0hewtZJ:/data/data/com.termux/files/usr/bin",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "TZ": ""
+      },
+      "guard_environment": {
+        "BIYAHE_RESOURCE_BREACH_SAMPLES": "1",
+        "BIYAHE_RESOURCE_MAX_DURATION_SECONDS": "1800",
+        "BIYAHE_RESOURCE_MAX_PROCESS_TREE_RSS_KB": "262144",
+        "BIYAHE_RESOURCE_MIN_MEMAVAILABLE_KB": "524288",
+        "BIYAHE_RESOURCE_MIN_SWAPFREE_KB": "131072",
+        "BIYAHE_RESOURCE_POLL_SECONDS": "1",
+        "BIYAHE_RESOURCE_PREFLIGHT_INTERVAL_SECONDS": "5",
+        "BIYAHE_RESOURCE_PREFLIGHT_SAMPLES": "5",
+        "PYTHONDONTWRITEBYTECODE": "1"
+      },
+      "historical_only": false,
+      "input_files": [
+        {
+          "path": "web/scripts/validation-ledger-harness.mjs",
+          "sha256": "9f56a9b0426b8439447617ca418d87ccfba51cf27a6be81f4720df1633e5566b"
+        },
+        {
+          "path": "web/scripts/validation-ledger.mjs",
+          "sha256": "62124ac048bb7dcf760b72ce59ea977baded3869aea84bfe93e3aa9e7b73c712"
+        }
+      ],
+      "memavailable_floor_kib": 524288,
+      "output_path": "evidence/validation_ledger.stdout.txt",
+      "output_sha256": "ba846d12cdfe4ceeae3036b50e8ccef6948412f5c54600aeaf9fdd58a627dd28",
+      "parent_exit_code": 1,
+      "parent_status": "FAIL",
+      "resource_guard": "PASS",
+      "resource_log": "evidence/validation_ledger.resource.log",
+      "resource_log_sha256": "ba846d12cdfe4ceeae3036b50e8ccef6948412f5c54600aeaf9fdd58a627dd28",
+      "run_directory": "/data/data/com.termux/files/home/.cache/biyahe/batch042/portable-verification/20261010T021146Z-2203",
+      "run_source_revision": "39417b17ac9447dd2d1866682ed57e37c8e7fc0b",
+      "started_at": "2026-10-10T02:27:25Z",
+      "status": "VERIFIED",
+      "swapfree_floor_kib": 131072,
+      "tool_versions": {
+        "bash": "path=/data/data/com.termux/files/usr/bin/bash;sha256=0179c7b15fb3df857608ef745daa17077523ffc42b7755ccc725ad7a712698a2",
+        "composer": "MISSING",
+        "locked:eslint": "9.39.5",
+        "locked:typescript": "5.9.3",
+        "node": "path=/data/data/com.termux/files/usr/bin/node;sha256=d682000d9f5d887ec66de1ed68d9616c7a9d064bca9ae9d8c46725a00912cbc6",
+        "npm": "path=/data/data/com.termux/files/usr/lib/node_modules/npm/bin/npm-cli.js;sha256=8e5f6f3429f8cdbe693cdc29904e9d5a7b127a494bd15c804bd54c7403bfcbe7",
+        "php": "path=/data/data/com.termux/files/usr/bin/php;sha256=0d7dad516768df79137c8921d9a63c77faa7df1d89c36240aa116a346ae9ad4d",
+        "python3": "path=/data/data/com.termux/files/usr/bin/python3.14;sha256=4f8d78ede7fc26e96e99342dd83ce42d32c9b4d0806bc9a99ff7151396269b25",
+        "python_runtime": "3.14.6"
+      },
+      "worker_min_memavailable_kib": 933040,
+      "worker_min_swapfree_kib": 253532,
+      "worker_peak_postgres_rss_kib": 0,
+      "worker_peak_rss_kib": 67812
+    }
+  }
+}

@@ -1,0 +1,42 @@
+{
+  "name": "biyahe-web",
+  "version": "0.1.0",
+  "private": true,
+  "allowScripts": [
+    "sharp"
+  ],
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build --webpack",
+    "typecheck": "tsc --noEmit",
+    "start": "next start",
+    "lint": "eslint",
+    "test:ride-mode": "node --experimental-strip-types scripts/ride-mode-harness.mjs",
+    "test:commute-cards": "node --experimental-strip-types scripts/commute-card-harness.mjs",
+    "test:offline-walking-preview": "node --experimental-strip-types scripts/offline-walking-preview-harness.mjs",
+    "test:personal-commute": "node --experimental-strip-types scripts/personal-commute-harness.mjs",
+    "test:disruptions": "node --experimental-strip-types scripts/disruption-harness.mjs",
+    "test:pulse-replan": "node --experimental-strip-types scripts/pulse-replan-harness.mjs",
+    "test:field-mode": "node --experimental-strip-types scripts/field-mode-harness.mjs",
+    "test:request-gate": "node --experimental-strip-types scripts/request-gate-harness.mjs",
+    "test:can-i-ride": "node --experimental-strip-types scripts/can-i-ride-harness.mjs",
+    "test:place-search": "node --experimental-strip-types scripts/place-search-harness.mjs",
+    "test:nearby": "node --experimental-strip-types scripts/nearby-harness.mjs",
+    "test:search-keyboard": "node --experimental-strip-types scripts/search-keyboard-harness.mjs",
+    "test:ux": "node scripts/ux-contract-harness.mjs"
+  },
+  "dependencies": {
+    "maplibre-gl": "^6.12.0",
+    "next": "16.3.8",
+    "react": "19.2.8",
+    "react-dom": "19.2.8"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.3.8",
+    "typescript": "^5"
+  }
+}

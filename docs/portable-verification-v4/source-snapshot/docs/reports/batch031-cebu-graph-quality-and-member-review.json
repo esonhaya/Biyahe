@@ -1,0 +1,1609 @@
+{
+    "format": "biyahe-cebu-graph-quality-and-member-review-v1",
+    "generated_by": {
+        "restriction_policy": "osm-pedestrian-turn-restrictions-v1",
+        "quality_audit": "OfflinePedestrianGraphQualityAudit"
+    },
+    "source": {
+        "sha256": "787cac20ecc586b754b1a464643a040566d486457c6a37bc0b11ce683bc66d4d",
+        "snapshot": "2026-10-07T01:00:21+00:00",
+        "url": "https://download.openstreetmap.fr/extracts/asia/philippines/central_visayas.osm.pbf"
+    },
+    "graph": {
+        "sha256": "29d7aaf9c45a596f4065c44d13f983f4a7edeec5ac2ea41b718b1c52ca865bf8",
+        "content_fingerprint": "a0d9f1cb8289cf1f9bde3905d1ad8a57124ee41120153b4efc1f5b31e4c03ecd",
+        "schema": "biyahe-pedestrian-sqlite-v3",
+        "nodes": 76685,
+        "edges": 78225
+    },
+    "restriction_inventory": {
+        "audit_report_sha256": "14671f5cfed2c816dff7986b251d85acb2fae6e816670f9925b67b58cf3a7e6c",
+        "source_scan_sha256": "ba04117fcfeb9ec05c6833536987714edd27b224604795e50d0e30c919ff0ea6",
+        "source_relations": 648,
+        "stored_relations": 619,
+        "omitted_source_relations": 29,
+        "source_inventory_complete": true,
+        "source_classification_counts": {
+            "total_turn_restrictions": 648,
+            "vehicle_only": 648,
+            "pedestrian_applicable": 0,
+            "pedestrian_exempt": 0,
+            "ambiguous": 0,
+            "conditional": 33,
+            "via_node": 449,
+            "via_way": 166,
+            "malformed_or_complex_members": 4,
+            "unsupported_applicable": 0
+        },
+        "stored_counts": {
+            "total": 619,
+            "vehicle_only": 619,
+            "pedestrian_applicable": 0,
+            "pedestrian_exempt": 0,
+            "ambiguous": 0,
+            "conditional": 5,
+            "pedestrian_conditional": 0,
+            "via_node": 449,
+            "via_way": 166,
+            "mixed_via": 0,
+            "nested_complex": 0,
+            "malformed": 4,
+            "relations_with_missing_member_dependencies": 75,
+            "missing_member_dependencies": 75,
+            "unsupported_applicable": 0
+        },
+        "stored_inventory_fingerprint": "dce408136ea330ee7959ad5026893062fdaad2f9763a2019704cd7179925010d",
+        "unresolved_member_relations": [
+            {
+                "relation_id": 7750020,
+                "tags": {
+                    "restriction": "only_straight_on",
+                    "type": "restriction"
+                },
+                "mode_applicability": "vehicle_only",
+                "member_form": "via_node",
+                "missing_member_dependencies": [
+                    {
+                        "sequence_index": 1,
+                        "member_type": "node",
+                        "member_ref": 13474225151,
+                        "role": "via"
+                    }
+                ]
+            },
+            {
+                "relation_id": 8202530,
+                "tags": {
+                    "restriction": "no_left_turn",
+                    "type": "restriction"
+                },
+                "mode_applicability": "vehicle_only",
+                "member_form": "via_node",
+                "missing_member_dependencies": [
+                    {
+                        "sequence_index": 1,
+                        "member_type": "node",
+                        "member_ref": 2160523293,
+                        "role": "via"
+                    }
+                ]
+            },
+            {
+                "relation_id": 8202531,
+                "tags": {
+                    "restriction": "no_left_turn",
+                    "type": "restriction"
+                },
+                "mode_applicability": "vehicle_only",
+                "member_form": "via_node",
+                "missing_member_dependencies": [
+                    {
+                        "sequence_index": 1,
+                        "member_type": "node",
+                        "member_ref": 2160523293,
+                        "role": "via"
+                    }
+                ]
+            },
+            {
+                "relation_id": 8202722,
+                "tags": {
+                    "restriction": "no_left_turn",
+                    "type": "restriction"
+                },
+                "mode_applicability": "vehicle_only",
+                "member_form": "via_node",
+                "missing_member_dependencies": [
+                    {
+                        "sequence_index": 1,
+                        "member_type": "node",
+                        "member_ref": 2529829999,
+                        "role": "via"
+                    }
+                ]
+            },
+            {
+                "relation_id": 11182133,
+                "tags": {
+                    "restriction": "no_left_turn",
+                    "type": "restriction"
+                },
+                "mode_applicability": "vehicle_only",
+                "member_form": "via_node",
+                "missing_member_dependencies": [
+                    {
+                        "sequence_index": 1,
+                        "member_type": "node",
+                        "member_ref": 286197925,
+                        "role": "via"
+                    }
+                ]
+            },
+            {
+                "relation_id": 11182134,
+                "tags": {
+                    "restriction": "no_left_turn",
+                    "type": "restriction"
+                },
+                "mode_applicability": "vehicle_only",
+                "member_form": "via_node",
+                "missing_member_dependencies": [
+                    {
+                        "sequence_index": 1,
+                        "member_type": "node",
+                        "member_ref": 2411610007,
+                        "role": "via"
+                    }
+                ]
+            },
+            {
+                "relation_id": 11182135,
+                "tags": {
+                    "restriction": "no_left_turn",
+                    "type": "restriction"
+                },
+                "mode_applicability": "vehicle_only",
+                "member_form": "via_node",
+                "missing_member_dependencies": [
+                    {
+                        "sequence_index": 1,
+                        "member_type": "node",
+                        "member_ref": 2411610007,
+                        "role": "via"
+                    }
+                ]
+            },
+            {
+                "relation_id": 11704380,
+                "tags": {
+                    "restriction": "only_left_turn",
+                    "type": "restriction"
+                },
+                "mode_applicability": "vehicle_only",
+                "member_form": "via_node",
+                "missing_member_dependencies": [
+                    {
+                        "sequence_index": 1,
+                        "member_type": "node",
+                        "member_ref": 455781253,
+                        "role": "via"
+                    }
+                ]
+            },
+            {
+                "relation_id": 12902112,
+                "tags": {
+                    "restriction": "no_u_turn",
+                    "type": "restriction"
+                },
+                "mode_applicability": "vehicle_only",
+                "member_form": "via_node",
+                "missing_member_dependencies": [
+                    {
+                        "sequence_index": 1,
+                        "member_type": "node",
+                        "member_ref": 1155933094,
+                        "role": "via"
+                    }
+                ]
+            },
+            {
+                "relation_id": 12902185,
+                "tags": {
+                    "restriction": "no_u_turn",
+                    "type": "restriction"
+                },
+                "mode_applicability": "vehicle_only",
+                "member_form": "via_node",
+                "missing_member_dependencies": [
+                    {
+                        "sequence_index": 1,
+                        "member_type": "node",
+                        "member_ref": 1627854328,
+                        "role": "via"
+                    }
+                ]
+            },
+            {
+                "relation_id": 12902561,
+                "tags": {
+                    "restriction": "no_u_turn",
+                    "type": "restriction"
+                },
+                "mode_applicability": "vehicle_only",
+                "member_form": "via_node",
+                "missing_member_dependencies": [
+                    {
+                        "sequence_index": 0,
+                        "member_type": "node",
+                        "member_ref": 6351576739,
+                        "role": "via"
+                    }
+                ]
+            },
+            {
+                "relation_id": 12903166,
+                "tags": {
+                    "restriction": "no_u_turn",
+                    "type": "restriction"
+                },
+                "mode_applicability": "vehicle_only",
+                "member_form": "via_node",
+                "missing_member_dependencies": [
+                    {
+                        "sequence_index": 1,
+                        "member_type": "node",
+                        "member_ref": 8871056544,
+                        "role": "via"
+                    }
+                ]
+            },
+            {
+                "relation_id": 13899268,
+                "tags": {
+                    "restriction": "only_right_turn",
+                    "type": "restriction"
+                },
+                "mode_applicability": "vehicle_only",
+                "member_form": "via_node",
+                "missing_member_dependencies": [
+                    {
+                        "sequence_index": 2,
+                        "member_type": "node",
+                        "member_ref": 597237072,
+                        "role": "via"
+                    }
+                ]
+            },
+            {
+                "relation_id": 13985428,
+                "tags": {
+                    "restriction": "only_right_turn",
+                    "type": "restriction"
+                },
+                "mode_applicability": "vehicle_only",
+                "member_form": "via_node",
+                "missing_member_dependencies": [
+                    {
+                        "sequence_index": 2,
+                        "member_type": "node",
+                        "member_ref": 2160523275,
+                        "role": "via"
+                    }
+                ]
+            },
+            {
+                "relation_id": 14134377,
+                "tags": {
+                    "restriction": "only_straight_on",
+                    "type": "restriction"
+                },
+                "mode_applicability": "vehicle_only",
+                "member_form": "via_node",
+                "missing_member_dependencies": [
+                    {
+                        "sequence_index": 2,
+                        "member_type": "node",
+                        "member_ref": 369910952,
+                        "role": "via"
+                    }
+                ]
+            },
+            {
+                "relation_id": 14413664,
+                "tags": {
+                    "restriction": "only_straight_on",
+                    "type": "restriction"
+                },
+                "mode_applicability": "vehicle_only",
+                "member_form": "via_node",
+                "missing_member_dependencies": [
+                    {
+                        "sequence_index": 1,
+                        "member_type": "node",
+                        "member_ref": 1202478390,
+                        "role": "via"
+                    }
+                ]
+            },
+            {
+                "relation_id": 14413665,
+                "tags": {
+                    "restriction": "only_straight_on",
+                    "type": "restriction"
+                },
+                "mode_applicability": "vehicle_only",
+                "member_form": "via_node",
+                "missing_member_dependencies": [
+                    {
+                        "sequence_index": 1,
+                        "member_type": "node",
+                        "member_ref": 8407382567,
+                        "role": "via"
+                    }
+                ]
+            },
+            {
+                "relation_id": 14413668,
+                "tags": {
+                    "restriction": "no_u_turn",
+                    "type": "restriction"
+                },
+                "mode_applicability": "vehicle_only",
+                "member_form": "via_node",
+                "missing_member_dependencies": [
+                    {
+                        "sequence_index": 1,
+                        "member_type": "node",
+                        "member_ref": 8649680208,
+                        "role": "via"
+                    }
+                ]
+            },
+            {
+                "relation_id": 15323567,
+                "tags": {
+                    "restriction": "only_right_turn",
+                    "type": "restriction"
+                },
+                "mode_applicability": "vehicle_only",
+                "member_form": "via_node",
+                "missing_member_dependencies": [
+                    {
+                        "sequence_index": 2,
+                        "member_type": "node",
+                        "member_ref": 600645101,
+                        "role": "via"
+                    }
+                ]
+            },
+            {
+                "relation_id": 15510935,
+                "tags": {
+                    "restriction": "no_left_turn",
+                    "type": "restriction"
+                },
+                "mode_applicability": "vehicle_only",
+                "member_form": "via_node",
+                "missing_member_dependencies": [
+                    {
+                        "sequence_index": 0,
+                        "member_type": "node",
+                        "member_ref": 4045048564,
+                        "role": "via"
+                    }
+                ]
+            },
+            {
+                "relation_id": 15510936,
+                "tags": {
+                    "restriction": "no_left_turn",
+                    "type": "restriction"
+                },
+                "mode_applicability": "vehicle_only",
+                "member_form": "via_node",
+                "missing_member_dependencies": [
+                    {
+                        "sequence_index": 0,
+                        "member_type": "node",
+                        "member_ref": 8407382586,
+                        "role": "via"
+                    }
+                ]
+            },
+            {
+                "relation_id": 15511511,
+                "tags": {
+                    "restriction": "no_left_turn",
+                    "type": "restriction"
+                },
+                "mode_applicability": "vehicle_only",
+                "member_form": "via_node",
+                "missing_member_dependencies": [
+                    {
+                        "sequence_index": 0,
+                        "member_type": "node",
+                        "member_ref": 367831600,
+                        "role": "via"
+                    }
+                ]
+            },
+            {
+                "relation_id": 15600435,
+                "tags": {
+                    "restriction": "only_right_turn",
+                    "type": "restriction"
+                },
+                "mode_applicability": "vehicle_only",
+                "member_form": "via_node",
+                "missing_member_dependencies": [
+                    {
+                        "sequence_index": 1,
+                        "member_type": "node",
+                        "member_ref": 1696219413,
+                        "role": "via"
+                    }
+                ]
+            },
+            {
+                "relation_id": 15608193,
+                "tags": {
+                    "restriction": "no_left_turn",
+                    "type": "restriction"
+                },
+                "mode_applicability": "vehicle_only",
+                "member_form": "via_node",
+                "missing_member_dependencies": [
+                    {
+                        "sequence_index": 1,
+                        "member_type": "node",
+                        "member_ref": 2136850660,
+                        "role": "via"
+                    }
+                ]
+            },
+            {
+                "relation_id": 15735863,
+                "tags": {
+                    "restriction": "no_left_turn",
+                    "type": "restriction"
+                },
+                "mode_applicability": "vehicle_only",
+                "member_form": "via_node",
+                "missing_member_dependencies": [
+                    {
+                        "sequence_index": 1,
+                        "member_type": "node",
+                        "member_ref": 937417826,
+                        "role": "via"
+                    }
+                ]
+            },
+            {
+                "relation_id": 15810785,
+                "tags": {
+                    "restriction": "no_left_turn",
+                    "type": "restriction"
+                },
+                "mode_applicability": "vehicle_only",
+                "member_form": "via_node",
+                "missing_member_dependencies": [
+                    {
+                        "sequence_index": 0,
+                        "member_type": "node",
+                        "member_ref": 367831600,
+                        "role": "via"
+                    }
+                ]
+            },
+            {
+                "relation_id": 15810786,
+                "tags": {
+                    "restriction": "no_left_turn",
+                    "type": "restriction"
+                },
+                "mode_applicability": "vehicle_only",
+                "member_form": "via_node",
+                "missing_member_dependencies": [
+                    {
+                        "sequence_index": 1,
+                        "member_type": "node",
+                        "member_ref": 367831600,
+                        "role": "via"
+                    }
+                ]
+            },
+            {
+                "relation_id": 15810787,
+                "tags": {
+                    "restriction": "no_left_turn",
+                    "type": "restriction"
+                },
+                "mode_applicability": "vehicle_only",
+                "member_form": "via_node",
+                "missing_member_dependencies": [
+                    {
+                        "sequence_index": 0,
+                        "member_type": "node",
+                        "member_ref": 367831600,
+                        "role": "via"
+                    }
+                ]
+            },
+            {
+                "relation_id": 16309507,
+                "tags": {
+                    "restriction": "only_right_turn",
+                    "type": "restriction"
+                },
+                "mode_applicability": "vehicle_only",
+                "member_form": "via_node",
+                "missing_member_dependencies": [
+                    {
+                        "sequence_index": 2,
+                        "member_type": "node",
+                        "member_ref": 11180646149,
+                        "role": "via"
+                    }
+                ]
+            },
+            {
+                "relation_id": 16394289,
+                "tags": {
+                    "restriction": "no_left_turn",
+                    "type": "restriction"
+                },
+                "mode_applicability": "vehicle_only",
+                "member_form": "via_node",
+                "missing_member_dependencies": [
+                    {
+                        "sequence_index": 1,
+                        "member_type": "node",
+                        "member_ref": 1312595032,
+                        "role": "via"
+                    }
+                ]
+            },
+            {
+                "relation_id": 16394293,
+                "tags": {
+                    "restriction": "no_left_turn",
+                    "type": "restriction"
+                },
+                "mode_applicability": "vehicle_only",
+                "member_form": "via_node",
+                "missing_member_dependencies": [
+                    {
+                        "sequence_index": 1,
+                        "member_type": "node",
+                        "member_ref": 2136850625,
+                        "role": "via"
+                    }
+                ]
+            },
+            {
+                "relation_id": 17038700,
+                "tags": {
+                    "restriction": "no_u_turn",
+                    "type": "restriction"
+                },
+                "mode_applicability": "vehicle_only",
+                "member_form": "via_node",
+                "missing_member_dependencies": [
+                    {
+                        "sequence_index": 1,
+                        "member_type": "node",
+                        "member_ref": 8675703494,
+                        "role": "via"
+                    }
+                ]
+            },
+            {
+                "relation_id": 17100982,
+                "tags": {
+                    "restriction": "no_left_turn",
+                    "type": "restriction"
+                },
+                "mode_applicability": "vehicle_only",
+                "member_form": "via_node",
+                "missing_member_dependencies": [
+                    {
+                        "sequence_index": 1,
+                        "member_type": "node",
+                        "member_ref": 11566340570,
+                        "role": "via"
+                    }
+                ]
+            },
+            {
+                "relation_id": 17480724,
+                "tags": {
+                    "restriction": "no_left_turn",
+                    "type": "restriction"
+                },
+                "mode_applicability": "vehicle_only",
+                "member_form": "via_node",
+                "missing_member_dependencies": [
+                    {
+                        "sequence_index": 2,
+                        "member_type": "node",
+                        "member_ref": 600645109,
+                        "role": "via"
+                    }
+                ]
+            },
+            {
+                "relation_id": 17480725,
+                "tags": {
+                    "restriction": "no_left_turn",
+                    "type": "restriction"
+                },
+                "mode_applicability": "vehicle_only",
+                "member_form": "via_node",
+                "missing_member_dependencies": [
+                    {
+                        "sequence_index": 2,
+                        "member_type": "node",
+                        "member_ref": 6402226179,
+                        "role": "via"
+                    }
+                ]
+            },
+            {
+                "relation_id": 17481375,
+                "tags": {
+                    "restriction": "only_right_turn",
+                    "type": "restriction"
+                },
+                "mode_applicability": "vehicle_only",
+                "member_form": "via_node",
+                "missing_member_dependencies": [
+                    {
+                        "sequence_index": 2,
+                        "member_type": "node",
+                        "member_ref": 286197903,
+                        "role": "via"
+                    }
+                ]
+            },
+            {
+                "relation_id": 17499862,
+                "tags": {
+                    "restriction": "no_left_turn",
+                    "type": "restriction"
+                },
+                "mode_applicability": "vehicle_only",
+                "member_form": "via_node",
+                "missing_member_dependencies": [
+                    {
+                        "sequence_index": 2,
+                        "member_type": "node",
+                        "member_ref": 678328912,
+                        "role": "via"
+                    }
+                ]
+            },
+            {
+                "relation_id": 17499863,
+                "tags": {
+                    "restriction": "no_left_turn",
+                    "type": "restriction"
+                },
+                "mode_applicability": "vehicle_only",
+                "member_form": "via_node",
+                "missing_member_dependencies": [
+                    {
+                        "sequence_index": 2,
+                        "member_type": "node",
+                        "member_ref": 678328912,
+                        "role": "via"
+                    }
+                ]
+            },
+            {
+                "relation_id": 17681357,
+                "tags": {
+                    "restriction": "no_straight_on",
+                    "type": "restriction"
+                },
+                "mode_applicability": "vehicle_only",
+                "member_form": "via_node",
+                "missing_member_dependencies": [
+                    {
+                        "sequence_index": 1,
+                        "member_type": "node",
+                        "member_ref": 400906414,
+                        "role": "via"
+                    }
+                ]
+            },
+            {
+                "relation_id": 18364084,
+                "tags": {
+                    "restriction": "only_right_turn",
+                    "type": "restriction"
+                },
+                "mode_applicability": "vehicle_only",
+                "member_form": "via_node",
+                "missing_member_dependencies": [
+                    {
+                        "sequence_index": 0,
+                        "member_type": "node",
+                        "member_ref": 914097593,
+                        "role": "via"
+                    }
+                ]
+            },
+            {
+                "relation_id": 18370228,
+                "tags": {
+                    "restriction": "no_left_turn",
+                    "type": "restriction"
+                },
+                "mode_applicability": "vehicle_only",
+                "member_form": "via_node",
+                "missing_member_dependencies": [
+                    {
+                        "sequence_index": 1,
+                        "member_type": "node",
+                        "member_ref": 1185457374,
+                        "role": "via"
+                    }
+                ]
+            },
+            {
+                "relation_id": 18458926,
+                "tags": {
+                    "restriction": "no_left_turn",
+                    "type": "restriction"
+                },
+                "mode_applicability": "vehicle_only",
+                "member_form": "via_node",
+                "missing_member_dependencies": [
+                    {
+                        "sequence_index": 1,
+                        "member_type": "node",
+                        "member_ref": 8407382583,
+                        "role": "via"
+                    }
+                ]
+            },
+            {
+                "relation_id": 18458927,
+                "tags": {
+                    "restriction": "no_left_turn",
+                    "type": "restriction"
+                },
+                "mode_applicability": "vehicle_only",
+                "member_form": "via_node",
+                "missing_member_dependencies": [
+                    {
+                        "sequence_index": 1,
+                        "member_type": "node",
+                        "member_ref": 8407382584,
+                        "role": "via"
+                    }
+                ]
+            },
+            {
+                "relation_id": 18940608,
+                "tags": {
+                    "except": "hgv;motorcar;psv;emergency",
+                    "restriction": "no_left_turn",
+                    "type": "restriction"
+                },
+                "mode_applicability": "vehicle_only",
+                "member_form": "via_node",
+                "missing_member_dependencies": [
+                    {
+                        "sequence_index": 1,
+                        "member_type": "node",
+                        "member_ref": 367833162,
+                        "role": "via"
+                    }
+                ]
+            },
+            {
+                "relation_id": 19258192,
+                "tags": {
+                    "restriction": "no_left_turn",
+                    "type": "restriction"
+                },
+                "mode_applicability": "vehicle_only",
+                "member_form": "via_node",
+                "missing_member_dependencies": [
+                    {
+                        "sequence_index": 1,
+                        "member_type": "node",
+                        "member_ref": 282089359,
+                        "role": "via"
+                    }
+                ]
+            },
+            {
+                "relation_id": 19343194,
+                "tags": {
+                    "restriction": "no_left_turn",
+                    "type": "restriction"
+                },
+                "mode_applicability": "vehicle_only",
+                "member_form": "via_node",
+                "missing_member_dependencies": [
+                    {
+                        "sequence_index": 1,
+                        "member_type": "node",
+                        "member_ref": 286197984,
+                        "role": "via"
+                    }
+                ]
+            },
+            {
+                "relation_id": 20072011,
+                "tags": {
+                    "motorcycle": "no",
+                    "restriction": "no_left_turn",
+                    "type": "restriction"
+                },
+                "mode_applicability": "vehicle_only",
+                "member_form": "via_node",
+                "missing_member_dependencies": [
+                    {
+                        "sequence_index": 1,
+                        "member_type": "node",
+                        "member_ref": 281418312,
+                        "role": "via"
+                    }
+                ]
+            },
+            {
+                "relation_id": 20111889,
+                "tags": {
+                    "restriction": "no_left_turn",
+                    "type": "restriction"
+                },
+                "mode_applicability": "vehicle_only",
+                "member_form": "via_node",
+                "missing_member_dependencies": [
+                    {
+                        "sequence_index": 2,
+                        "member_type": "node",
+                        "member_ref": 8348684997,
+                        "role": "via"
+                    }
+                ]
+            },
+            {
+                "relation_id": 20112896,
+                "tags": {
+                    "restriction": "no_u_turn",
+                    "type": "restriction"
+                },
+                "mode_applicability": "vehicle_only",
+                "member_form": "via_node",
+                "missing_member_dependencies": [
+                    {
+                        "sequence_index": 1,
+                        "member_type": "node",
+                        "member_ref": 316768367,
+                        "role": "via"
+                    }
+                ]
+            },
+            {
+                "relation_id": 20113055,
+                "tags": {
+                    "restriction": "no_u_turn",
+                    "type": "restriction"
+                },
+                "mode_applicability": "vehicle_only",
+                "member_form": "via_node",
+                "missing_member_dependencies": [
+                    {
+                        "sequence_index": 1,
+                        "member_type": "node",
+                        "member_ref": 598612473,
+                        "role": "via"
+                    }
+                ]
+            },
+            {
+                "relation_id": 20115173,
+                "tags": {
+                    "restriction": "only_right_turn",
+                    "type": "restriction"
+                },
+                "mode_applicability": "vehicle_only",
+                "member_form": "via_node",
+                "missing_member_dependencies": [
+                    {
+                        "sequence_index": 2,
+                        "member_type": "node",
+                        "member_ref": 1157168202,
+                        "role": "via"
+                    }
+                ]
+            },
+            {
+                "relation_id": 20115518,
+                "tags": {
+                    "restriction": "no_left_turn",
+                    "type": "restriction"
+                },
+                "mode_applicability": "vehicle_only",
+                "member_form": "via_node",
+                "missing_member_dependencies": [
+                    {
+                        "sequence_index": 0,
+                        "member_type": "node",
+                        "member_ref": 369910953,
+                        "role": "via"
+                    }
+                ]
+            },
+            {
+                "relation_id": 20145140,
+                "tags": {
+                    "restriction": "no_u_turn",
+                    "type": "restriction"
+                },
+                "mode_applicability": "vehicle_only",
+                "member_form": "via_node",
+                "missing_member_dependencies": [
+                    {
+                        "sequence_index": 2,
+                        "member_type": "node",
+                        "member_ref": 442074845,
+                        "role": "via"
+                    }
+                ]
+            },
+            {
+                "relation_id": 20145141,
+                "tags": {
+                    "restriction": "no_left_turn",
+                    "type": "restriction"
+                },
+                "mode_applicability": "vehicle_only",
+                "member_form": "via_node",
+                "missing_member_dependencies": [
+                    {
+                        "sequence_index": 2,
+                        "member_type": "node",
+                        "member_ref": 442074845,
+                        "role": "via"
+                    }
+                ]
+            },
+            {
+                "relation_id": 20153561,
+                "tags": {
+                    "restriction": "no_left_turn",
+                    "type": "restriction"
+                },
+                "mode_applicability": "vehicle_only",
+                "member_form": "via_node",
+                "missing_member_dependencies": [
+                    {
+                        "sequence_index": 2,
+                        "member_type": "node",
+                        "member_ref": 4221684650,
+                        "role": "via"
+                    }
+                ]
+            },
+            {
+                "relation_id": 20169063,
+                "tags": {
+                    "restriction": "no_left_turn",
+                    "type": "restriction"
+                },
+                "mode_applicability": "vehicle_only",
+                "member_form": "via_node",
+                "missing_member_dependencies": [
+                    {
+                        "sequence_index": 2,
+                        "member_type": "node",
+                        "member_ref": 2160522999,
+                        "role": "via"
+                    }
+                ]
+            },
+            {
+                "relation_id": 20169064,
+                "tags": {
+                    "restriction": "no_u_turn",
+                    "type": "restriction"
+                },
+                "mode_applicability": "vehicle_only",
+                "member_form": "via_node",
+                "missing_member_dependencies": [
+                    {
+                        "sequence_index": 2,
+                        "member_type": "node",
+                        "member_ref": 2160522999,
+                        "role": "via"
+                    }
+                ]
+            },
+            {
+                "relation_id": 20170534,
+                "tags": {
+                    "restriction": "no_left_turn",
+                    "type": "restriction"
+                },
+                "mode_applicability": "vehicle_only",
+                "member_form": "via_node",
+                "missing_member_dependencies": [
+                    {
+                        "sequence_index": 2,
+                        "member_type": "node",
+                        "member_ref": 367833162,
+                        "role": "via"
+                    }
+                ]
+            },
+            {
+                "relation_id": 20173265,
+                "tags": {
+                    "restriction": "no_u_turn",
+                    "type": "restriction"
+                },
+                "mode_applicability": "vehicle_only",
+                "member_form": "via_node",
+                "missing_member_dependencies": [
+                    {
+                        "sequence_index": 1,
+                        "member_type": "node",
+                        "member_ref": 13525042365,
+                        "role": "via"
+                    }
+                ]
+            },
+            {
+                "relation_id": 20173362,
+                "tags": {
+                    "restriction": "no_left_turn",
+                    "type": "restriction"
+                },
+                "mode_applicability": "vehicle_only",
+                "member_form": "via_node",
+                "missing_member_dependencies": [
+                    {
+                        "sequence_index": 2,
+                        "member_type": "node",
+                        "member_ref": 11523963385,
+                        "role": "via"
+                    }
+                ]
+            },
+            {
+                "relation_id": 20173364,
+                "tags": {
+                    "restriction": "no_left_turn",
+                    "type": "restriction"
+                },
+                "mode_applicability": "vehicle_only",
+                "member_form": "via_node",
+                "missing_member_dependencies": [
+                    {
+                        "sequence_index": 2,
+                        "member_type": "node",
+                        "member_ref": 11523963384,
+                        "role": "via"
+                    }
+                ]
+            },
+            {
+                "relation_id": 20175821,
+                "tags": {
+                    "restriction": "no_left_turn",
+                    "type": "restriction"
+                },
+                "mode_applicability": "vehicle_only",
+                "member_form": "via_node",
+                "missing_member_dependencies": [
+                    {
+                        "sequence_index": 2,
+                        "member_type": "node",
+                        "member_ref": 940968541,
+                        "role": "via"
+                    }
+                ]
+            },
+            {
+                "relation_id": 20175822,
+                "tags": {
+                    "restriction": "no_left_turn",
+                    "type": "restriction"
+                },
+                "mode_applicability": "vehicle_only",
+                "member_form": "via_node",
+                "missing_member_dependencies": [
+                    {
+                        "sequence_index": 2,
+                        "member_type": "node",
+                        "member_ref": 281418309,
+                        "role": "via"
+                    }
+                ]
+            },
+            {
+                "relation_id": 20176054,
+                "tags": {
+                    "restriction": "no_left_turn",
+                    "type": "restriction"
+                },
+                "mode_applicability": "vehicle_only",
+                "member_form": "via_node",
+                "missing_member_dependencies": [
+                    {
+                        "sequence_index": 1,
+                        "member_type": "node",
+                        "member_ref": 8601761577,
+                        "role": "via"
+                    }
+                ]
+            },
+            {
+                "relation_id": 20183875,
+                "tags": {
+                    "restriction": "no_left_turn",
+                    "type": "restriction"
+                },
+                "mode_applicability": "vehicle_only",
+                "member_form": "via_node",
+                "missing_member_dependencies": [
+                    {
+                        "sequence_index": 2,
+                        "member_type": "node",
+                        "member_ref": 281418312,
+                        "role": "via"
+                    }
+                ]
+            },
+            {
+                "relation_id": 20193953,
+                "tags": {
+                    "restriction": "no_left_turn",
+                    "type": "restriction"
+                },
+                "mode_applicability": "vehicle_only",
+                "member_form": "via_node",
+                "missing_member_dependencies": [
+                    {
+                        "sequence_index": 1,
+                        "member_type": "node",
+                        "member_ref": 5859926257,
+                        "role": "via"
+                    }
+                ]
+            },
+            {
+                "relation_id": 20204177,
+                "tags": {
+                    "restriction": "no_left_turn",
+                    "type": "restriction"
+                },
+                "mode_applicability": "vehicle_only",
+                "member_form": "via_node",
+                "missing_member_dependencies": [
+                    {
+                        "sequence_index": 2,
+                        "member_type": "node",
+                        "member_ref": 11566340580,
+                        "role": "via"
+                    }
+                ]
+            },
+            {
+                "relation_id": 20204178,
+                "tags": {
+                    "restriction": "no_left_turn",
+                    "type": "restriction"
+                },
+                "mode_applicability": "vehicle_only",
+                "member_form": "via_node",
+                "missing_member_dependencies": [
+                    {
+                        "sequence_index": 2,
+                        "member_type": "node",
+                        "member_ref": 11566340580,
+                        "role": "via"
+                    }
+                ]
+            },
+            {
+                "relation_id": 20204664,
+                "tags": {
+                    "restriction": "no_left_turn",
+                    "type": "restriction"
+                },
+                "mode_applicability": "vehicle_only",
+                "member_form": "via_node",
+                "missing_member_dependencies": [
+                    {
+                        "sequence_index": 1,
+                        "member_type": "node",
+                        "member_ref": 622270482,
+                        "role": "via"
+                    }
+                ]
+            },
+            {
+                "relation_id": 20212158,
+                "tags": {
+                    "restriction": "no_left_turn",
+                    "type": "restriction"
+                },
+                "mode_applicability": "vehicle_only",
+                "member_form": "via_node",
+                "missing_member_dependencies": [
+                    {
+                        "sequence_index": 1,
+                        "member_type": "node",
+                        "member_ref": 1185457374,
+                        "role": "via"
+                    }
+                ]
+            },
+            {
+                "relation_id": 20212837,
+                "tags": {
+                    "restriction": "no_left_turn",
+                    "type": "restriction"
+                },
+                "mode_applicability": "vehicle_only",
+                "member_form": "via_node",
+                "missing_member_dependencies": [
+                    {
+                        "sequence_index": 1,
+                        "member_type": "node",
+                        "member_ref": 1185457374,
+                        "role": "via"
+                    }
+                ]
+            },
+            {
+                "relation_id": 20228575,
+                "tags": {
+                    "restriction": "no_left_turn",
+                    "type": "restriction"
+                },
+                "mode_applicability": "vehicle_only",
+                "member_form": "via_node",
+                "missing_member_dependencies": [
+                    {
+                        "sequence_index": 1,
+                        "member_type": "node",
+                        "member_ref": 678328929,
+                        "role": "via"
+                    }
+                ]
+            },
+            {
+                "relation_id": 20228576,
+                "tags": {
+                    "restriction": "no_left_turn",
+                    "type": "restriction"
+                },
+                "mode_applicability": "vehicle_only",
+                "member_form": "via_node",
+                "missing_member_dependencies": [
+                    {
+                        "sequence_index": 1,
+                        "member_type": "node",
+                        "member_ref": 678328929,
+                        "role": "via"
+                    }
+                ]
+            },
+            {
+                "relation_id": 20228577,
+                "tags": {
+                    "restriction": "no_left_turn",
+                    "type": "restriction"
+                },
+                "mode_applicability": "vehicle_only",
+                "member_form": "via_node",
+                "missing_member_dependencies": [
+                    {
+                        "sequence_index": 1,
+                        "member_type": "node",
+                        "member_ref": 678328929,
+                        "role": "via"
+                    }
+                ]
+            },
+            {
+                "relation_id": 20228578,
+                "tags": {
+                    "restriction": "no_left_turn",
+                    "type": "restriction"
+                },
+                "mode_applicability": "vehicle_only",
+                "member_form": "via_node",
+                "missing_member_dependencies": [
+                    {
+                        "sequence_index": 1,
+                        "member_type": "node",
+                        "member_ref": 286197952,
+                        "role": "via"
+                    }
+                ]
+            }
+        ],
+        "unresolved_member_note": "All unresolved member dependencies are via-node references in vehicle-only restrictions; extract clipping versus stale source relation references is unknown.",
+        "routing_capabilities": {
+            "source_restriction_inventory_complete": true,
+            "pedestrian_turn_restrictions_enforced": false,
+            "via_node_enforced": false,
+            "via_way_enforced": false,
+            "conditional_turn_restrictions_evaluated": false,
+            "routing_ready": true,
+            "reason": "The complete source restriction inventory contains no pedestrian-applicable or mode-ambiguous turn restriction. Generic vehicle restrictions are not applied to walking."
+        }
+    },
+    "graph_quality": {
+        "graph_components": 2754,
+        "walkable_components": 432,
+        "largest_walkable_component_nodes": 70401,
+        "long_edges_over_250m": 26,
+        "maximum_edge_meters_over_250m": 867,
+        "long_edge_examples": [
+            {
+                "osm_way_id": 27751190,
+                "segment_index": 0,
+                "length_meters": 867,
+                "highway": "primary",
+                "properties": {
+                    "bridge": "yes",
+                    "layer": "1",
+                    "sidewalk": "both",
+                    "surface": "asphalt"
+                }
+            },
+            {
+                "osm_way_id": 1480425819,
+                "segment_index": 0,
+                "length_meters": 865.86,
+                "highway": "path",
+                "properties": {
+                    "bridge": "yes",
+                    "layer": "1"
+                }
+            },
+            {
+                "osm_way_id": 590000516,
+                "segment_index": 2,
+                "length_meters": 767.14,
+                "highway": "service",
+                "properties": {
+                    "smoothness": "bad",
+                    "surface": "unpaved"
+                }
+            },
+            {
+                "osm_way_id": 423687619,
+                "segment_index": 17,
+                "length_meters": 430.25,
+                "highway": "living_street",
+                "properties": []
+            },
+            {
+                "osm_way_id": 38607201,
+                "segment_index": 0,
+                "length_meters": 393.97,
+                "highway": "secondary",
+                "properties": {
+                    "bridge": "yes",
+                    "layer": "1",
+                    "surface": "asphalt"
+                }
+            },
+            {
+                "osm_way_id": 1024057631,
+                "segment_index": 0,
+                "length_meters": 389.71,
+                "highway": "footway",
+                "properties": {
+                    "bridge": "viaduct",
+                    "layer": "2",
+                    "smoothness": "excellent",
+                    "surface": "concrete"
+                }
+            },
+            {
+                "osm_way_id": 618976309,
+                "segment_index": 0,
+                "length_meters": 375.63,
+                "highway": "unclassified",
+                "properties": {
+                    "sidewalk": "no",
+                    "surface": "concrete"
+                }
+            },
+            {
+                "osm_way_id": 926486960,
+                "segment_index": 0,
+                "length_meters": 373.99,
+                "highway": "footway",
+                "properties": []
+            },
+            {
+                "osm_way_id": 1055343861,
+                "segment_index": 15,
+                "length_meters": 371.93,
+                "highway": "footway",
+                "properties": {
+                    "smoothness": "excellent",
+                    "surface": "concrete"
+                }
+            },
+            {
+                "osm_way_id": 1055343881,
+                "segment_index": 14,
+                "length_meters": 320.62,
+                "highway": "footway",
+                "properties": {
+                    "smoothness": "excellent",
+                    "surface": "concrete"
+                }
+            },
+            {
+                "osm_way_id": 590000516,
+                "segment_index": 0,
+                "length_meters": 305.8,
+                "highway": "service",
+                "properties": {
+                    "smoothness": "bad",
+                    "surface": "unpaved"
+                }
+            },
+            {
+                "osm_way_id": 28960128,
+                "segment_index": 2,
+                "length_meters": 302.86,
+                "highway": "primary",
+                "properties": {
+                    "sidewalk": "right",
+                    "surface": "asphalt"
+                }
+            },
+            {
+                "osm_way_id": 1055343880,
+                "segment_index": 17,
+                "length_meters": 300.31,
+                "highway": "footway",
+                "properties": {
+                    "smoothness": "excellent",
+                    "surface": "concrete"
+                }
+            },
+            {
+                "osm_way_id": 920581792,
+                "segment_index": 1,
+                "length_meters": 291.28,
+                "highway": "footway",
+                "properties": {
+                    "surface": "dirt"
+                }
+            },
+            {
+                "osm_way_id": 921596197,
+                "segment_index": 0,
+                "length_meters": 285.4,
+                "highway": "residential",
+                "properties": {
+                    "surface": "concrete"
+                }
+            },
+            {
+                "osm_way_id": 95201252,
+                "segment_index": 3,
+                "length_meters": 285.37,
+                "highway": "service",
+                "properties": []
+            },
+            {
+                "osm_way_id": 898447988,
+                "segment_index": 0,
+                "length_meters": 283.04,
+                "highway": "residential",
+                "properties": {
+                    "surface": "concrete"
+                }
+            },
+            {
+                "osm_way_id": 925056350,
+                "segment_index": 1,
+                "length_meters": 272.55,
+                "highway": "service",
+                "properties": []
+            },
+            {
+                "osm_way_id": 1471104547,
+                "segment_index": 0,
+                "length_meters": 272.45,
+                "highway": "residential",
+                "properties": {
+                    "surface": "asphalt"
+                }
+            },
+            {
+                "osm_way_id": 628257328,
+                "segment_index": 0,
+                "length_meters": 266.98,
+                "highway": "residential",
+                "properties": {
+                    "surface": "unpaved"
+                }
+            },
+            {
+                "osm_way_id": 99142672,
+                "segment_index": 2,
+                "length_meters": 265.37,
+                "highway": "service",
+                "properties": []
+            },
+            {
+                "osm_way_id": 94080861,
+                "segment_index": 10,
+                "length_meters": 264.3,
+                "highway": "unclassified",
+                "properties": {
+                    "surface": "concrete"
+                }
+            },
+            {
+                "osm_way_id": 95348306,
+                "segment_index": 0,
+                "length_meters": 258.13,
+                "highway": "residential",
+                "properties": {
+                    "foot": "yes",
+                    "surface": "asphalt"
+                }
+            },
+            {
+                "osm_way_id": 1171505785,
+                "segment_index": 2,
+                "length_meters": 256.57,
+                "highway": "unclassified",
+                "properties": []
+            },
+            {
+                "osm_way_id": 1285548988,
+                "segment_index": 0,
+                "length_meters": 253.21,
+                "highway": "service",
+                "properties": []
+            },
+            {
+                "osm_way_id": 609524572,
+                "segment_index": 2,
+                "length_meters": 253.16,
+                "highway": "unclassified",
+                "properties": []
+            }
+        ],
+        "crossing_tagged_nodes": 1510,
+        "blocked_nodes": 2322,
+        "isolated_blocked_nodes": 2322,
+        "isolated_walkable_nodes": 0,
+        "outside_scope_resolved_nodes": 1740,
+        "outside_scope_required_nodes": 1740,
+        "ways_with_inside_and_outside_references": 171,
+        "boundary_nodes_within_0_0005_degrees": 944,
+        "boundary_review_margin_degrees": 0.0005,
+        "geometry_intersections_are_not_connections": true,
+        "artificial_connectors_added": false,
+        "field_review_required": true,
+        "scope_bounds": {
+            "min_latitude": 10.25,
+            "min_longitude": 123.845,
+            "max_latitude": 10.381,
+            "max_longitude": 123.96,
+            "margin_degrees": 0.012
+        }
+    }
+}

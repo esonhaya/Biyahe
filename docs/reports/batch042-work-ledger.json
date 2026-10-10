@@ -89,7 +89,7 @@
       "id": "EVIDENCE_SYSTEM",
       "scope": "portable runner, Doctor per-test evidence, partial worker results and input completeness",
       "status": "VERIFIED",
-      "evidence": "Doctor normalized-path binding regression now passes in the full 15-test suite (2026-10-10T04:45:50Z–04:45:52Z); `validate-batch042-doctor.py` passes at 04:45:52Z–04:45:53Z. Commit 2fba314 is pinned in the refreshed Doctor report. A portable kit built from the 2fba314 executable revision is still pending."
+      "evidence": "Executable implementation pin: 2fba3141170cc3406c532623a433257610ff726e; later checkpoint commits are documentation/kit only. The refreshed Doctor report binds the final portable package STATIC run. Doctor test suite: 15/15 PASS at 2026-10-10T04:47:37Z–04:47:41Z; validator: PASS at 04:47:41Z–04:47:42Z. Portable checkout-bound STATIC: 11/11 PASS at 04:46:14Z–04:46:34Z."
     },
     {
       "id": "ADAPTER_PHPUNIT",
@@ -124,8 +124,8 @@
     {
       "id": "PORTABLE_KIT",
       "scope": "Batch042 v4 portable verification kit",
-      "status": "IMPLEMENTED_UNTESTED",
-      "evidence": "Older package at e182af1 passed 11/11 STATIC, but Doctor refresh correctly exposed a normalized-report input binding gap. The gap is fixed and covered by the current Doctor 15/15 test suite; final kit must be regenerated to include source revision 2fba314 and rerun checkout-bound STATIC."
+      "status": "VERIFIED",
+      "evidence": "Fresh v4 package generated at repository revision a91dabe and executable revision 2fba314. Checkout-bound `verify-kit.sh STATIC --repo-root <checkout>` passed 2026-10-10T04:46:14Z–04:46:34Z: manifest/checksum inventory, exact source revision, controlled Doctor evidence relocation and 11/11 suites all passed. Current kit run-status: /data/data/com.termux/files/home/.cache/biyahe/batch042/portable-verification/20261010T044618Z-16777/run-status.json. No external host execution is claimed."
     }
   ],
   "execution_attempts": [
@@ -373,6 +373,58 @@
       "validator_categories": 17,
       "validator_tests": 24,
       "exit_code": 0
+    },
+    {
+      "id": "portable-v4-final-checkout-static-20261010T044614Z-16777",
+      "status": "PASS",
+      "started_at": "2026-10-10T04:46:14Z",
+      "ended_at": "2026-10-10T04:46:34Z",
+      "wall_time_seconds": 19.277,
+      "command": "bash docs/portable-verification-v4/verify-kit.sh STATIC --repo-root \"$PWD\"",
+      "repository_revision": "a91dabe1996f5809d25ebd6b57cfd4bab024a493",
+      "executable_source_revision": "2fba3141170cc3406c532623a433257610ff726e",
+      "run_status": "/data/data/com.termux/files/home/.cache/biyahe/batch042/portable-verification/20261010T044618Z-16777/run-status.json",
+      "wrapper_output": "/data/data/com.termux/files/home/.cache/biyahe/batch042/evidence/portable-v4-final-static-20261010T044614Z.stdout.txt",
+      "wrapper_output_sha256": "13eb5eafff353d78da1f7d85f48ad58d8d1528315ec159ef47078e293d90a7e2",
+      "manifest_sha256": "ea8f2f0695f02e2a8fddc1a39f572004aa2878163216d82e8d3e416a281521d5",
+      "sha256sums_file_sha256": "0ecdb4233dbb38c305e1d2d018a741111eda7698e0fe8a75a8f30561c2768243",
+      "suite_count": 11,
+      "doctor_contract_tests": 15,
+      "portable_runner_contract_tests": 10,
+      "result": "Package verification, checkout/source binding and all 11 STATIC suites passed."
+    },
+    {
+      "id": "doctor-v42-final-validation-20261010T044737Z",
+      "status": "PASS",
+      "started_at": "2026-10-10T04:47:37Z",
+      "ended_at": "2026-10-10T04:47:42Z",
+      "source_revision": "2fba3141170cc3406c532623a433257610ff726e",
+      "unit_test_command": "PYTHONDONTWRITEBYTECODE=1 python3 api/scripts/test_validate_batch042_doctor.py",
+      "unit_test_count": 15,
+      "unit_test_failures": 0,
+      "validator_command": "PYTHONDONTWRITEBYTECODE=1 python3 api/scripts/validate-batch042-doctor.py",
+      "validator_status": "PASS_STATIC_DOCTOR_CONTRACT",
+      "validator_categories": 17,
+      "validator_tests": 24,
+      "exit_code": 0
+    },
+    {
+      "id": "batch042-final-static-syntax-20261010T044803Z",
+      "status": "PASS",
+      "started_at": "2026-10-10T04:48:03Z",
+      "ended_at": "2026-10-10T04:48:12Z",
+      "wall_time_seconds": 9.055,
+      "source_revision": "2fba3141170cc3406c532623a433257610ff726e",
+      "command": "PYTHONDONTWRITEBYTECODE=1 python3 api/scripts/check-batch042-static-syntax.py --root \"$PWD\"",
+      "checks": {
+        "git_diff_check": 1,
+        "python_syntax_or_parse": 10,
+        "bash_syntax_or_parse": 2,
+        "php_syntax_or_parse": 5,
+        "javascript_syntax_or_parse": 11,
+        "json_syntax": 6
+      },
+      "exit_code": 0
     }
   ],
   "queues": {
@@ -392,11 +444,12 @@
       "nullable Doctor evidence mapping regression fixed (commit 049cf77; portable verifier tests 10/10)",
       "portable v4 package with checkout-bound STATIC mode (11/11 PASS; manifest a4e53ced192724c5732cc1174829beed5237368633e39c39095d231cdcf98adf)",
       "Doctor portable run binding regression for normalized Doctor source (commit 2fba314; 1/1 focused test PASS)",
-      "Doctor V42 full current suite 15/15 and report validator (source commit 2fba314)"
+      "Doctor V42 full current suite 15/15 and report validator (source commit 2fba314)",
+      "portable v4 current-source kit and checkout-bound STATIC verification (11/11; Doctor 15/15; runner 10/10)",
+      "final Doctor V42 refresh pinned to executable source commit 2fba314; full validator and 15/15 tests pass",
+      "current Doctor/ledger/source static syntax and JSON checks (Python 10, Bash 2, PHP 5, JavaScript 11, JSON 6; git diff --check PASS)"
     ],
-    "implemented_untested": [
-      "portable v4 package regenerated at executable source revision 2fba314 and checkout-bound STATIC verification"
-    ],
+    "implemented_untested": [],
     "blocked_resource": [
       "TypeScript and ESLint",
       "adapter PHPUnit",
@@ -573,7 +626,7 @@
   },
   "current_checkpoint": {
     "branch": "main",
-    "head": "2fba3141170cc3406c532623a433257610ff726e",
+    "head": "a91dabe1996f5809d25ebd6b57cfd4bab024a493",
     "executable_source_revision": "2fba3141170cc3406c532623a433257610ff726e"
   },
   "commits_since_start": [
@@ -592,6 +645,7 @@
     "18d757a19b894881beb45ce490e9d1b5f4e7adfb",
     "049cf77225b522fe272baa6166400c5262b59f52",
     "e182af10b822361698b1b5343b5805b8004f9c39",
-    "2fba3141170cc3406c532623a433257610ff726e"
+    "2fba3141170cc3406c532623a433257610ff726e",
+    "a91dabe1996f5809d25ebd6b57cfd4bab024a493"
   ]
 }

@@ -1,0 +1,15 @@
+test_abandoned_running_records_recover_as_not_run (__main__.PortableRunnerTests.test_abandoned_running_records_recover_as_not_run) ... ok
+test_aggregate_keeps_blocked_and_failed_distinct (__main__.PortableRunnerTests.test_aggregate_keeps_blocked_and_failed_distinct) ... ok
+test_checkout_verifier_validates_only_documented_doctor_path_relocation (__main__.PortableRunnerTests.test_checkout_verifier_validates_only_documented_doctor_path_relocation) ... ok
+test_child_command_results_accept_guard_worker_prefix (__main__.PortableRunnerTests.test_child_command_results_accept_guard_worker_prefix) ... ok
+test_individual_suite_selection_is_mode_scoped (__main__.PortableRunnerTests.test_individual_suite_selection_is_mode_scoped) ... ok
+test_no_clobber_output_is_not_executed_or_overwritten (__main__.PortableRunnerTests.test_no_clobber_output_is_not_executed_or_overwritten) ... ok
+test_packaged_doctor_evidence_is_relocated_and_hash_pinned (__main__.PortableRunnerTests.test_packaged_doctor_evidence_is_relocated_and_hash_pinned) ... ok
+test_packaged_verifier_imports_checksum_dependency (__main__.PortableRunnerTests.test_packaged_verifier_imports_checksum_dependency) ... ok
+test_search_group_fingerprints_every_ux_harness_source (__main__.PortableRunnerTests.test_search_group_fingerprints_every_ux_harness_source) ... ok
+test_source_command_cwd_and_environment_change_fingerprint (__main__.PortableRunnerTests.test_source_command_cwd_and_environment_change_fingerprint) ... ok
+
+----------------------------------------------------------------------
+Ran 10 tests in 0.248s
+
+OK
