@@ -6,6 +6,7 @@ import hashlib
 import importlib.util
 import json
 from pathlib import Path
+import tempfile
 import unittest
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -14,6 +15,11 @@ SPEC = importlib.util.spec_from_file_location("batch042_doctor_validator", SCRIP
 assert SPEC is not None and SPEC.loader is not None
 VALIDATOR = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(VALIDATOR)
+REFRESH_SCRIPT = Path(__file__).with_name("refresh-batch042-doctor.py")
+REFRESH_SPEC = importlib.util.spec_from_file_location("batch042_doctor_refresh", REFRESH_SCRIPT)
+assert REFRESH_SPEC is not None and REFRESH_SPEC.loader is not None
+REFRESH = importlib.util.module_from_spec(REFRESH_SPEC)
+REFRESH_SPEC.loader.exec_module(REFRESH)
 DOCTOR = json.loads((ROOT / "docs/reports/batch042-doctor-v42.json").read_text(encoding="utf-8"))
 
 
@@ -101,6 +107,39 @@ class DoctorV42Tests(unittest.TestCase):
         document["release_gates"]["private_beta"] = "VERIFIED"
         with self.assertRaisesRegex(VALIDATOR.DoctorError, "must keep production"):
             VALIDATOR.validate_doctor(document, ROOT)
+
+    def test_doctor_builder_invalidates_changed_inputs_and_evidence(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            source = root / "source.json"
+            output = root / "evidence.txt"
+            source.write_text("source-v1", encoding="utf-8")
+            output.write_text("PASS", encoding="utf-8")
+            row = {
+                "status": "PASS",
+                "input_files": [{"path": "source.json", "sha256": REFRESH.sha256(source)}],
+                "output_path": str(output),
+                "output_sha256": REFRESH.sha256(output),
+            }
+            current = REFRESH.make_test("fixture", row, root=root)
+            self.assertEqual("VERIFIED", current["status"])
+            missing_output_hash = dict(row)
+            missing_output_hash["output_sha256"] = None
+            missing_evidence = REFRESH.make_test("fixture", missing_output_hash, root=root)
+            self.assertEqual("NOT_RUN", missing_evidence["status"])
+            self.assertIn("missing_evidence_output_hash", missing_evidence["evidence_invalidated"])
+            source.write_text("source-v2", encoding="utf-8")
+            stale_source = REFRESH.make_test("fixture", row, root=root)
+            self.assertEqual("NOT_RUN", stale_source["status"])
+            self.assertEqual("VERIFIED", stale_source["attempted_status"])
+            self.assertIn("changed_input:source.json", stale_source["evidence_invalidated"])
+            source.write_text("source-v1", encoding="utf-8")
+            output.write_text("FAIL", encoding="utf-8")
+            stale_output = REFRESH.make_test("fixture", row, root=root)
+            self.assertEqual("NOT_RUN", stale_output["status"])
+            self.assertIsNone(stale_output["output_sha256"])
+            self.assertEqual(row["output_sha256"], stale_output["attempted_output_sha256"])
+            self.assertIn("changed_evidence_output", stale_output["evidence_invalidated"])
 
 
 if __name__ == "__main__":

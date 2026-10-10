@@ -204,7 +204,7 @@ def find_child(runs: list[dict], suite_id: str, fragment: str) -> tuple[dict | N
     return parent, None
 
 
-def make_test(name: str, row: dict | None, child: dict | None = None) -> dict:
+def make_test(name: str, row: dict | None, child: dict | None = None, root: Path = ROOT) -> dict:
     if row is None:
         return {"status": "NOT_RUN", "executed": False, "reason": "no current runner record was supplied"}
     outer_status = str(row.get("status", "NOT_RUN"))
@@ -214,6 +214,32 @@ def make_test(name: str, row: dict | None, child: dict | None = None) -> dict:
         status = map_status(child.get("status"))
     else:
         status = map_status(outer_status)
+    invalidations = []
+    if status in {"VERIFIED", "FAILED"}:
+        for item in row.get("input_files", []):
+            relative = Path(str(item.get("path", "")))
+            if relative.is_absolute() or ".." in relative.parts:
+                invalidations.append(f"unsafe_input_path:{relative}")
+                continue
+            source_path = root / relative
+            expected = item.get("sha256")
+            if not source_path.is_file():
+                invalidations.append(f"missing_input:{relative}")
+            elif expected != sha256(source_path):
+                invalidations.append(f"changed_input:{relative}")
+        output_path_value = row.get("output_path")
+        output_sha = row.get("output_sha256")
+        if status == "VERIFIED" and output_sha is None:
+            invalidations.append("missing_evidence_output_hash")
+        if output_sha is not None:
+            if not isinstance(output_path_value, str) or not Path(output_path_value).is_file():
+                invalidations.append("missing_evidence_output")
+            elif output_sha != sha256(Path(output_path_value)):
+                invalidations.append("changed_evidence_output")
+    attempted_status = status
+    if invalidations:
+        status = "NOT_RUN"
+    output_sha = row.get("output_sha256")
     result = {
         "status": status,
         "executed": status in {"VERIFIED", "FAILED"},
@@ -224,7 +250,7 @@ def make_test(name: str, row: dict | None, child: dict | None = None) -> dict:
         "fingerprint_environment": row.get("fingerprint_environment", {}),
         "cwd": row.get("cwd"),
         "output_path": row.get("output_path"),
-        "output_sha256": row.get("output_sha256"),
+        "output_sha256": None if invalidations else output_sha,
         "resource_guard": row.get("resource_guard", "NOT_REQUIRED"),
         "guard_environment": row.get("guard_environment", {}),
         "memavailable_floor_kib": row.get("memavailable_floor_kib"),
@@ -237,6 +263,10 @@ def make_test(name: str, row: dict | None, child: dict | None = None) -> dict:
         "started_at": row.get("started_at"),
         "ended_at": row.get("ended_at"),
     }
+    if invalidations:
+        result.update({"attempted_status": attempted_status, "attempted_output_sha256": output_sha,
+                       "evidence_invalidated": invalidations,
+                       "reason": "recorded result inputs or output no longer match current evidence"})
     if child is not None:
         result.update({"exit_code": child.get("exit_code"), "child_command": child.get("argv")})
     else:
