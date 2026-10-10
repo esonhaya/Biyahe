@@ -1,0 +1,183 @@
+{
+  "doctor_version": 48,
+  "generated_at_utc": "2026-10-10T23:39:19Z",
+  "executable_source_revision": "20afdc33025e1bee566470fe9d715517e9159ad2",
+  "environment": "Android Termux; Node v26.4.0; no browser, database, Docker, or external host run",
+  "changes": [
+    {
+      "module": "web/src/app/page.tsx",
+      "status": "VERIFIED",
+      "finding": "Journey recommendation now follows the planner's first-ranked journey identity through comparison filters; current selection is tracked independently. Search combobox aria-expanded now matches actual visible suggestions."
+    },
+    {
+      "module": "web/src/lib/journeyComparison.ts",
+      "status": "VERIFIED",
+      "finding": "Pure identity-based selected/recommended comparison state."
+    },
+    {
+      "module": "api/scripts/run-lightweight-check.sh",
+      "status": "VERIFIED",
+      "finding": "Corrected source fingerprint paths and allowlisted existing preview fixtures."
+    }
+  ],
+  "functional_tests": [
+    {
+      "name": "request-gate",
+      "status": "PASS",
+      "command": "node --experimental-strip-types scripts/request-gate-harness.mjs",
+      "exit_code": 0,
+      "elapsed_seconds": 8,
+      "peak_rss_kib": 61568,
+      "min_memavailable_kib": 904688,
+      "min_swapfree_kib": 296820,
+      "evidence": "$HOME/.cache/biyahe/batch048/request-gate-20261010T2334Z/"
+    },
+    {
+      "name": "place-search",
+      "status": "PASS",
+      "command": "node --experimental-strip-types scripts/place-search-harness.mjs",
+      "exit_code": 0,
+      "elapsed_seconds": 9,
+      "peak_rss_kib": 61148,
+      "min_memavailable_kib": 881652,
+      "min_swapfree_kib": 312456,
+      "evidence": "$HOME/.cache/biyahe/batch048/place-search-20261010T2335Z-r1/"
+    },
+    {
+      "name": "search-keyboard-and-combobox",
+      "status": "PASS",
+      "command": "node --experimental-strip-types scripts/search-keyboard-harness.mjs",
+      "exit_code": 0,
+      "elapsed_seconds": 8,
+      "peak_rss_kib": 49040,
+      "min_memavailable_kib": 946932,
+      "min_swapfree_kib": 40944,
+      "evidence": "$HOME/.cache/biyahe/batch048/search-keyboard-20261010T2337Z-r1/"
+    },
+    {
+      "name": "can-i-ride",
+      "status": "PASS",
+      "command": "node --experimental-strip-types scripts/can-i-ride-harness.mjs",
+      "exit_code": 0,
+      "elapsed_seconds": 7,
+      "peak_rss_kib": 61408,
+      "min_memavailable_kib": 964960,
+      "min_swapfree_kib": 347436,
+      "evidence": "$HOME/.cache/biyahe/batch048/can-i-ride-20261010T2337Z/"
+    },
+    {
+      "name": "commute-cards-comparison-saved-data",
+      "status": "PASS",
+      "command": "node --experimental-strip-types scripts/commute-card-harness.mjs",
+      "exit_code": 0,
+      "elapsed_seconds": 9,
+      "peak_rss_kib": 59476,
+      "min_memavailable_kib": 864768,
+      "min_swapfree_kib": 37864,
+      "evidence": "$HOME/.cache/biyahe/batch048/commute-cards-20261010T2338Z/"
+    },
+    {
+      "name": "walking-preview-state",
+      "status": "PASS",
+      "command": "node --experimental-strip-types scripts/offline-walking-preview-state-harness.mjs",
+      "exit_code": 0,
+      "elapsed_seconds": 7,
+      "peak_rss_kib": null,
+      "min_memavailable_kib": 913508,
+      "min_swapfree_kib": 51328,
+      "evidence": "$HOME/.cache/biyahe/batch048/offline-walking-preview-state-20261010T2339Z/",
+      "note": "Worker ended before RSS poll; peak was not measurable."
+    },
+    {
+      "name": "walking-preview-presentation",
+      "status": "PASS",
+      "command": "node --experimental-strip-types scripts/offline-walking-preview-harness.mjs",
+      "exit_code": 0,
+      "elapsed_seconds": 7,
+      "peak_rss_kib": 76612,
+      "min_memavailable_kib": 870188,
+      "min_swapfree_kib": 58248,
+      "evidence": "$HOME/.cache/biyahe/batch048/offline-walking-preview-20261010T2340Z/"
+    },
+    {
+      "name": "ride-mode",
+      "status": "PASS",
+      "command": "node --experimental-strip-types scripts/ride-mode-harness.mjs",
+      "exit_code": 0,
+      "elapsed_seconds": 8,
+      "peak_rss_kib": 77400,
+      "min_memavailable_kib": 869852,
+      "min_swapfree_kib": 69680,
+      "evidence": "$HOME/.cache/biyahe/batch048/ride-mode-20261010T2341Z/"
+    },
+    {
+      "name": "api-failure-and-response-contract",
+      "status": "PASS",
+      "command": "node --experimental-strip-types scripts/api-failure-harness.mjs",
+      "exit_code": 0,
+      "elapsed_seconds": 8,
+      "peak_rss_kib": 53784,
+      "min_memavailable_kib": 873796,
+      "min_swapfree_kib": 77528,
+      "evidence": "$HOME/.cache/biyahe/batch048/api-failure-20261010T2342Z/"
+    }
+  ],
+  "test_runner_setup_failure": {
+    "status": "FIXED_BEFORE_TEST",
+    "detail": "Initial place-search invocation referenced nonexistent web/src/lib/placeSearch.ts in the fingerprint allowlist and exited before worker launch. The allowlist now uses latestPlaceSearch.ts; the subsequent single execution passed."
+  },
+  "resource_policy": {
+    "status": "VERIFIED",
+    "light_profile_memavailable_floor_kib": 524288,
+    "light_profile_swapfree_floor_kib": 32768,
+    "light_profile_process_tree_rss_cap_kib": 131072,
+    "preflight_samples": 3,
+    "timeout_seconds": 60,
+    "first_breach_cancellation": true,
+    "minimum_observed_memavailable_kib": 864768,
+    "minimum_observed_swapfree_kib": 37864,
+    "cancellations": 0
+  },
+  "static_checks": [
+    {
+      "command": "git diff --check",
+      "status": "PASS",
+      "exit_code": 0
+    },
+    {
+      "command": "node --check web/scripts/commute-card-harness.mjs",
+      "status": "PASS",
+      "exit_code": 0
+    },
+    {
+      "command": "node --check web/scripts/search-keyboard-harness.mjs",
+      "status": "PASS",
+      "exit_code": 0
+    },
+    {
+      "command": "bash -n api/scripts/run-lightweight-check.sh",
+      "status": "PASS",
+      "exit_code": 0
+    }
+  ],
+  "not_run": {
+    "real_cebu_graph_and_ten_case_corpus": "NOT_RUN; graph execution excluded on Termux",
+    "browser_visual_and_mobile_viewports": "NOT_RUN; browser automation excluded/unavailable",
+    "live_api_and_postgresql": "NOT_RUN; no service started",
+    "full_typescript_or_production_build": "NOT_RUN; heavyweight under Termux limits",
+    "field_safety": "BLOCKED; transfer locations remain physically unverified"
+  },
+  "release_readiness": {
+    "private_beta": "BLOCKED",
+    "production_activation": "NO",
+    "known_defects_found": "None in the exercised focused fixtures; untested browser/live-graph behavior remains."
+  },
+  "source_fingerprints": {
+    "api/scripts/run-lightweight-check.sh": "0608906089c58dbee5dbc00d4b47c18a91f44158266b171c440fb5caacd59621",
+    "web/src/app/page.tsx": "ef1f08d0639f0fe0cc09df16ff06df3ad2f27bf073379ba59804f33fa9ccad40",
+    "web/src/lib/journeyComparison.ts": "0fab4a28799308720a68cc3e3f263e691bcd296e5ba6acd1d5108a6facf16190",
+    "web/scripts/commute-card-harness.mjs": "d13ca423059494cd6194f51ed148b42996161893aee54b8dd274c48c5e1a678d",
+    "web/scripts/search-keyboard-harness.mjs": "2c26eccb1fc3ad2d0c5e3ebbf61df6ad8462c4b201a4fb9827ac6e9fb51686a3"
+  },
+  "assertion_counts": "The existing harnesses do not emit aggregate assertion counts; named checks are recorded in their worker logs."
+}
