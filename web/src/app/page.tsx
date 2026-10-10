@@ -1148,9 +1148,9 @@ export default function Home() {
           </div>
           <p className={styles.sectionCopy}>Saved journeys are local snapshots. They can reopen without the journey API, but may be out of date. New route search requires connectivity.</p>
           <div className={styles.savedGrid}>
-            {savedJourneys.map((saved) => (
+            {savedJourneys.map((saved, index) => (
               <CommuteCard
-                key={saved.id}
+                key={`${saved.id}:${saved.savedAt}:${index}`}
                 journey={saved.journey}
                 variant="saved"
                 offlineSnapshot

@@ -255,6 +255,44 @@ assert.equal(isJourneySnapshot(restored[0].journey), true);
 assert.equal(restored[0].version, 1, "snapshot-v1 remains the persisted format");
 assert.equal(serialized.includes("currentLocation"), false);
 assert.equal(serialized.includes("locationSamples"), false);
+
+const mismatchedSnapshotId = JSON.stringify({
+  version: 1,
+  journeys: [{ ...saved[0], id: "different-journey", journey: saved[0].journey }],
+});
+const mismatchedSnapshotStorageData = new Map([[SAVED_JOURNEYS_STORAGE_KEY, mismatchedSnapshotId]]);
+const mismatchedSnapshotStorage = {
+  getItem: (key) => mismatchedSnapshotStorageData.get(key) ?? null,
+  setItem: (key, value) => mismatchedSnapshotStorageData.set(key, value),
+  removeItem: (key) => mismatchedSnapshotStorageData.delete(key),
+};
+const mismatchedSnapshotRead = readSavedJourneyStore(mismatchedSnapshotStorage);
+assert.equal(mismatchedSnapshotRead.writable, false, "snapshot-v1 record identity must match its journey identity");
+assert.match(mismatchedSnapshotRead.problem ?? "", /preserved/);
+assert.throws(() => persistSavedJourneys(mismatchedSnapshotStorage, saved), /could not be read safely/);
+assert.equal(mismatchedSnapshotStorageData.get(SAVED_JOURNEYS_STORAGE_KEY), mismatchedSnapshotId,
+  "a mismatched snapshot id must not cause a silent overwrite");
+
+const duplicateSnapshotRaw = JSON.stringify({
+  version: 1,
+  journeys: [saved[0], { ...saved[0], savedAt: "2026-10-08T00:00:00.000Z" }],
+});
+assert.throws(() => serializeSavedJourneys([saved[0], { ...saved[0] }]), /duplicate records/,
+  "direct snapshot serialization rejects duplicate journey identities");
+const duplicateSnapshotData = new Map([[SAVED_JOURNEYS_STORAGE_KEY, duplicateSnapshotRaw]]);
+const duplicateSnapshotStorage = {
+  getItem: (key) => duplicateSnapshotData.get(key) ?? null,
+  setItem: (key, value) => duplicateSnapshotData.set(key, value),
+  removeItem: (key) => duplicateSnapshotData.delete(key),
+};
+const duplicateSnapshotRead = readSavedJourneyStore(duplicateSnapshotStorage);
+assert.equal(duplicateSnapshotRead.writable, false, "duplicate stored ids require recovery before mutation");
+assert.equal(duplicateSnapshotRead.journeys.length, 2, "duplicate snapshots stay readable for user review");
+assert.match(duplicateSnapshotRead.problem ?? "", /duplicate records/);
+assert.throws(() => persistSavedJourneys(duplicateSnapshotStorage, saved), /duplicate records/);
+assert.equal(duplicateSnapshotData.get(SAVED_JOURNEYS_STORAGE_KEY), duplicateSnapshotRaw,
+  "duplicate entries remain untouched until the user backs up and repairs storage");
+
 assert.deepEqual(parseSavedJourneys(JSON.stringify({ version: 999, journeys: saved })), []);
 assert.deepEqual(parseSavedJourneys(JSON.stringify({ version: 1, journeys: [{ ...saved[0], journey: { ...saved[0].journey, currentLocation: { lat: 10.3, lng: 123.9 } } }] })), []);
 assert.deepEqual(parseSavedJourneys("{broken local data"), [], "corrupt local JSON is ignored without throwing");

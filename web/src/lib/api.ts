@@ -1,4 +1,36 @@
-import { fetchWithTimeout } from "./fetchWithTimeout";
+import { fetchWithTimeout } from "./fetchWithTimeout.ts";
+
+function endpointPath(path: string): string {
+  return path.split("?", 1)[0] || "/";
+}
+
+export class ApiHttpError extends Error {
+  readonly path: string;
+  readonly status: number;
+
+  constructor(path: string, status: number) {
+    const safePath = endpointPath(path);
+    super(`API request to ${safePath} failed with status ${status}.`);
+    this.name = "ApiHttpError";
+    this.path = safePath;
+    this.status = status;
+  }
+}
+
+function requireSuccessfulResponse(response: Response, path: string): void {
+  if (!response.ok) throw new ApiHttpError(path, response.status);
+}
+
+async function readJsonResponse<T>(response: Response, path: string): Promise<T> {
+  try {
+    return await response.json() as T;
+  } catch (error) {
+    if (error instanceof SyntaxError) {
+      throw new Error(`Malformed JSON response from ${endpointPath(path)}.`);
+    }
+    throw error;
+  }
+}
 
 export type VerificationState = "DRAFT" | "UNVERIFIED" | "VERIFIED" | "STALE" | "RETIRED";
 
@@ -445,8 +477,8 @@ async function getJson<T>(path: string, signal?: AbortSignal): Promise<T> {
     signal,
     cache: "no-store",
   }, async (result) => {
-    if (!result.ok) throw new Error("API request failed with status " + result.status);
-    return result.json();
+    requireSuccessfulResponse(result, path);
+    return readJsonResponse<T>(result, path);
   });
   return response as T;
 }
@@ -468,6 +500,7 @@ function isLocationPoint(value: unknown): boolean {
 function isVerificationResponse(value: unknown): boolean {
   return isRecord(value)
     && typeof value.state === "string"
+    && ["DRAFT", "UNVERIFIED", "VERIFIED", "STALE", "RETIRED"].includes(value.state)
     && typeof value.is_demo === "boolean"
     && typeof value.trusted === "boolean";
 }
@@ -475,11 +508,12 @@ function isVerificationResponse(value: unknown): boolean {
 function isGeometryResponse(value: unknown): boolean {
   if (value === null) return true;
   if (!isRecord(value) || !Array.isArray(value.coordinates)) return false;
-  const coordinate = (point: unknown) => Array.isArray(point) && point.length >= 2
-    && point.slice(0, 2).every((part) => typeof part === "number" && Number.isFinite(part));
-  if (value.type === "LineString") return value.coordinates.every(coordinate);
+  const coordinate = (point: unknown) => Array.isArray(point) && point.length >= 2 && point.length <= 3
+    && point.every((part) => typeof part === "number" && Number.isFinite(part))
+    && point[0] >= -180 && point[0] <= 180 && point[1] >= -90 && point[1] <= 90;
+  if (value.type === "LineString") return value.coordinates.length >= 2 && value.coordinates.every(coordinate);
   if (value.type === "MultiLineString") return value.coordinates.every((line) =>
-    Array.isArray(line) && line.every(coordinate));
+    Array.isArray(line) && line.length >= 2 && line.every(coordinate)) && value.coordinates.length > 0;
   return false;
 }
 
@@ -508,12 +542,97 @@ function isRouteSummary(value: unknown): value is Route {
     && isVerificationResponse(value.verification);
 }
 
-function isJourneyPointResponse(value: unknown): boolean {
+function isJourneyPointResponse(value: unknown): value is JourneyPoint {
   return isRecord(value)
+    && (value.type === "PLACE" || value.type === "STOP")
     && Number.isSafeInteger(value.id) && (value.id as number) > 0
-    && typeof value.name === "string"
+    && typeof value.name === "string" && value.name.length > 0
     && isLocationPoint(value.location)
     && isVerificationResponse(value.verification);
+}
+
+function isNullableString(value: unknown): boolean {
+  return value === null || typeof value === "string";
+}
+
+function isNullableNonNegativeNumber(value: unknown): boolean {
+  return value === null || (typeof value === "number" && Number.isFinite(value) && value >= 0);
+}
+
+function isProvenanceList(value: unknown): boolean {
+  return Array.isArray(value) && value.every((item) => isRecord(item)
+    && typeof item.type === "string" && typeof item.title === "string");
+}
+
+function isJourneyDisruptionImpactResponse(value: unknown): boolean {
+  if (!isRecord(value) || typeof value.warning !== "string"
+    || !["INFORMATIONAL", "POSSIBLY_AFFECTED", "AFFECTED", "SERVICE_UNAVAILABLE"].includes(String(value.impact_level))
+    || !(value.affected_leg_index === null || (Number.isSafeInteger(value.affected_leg_index) && (value.affected_leg_index as number) >= 0))
+    || !(value.affected_leg_type === null || ["WALK_ACCESS", "RIDE", "TRANSFER_WALK", "WALK_EGRESS"].includes(String(value.affected_leg_type)))
+    || !Array.isArray(value.matched_by) || !value.matched_by.every((item) => typeof item === "string")
+    || !(value.affected_legs === undefined || (Array.isArray(value.affected_legs) && value.affected_legs.every((leg) => isRecord(leg)
+      && Number.isSafeInteger(leg.index) && (leg.index as number) >= 0
+      && ["WALK_ACCESS", "RIDE", "TRANSFER_WALK", "WALK_EGRESS"].includes(String(leg.type))
+      && Array.isArray(leg.matched_by) && leg.matched_by.every((item) => typeof item === "string"))))) return false;
+
+  const advisory = value.advisory;
+  return isRecord(advisory)
+    && typeof advisory.stable_id === "string" && advisory.stable_id.length > 0
+    && typeof advisory.headline === "string"
+    && typeof advisory.description === "string"
+    && ["SERVICE_SUSPENDED", "SERVICE_REDUCED", "REROUTED", "STOP_UNAVAILABLE", "BOARDING_AREA_UNAVAILABLE", "ROAD_CLOSURE", "FLOODING", "EVENT", "TRAFFIC_DISRUPTION", "TRANSFER_UNAVAILABLE", "OTHER"].includes(String(advisory.category))
+    && ["INFO", "MINOR", "MAJOR", "CRITICAL"].includes(String(advisory.severity))
+    && typeof advisory.source_class === "string"
+    && (advisory.starts_at === null || typeof advisory.starts_at === "string")
+    && (advisory.ends_at === null || typeof advisory.ends_at === "string")
+    && (advisory.source === null || (isRecord(advisory.source)
+      && (advisory.source.observed_at === null || typeof advisory.source.observed_at === "string")
+      && (advisory.source.conflict_status === undefined || advisory.source.conflict_status === null || typeof advisory.source.conflict_status === "string")));
+}
+
+function isJourneyLegResponse(value: unknown): boolean {
+  if (!isRecord(value)
+    || !["WALK_ACCESS", "RIDE", "TRANSFER_WALK", "WALK_EGRESS"].includes(String(value.type))
+    || !isJourneyPointResponse(value.origin) || !isJourneyPointResponse(value.destination)
+    || !isNullableNonNegativeNumber(value.distance_meters)
+    || typeof value.distance_is_estimate !== "boolean"
+    || !(value.distance_type === null || ["PEDESTRIAN_NETWORK", "PEDESTRIAN_NETWORK_WITH_APPROXIMATE_CONNECTORS", "STRAIGHT_LINE_ESTIMATE", "NOT_REQUIRED", "UNAVAILABLE"].includes(String(value.distance_type)))
+    || !isNullableString(value.routing_status) || !isNullableString(value.routing_source)
+    || !(value.access_classification === null || ["NETWORK_ROUTE", "STRAIGHT_LINE_ESTIMATE", "NO_WALKABLE_ACCESS", "GRAPH_COVERAGE_GAP", "ROUTING_UNAVAILABLE"].includes(String(value.access_classification)))
+    || !isNullableNonNegativeNumber(value.estimated_duration_seconds)
+    || !isNullableString(value.origin_precision) || !isNullableString(value.destination_precision)
+    || !Array.isArray(value.warnings) || !value.warnings.every((item) => typeof item === "string")
+    || !(value.instruction === null || typeof value.instruction === "string")
+    || !isProvenanceList(value.provenance)
+    || !isGeometryResponse(value.geometry)) return false;
+
+  if (value.route !== null && (!isRecord(value.route)
+    || !Number.isSafeInteger(value.route.id) || (value.route.id as number) <= 0
+    || typeof value.route.code !== "string" || typeof value.route.name !== "string"
+    || !(value.route.vehicle_type === null || (isRecord(value.route.vehicle_type)
+      && typeof value.route.vehicle_type.code === "string" && typeof value.route.vehicle_type.name === "string"))
+    || !isVerificationResponse(value.route.verification))) return false;
+  if (value.pattern !== null && (!isRecord(value.pattern)
+    || !Number.isSafeInteger(value.pattern.id) || (value.pattern.id as number) <= 0
+    || typeof value.pattern.name !== "string" || typeof value.pattern.direction !== "string"
+    || !isVerificationResponse(value.pattern.verification))) return false;
+  if (!(value.boarding_stop === null || isJourneyPointResponse(value.boarding_stop))
+    || !(value.alighting_stop === null || isJourneyPointResponse(value.alighting_stop))
+    || !(value.transfer === null || (isRecord(value.transfer)
+      && ["TRANSFER", "SHARED_STOP"].includes(String(value.transfer.type))
+      && (value.transfer.id === null || (Number.isSafeInteger(value.transfer.id) && (value.transfer.id as number) > 0))
+      && isNullableString(value.transfer.stable_id)))
+    || !(value.stop_count === null || (Number.isSafeInteger(value.stop_count) && (value.stop_count as number) >= 0))
+    || !(value.boarding_sequence === null || (Number.isSafeInteger(value.boarding_sequence) && (value.boarding_sequence as number) >= 0))
+    || !(value.alighting_sequence === null || (Number.isSafeInteger(value.alighting_sequence) && (value.alighting_sequence as number) >= 0))
+    || !(value.boarding_instruction === null || typeof value.boarding_instruction === "string")
+    || !(value.boarding_association === null || isVerificationResponse(value.boarding_association))
+    || !(value.alighting_association === null || isVerificationResponse(value.alighting_association))
+    || !(value.driver_instruction === null || typeof value.driver_instruction === "string")
+    || !(value.get_off_guidance === null || typeof value.get_off_guidance === "string")
+    || !(value.trust === null || ["VERIFIED", "MIXED", "UNVERIFIED"].includes(String(value.trust)))) return false;
+
+  return true;
 }
 
 function isCanIRideOptionResponse(value: unknown): boolean {
@@ -541,8 +660,8 @@ function isCanIRideOptionResponse(value: unknown): boolean {
 function isJourneyResponseValue(value: unknown): value is JourneyResponse {
   if (!isRecord(value) || !hasDataArray(value) || !isRecord(value.meta)
     || !isJourneyPointResponse(value.meta.origin) || !isJourneyPointResponse(value.meta.destination)
-    || !Number.isSafeInteger(value.meta.result_count)
-    || !Number.isSafeInteger(value.meta.max_transfers)
+    || !Number.isSafeInteger(value.meta.result_count) || (value.meta.result_count as number) < 0
+    || !Number.isSafeInteger(value.meta.max_transfers) || (value.meta.max_transfers as number) < 0
     || !(value.meta.no_route === null || (isRecord(value.meta.no_route)
       && typeof value.meta.no_route.code === "string" && typeof value.meta.no_route.message === "string"))
     || !isRecord(value.meta.pedestrian_routing)) return false;
@@ -551,14 +670,16 @@ function isJourneyResponseValue(value: unknown): value is JourneyResponse {
     || (value.data.length > 0 && value.meta.no_route !== null)) return false;
 
   return value.data.every((journey) => {
-    if (typeof journey.id !== "string" || !isJourneyPointResponse(journey.origin)
+    if (typeof journey.id !== "string" || journey.id.length === 0 || !isJourneyPointResponse(journey.origin)
       || !isJourneyPointResponse(journey.destination) || !Array.isArray(journey.legs)
       || journey.legs.length === 0 || !Number.isSafeInteger(journey.transfer_count)
+      || (journey.transfer_count as number) < 0
+      || journey.transfer_count !== journey.legs.filter((leg) => isRecord(leg) && leg.type === "RIDE").length - 1
+      || journey.origin.id !== value.meta.origin.id || journey.destination.id !== value.meta.destination.id
       || !isRecord(journey.ranking)
       || typeof journey.ranking.walking_distance_meters !== "number"
-      || !Number.isFinite(journey.ranking.walking_distance_meters)
-      || typeof journey.ranking.ride_stop_count !== "number"
-      || !Number.isFinite(journey.ranking.ride_stop_count)
+      || !Number.isFinite(journey.ranking.walking_distance_meters) || journey.ranking.walking_distance_meters < 0
+      || !Number.isSafeInteger(journey.ranking.ride_stop_count) || (journey.ranking.ride_stop_count as number) < 0
       || typeof journey.ranking.policy !== "string"
       || !Array.isArray(journey.ranking.reasons) || !journey.ranking.reasons.every((item) => typeof item === "string")
       || !isRecord(journey.trust)
@@ -569,26 +690,12 @@ function isJourneyResponseValue(value: unknown): value is JourneyResponse {
       || typeof journey.fare.label !== "string"
       || !(journey.fare.amount === null || (typeof journey.fare.amount === "number" && Number.isFinite(journey.fare.amount)))
       || !(journey.fare.currency === null || typeof journey.fare.currency === "string")
-      || !Array.isArray(journey.provenance)) return false;
+      || !isProvenanceList(journey.provenance)
+      || !(journey.operational_impact === undefined || ["INFORMATIONAL", "POSSIBLY_AFFECTED", "AFFECTED", "SERVICE_UNAVAILABLE"].includes(String(journey.operational_impact)))
+      || !(journey.disruptions === undefined || (Array.isArray(journey.disruptions)
+        && journey.disruptions.every(isJourneyDisruptionImpactResponse)))) return false;
 
-    return journey.legs.every((leg) => isRecord(leg)
-      && ["WALK_ACCESS", "RIDE", "TRANSFER_WALK", "WALK_EGRESS"].includes(String(leg.type))
-      && isJourneyPointResponse(leg.origin) && isJourneyPointResponse(leg.destination)
-      && (leg.distance_meters === null || (typeof leg.distance_meters === "number"
-        && Number.isFinite(leg.distance_meters) && leg.distance_meters >= 0))
-      && typeof leg.distance_is_estimate === "boolean"
-      && Array.isArray(leg.warnings) && leg.warnings.every((item) => typeof item === "string")
-      && isGeometryResponse(leg.geometry)
-      && (leg.route === null || (isRecord(leg.route) && Number.isSafeInteger(leg.route.id)
-        && typeof leg.route.code === "string" && typeof leg.route.name === "string"
-        && isVerificationResponse(leg.route.verification)))
-      && (leg.pattern === null || (isRecord(leg.pattern) && Number.isSafeInteger(leg.pattern.id)
-        && typeof leg.pattern.name === "string" && typeof leg.pattern.direction === "string"
-        && isVerificationResponse(leg.pattern.verification)))
-      && (leg.boarding_stop === null || isJourneyPointResponse(leg.boarding_stop))
-      && (leg.alighting_stop === null || isJourneyPointResponse(leg.alighting_stop))
-      && (leg.instruction === null || typeof leg.instruction === "string")
-      && Array.isArray(leg.provenance));
+    return journey.legs.every(isJourneyLegResponse);
   });
 }
 
@@ -599,8 +706,16 @@ function requireApiDataArray<T>(value: unknown, path: string, validateItem?: (it
   return value.data as T[];
 }
 
-function requireJourneyResponse(value: unknown, path: string): JourneyResponse {
+function requireJourneyResponse(
+  value: unknown,
+  path: string,
+  expectedIdentity?: { originId: number; destinationId: number },
+): JourneyResponse {
   if (!isJourneyResponseValue(value)) throw new Error(`Invalid API response from ${path}.`);
+  if (expectedIdentity && (value.meta.origin.id !== expectedIdentity.originId
+    || value.meta.destination.id !== expectedIdentity.destinationId)) {
+    throw new Error(`Invalid API response from ${path}: requested place identity mismatch.`);
+  }
   return value;
 }
 
@@ -679,9 +794,17 @@ export async function submitCommuterReport(payload: CommuterReportPayload): Prom
     body: JSON.stringify(payload),
     cache: "no-store",
   }, async (result) => {
-    if (!result.ok) throw new Error("Report request failed with status " + result.status);
-    return result.json();
+    requireSuccessfulResponse(result, "/commuter-reports");
+    return readJsonResponse<unknown>(result, "/commuter-reports");
   });
+  if (!isRecord(response) || !isRecord(response.data)
+    || typeof response.data.stable_id !== "string" || response.data.stable_id.length === 0
+    || typeof response.data.category !== "string"
+    || !["ROUTE_NOT_SEEN", "SERVICE_STOPPED", "REROUTE", "STOP_BLOCKED", "FLOODING", "ROAD_CLOSURE", "TRANSFER_PROBLEM", "FARE_OBSERVATION", "OTHER"].includes(response.data.category)
+    || typeof response.data.status !== "string" || typeof response.data.description !== "string"
+    || typeof response.data.observed_at !== "string" || !isLocationPoint(response.data.location)) {
+    throw new Error("Invalid API response from /commuter-reports.");
+  }
   return response as { data: { stable_id: string; category: CommuterReportCategory; status: string; description: string; observed_at: string; location: LocationPoint | null } };
 }
 
@@ -701,7 +824,10 @@ export async function planJourney(
   });
 
   const path = "/journeys?" + params.toString();
-  return requireJourneyResponse(await getJson<unknown>(path, signal), "/journeys");
+  return requireJourneyResponse(await getJson<unknown>(path, signal), "/journeys", {
+    originId: fromPlaceId,
+    destinationId: toPlaceId,
+  });
 }
 
 export async function previewJourneyWalkingOffline(
@@ -741,10 +867,13 @@ export async function replanJourney(
     signal,
     cache: "no-store",
   }, async (result) => {
-    if (!result.ok) throw new Error("Replan request failed with status " + result.status);
-    return result.json();
+    requireSuccessfulResponse(result, "/journeys/replan");
+    return readJsonResponse<unknown>(result, "/journeys/replan");
   });
-  return requireJourneyResponse(response, "/journeys/replan");
+  return requireJourneyResponse(response, "/journeys/replan", {
+    originId: fromPlaceId,
+    destinationId: toPlaceId,
+  });
 }
 
 export async function canIRide(
@@ -779,6 +908,9 @@ export async function canIRide(
     || response.meta.pedestrian_leg_distance_type !== "per_leg"
     || typeof response.meta.access_radius_meters !== "number" || !Number.isFinite(response.meta.access_radius_meters)) {
     throw new Error("Invalid API response from /can-i-ride.");
+  }
+  if (response.data.origin.id !== fromPlaceId || response.data.destination.id !== toPlaceId) {
+    throw new Error("Invalid API response from /can-i-ride: requested place identity mismatch.");
   }
   if ((response.data.status === "YES" || response.data.status === "YES_BUT_AFFECTED")
     && (response.data.route === null || response.data.option === null)) {

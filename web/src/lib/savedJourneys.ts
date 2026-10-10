@@ -192,7 +192,8 @@ function isSavedJourney(value: unknown): value is SavedJourney {
     && value.id.length > 0
     && typeof value.savedAt === "string"
     && Number.isFinite(Date.parse(value.savedAt))
-    && isJourneySnapshot(value.journey);
+    && isJourneySnapshot(value.journey)
+    && value.id === value.journey.id;
 }
 
 export function savedSnapshotAgeLabel(savedAt: string, now = Date.now()): string {
@@ -235,7 +236,21 @@ function inspectSavedJourneyValue(raw: string | null): SavedJourneyStoreRead {
       || !parsed.journeys.every((saved) => isSavedJourney(saved) && snapshotSize(saved) <= MAX_SNAPSHOT_CHARS)) {
       return { journeys: [], writable: false, problem: "One or more saved journeys could not be read safely. Existing local data was preserved; saves and deletes are disabled." };
     }
-    return { journeys: parsed.journeys, writable: true, problem: null };
+    const journeys = parsed.journeys as SavedJourney[];
+    const savedIds = new Set<string>();
+    const containsDuplicateId = journeys.some((saved) => {
+      if (savedIds.has(saved.id)) return true;
+      savedIds.add(saved.id);
+      return false;
+    });
+    if (containsDuplicateId) {
+      return {
+        journeys,
+        writable: false,
+        problem: "Saved journey data contains duplicate records for the same journey. Existing local data was preserved; back it up before clearing or repairing it.",
+      };
+    }
+    return { journeys, writable: true, problem: null };
   } catch {
     return { journeys: [], writable: false, problem: "Saved journey data could not be parsed. Existing local data was preserved; saves and deletes are disabled." };
   }
@@ -262,6 +277,9 @@ export function serializeSavedJourneys(journeys: SavedJourney[]): string {
   if (journeys.length > MAX_SAVED_JOURNEYS
     || !journeys.every((saved) => isSavedJourney(saved) && snapshotSize(saved) <= MAX_SNAPSHOT_CHARS)) {
     throw new Error("Saved journeys contain unreadable or oversized records; existing data was not replaced.");
+  }
+  if (new Set(journeys.map((saved) => saved.id)).size !== journeys.length) {
+    throw new Error("Saved journeys contain duplicate records for the same journey.");
   }
   const envelope: SavedJourneyEnvelope = { version: SAVED_JOURNEY_SCHEMA_VERSION, journeys };
   const serialized = JSON.stringify(envelope);
