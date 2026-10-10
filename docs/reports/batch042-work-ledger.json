@@ -89,7 +89,7 @@
       "id": "EVIDENCE_SYSTEM",
       "scope": "portable runner, Doctor per-test evidence, partial worker results and input completeness",
       "status": "VERIFIED",
-      "evidence": "Final source revision 29df41b passes STATIC 11/11 at 2026-10-10T04:36:15Z–04:36:31Z, Doctor contract 14/14, portable runner contract 9/9, current Doctor validator, PHP geometry smoke and syntax/JSON checks. Child results use log-hash verification and per-child source fingerprints."
+      "evidence": "Source revision 29df41b passes portable STATIC 11/11 (2026-10-10T04:37:37Z–04:37:52Z). Checkout-bound verification then exposed that packaged Doctor evidence-path relocation made the `--repo-root` byte comparison impossible; no suite ran in that failed attempt. Commit 18d757a records the fix; portable verifier regressions pass 10/10 at 2026-10-10T04:40:58Z–04:40:59Z."
     },
     {
       "id": "ADAPTER_PHPUNIT",
@@ -125,7 +125,7 @@
       "id": "PORTABLE_KIT",
       "scope": "Batch042 v4 portable verification kit",
       "status": "IMPLEMENTED_UNTESTED",
-      "evidence": "The first v4 package attempt exposed a missing hashlib import in the embedded checksum gate; no tests ran from it, and that package is preserved outside the repository. Commit 29df41b adds the import and 9/9 runner regressions pass. A fresh v4 package and local STATIC verification remain pending."
+      "evidence": "Fresh package integrity verification and packaged STATIC mode passed 11/11 at 2026-10-10T04:37:37Z–04:37:52Z for executable revision 29df41b. A checkout-bound run failed before test execution because Doctor evidence paths were deliberately relocated but the verifier required byte identity. Preserved that package under $HOME/.cache/biyahe/batch042/evidence/portable-verification-v4-checkout-mismatch-20261010T043737Z. Commit 18d757a fixes the verified transformation contract and passes 10/10 regression tests; a rebuilt checkout-bound kit run remains pending."
     }
   ],
   "execution_attempts": [
@@ -259,6 +259,41 @@
       "ended_at": "2026-10-10T04:36:31Z",
       "source_revision": "29df41bc768c22d8074970577f5fa67009093c0d",
       "suites": "11/11 PASS; provenance 6, coverage 11, static smoke 2, comparator 4, Doctor contract 14, portable runner 9; PHP geometry and syntax/JSON PASS."
+    },
+    {
+      "id": "portable-v4-packaged-static-20261010T043737Z-13517",
+      "status": "PASS",
+      "started_at": "2026-10-10T04:37:37Z",
+      "ended_at": "2026-10-10T04:37:52Z",
+      "repository_revision": "1d249f41c389436e36930abeec4ddc503e52492c",
+      "executable_source_revision": "29df41bc768c22d8074970577f5fa67009093c0d",
+      "run_status": "$HOME/.cache/biyahe/batch042/portable-verification/20261010T043737Z-13517/run-status.json",
+      "package_path": "$HOME/.cache/biyahe/batch042/evidence/portable-verification-v4-checkout-mismatch-20261010T043737Z",
+      "result": "Manifest and SHA256SUMS verified; packaged STATIC completed 11/11 suites PASS, exit 0. This run used the embedded source snapshot and did not validate --repo-root."
+    },
+    {
+      "id": "portable-v4-checkout-bound-20261010T0438Z",
+      "status": "FAILED_PACKAGE_CHECKOUT_CONTRACT",
+      "started_at": "NOT_INSTRUMENTED",
+      "ended_at": "2026-10-10T04:39:07Z",
+      "wall_time_seconds": 1.5,
+      "command": "bash docs/portable-verification-v4/verify-kit.sh STATIC --repo-root \"$PWD\"",
+      "output_path": "$HOME/.cache/biyahe/batch042/evidence/portable-v4-static-checkout-20261010T0438Z.stdout.txt",
+      "command_started": true,
+      "test_suites_started": false,
+      "result": "Package checksums passed; checkout validation rejected the intentionally relocated Doctor output/resource log paths as a full-file mismatch. This exposed a verifier contract defect; no test suite ran. Fixed in commit 18d757a and preserved the original kit under cache."
+    },
+    {
+      "id": "portable-verifier-regressions-after-18d757a",
+      "status": "PASS",
+      "started_at": "2026-10-10T04:40:58Z",
+      "ended_at": "2026-10-10T04:40:59Z",
+      "wall_time_seconds": 1.271,
+      "source_revision": "18d757a19b894881beb45ce490e9d1b5f4e7adfb",
+      "command": "PYTHONDONTWRITEBYTECODE=1 python3 api/scripts/test_portable_verification.py",
+      "test_count": 10,
+      "failure_count": 0,
+      "exit_code": 0
     }
   ],
   "queues": {
@@ -273,10 +308,11 @@
       "static provenance/coverage/comparator/PHP-geometry/Doctor/portable-runner suites",
       "read-only graph SHA256 identity",
       "portable checksum verifier missing-import regression (9/9 portable runner tests)",
-      "source commit 29df41b package verifier fix plus 9/9 portable runner regressions"
+      "source commit 29df41b package verifier fix plus 9/9 portable runner regressions",
+      "portable kit checkout evidence relocation verifier fix (commit 18d757a; regression harness 10/10)"
     ],
     "implemented_untested": [
-      "portable v4 fresh package/local STATIC verification"
+      "rebuilt v4 package and checkout-bound STATIC verification against the corrected verifier"
     ],
     "blocked_resource": [
       "TypeScript and ESLint",
@@ -454,8 +490,8 @@
   },
   "current_checkpoint": {
     "branch": "main",
-    "head": "29df41bc768c22d8074970577f5fa67009093c0d",
-    "executable_source_revision": "29df41bc768c22d8074970577f5fa67009093c0d"
+    "head": "18d757a19b894881beb45ce490e9d1b5f4e7adfb",
+    "executable_source_revision": "18d757a19b894881beb45ce490e9d1b5f4e7adfb"
   },
   "commits_since_start": [
     "aa929e7ef0902680911cb451baea8421a647dc19",
@@ -469,6 +505,7 @@
     "3be8af5fe6b1606d95e28cafaf0cae0da047f568",
     "eae272fe90e4320f129dd4349f644cbc91bd108b",
     "1015874d95e3d6dc93241cbe3a7ad5645e62dcd5",
-    "29df41bc768c22d8074970577f5fa67009093c0d"
+    "29df41bc768c22d8074970577f5fa67009093c0d",
+    "18d757a19b894881beb45ce490e9d1b5f4e7adfb"
   ]
 }
