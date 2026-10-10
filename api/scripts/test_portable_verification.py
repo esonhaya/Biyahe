@@ -151,6 +151,7 @@ class PortableRunnerTests(unittest.TestCase):
         self.assertIn("normalized_checkout_files", PACKAGER.VERIFY_SCRIPT)
         self.assertIn("checkout_sha256", PACKAGER.VERIFY_SCRIPT)
         self.assertIn("snapshot_sha256", PACKAGER.VERIFY_SCRIPT)
+        self.assertIn("test_row.get(hash_field) is None", PACKAGER.VERIFY_SCRIPT)
         self.assertIn("differs beyond evidence path relocation", PACKAGER.VERIFY_SCRIPT)
 
 

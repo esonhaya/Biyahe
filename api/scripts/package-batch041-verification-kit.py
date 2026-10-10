@@ -166,7 +166,7 @@ for relative in m['required_checkout_paths']:
         expected_evidence=set()
         for test_name,test_row in original.get('tests',{}).items():
             for field,hash_field,kind in (('output_path','output_sha256','stdout.txt'),('resource_log','resource_log_sha256','resource.log')):
-                if hash_field not in test_row: continue
+                if test_row.get(hash_field) is None: continue
                 key=(test_name,kind)
                 expected_evidence.add(key)
                 artifact=evidence.get(key)
