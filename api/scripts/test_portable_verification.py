@@ -24,6 +24,17 @@ PACKAGER_SPEC.loader.exec_module(PACKAGER)
 
 
 class PortableRunnerTests(unittest.TestCase):
+    def test_child_command_results_accept_guard_worker_prefix(self):
+        output = "\n".join([
+            "2026-10-10T03:51:01Z worker: CHILD_COMMAND=['node', 'one.mjs'] EXIT=0",
+            "2026-10-10T03:51:02Z worker: CHILD_COMMAND=['node', 'two.mjs'] EXIT=143",
+            "  CHILD_COMMAND=['node', 'example.mjs'] EXIT=0 is illustrative source text",
+        ])
+        self.assertEqual([
+            {"argv": ["node", "one.mjs"], "status": "PASS", "exit_code": 0},
+            {"argv": ["node", "two.mjs"], "status": "FAIL", "exit_code": 143},
+        ], RUNNER.parse_child_command_results(output))
+
     def test_source_command_cwd_and_environment_change_fingerprint(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
@@ -94,6 +105,17 @@ class PortableRunnerTests(unittest.TestCase):
         self.assertEqual(RUNNER.select_specs(specs, None), specs)
         with self.assertRaisesRegex(ValueError, "not available in this mode"):
             RUNNER.select_specs(specs, "adapter-phpunit")
+
+    def test_search_group_fingerprints_every_ux_harness_source(self):
+        specs = RUNNER.command_specs(ROOT, "FRONTEND", ROOT / ".temporary-run-directory")
+        group = next(spec for spec in specs if spec["id"] == "search-and-can-i-ride")
+        required = {
+            "web/src/app/page.tsx", "web/src/app/globals.css", "web/src/components/NearbyRoutes.tsx",
+            "web/src/components/PersonalCommuteTools.tsx", "web/src/lib/nearbyLookup.ts",
+            "web/src/lib/rideMode.ts", "web/public/sw.js", "web/public/manifest.webmanifest",
+            "api/app/Http/Controllers/Api/DevelopmentOfflineWalkingPreviewController.php",
+        }
+        self.assertTrue(required.issubset(set(group["inputs"])), sorted(required - set(group["inputs"])))
 
     def test_packaged_doctor_evidence_is_relocated_and_hash_pinned(self):
         with tempfile.TemporaryDirectory() as temporary:

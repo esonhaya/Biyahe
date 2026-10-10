@@ -68,6 +68,28 @@ def canonical_hash(value: object) -> str:
     return sha256_bytes(json.dumps(value, sort_keys=True, separators=(",", ":")).encode())
 
 
+def parse_child_command_results(output_text: str) -> list[dict[str, object]]:
+    """Recover completed child commands from the resource guard's worker log."""
+    results: list[dict[str, object]] = []
+    for line in output_text.splitlines():
+        worker_marker = "worker: "
+        candidate = line.split(worker_marker, 1)[1] if worker_marker in line else line
+        if not candidate.startswith("CHILD_COMMAND=") or " EXIT=" not in candidate:
+            continue
+        command_text, exit_text = candidate[len("CHILD_COMMAND="):].rsplit(" EXIT=", 1)
+        try:
+            child_argv = ast.literal_eval(command_text)
+            child_exit = int(exit_text)
+            if not isinstance(child_argv, list) or not all(isinstance(item, str) for item in child_argv):
+                raise ValueError("child command is not a string argument list")
+        except (ValueError, SyntaxError):
+            results.append({"command_text": command_text, "status": "FAIL", "exit_code": None})
+            continue
+        results.append({"argv": child_argv, "status": "PASS" if child_exit == 0 else "FAIL",
+                        "exit_code": child_exit})
+    return results
+
+
 def file_fingerprint(root: Path, relative_paths: list[str], command: list[str], cwd: Path,
                      environment: dict[str, str]) -> tuple[str, list[dict[str, str]], dict[str, str]]:
     files: list[dict[str, str]] = []
@@ -197,7 +219,25 @@ def command_specs(root: Path, mode: str, run_dir: Path) -> list[dict[str, object
         {"id": "commute-card", "argv": ["node", "--experimental-strip-types", "scripts/commute-card-harness.mjs"], "cwd": web, "inputs": ["web/src/lib/savedJourneys.ts", "web/src/lib/commuteInstructions.ts", "web/scripts/commute-card-harness.mjs"]},
         {"id": "ride-mode", "argv": ["node", "--experimental-strip-types", "scripts/ride-mode-harness.mjs"], "cwd": web, "inputs": ["web/src/lib/rideMode.ts", "web/scripts/ride-mode-harness.mjs"]},
         {"id": "request-gate", "argv": ["node", "--experimental-strip-types", "scripts/request-gate-harness.mjs"], "cwd": web, "inputs": ["web/src/lib/requestGate.ts", "web/scripts/request-gate-harness.mjs"]},
-        {"id": "search-and-can-i-ride", "argv": [sys.executable, "-c", "import subprocess,sys; cs=[['node','--experimental-strip-types','scripts/place-search-harness.mjs'],['node','--experimental-strip-types','scripts/search-keyboard-harness.mjs'],['node','--experimental-strip-types','scripts/can-i-ride-harness.mjs'],['node','scripts/ux-contract-harness.mjs'],['node','scripts/validation-ledger-harness.mjs']]; failed=0\nfor c in cs:\n p=subprocess.run(c); print('CHILD_COMMAND='+repr(c)+' EXIT='+str(p.returncode), flush=True); failed |= p.returncode != 0\nsys.exit(1 if failed else 0)"], "cwd": web, "inputs": ["web/src/app/page.module.css", "web/src/lib/latestPlaceSearch.ts", "web/src/lib/searchKeyboard.ts", "web/src/lib/canIRidePresentation.ts", "web/scripts/place-search-harness.mjs", "web/scripts/search-keyboard-harness.mjs", "web/scripts/can-i-ride-harness.mjs", "web/scripts/ux-contract-harness.mjs", "web/scripts/validation-ledger-harness.mjs", "web/scripts/validation-ledger.mjs"]},
+        {"id": "search-and-can-i-ride", "argv": [sys.executable, "-c", "import subprocess,sys; cs=[['node','--experimental-strip-types','scripts/place-search-harness.mjs'],['node','--experimental-strip-types','scripts/search-keyboard-harness.mjs'],['node','--experimental-strip-types','scripts/can-i-ride-harness.mjs'],['node','scripts/ux-contract-harness.mjs'],['node','scripts/validation-ledger-harness.mjs']]; failed=0\nfor c in cs:\n p=subprocess.run(c); print('CHILD_COMMAND='+repr(c)+' EXIT='+str(p.returncode), flush=True); failed |= p.returncode != 0\nsys.exit(1 if failed else 0)"], "cwd": web, "inputs": [
+            "web/src/app/page.tsx", "web/src/app/page.module.css", "web/src/app/globals.css",
+            "web/src/components/CommuteCard.tsx", "web/src/components/MapView.tsx",
+            "web/src/components/NearbyRoutes.tsx", "web/src/components/BiyahePulse.tsx",
+            "web/src/components/RideMode.tsx", "web/src/components/PersonalCommuteTools.tsx",
+            "web/src/components/FieldMode.tsx", "web/src/lib/api.ts", "web/src/lib/canIRidePresentation.ts",
+            "web/src/lib/commuteInstructions.ts", "web/src/lib/journeyExplanation.ts",
+            "web/src/lib/journeyMapPresentation.ts", "web/src/lib/latestPlaceSearch.ts",
+            "web/src/lib/nearbyLookup.ts", "web/src/lib/offlineWalkingPreviewState.ts",
+            "web/src/lib/requestGate.ts", "web/src/lib/rideMode.ts", "web/src/lib/savedJourneys.ts",
+            "web/src/lib/searchKeyboard.ts", "web/public/sw.js", "web/public/manifest.webmanifest",
+            "web/scripts/place-search-harness.mjs", "web/scripts/search-keyboard-harness.mjs",
+            "web/scripts/can-i-ride-harness.mjs", "web/scripts/ux-contract-harness.mjs",
+            "web/scripts/validation-ledger-harness.mjs", "web/scripts/validation-ledger.mjs",
+            "web/scripts/offline-walking-preview-state-harness.mjs", "web/scripts/request-gate-harness.mjs",
+            "web/scripts/nearby-harness.mjs", "web/scripts/offline-walking-preview-harness.mjs",
+            "web/scripts/commute-card-harness.mjs", "api/app/Http/Controllers/Api/DevelopmentOfflineWalkingPreviewController.php",
+            "api/app/Services/Routing/OfflineJourneyWalkingPreview.php", "api/routes/api.php"
+        ]},
         {"id": "typescript", "argv": ["npm", "run", "typecheck"], "cwd": web, "inputs": ["web/package.json", "web/package-lock.json", "web/tsconfig.json", "web/src/app/page.tsx", "web/src/components/CommuteCard.tsx", "web/src/components/RideMode.tsx", "web/src/lib/offlineWalkingPreviewState.ts", "web/src/lib/requestGate.ts", "web/src/lib/savedJourneys.ts", "web/src/lib/rideMode.ts", "web/src/lib/canIRidePresentation.ts"]},
         {"id": "eslint", "argv": ["npm", "run", "lint", "--", "src/app/page.tsx", "src/components/CommuteCard.tsx", "src/components/RideMode.tsx", "src/lib/offlineWalkingPreviewState.ts", "src/lib/requestGate.ts", "src/lib/savedJourneys.ts", "src/lib/rideMode.ts", "src/lib/canIRidePresentation.ts"], "cwd": web, "inputs": ["web/package.json", "web/package-lock.json", "web/eslint.config.mjs", "web/src/app/page.tsx", "web/src/components/CommuteCard.tsx", "web/src/components/RideMode.tsx", "web/src/lib/offlineWalkingPreviewState.ts", "web/src/lib/requestGate.ts", "web/src/lib/savedJourneys.ts", "web/src/lib/rideMode.ts", "web/src/lib/canIRidePresentation.ts"]},
     ]
@@ -353,18 +393,7 @@ def run_specs(root: Path, run_dir: Path, specs: list[dict[str, object]], resourc
                               worker_min_swapfree_kib=find_metric(resource_text, "min_swapfree_kb"),
                               worker_peak_rss_kib=find_metric(resource_text, "peak_rss_kb"),
                               worker_peak_postgres_rss_kib=find_metric(resource_text, "peak_postgres_rss_kb"))
-            child_results = []
-            for line in output_text.splitlines():
-                if not line.startswith("CHILD_COMMAND=") or " EXIT=" not in line:
-                    continue
-                command_text, exit_text = line[len("CHILD_COMMAND="):].rsplit(" EXIT=", 1)
-                try:
-                    child_argv = ast.literal_eval(command_text)
-                    child_exit = int(exit_text)
-                except (ValueError, SyntaxError):
-                    child_results.append({"command_text": command_text, "status": "FAILED", "exit_code": None})
-                    continue
-                child_results.append({"argv": child_argv, "status": "PASS" if child_exit == 0 else "FAIL", "exit_code": child_exit})
+            child_results = parse_child_command_results(output_text)
             if child_results:
                 record["child_command_results"] = child_results
             record["test_count"] = parse_test_count(output_text)

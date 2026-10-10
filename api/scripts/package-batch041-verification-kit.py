@@ -57,15 +57,18 @@ FILES = [
     "web/scripts/offline-walking-preview-state-harness.mjs", "web/scripts/ride-mode-harness.mjs",
     "web/scripts/ux-contract-harness.mjs", "web/scripts/validation-ledger-harness.mjs",
     "web/scripts/request-gate-harness.mjs", "web/scripts/search-keyboard-harness.mjs",
-    "web/scripts/place-search-harness.mjs", "web/scripts/validation-ledger.mjs",
-    "web/src/app/page.tsx", "web/src/app/page.module.css",
+    "web/scripts/place-search-harness.mjs", "web/scripts/validation-ledger.mjs", "web/scripts/nearby-harness.mjs",
+    "web/src/app/page.tsx", "web/src/app/page.module.css", "web/src/app/globals.css",
     "web/src/components/CommuteCard.tsx", "web/src/components/DisruptionNotice.tsx",
     "web/src/components/MapView.tsx", "web/src/components/ReplanPanel.tsx", "web/src/components/RideMode.tsx",
+    "web/src/components/NearbyRoutes.tsx", "web/src/components/BiyahePulse.tsx",
+    "web/src/components/PersonalCommuteTools.tsx", "web/src/components/FieldMode.tsx",
     "web/src/lib/api.ts", "web/src/lib/canIRidePresentation.ts", "web/src/lib/commuteInstructions.ts",
     "web/src/lib/journeyExplanation.ts", "web/src/lib/journeyMapPresentation.ts",
-    "web/src/lib/latestPlaceSearch.ts", "web/src/lib/offlineWalkingPreviewState.ts",
+    "web/src/lib/latestPlaceSearch.ts", "web/src/lib/nearbyLookup.ts", "web/src/lib/offlineWalkingPreviewState.ts",
     "web/src/lib/requestGate.ts", "web/src/lib/rideMode.ts", "web/src/lib/savedJourneys.ts",
     "web/src/lib/searchKeyboard.ts",
+    "web/public/sw.js", "web/public/manifest.webmanifest",
 ]
 
 VERIFY_SCRIPT = r'''#!/usr/bin/env bash

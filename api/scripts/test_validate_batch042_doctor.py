@@ -154,6 +154,119 @@ class DoctorV42Tests(unittest.TestCase):
             self.assertIsNone(stale_output["output_sha256"])
             self.assertEqual(row["output_sha256"], stale_output["attempted_output_sha256"])
             self.assertIn("changed_evidence_output", stale_output["evidence_invalidated"])
+            report = root / "docs/reports/batch042-doctor-v42.json"
+            report.parent.mkdir(parents=True)
+            report.write_text("current report", encoding="utf-8")
+            self_referential = dict(row, status="PASS",
+                input_files=[{"path": "docs/reports/batch042-doctor-v42.json", "sha256": REFRESH.sha256(report)}],
+                output_path=str(output), output_sha256=REFRESH.sha256(output))
+            circular = REFRESH.make_test("doctor-self-check", self_referential, root=root)
+            self.assertEqual("NOT_RUN", circular["status"])
+            self.assertIn("self_referential_doctor_report_input", circular["evidence_invalidated"])
+
+    def test_completed_child_remains_verified_when_parent_group_is_resource_blocked(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            source_paths = ["web/scripts/place-search-harness.mjs", "web/src/lib/latestPlaceSearch.ts"]
+            input_files = []
+            for relative in source_paths:
+                source = root / relative
+                source.parent.mkdir(parents=True, exist_ok=True)
+                source.write_text(f"fixture:{relative}", encoding="utf-8")
+                input_files.append({"path": relative, "sha256": REFRESH.sha256(source)})
+            output = root / "group.stdout.txt"
+            output.write_text(
+                "2026-10-10T03:51:02Z worker: CHILD_COMMAND=['node', 'scripts/place-search-harness.mjs'] EXIT=0\n",
+                encoding="utf-8",
+            )
+            row = {
+                "id": "search-and-can-i-ride", "status": "BLOCKED_RESOURCE", "exit_code": 6,
+                "command": ["python3", "-c", "run child harnesses"], "cwd": str(root),
+                "input_fingerprint_sha256": "a" * 64,
+                "input_files": input_files,
+                "fingerprint_environment": {"NODE_OPTIONS": ""},
+                "tool_versions": {"node": "fixture-node", "python3": "fixture-python", "php": "MISSING",
+                                   "bash": "fixture-bash", "npm": "MISSING", "composer": "MISSING",
+                                   "python_runtime": "3.14"},
+                "output_path": str(output), "output_sha256": REFRESH.sha256(output),
+                "resource_guard": "BLOCKED", "resource_log": None,
+                "started_at": "2026-10-10T03:50:55Z", "ended_at": "2026-10-10T03:51:02Z",
+            }
+            parent, child = REFRESH.find_child([{"suites": [row]}], "search-and-can-i-ride", "place-search-harness")
+            self.assertEqual(row["status"], parent["status"])
+            self.assertEqual(["node", "scripts/place-search-harness.mjs"], child["argv"])
+            self.assertEqual(0, child["exit_code"])
+            self.assertEqual("PASS", child["status"])
+            evidence = REFRESH.make_test("place_search", parent, child, root=root)
+            self.assertEqual("VERIFIED", evidence["status"])
+            self.assertEqual("BLOCKED_RESOURCE", evidence["parent_status"])
+            self.assertEqual("BLOCKED", evidence["resource_guard"])
+            self.assertEqual("node", evidence["child_command"][0])
+            self.assertEqual(sorted(source_paths), [item["path"] for item in evidence["input_files"]])
+            self.assertEqual(64, len(evidence["command_fingerprint_sha256"]))
+
+            earlier_output = root / "earlier.stdout.txt"
+            earlier_output.write_text(
+                "2026-10-10T02:30:39Z worker: CHILD_COMMAND=['node', 'scripts/validation-ledger-harness.mjs'] EXIT=0\n",
+                encoding="utf-8",
+            )
+            ledger_paths = ["web/scripts/validation-ledger-harness.mjs", "web/scripts/validation-ledger.mjs"]
+            ledger_inputs = []
+            for relative in ledger_paths:
+                source = root / relative
+                source.parent.mkdir(parents=True, exist_ok=True)
+                source.write_text(f"fixture:{relative}", encoding="utf-8")
+                ledger_inputs.append({"path": relative, "sha256": REFRESH.sha256(source)})
+            earlier = dict(row, status="FAIL", exit_code=1, input_files=ledger_inputs, output_path=str(earlier_output),
+                           output_sha256=REFRESH.sha256(earlier_output))
+            latest_parent, earlier_child = REFRESH.find_child(
+                [{"executable_source_revision": "1" * 40, "suites": [earlier]},
+                 {"executable_source_revision": "2" * 40, "suites": [row]}],
+                "search-and-can-i-ride", "validation-ledger-harness",
+            )
+            self.assertIsNotNone(earlier_child)
+            self.assertEqual("PASS", earlier_child["status"])
+            self.assertEqual("1" * 40, latest_parent["_run_source_revision"])
+            ledger_evidence = REFRESH.make_test("validation_ledger", latest_parent, earlier_child, root=root)
+            self.assertEqual("VERIFIED", ledger_evidence["status"])
+            self.assertEqual("FAIL", ledger_evidence["parent_status"])
+
+            can_i_ride_output = root / "can-i-ride.stdout.txt"
+            can_i_ride_output.write_text(
+                "2026-10-10T03:51:02Z worker: CHILD_COMMAND=['node', 'scripts/can-i-ride-harness.mjs'] EXIT=0\n",
+                encoding="utf-8",
+            )
+            can_i_ride_inputs = []
+            for relative in ["web/scripts/can-i-ride-harness.mjs", "web/src/lib/canIRidePresentation.ts"]:
+                source = root / relative
+                source.parent.mkdir(parents=True, exist_ok=True)
+                source.write_text(f"fixture:{relative}", encoding="utf-8")
+                can_i_ride_inputs.append({"path": relative, "sha256": REFRESH.sha256(source)})
+            can_i_ride_row = dict(row, input_files=can_i_ride_inputs, output_path=str(can_i_ride_output),
+                                  output_sha256=REFRESH.sha256(can_i_ride_output))
+            can_i_ride_parent, can_i_ride_child = REFRESH.find_child(
+                [{"suites": [can_i_ride_row]}], "search-and-can-i-ride", "can-i-ride-harness")
+            can_i_ride_evidence = REFRESH.make_test("can_i_ride", can_i_ride_parent, can_i_ride_child, root=root)
+            self.assertEqual("NOT_RUN", can_i_ride_evidence["status"])
+            self.assertEqual("PASS", can_i_ride_evidence["execution_observed_status"])
+            self.assertIn("missing_child_input:web/src/app/page.tsx", can_i_ride_evidence["evidence_invalidated"])
+
+            output.write_text("tampered\n", encoding="utf-8")
+            parent, child = REFRESH.find_child([{"suites": [row]}], "search-and-can-i-ride", "place-search-harness")
+            self.assertIsNone(child)
+            self.assertEqual("BLOCKED_RESOURCE", REFRESH.make_test("place_search", parent, child, root=root)["status"])
+            output.write_text(
+                "2026-10-10T03:51:02Z worker: CHILD_COMMAND=['node', 'scripts/place-search-harness.mjs'] EXIT=1\n",
+                encoding="utf-8",
+            )
+            forged = dict(row, output_sha256=REFRESH.sha256(output), child_command_results=[{
+                "argv": ["node", "scripts/place-search-harness.mjs"], "status": "PASS", "exit_code": 0,
+            }])
+            parent, child = REFRESH.find_child([{"suites": [forged]}], "search-and-can-i-ride", "place-search-harness")
+            self.assertEqual("FAIL", child["status"])
+            conflicting_evidence = REFRESH.make_test("place_search", parent, child, root=root)
+            self.assertEqual("NOT_RUN", conflicting_evidence["status"])
+            self.assertIn("conflicting_child_result_record", conflicting_evidence["evidence_invalidated"])
 
 
 if __name__ == "__main__":

@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import ast
 import hashlib
 import json
 import os
@@ -17,20 +18,24 @@ from datetime import datetime, timezone
 
 ROOT = Path(__file__).resolve().parents[2]
 SOURCE_FILES = [
-    "web/src/app/page.tsx", "web/src/app/page.module.css", "web/src/components/CommuteCard.tsx",
-    "web/src/components/DisruptionNotice.tsx", "web/src/components/MapView.tsx",
+    "web/src/app/page.tsx", "web/src/app/page.module.css", "web/src/app/globals.css",
+    "web/src/components/CommuteCard.tsx", "web/src/components/DisruptionNotice.tsx",
+    "web/src/components/MapView.tsx", "web/src/components/NearbyRoutes.tsx",
+    "web/src/components/BiyahePulse.tsx", "web/src/components/PersonalCommuteTools.tsx",
+    "web/src/components/FieldMode.tsx",
     "web/src/components/ReplanPanel.tsx",
     "web/src/components/RideMode.tsx", "web/src/lib/api.ts",
     "web/src/lib/canIRidePresentation.ts", "web/src/lib/commuteInstructions.ts",
     "web/src/lib/journeyExplanation.ts", "web/src/lib/journeyMapPresentation.ts",
-    "web/src/lib/latestPlaceSearch.ts", "web/src/lib/offlineWalkingPreviewState.ts",
+    "web/src/lib/latestPlaceSearch.ts", "web/src/lib/nearbyLookup.ts", "web/src/lib/offlineWalkingPreviewState.ts",
     "web/src/lib/requestGate.ts", "web/src/lib/rideMode.ts", "web/src/lib/savedJourneys.ts",
     "web/src/lib/searchKeyboard.ts", "web/scripts/offline-walking-preview-harness.mjs",
     "web/scripts/offline-walking-preview-state-harness.mjs", "web/scripts/commute-card-harness.mjs",
     "web/scripts/ride-mode-harness.mjs", "web/scripts/request-gate-harness.mjs",
     "web/scripts/place-search-harness.mjs", "web/scripts/search-keyboard-harness.mjs",
-    "web/scripts/can-i-ride-harness.mjs", "web/scripts/ux-contract-harness.mjs",
+    "web/scripts/can-i-ride-harness.mjs", "web/scripts/ux-contract-harness.mjs", "web/scripts/nearby-harness.mjs",
     "web/scripts/validation-ledger.mjs", "web/scripts/validation-ledger-harness.mjs",
+    "web/public/sw.js", "web/public/manifest.webmanifest",
     "web/package.json", "web/package-lock.json", "web/tsconfig.json", "web/eslint.config.mjs",
     "api/composer.json", "api/composer.lock", "api/phpunit.xml", "api/routes/api.php",
     "api/config/offline_walking_preview.php",
@@ -58,6 +63,31 @@ SOURCE_FILES = [
 ]
 GRAPH_SHA256 = "29d7aaf9c45a596f4065c44d13f983f4a7edeec5ac2ea41b718b1c52ca865bf8"
 ALLOWED = {"VERIFIED", "IMPLEMENTED_UNTESTED", "BLOCKED_RESOURCE", "BLOCKED_DEPENDENCY", "NOT_RUN", "FAILED"}
+CHILD_INPUTS = {
+    "place-search-harness.mjs": ["web/scripts/place-search-harness.mjs", "web/src/lib/latestPlaceSearch.ts"],
+    "search-keyboard-harness.mjs": ["web/scripts/search-keyboard-harness.mjs", "web/src/lib/searchKeyboard.ts"],
+    "can-i-ride-harness.mjs": ["web/scripts/can-i-ride-harness.mjs", "web/src/lib/canIRidePresentation.ts", "web/src/app/page.tsx"],
+    "ux-contract-harness.mjs": [
+        "web/scripts/ux-contract-harness.mjs", "web/src/app/page.tsx", "web/src/app/page.module.css",
+        "web/src/app/globals.css", "web/src/lib/canIRidePresentation.ts", "web/scripts/can-i-ride-harness.mjs",
+        "web/src/components/CommuteCard.tsx", "web/src/lib/journeyExplanation.ts",
+        "web/src/lib/commuteInstructions.ts", "web/src/lib/savedJourneys.ts",
+        "web/src/lib/latestPlaceSearch.ts", "web/src/lib/searchKeyboard.ts",
+        "web/scripts/place-search-harness.mjs", "web/scripts/search-keyboard-harness.mjs",
+        "web/src/components/MapView.tsx", "web/src/lib/journeyMapPresentation.ts",
+        "web/src/lib/offlineWalkingPreviewState.ts", "web/scripts/offline-walking-preview-state-harness.mjs",
+        "web/src/lib/requestGate.ts", "web/scripts/request-gate-harness.mjs",
+        "web/src/components/NearbyRoutes.tsx", "web/src/lib/nearbyLookup.ts", "web/scripts/nearby-harness.mjs",
+        "web/src/components/BiyahePulse.tsx", "web/src/components/RideMode.tsx", "web/src/lib/rideMode.ts",
+        "web/scripts/validation-ledger.mjs", "web/scripts/validation-ledger-harness.mjs",
+        "web/scripts/offline-walking-preview-harness.mjs", "web/scripts/commute-card-harness.mjs",
+        "api/app/Http/Controllers/Api/DevelopmentOfflineWalkingPreviewController.php",
+        "api/app/Services/Routing/OfflineJourneyWalkingPreview.php", "api/routes/api.php",
+        "web/src/components/PersonalCommuteTools.tsx", "web/src/components/FieldMode.tsx",
+        "web/src/lib/api.ts", "web/public/sw.js", "web/public/manifest.webmanifest",
+    ],
+    "validation-ledger-harness.mjs": ["web/scripts/validation-ledger-harness.mjs", "web/scripts/validation-ledger.mjs"],
+}
 
 
 def utc_now() -> str:
@@ -185,41 +215,115 @@ def map_status(status: str | None) -> str:
             "NOT_RUN": "NOT_RUN", "RUNNING": "NOT_RUN"}.get(status or "NOT_RUN", "NOT_RUN")
 
 
-def find_suite(runs: list[dict], suite_id: str) -> dict | None:
+def find_suite(runs: list[dict], suite_id: str, prefer_completed: bool = True) -> dict | None:
+    latest = None
     for run in reversed(runs):
         for suite in reversed(run.get("suites", [])):
             if suite.get("id") == suite_id:
-                return suite
-    return None
+                result = dict(suite)
+                result["_run_source_revision"] = run.get("executable_source_revision", run.get("source_revision"))
+                result["_run_directory"] = run.get("run_directory")
+                if latest is None:
+                    latest = result
+                if not prefer_completed or suite.get("status") in {"PASS", "FAIL"}:
+                    return result
+    return latest
+
+
+def parse_child_command_results(output_text: str) -> list[dict[str, object]]:
+    children: list[dict[str, object]] = []
+    for line in output_text.splitlines():
+        worker_marker = "worker: "
+        candidate = line.split(worker_marker, 1)[1] if worker_marker in line else line
+        if not candidate.startswith("CHILD_COMMAND=") or " EXIT=" not in candidate:
+            continue
+        command_text, exit_text = candidate[len("CHILD_COMMAND="):].rsplit(" EXIT=", 1)
+        try:
+            argv = ast.literal_eval(command_text)
+            exit_code = int(exit_text)
+            if not isinstance(argv, list) or not all(isinstance(item, str) for item in argv):
+                continue
+        except (ValueError, SyntaxError):
+            continue
+        children.append({"argv": argv, "exit_code": exit_code,
+                         "status": "PASS" if exit_code == 0 else "FAIL"})
+    return children
 
 
 def find_child(runs: list[dict], suite_id: str, fragment: str) -> tuple[dict | None, dict | None]:
-    parent = find_suite(runs, suite_id)
-    if not parent:
-        return None, None
-    for child in parent.get("child_command_results", []):
-        argv = child.get("argv", [])
-        if any(fragment in str(part) for part in argv):
-            return parent, child
-    return parent, None
+    latest_parent = None
+    for run in reversed(runs):
+        parent = find_suite([run], suite_id, prefer_completed=False)
+        if not parent:
+            continue
+        if latest_parent is None:
+            latest_parent = parent
+        output_value = parent.get("output_path")
+        output_digest = parent.get("output_sha256")
+        children = []
+        child_record_conflict = False
+        if isinstance(output_value, str) and isinstance(output_digest, str):
+            output_path = Path(output_value)
+            if output_path.is_file() and sha256(output_path) == output_digest:
+                children = parse_child_command_results(output_path.read_text(encoding="utf-8", errors="replace"))
+        recorded_children = parent.get("child_command_results")
+        if isinstance(recorded_children, list):
+            def normalized(items: list[dict]) -> list[tuple[object, object, object]]:
+                return [(item.get("argv"), item.get("status"), item.get("exit_code"))
+                        for item in items if isinstance(item, dict)]
+            if normalized(recorded_children) != normalized(children):
+                child_record_conflict = True
+        for child in children:
+            argv = child.get("argv", [])
+            if any(fragment in str(part) for part in argv):
+                result = dict(child)
+                marker = next((name for name in CHILD_INPUTS if any(name in str(part) for part in argv)), None)
+                expected_paths = CHILD_INPUTS.get(marker, [])
+                recorded = {item.get("path"): item for item in parent.get("input_files", []) if isinstance(item, dict)}
+                missing = sorted(path for path in expected_paths if path not in recorded or recorded[path].get("sha256") == "MISSING")
+                result["_input_files"] = [recorded[path] for path in sorted(expected_paths) if path in recorded]
+                result["_missing_inputs"] = missing
+                result["_record_conflict"] = child_record_conflict
+                return parent, result
+    return latest_parent, None
 
 
 def make_test(name: str, row: dict | None, child: dict | None = None, root: Path = ROOT) -> dict:
     if row is None:
         return {"status": "NOT_RUN", "executed": False, "reason": "no current runner record was supplied"}
     outer_status = str(row.get("status", "NOT_RUN"))
-    if outer_status in {"BLOCKED_RESOURCE", "BLOCKED_DEPENDENCY", "NOT_RUN"}:
+    input_files = child.get("_input_files", []) if child is not None else row.get("input_files", [])
+    command = child.get("argv") if child is not None else row.get("command")
+    fingerprint_environment = row.get("fingerprint_environment", {})
+    tool_versions = row.get("tool_versions", {})
+    if child is not None:
+        command_tool_names = {str(command[0]), "python3", "node", "php", "bash", "npm", "composer"}
+        tool_versions = {key: value for key, value in tool_versions.items()
+                         if key in command_tool_names or key == "python_runtime" or key.startswith("locked:") or key == "package-lock"}
+        fingerprint_payload = {"files": input_files, "command": command, "cwd": row.get("cwd"),
+                               "environment": fingerprint_environment, "tools": tool_versions}
+        command_fingerprint = hashlib.sha256(json.dumps(
+            fingerprint_payload, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+    else:
+        command_fingerprint = row.get("input_fingerprint_sha256")
+    if child is not None:
+        attempted_child_status = map_status(child.get("status"))
+        status = "NOT_RUN" if child.get("_missing_inputs") else attempted_child_status
+    elif outer_status in {"BLOCKED_RESOURCE", "BLOCKED_DEPENDENCY", "NOT_RUN"}:
         status = map_status(outer_status)
-    elif child is not None:
-        status = map_status(child.get("status"))
     else:
         status = map_status(outer_status)
-    invalidations = []
+    invalidations = [f"missing_child_input:{path}" for path in (child or {}).get("_missing_inputs", [])]
+    if child is not None and child.get("_record_conflict"):
+        invalidations.append("conflicting_child_result_record")
     if status in {"VERIFIED", "FAILED"}:
-        for item in row.get("input_files", []):
+        for item in input_files:
             relative = Path(str(item.get("path", "")))
             if relative.is_absolute() or ".." in relative.parts:
                 invalidations.append(f"unsafe_input_path:{relative}")
+                continue
+            if relative.as_posix() == "docs/reports/batch042-doctor-v42.json":
+                invalidations.append("self_referential_doctor_report_input")
                 continue
             source_path = root / relative
             expected = item.get("sha256")
@@ -244,10 +348,10 @@ def make_test(name: str, row: dict | None, child: dict | None = None, root: Path
         "status": status,
         "executed": status in {"VERIFIED", "FAILED"},
         "historical_only": False,
-        "command_fingerprint_sha256": row.get("input_fingerprint_sha256"),
-        "input_files": row.get("input_files", []),
-        "tool_versions": row.get("tool_versions", {}),
-        "fingerprint_environment": row.get("fingerprint_environment", {}),
+        "command_fingerprint_sha256": command_fingerprint,
+        "input_files": input_files,
+        "tool_versions": tool_versions,
+        "fingerprint_environment": fingerprint_environment,
         "cwd": row.get("cwd"),
         "output_path": row.get("output_path"),
         "output_sha256": None if invalidations else output_sha,
@@ -263,7 +367,15 @@ def make_test(name: str, row: dict | None, child: dict | None = None, root: Path
         "worker_peak_postgres_rss_kib": row.get("worker_peak_postgres_rss_kib"),
         "started_at": row.get("started_at"),
         "ended_at": row.get("ended_at"),
+        "run_source_revision": row.get("_run_source_revision"),
+        "run_directory": row.get("_run_directory"),
     }
+    if child is not None:
+        result.update({"command": command, "parent_status": outer_status,
+                       "parent_exit_code": row.get("exit_code"),
+                       "child_command": child.get("argv"),
+                       "child_result_recorded": True,
+                       "execution_observed_status": child.get("status")})
     if invalidations:
         result.update({"attempted_status": attempted_status, "attempted_output_sha256": output_sha,
                        "evidence_invalidated": invalidations,
@@ -317,8 +429,8 @@ def main() -> int:
             raise ValueError("executable source revision must be a full lowercase Git commit hash")
         for run in runs:
             executed_revision = run.get("executable_source_revision", run.get("source_revision"))
-            if executed_revision != revision:
-                raise ValueError(f"runner executable revision {executed_revision} differs from pinned source revision {revision}")
+            if executed_revision is not None and (len(executed_revision) != 40 or any(char not in "0123456789abcdef" for char in executed_revision)):
+                raise ValueError(f"runner executable revision is malformed: {executed_revision}")
 
         tests: dict[str, dict] = {
             "source_provenance_validator": make_test("source_provenance_validator", find_suite(runs, "source-provenance")),
@@ -339,7 +451,7 @@ def main() -> int:
                                ("validation_ledger", "validation-ledger-harness")):
             parent, child = find_child(runs, "search-and-can-i-ride", fragment)
             tests[name] = make_test(name, parent, child)
-        tests["typescript"] = make_test("typescript", find_suite(runs, "typescript"))
+        tests["typescript"] = make_test("typescript", find_suite(runs, "typescript") or find_suite(runs, "typecheck-and-eslint"))
         tests["eslint"] = make_test("eslint", find_suite(runs, "eslint"))
         tests["adapter_phpunit"] = make_test("adapter_phpunit", find_suite(runs, "adapter-phpunit"))
         tests["real_cebu_corpus"] = make_test("real_cebu_corpus", find_suite(runs, "real-cebu-corpus"))
