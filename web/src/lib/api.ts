@@ -1,3 +1,5 @@
+import { fetchWithTimeout } from "./fetchWithTimeout";
+
 export type VerificationState = "DRAFT" | "UNVERIFIED" | "VERIFIED" | "STALE" | "RETIRED";
 
 export type LocationPoint = {
@@ -425,11 +427,6 @@ export type CanIRideResponse = {
   };
 };
 
-type ApiPage<T> = {
-  data: T[];
-  meta?: { current_page?: number; last_page?: number; per_page?: number; total?: number };
-};
-
 const apiUrl = (process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:8000/api/v1").replace(/\/$/, "");
 
 export function canUseOfflineWalkingPreview(): boolean {
@@ -443,37 +440,188 @@ export function canUseOfflineWalkingPreview(): boolean {
 }
 
 async function getJson<T>(path: string, signal?: AbortSignal): Promise<T> {
-  const response = await fetch(apiUrl + path, {
+  const response = await fetchWithTimeout(apiUrl + path, {
     headers: { Accept: "application/json" },
     signal,
     cache: "no-store",
+  }, async (result) => {
+    if (!result.ok) throw new Error("API request failed with status " + result.status);
+    return result.json();
   });
+  return response as T;
+}
 
-  if (!response.ok) {
-    throw new Error("API request failed with status " + response.status);
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function hasDataArray(value: unknown): value is { data: Record<string, unknown>[] } {
+  return isRecord(value) && Array.isArray(value.data) && value.data.every(isRecord);
+}
+
+function isLocationPoint(value: unknown): boolean {
+  return value === null || (isRecord(value)
+    && typeof value.lat === "number" && Number.isFinite(value.lat) && value.lat >= -90 && value.lat <= 90
+    && typeof value.lng === "number" && Number.isFinite(value.lng) && value.lng >= -180 && value.lng <= 180);
+}
+
+function isVerificationResponse(value: unknown): boolean {
+  return isRecord(value)
+    && typeof value.state === "string"
+    && typeof value.is_demo === "boolean"
+    && typeof value.trusted === "boolean";
+}
+
+function isGeometryResponse(value: unknown): boolean {
+  if (value === null) return true;
+  if (!isRecord(value) || !Array.isArray(value.coordinates)) return false;
+  const coordinate = (point: unknown) => Array.isArray(point) && point.length >= 2
+    && point.slice(0, 2).every((part) => typeof part === "number" && Number.isFinite(part));
+  if (value.type === "LineString") return value.coordinates.every(coordinate);
+  if (value.type === "MultiLineString") return value.coordinates.every((line) =>
+    Array.isArray(line) && line.every(coordinate));
+  return false;
+}
+
+function isPlaceSuggestion(value: unknown): value is Place {
+  return isRecord(value)
+    && Number.isSafeInteger(value.id) && (value.id as number) > 0
+    && typeof value.name === "string" && value.name.length > 0
+    && typeof value.slug === "string"
+    && typeof value.category === "string"
+    && isLocationPoint(value.location)
+    && isVerificationResponse(value.verification);
+}
+
+function isStopSummary(value: unknown): value is Stop {
+  return isRecord(value)
+    && Number.isSafeInteger(value.id) && (value.id as number) > 0
+    && typeof value.name === "string" && typeof value.category === "string"
+    && isLocationPoint(value.location)
+    && isVerificationResponse(value.verification);
+}
+
+function isRouteSummary(value: unknown): value is Route {
+  return isRecord(value)
+    && Number.isSafeInteger(value.id) && (value.id as number) > 0
+    && typeof value.code === "string" && typeof value.name === "string"
+    && isVerificationResponse(value.verification);
+}
+
+function isJourneyPointResponse(value: unknown): boolean {
+  return isRecord(value)
+    && Number.isSafeInteger(value.id) && (value.id as number) > 0
+    && typeof value.name === "string"
+    && isLocationPoint(value.location)
+    && isVerificationResponse(value.verification);
+}
+
+function isCanIRideOptionResponse(value: unknown): boolean {
+  const accessLegIsValid = (leg: unknown) => isRecord(leg)
+    && ["PEDESTRIAN_NETWORK", "STRAIGHT_LINE_ESTIMATE"].includes(String(leg.distance_type))
+    && typeof leg.access_classification === "string"
+    && (leg.distance_meters === null || (typeof leg.distance_meters === "number"
+      && Number.isFinite(leg.distance_meters) && leg.distance_meters >= 0))
+    && isGeometryResponse(leg.geometry);
+  return isRecord(value)
+    && isRecord(value.pattern) && Number.isSafeInteger(value.pattern.id)
+    && typeof value.pattern.name === "string" && typeof value.pattern.direction === "string"
+    && isVerificationResponse(value.pattern.verification)
+    && isJourneyPointResponse(value.boarding_stop) && isJourneyPointResponse(value.alighting_stop)
+    && typeof value.boarding_instruction === "string"
+    && typeof value.driver_instruction === "string"
+    && typeof value.get_off_guidance === "string"
+    && Number.isSafeInteger(value.stop_count) && (value.stop_count as number) >= 0
+    && ["VERIFIED", "MIXED", "UNVERIFIED"].includes(String(value.trust))
+    && (value.pedestrian_access === undefined || (isRecord(value.pedestrian_access)
+      && accessLegIsValid(value.pedestrian_access.to_boarding)
+      && accessLegIsValid(value.pedestrian_access.from_alighting)));
+}
+
+function isJourneyResponseValue(value: unknown): value is JourneyResponse {
+  if (!isRecord(value) || !hasDataArray(value) || !isRecord(value.meta)
+    || !isJourneyPointResponse(value.meta.origin) || !isJourneyPointResponse(value.meta.destination)
+    || !Number.isSafeInteger(value.meta.result_count)
+    || !Number.isSafeInteger(value.meta.max_transfers)
+    || !(value.meta.no_route === null || (isRecord(value.meta.no_route)
+      && typeof value.meta.no_route.code === "string" && typeof value.meta.no_route.message === "string"))
+    || !isRecord(value.meta.pedestrian_routing)) return false;
+  if (value.meta.result_count !== value.data.length
+    || (value.data.length === 0 && value.meta.no_route === null)
+    || (value.data.length > 0 && value.meta.no_route !== null)) return false;
+
+  return value.data.every((journey) => {
+    if (typeof journey.id !== "string" || !isJourneyPointResponse(journey.origin)
+      || !isJourneyPointResponse(journey.destination) || !Array.isArray(journey.legs)
+      || journey.legs.length === 0 || !Number.isSafeInteger(journey.transfer_count)
+      || !isRecord(journey.ranking)
+      || typeof journey.ranking.walking_distance_meters !== "number"
+      || !Number.isFinite(journey.ranking.walking_distance_meters)
+      || typeof journey.ranking.ride_stop_count !== "number"
+      || !Number.isFinite(journey.ranking.ride_stop_count)
+      || typeof journey.ranking.policy !== "string"
+      || !Array.isArray(journey.ranking.reasons) || !journey.ranking.reasons.every((item) => typeof item === "string")
+      || !isRecord(journey.trust)
+      || !["VERIFIED", "MIXED", "UNVERIFIED"].includes(String(journey.trust.state))
+      || !(journey.trust.warning === null || typeof journey.trust.warning === "string")
+      || !Array.isArray(journey.warnings) || !journey.warnings.every((item) => typeof item === "string")
+      || !isRecord(journey.fare) || !["AVAILABLE", "UNAVAILABLE"].includes(String(journey.fare.status))
+      || typeof journey.fare.label !== "string"
+      || !(journey.fare.amount === null || (typeof journey.fare.amount === "number" && Number.isFinite(journey.fare.amount)))
+      || !(journey.fare.currency === null || typeof journey.fare.currency === "string")
+      || !Array.isArray(journey.provenance)) return false;
+
+    return journey.legs.every((leg) => isRecord(leg)
+      && ["WALK_ACCESS", "RIDE", "TRANSFER_WALK", "WALK_EGRESS"].includes(String(leg.type))
+      && isJourneyPointResponse(leg.origin) && isJourneyPointResponse(leg.destination)
+      && (leg.distance_meters === null || (typeof leg.distance_meters === "number"
+        && Number.isFinite(leg.distance_meters) && leg.distance_meters >= 0))
+      && typeof leg.distance_is_estimate === "boolean"
+      && Array.isArray(leg.warnings) && leg.warnings.every((item) => typeof item === "string")
+      && isGeometryResponse(leg.geometry)
+      && (leg.route === null || (isRecord(leg.route) && Number.isSafeInteger(leg.route.id)
+        && typeof leg.route.code === "string" && typeof leg.route.name === "string"
+        && isVerificationResponse(leg.route.verification)))
+      && (leg.pattern === null || (isRecord(leg.pattern) && Number.isSafeInteger(leg.pattern.id)
+        && typeof leg.pattern.name === "string" && typeof leg.pattern.direction === "string"
+        && isVerificationResponse(leg.pattern.verification)))
+      && (leg.boarding_stop === null || isJourneyPointResponse(leg.boarding_stop))
+      && (leg.alighting_stop === null || isJourneyPointResponse(leg.alighting_stop))
+      && (leg.instruction === null || typeof leg.instruction === "string")
+      && Array.isArray(leg.provenance));
+  });
+}
+
+function requireApiDataArray<T>(value: unknown, path: string, validateItem?: (item: unknown) => boolean): T[] {
+  if (!hasDataArray(value) || (validateItem && !value.data.every(validateItem))) {
+    throw new Error(`Invalid API response from ${path}.`);
   }
+  return value.data as T[];
+}
 
-  return response.json() as Promise<T>;
+function requireJourneyResponse(value: unknown, path: string): JourneyResponse {
+  if (!isJourneyResponseValue(value)) throw new Error(`Invalid API response from ${path}.`);
+  return value;
 }
 
 export async function listPlaces(signal?: AbortSignal): Promise<Place[]> {
-  const page = await getJson<ApiPage<Place>>("/places?per_page=50", signal);
-  return page.data;
+  const path = "/places?per_page=50";
+  return requireApiDataArray<Place>(await getJson<unknown>(path, signal), path, isPlaceSuggestion);
 }
 
 export async function searchPlaces(query: string, signal?: AbortSignal): Promise<Place[]> {
-  const page = await getJson<{ data: Place[] }>("/places/search?q=" + encodeURIComponent(query), signal);
-  return page.data;
+  const path = "/places/search?q=" + encodeURIComponent(query);
+  return requireApiDataArray<Place>(await getJson<unknown>(path, signal), "/places/search", isPlaceSuggestion);
 }
 
 export async function listStops(signal?: AbortSignal): Promise<Stop[]> {
-  const page = await getJson<ApiPage<Stop>>("/stops?per_page=100", signal);
-  return page.data;
+  const path = "/stops?per_page=100";
+  return requireApiDataArray<Stop>(await getJson<unknown>(path, signal), path, isStopSummary);
 }
 
 export async function listRoutes(signal?: AbortSignal): Promise<Route[]> {
-  const page = await getJson<ApiPage<Route>>("/routes?per_page=50", signal);
-  return page.data;
+  const path = "/routes?per_page=50";
+  return requireApiDataArray<Route>(await getJson<unknown>(path, signal), path, isRouteSummary);
 }
 
 export async function listNearbyRoutes(
@@ -525,14 +673,16 @@ export type CommuterReportPayload = {
 };
 
 export async function submitCommuterReport(payload: CommuterReportPayload): Promise<{ data: { stable_id: string; category: CommuterReportCategory; status: string; description: string; observed_at: string; location: LocationPoint | null } }> {
-  const response = await fetch(apiUrl + "/commuter-reports", {
+  const response = await fetchWithTimeout(apiUrl + "/commuter-reports", {
     method: "POST",
     headers: { Accept: "application/json", "Content-Type": "application/json" },
     body: JSON.stringify(payload),
     cache: "no-store",
+  }, async (result) => {
+    if (!result.ok) throw new Error("Report request failed with status " + result.status);
+    return result.json();
   });
-  if (!response.ok) throw new Error("Report request failed with status " + response.status);
-  return response.json() as Promise<{ data: { stable_id: string; category: CommuterReportCategory; status: string; description: string; observed_at: string; location: LocationPoint | null } }>;
+  return response as { data: { stable_id: string; category: CommuterReportCategory; status: string; description: string; observed_at: string; location: LocationPoint | null } };
 }
 
 export async function getRoutePattern(patternId: number, signal?: AbortSignal): Promise<RoutePattern> {
@@ -550,7 +700,8 @@ export async function planJourney(
     to_place_id: String(toPlaceId),
   });
 
-  return getJson<JourneyResponse>("/journeys?" + params.toString(), signal);
+  const path = "/journeys?" + params.toString();
+  return requireJourneyResponse(await getJson<unknown>(path, signal), "/journeys");
 }
 
 export async function previewJourneyWalkingOffline(
@@ -560,21 +711,22 @@ export async function previewJourneyWalkingOffline(
   if (!canUseOfflineWalkingPreview()) {
     throw new Error("unsafe_preview_target: Offline graph preview is enabled only against a local development API.");
   }
-  const response = await fetch(apiUrl + "/dev/offline-walking-preview", {
+  const response = await fetchWithTimeout(apiUrl + "/dev/offline-walking-preview", {
     method: "POST",
     headers: { Accept: "application/json", "Content-Type": "application/json" },
     body: JSON.stringify({ journey }),
     signal,
     cache: "no-store",
+  }, async (result) => {
+    const body = await result.json().catch(() => null) as { data?: { journey?: Journey; preview?: Journey["offline_walking_preview"] }; error?: { code?: string; message?: string } } | null;
+    if (!result.ok || !body?.data?.journey || !body.data.preview) {
+      const code = body?.error?.code ?? `http_${result.status}`;
+      const message = body?.error?.message ?? "The local graph preview is unavailable.";
+      throw new Error(`${code}: ${message}`);
+    }
+    return { journey: body.data.journey, preview: body.data.preview as NonNullable<Journey["offline_walking_preview"]> };
   });
-  const body = await response.json().catch(() => null) as { data?: { journey?: Journey; preview?: Journey["offline_walking_preview"] }; error?: { code?: string; message?: string } } | null;
-  if (!response.ok || !body?.data?.journey || !body.data.preview) {
-    const code = body?.error?.code ?? `http_${response.status}`;
-    const message = body?.error?.message ?? "The local graph preview is unavailable.";
-    throw new Error(`${code}: ${message}`);
-  }
-
-  return { journey: body.data.journey, preview: body.data.preview as NonNullable<Journey["offline_walking_preview"]> };
+  return response as { journey: Journey; preview: NonNullable<Journey["offline_walking_preview"]> };
 }
 
 export async function replanJourney(
@@ -582,15 +734,17 @@ export async function replanJourney(
   toPlaceId: number,
   signal?: AbortSignal,
 ): Promise<JourneyResponse> {
-  const response = await fetch(apiUrl + "/journeys/replan", {
+  const response = await fetchWithTimeout(apiUrl + "/journeys/replan", {
     method: "POST",
     headers: { Accept: "application/json", "Content-Type": "application/json" },
     body: JSON.stringify({ from_place_id: fromPlaceId, to_place_id: toPlaceId }),
     signal,
     cache: "no-store",
+  }, async (result) => {
+    if (!result.ok) throw new Error("Replan request failed with status " + result.status);
+    return result.json();
   });
-  if (!response.ok) throw new Error("Replan request failed with status " + response.status);
-  return response.json() as Promise<JourneyResponse>;
+  return requireJourneyResponse(response, "/journeys/replan");
 }
 
 export async function canIRide(
@@ -605,5 +759,33 @@ export async function canIRide(
     to_place_id: String(toPlaceId),
   });
 
-  return getJson<CanIRideResponse>("/can-i-ride?" + params.toString(), signal);
+  const path = "/can-i-ride?" + params.toString();
+  const response = await getJson<unknown>(path, signal);
+  if (!isRecord(response) || !isRecord(response.data) || !isRecord(response.meta)
+    || !isJourneyPointResponse(response.data.origin) || !isJourneyPointResponse(response.data.destination)
+    || !["YES", "YES_BUT_AFFECTED", "TEMPORARILY_UNAVAILABLE", "UNCERTAIN_DUE_TO_REPORT", "NO", "DIRECTION_DEPENDENT", "UNKNOWN"].includes(String(response.data.status))
+    || typeof response.data.message !== "string" || typeof response.data.reason_code !== "string"
+    || !Array.isArray(response.data.warnings) || !response.data.warnings.every((item) => typeof item === "string")
+    || !Array.isArray(response.data.provenance)
+    || !(response.data.route === null || (isRecord(response.data.route) && typeof response.data.route.code === "string"))
+    || !(response.data.option === null || isCanIRideOptionResponse(response.data.option))
+    || !(response.data.opposite_direction === null || isCanIRideOptionResponse(response.data.opposite_direction))
+    || !(response.data.trust === null || ["VERIFIED", "MIXED", "UNVERIFIED"].includes(String(response.data.trust)))
+    || (response.data.disruptions !== undefined && (!Array.isArray(response.data.disruptions)
+      || !response.data.disruptions.every((impact) => isRecord(impact) && typeof impact.warning === "string"
+        && isRecord(impact.advisory) && typeof impact.advisory.stable_id === "string")))
+    || response.meta.distance_unit !== "meters"
+    || typeof response.meta.walking_distance_type !== "string"
+    || response.meta.pedestrian_leg_distance_type !== "per_leg"
+    || typeof response.meta.access_radius_meters !== "number" || !Number.isFinite(response.meta.access_radius_meters)) {
+    throw new Error("Invalid API response from /can-i-ride.");
+  }
+  if ((response.data.status === "YES" || response.data.status === "YES_BUT_AFFECTED")
+    && (response.data.route === null || response.data.option === null)) {
+    throw new Error("Invalid API response from /can-i-ride: a YES result needs a route and direction option.");
+  }
+  if (response.data.status === "DIRECTION_DEPENDENT" && response.data.opposite_direction === null) {
+    throw new Error("Invalid API response from /can-i-ride: direction-dependent result has no opposite-direction evidence.");
+  }
+  return response as unknown as CanIRideResponse;
 }
