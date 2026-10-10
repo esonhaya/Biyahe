@@ -89,7 +89,7 @@
       "id": "EVIDENCE_SYSTEM",
       "scope": "portable runner, Doctor per-test evidence, partial worker results and input completeness",
       "status": "VERIFIED",
-      "evidence": "Portable runner regressions pass 10/10 after commits 18d757a and 049cf77 (latest 2026-10-10T04:42:21Z–04:42:22Z). Checkout-bound validation now explicitly checks source-bound Doctor content while allowing only hash-pinned evidence path relocation; nullable evidence hashes are ignored. Rebuild and full checkout-bound STATIC remain pending."
+      "evidence": "Doctor normalized-path binding regression now passes in the full 15-test suite (2026-10-10T04:45:50Z–04:45:52Z); `validate-batch042-doctor.py` passes at 04:45:52Z–04:45:53Z. Commit 2fba314 is pinned in the refreshed Doctor report. A portable kit built from the 2fba314 executable revision is still pending."
     },
     {
       "id": "ADAPTER_PHPUNIT",
@@ -125,7 +125,7 @@
       "id": "PORTABLE_KIT",
       "scope": "Batch042 v4 portable verification kit",
       "status": "IMPLEMENTED_UNTESTED",
-      "evidence": "The first fresh package passed manifest/SHA checks and embedded STATIC 11/11 at 04:37:37Z–04:37:52Z. Checkout-bound attempts exposed and fixed two verifier defects: byte comparison ignored the intentional Doctor evidence relocation (18d757a), then treated null log hashes as required artifacts (049cf77). Both failed attempts and packages are preserved in cache. Latest regression suite passes 10/10; corrected kit build and checkout-bound STATIC are pending."
+      "evidence": "Older package at e182af1 passed 11/11 STATIC, but Doctor refresh correctly exposed a normalized-report input binding gap. The gap is fixed and covered by the current Doctor 15/15 test suite; final kit must be regenerated to include source revision 2fba314 and rerun checkout-bound STATIC."
     }
   ],
   "execution_attempts": [
@@ -320,6 +320,59 @@
       "test_count": 10,
       "failure_count": 0,
       "exit_code": 0
+    },
+    {
+      "id": "portable-v4-checkout-static-20261010T044301Z-15419",
+      "status": "PASS",
+      "started_at": "2026-10-10T04:43:01Z",
+      "ended_at": "2026-10-10T04:43:20Z",
+      "wall_time_seconds": 18.693,
+      "command": "bash docs/portable-verification-v4/verify-kit.sh STATIC --repo-root \"$PWD\"",
+      "repository_revision": "e182af10b822361698b1b5343b5805b8004f9c39",
+      "executable_source_revision": "049cf77225b522fe272baa6166400c5262b59f52",
+      "run_status": "/data/data/com.termux/files/home/.cache/biyahe/batch042/portable-verification/20261010T044304Z-15419/run-status.json",
+      "wrapper_output": "/data/data/com.termux/files/home/.cache/biyahe/batch042/evidence/portable-v4-static-checkout-20261010T044301Z.stdout.txt",
+      "wrapper_output_sha256": "816f83f837fcf870b9c3093224f24028606e52f5a12acc5c62b9193f2d13d768",
+      "manifest_sha256": "a4e53ced192724c5732cc1174829beed5237368633e39c39095d231cdcf98adf",
+      "sha256sums_file_sha256": "29af0f5dff350fbc7017dcba6a93a294fc360cd97a77308a1f7f8370c14235c5",
+      "suite_count": 11,
+      "result": "All package checksums, pinned checkout comparison, source fingerprints, and 11 STATIC suites passed; no guarded or external database service was started."
+    },
+    {
+      "id": "doctor-portable-normalized-source-binding",
+      "status": "FAILED_EVIDENCE_BINDING",
+      "started_at": "NOT_INSTRUMENTED",
+      "ended_at": "NOT_INSTRUMENTED",
+      "command": "python3 api/scripts/refresh-batch042-doctor.py --portable-output <successful-checkout-run-output> --portable-manifest docs/portable-verification-v4/manifest.json",
+      "input_run_status": "$HOME/.cache/biyahe/batch042/portable-verification/20261010T044304Z-15419/run-status.json",
+      "result": "The packaged checkout-bound STATIC run itself was PASS 11/11. Doctor refresh rejected the syntax-and-json input hash because the run read the original source-bound Doctor report while the kit snapshot holds the evidence-path-relocated report. No Doctor report update was written. Fixed in commit 2fba314; focused regression test passes."
+    },
+    {
+      "id": "doctor-portable-normalized-source-regression-20261010T044507Z",
+      "status": "PASS",
+      "started_at": "2026-10-10T04:45:07Z",
+      "ended_at": "2026-10-10T04:45:08Z",
+      "wall_time_seconds": 1.034,
+      "source_revision": "2fba3141170cc3406c532623a433257610ff726e",
+      "command": "PYTHONDONTWRITEBYTECODE=1 python3 api/scripts/test_validate_batch042_doctor.py DoctorV42Tests.test_portable_static_accepts_pinned_checkout_hash_for_relocated_doctor",
+      "test_count": 1,
+      "failure_count": 0,
+      "exit_code": 0
+    },
+    {
+      "id": "doctor-v42-current-source-2fba314",
+      "status": "PASS",
+      "started_at": "2026-10-10T04:45:50Z",
+      "ended_at": "2026-10-10T04:45:53Z",
+      "source_revision": "2fba3141170cc3406c532623a433257610ff726e",
+      "unit_test_command": "PYTHONDONTWRITEBYTECODE=1 python3 api/scripts/test_validate_batch042_doctor.py",
+      "unit_test_count": 15,
+      "unit_test_failures": 0,
+      "validator_command": "PYTHONDONTWRITEBYTECODE=1 python3 api/scripts/validate-batch042-doctor.py",
+      "validator_status": "PASS_STATIC_DOCTOR_CONTRACT",
+      "validator_categories": 17,
+      "validator_tests": 24,
+      "exit_code": 0
     }
   ],
   "queues": {
@@ -336,10 +389,13 @@
       "portable checksum verifier missing-import regression (9/9 portable runner tests)",
       "source commit 29df41b package verifier fix plus 9/9 portable runner regressions",
       "portable kit checkout evidence relocation verifier fix (commit 18d757a; regression harness 10/10)",
-      "nullable Doctor evidence mapping regression fixed (commit 049cf77; portable verifier tests 10/10)"
+      "nullable Doctor evidence mapping regression fixed (commit 049cf77; portable verifier tests 10/10)",
+      "portable v4 package with checkout-bound STATIC mode (11/11 PASS; manifest a4e53ced192724c5732cc1174829beed5237368633e39c39095d231cdcf98adf)",
+      "Doctor portable run binding regression for normalized Doctor source (commit 2fba314; 1/1 focused test PASS)",
+      "Doctor V42 full current suite 15/15 and report validator (source commit 2fba314)"
     ],
     "implemented_untested": [
-      "rebuilt v4 package and checkout-bound STATIC verification against commits 18d757a and 049cf77"
+      "portable v4 package regenerated at executable source revision 2fba314 and checkout-bound STATIC verification"
     ],
     "blocked_resource": [
       "TypeScript and ESLint",
@@ -517,8 +573,8 @@
   },
   "current_checkpoint": {
     "branch": "main",
-    "head": "049cf77225b522fe272baa6166400c5262b59f52",
-    "executable_source_revision": "049cf77225b522fe272baa6166400c5262b59f52"
+    "head": "2fba3141170cc3406c532623a433257610ff726e",
+    "executable_source_revision": "2fba3141170cc3406c532623a433257610ff726e"
   },
   "commits_since_start": [
     "aa929e7ef0902680911cb451baea8421a647dc19",
@@ -534,6 +590,8 @@
     "1015874d95e3d6dc93241cbe3a7ad5645e62dcd5",
     "29df41bc768c22d8074970577f5fa67009093c0d",
     "18d757a19b894881beb45ce490e9d1b5f4e7adfb",
-    "049cf77225b522fe272baa6166400c5262b59f52"
+    "049cf77225b522fe272baa6166400c5262b59f52",
+    "e182af10b822361698b1b5343b5805b8004f9c39",
+    "2fba3141170cc3406c532623a433257610ff726e"
   ]
 }
