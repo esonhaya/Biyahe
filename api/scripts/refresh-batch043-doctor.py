@@ -5,6 +5,8 @@ from __future__ import annotations
 
 import argparse
 from datetime import datetime, timezone
+import ctypes
+import errno
 import hashlib
 import importlib.util
 import json
@@ -155,11 +157,33 @@ def write_new(path: Path, document: dict[str, object]) -> None:
             stream.write("\n")
             stream.flush()
             os.fsync(stream.fileno())
-        os.link(temporary, path)
+        publish_no_clobber(temporary, path)
     except Exception:
         temporary.unlink(missing_ok=True)
         raise
-    temporary.unlink()
+    temporary.unlink(missing_ok=True)
+
+
+def publish_no_clobber(source: Path, destination: Path) -> None:
+    if hasattr(os, "link"):
+        os.link(source, destination)
+        return
+    libc = ctypes.CDLL(None, use_errno=True)
+    if hasattr(libc, "renameat2"):
+        renameat2 = libc.renameat2
+        renameat2.argtypes = (ctypes.c_int, ctypes.c_char_p, ctypes.c_int, ctypes.c_char_p, ctypes.c_uint)
+        renameat2.restype = ctypes.c_int
+        if renameat2(-100, os.fsencode(source), -100, os.fsencode(destination), 1) == 0:
+            return
+        error_number = ctypes.get_errno()
+        if error_number not in {errno.ENOSYS, errno.EINVAL, getattr(errno, "EOPNOTSUPP", errno.ENOSYS)}:
+            raise OSError(error_number, os.strerror(error_number), str(destination))
+    link = libc.link
+    link.argtypes = (ctypes.c_char_p, ctypes.c_char_p)
+    link.restype = ctypes.c_int
+    if link(os.fsencode(source), os.fsencode(destination)) != 0:
+        error_number = ctypes.get_errno()
+        raise OSError(error_number, os.strerror(error_number), str(destination))
 
 
 def main(argv: list[str] | None = None) -> int:

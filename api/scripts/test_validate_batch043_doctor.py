@@ -16,6 +16,11 @@ SPEC = importlib.util.spec_from_file_location("batch043_doctor_validator", SCRIP
 assert SPEC is not None and SPEC.loader is not None
 VALIDATOR = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(VALIDATOR)
+GENERATOR_SCRIPT = Path(__file__).with_name("refresh-batch043-doctor.py")
+GENERATOR_SPEC = importlib.util.spec_from_file_location("batch043_doctor_generator", GENERATOR_SCRIPT)
+assert GENERATOR_SPEC is not None and GENERATOR_SPEC.loader is not None
+GENERATOR = importlib.util.module_from_spec(GENERATOR_SPEC)
+GENERATOR_SPEC.loader.exec_module(GENERATOR)
 
 
 def digest(path: Path) -> str:
@@ -104,6 +109,16 @@ def valid_document(root: Path) -> dict:
 
 
 class DoctorV43Tests(unittest.TestCase):
+    def test_report_write_is_no_clobber_and_releases_temporary_file(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            output = Path(temporary) / "doctor.json"
+            GENERATOR.write_new(output, {"format": "fixture"})
+            self.assertEqual({"format": "fixture"}, json.loads(output.read_text()))
+            self.assertFalse(output.with_name("doctor.json.building").exists())
+            with self.assertRaisesRegex(ValueError, "refusing to overwrite"):
+                GENERATOR.write_new(output, {"format": "replacement"})
+            self.assertEqual({"format": "fixture"}, json.loads(output.read_text()))
+
     def test_zero_current_cases_and_resource_block_are_valid(self):
         with tempfile.TemporaryDirectory() as temporary:
             document = valid_document(Path(temporary))

@@ -2,9 +2,12 @@
 
 namespace Tests\Unit;
 
+use App\Console\Commands\VerifyOfflineWalkingCorpus;
 use App\Services\Routing\OfflineWalkingCorpusSelection;
 use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\DataProvider;
+use ReflectionClass;
+use RuntimeException;
 use Tests\TestCase;
 
 final class OfflineWalkingCorpusSelectionTest extends TestCase
@@ -37,6 +40,32 @@ final class OfflineWalkingCorpusSelectionTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
 
         OfflineWalkingCorpusSelection::parse('2,2');
+    }
+
+    public function test_corpus_report_writer_publishes_without_overwriting(): void
+    {
+        $reflection = new ReflectionClass(VerifyOfflineWalkingCorpus::class);
+        $command = $reflection->newInstanceWithoutConstructor();
+        $writer = $reflection->getMethod('writeNewJson');
+        $writer->setAccessible(true);
+        $path = sys_get_temp_dir().'/biyahe-corpus-report-'.bin2hex(random_bytes(8)).'.json';
+
+        try {
+            $writer->invoke($command, $path, ['format' => 'fixture']);
+            $original = file_get_contents($path);
+            $this->assertIsString($original);
+            $this->assertSame(['format' => 'fixture'], json_decode($original, true, flags: JSON_THROW_ON_ERROR));
+
+            try {
+                $writer->invoke($command, $path, ['format' => 'replacement']);
+                $this->fail('The report writer must reject an existing result path.');
+            } catch (RuntimeException) {
+                $this->assertSame($original, file_get_contents($path));
+            }
+        } finally {
+            @unlink($path);
+            @unlink($path.'.building');
+        }
     }
 
     #[DataProvider('malformedCaseSelections')]

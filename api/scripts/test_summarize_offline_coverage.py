@@ -1,6 +1,7 @@
 """Synthetic-only unit fixtures for the stored-evidence coverage summarizer."""
 
 import importlib.util
+import json
 from pathlib import Path
 import tempfile
 import unittest
@@ -191,6 +192,11 @@ class CoverageSummaryTests(unittest.TestCase):
 
     def test_comparator_publication_preserves_existing_outputs(self):
         with tempfile.TemporaryDirectory() as directory:
+            success_target = Path(directory) / "success.json"
+            COMPARE.write_new(success_target, {"status": "PASS"})
+            self.assertEqual({"status": "PASS"}, json.loads(success_target.read_text(encoding="utf-8")))
+            self.assertFalse(success_target.with_name("success.json.building").exists())
+
             target = Path(directory) / "comparison.json"
             target.write_text("existing output", encoding="utf-8")
             with self.assertRaisesRegex(COMPARE.CompareError, "already exists"):

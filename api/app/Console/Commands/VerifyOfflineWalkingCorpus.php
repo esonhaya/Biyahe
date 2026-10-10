@@ -78,10 +78,35 @@ final class VerifyOfflineWalkingCorpus extends Command
             throw $exception;
         }
         fclose($handle);
-        if (! link($temporary, $path)) {
-            @unlink($temporary);
-            throw new RuntimeException('The corpus report could not be atomically published without overwriting a file.');
+        if (! @link($temporary, $path)) {
+            // Android's app-private filesystem denies hard links; exclusive create
+            // still preserves no-clobber behavior for local Termux verification.
+            $destination = @fopen($path, 'x');
+            if ($destination === false) {
+                @unlink($temporary);
+                throw new RuntimeException('The corpus report could not be published without overwriting a file.');
+            }
+            try {
+                $written = 0;
+                $length = strlen($json);
+                while ($written < $length) {
+                    $count = fwrite($destination, substr($json, $written));
+                    if ($count === false || $count === 0) {
+                        throw new RuntimeException('The complete corpus report could not be written.');
+                    }
+                    $written += $count;
+                }
+                if (! fflush($destination) || (function_exists('fsync') && ! fsync($destination))) {
+                    throw new RuntimeException('The corpus report could not be flushed safely.');
+                }
+            } catch (Throwable $exception) {
+                fclose($destination);
+                @unlink($path);
+                @unlink($temporary);
+                throw $exception;
+            }
+            fclose($destination);
         }
-        unlink($temporary);
+        @unlink($temporary);
     }
 }

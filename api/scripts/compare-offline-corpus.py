@@ -29,6 +29,15 @@ def publish_no_clobber(source: Path, destination: Path) -> None:
         os.link(source, destination)
         return
     libc = ctypes.CDLL(None, use_errno=True)
+    if hasattr(libc, "renameat2"):
+        renameat2 = libc.renameat2
+        renameat2.argtypes = (ctypes.c_int, ctypes.c_char_p, ctypes.c_int, ctypes.c_char_p, ctypes.c_uint)
+        renameat2.restype = ctypes.c_int
+        if renameat2(-100, os.fsencode(source), -100, os.fsencode(destination), 1) == 0:
+            return
+        error_number = ctypes.get_errno()
+        if error_number not in {errno.ENOSYS, errno.EINVAL, getattr(errno, "EOPNOTSUPP", errno.ENOSYS)}:
+            raise OSError(error_number, os.strerror(error_number), str(destination))
     link = libc.link
     link.argtypes = (ctypes.c_char_p, ctypes.c_char_p)
     link.restype = ctypes.c_int
@@ -270,7 +279,7 @@ def write_new(path, document):
         # A same-directory hard link publishes atomically and fails if another
         # process created the destination after the initial check.
         publish_no_clobber(temporary, path)
-        temporary.unlink()
+        temporary.unlink(missing_ok=True)
         owns_temporary = False
     except Exception:
         if owns_temporary:
