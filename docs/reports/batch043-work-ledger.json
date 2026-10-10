@@ -321,6 +321,59 @@
       "reason": "No SQLite query or metadata access occurred before a passing guard.",
       "status": "BLOCKED_RESOURCE"
     },
+    "portable_v5_package": {
+      "local_verification": {
+        "command": [
+          "bash",
+          "docs/portable-verification-v5/verify-kit.sh",
+          "--mode",
+          "STATIC",
+          "--suite",
+          "corpus-verification-contract",
+          "--output-root",
+          "$HOME/.cache/biyahe/batch043/portable-kit-verification"
+        ],
+        "elapsed_milliseconds": 1369.819,
+        "ended_at_utc": "2026-10-10T11:05:54Z",
+        "exit_code": 0,
+        "failure_count": 0,
+        "input_fingerprint_sha256": "bab3b79d29a29de23164a109eac47638b3254be7efa295a4d2e34f85bb1bf2b0",
+        "mode": "STATIC",
+        "resource_floors_recorded_kib": {
+          "memavailable": 524288,
+          "swapfree": 131072
+        },
+        "resource_guard": "NOT_REQUIRED: deterministic Python contract fixture; no graph or database access",
+        "run_status": "$HOME/.cache/biyahe/batch043/portable-kit-verification/20261010T110553Z-26349/run-status.json",
+        "started_at_utc": "2026-10-10T11:05:53Z",
+        "status": "PASS",
+        "stdout_sha256": "b67c31823633cd1e8892bd56397da47dae829486c0117e72b396233ae84f6847",
+        "suite": "corpus-verification-contract",
+        "test_count": 4
+      },
+      "manual_checksum_invocation": {
+        "command": "sha256sum -c docs/portable-verification-v5/SHA256SUMS",
+        "reason": "The checksum file uses paths relative to the kit root; this standalone invocation was issued from the repository root. The packaged verifier then ran from the correct kit root and verified all 133 entries.",
+        "status": "FAIL_INVALID_WORKING_DIRECTORY"
+      },
+      "package_generation_command": [
+        "python3",
+        "api/scripts/package-batch041-verification-kit.py",
+        "--output",
+        "docs/portable-verification-v5"
+      ],
+      "package_generation_output": {
+        "checksum_inventory_sha256": "1e3885b37ab96e21a40bdcbe65c56f3ca94d424b43d7f3b8f3e1e72989778a66",
+        "executable_source_revision": "dad74a31898c1c96235e14b94ef8b4a69e31287f",
+        "included_files": 130,
+        "manifest_sha256": "dd2a6bb6ddb4a97015d238c05b3bdf7ed6ce650219572810a5c43a44f9ca353f",
+        "sha256_entries": 133,
+        "source_revision": "c15d4e09f7c361385bbe3f224f2c4c57742ad81e"
+      },
+      "package_generation_status": "PASS",
+      "package_path": "docs/portable-verification-v5",
+      "status": "VERIFIED"
+    },
     "real_graph_attempt": {
       "case_indices_requested": [
         0
@@ -1304,8 +1357,8 @@
     },
     {
       "id": "PORTABLE_V5",
-      "status": "IMPLEMENTED_UNTESTED",
-      "stop_condition": "Build from a clean tracked checkout, verify all manifest hashes, then execute local static entry point."
+      "status": "VERIFIED",
+      "stop_condition": "Package generated from clean tracked revision c15d4e0; manifest and all 133 SHA256 entries verified by verify-kit.sh, and the packaged corpus-verification-contract suite passed. This is local static verification, not external-host execution."
     },
     {
       "id": "STAGING_READINESS",
@@ -1320,7 +1373,7 @@
     {
       "id": "DELIVERY",
       "status": "IN_PROGRESS",
-      "stop_condition": "Commit evidence/docs and kit; verify final SD bundle, archive, report, and clipboard."
+      "stop_condition": "Commit this evidence update, confirm tracked tree cleanliness and preserved report hashes, then create and verify final SD bundle, recovery archive, final report, and clipboard readback."
     }
   ]
 }
