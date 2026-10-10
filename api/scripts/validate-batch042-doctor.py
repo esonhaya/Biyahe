@@ -213,6 +213,12 @@ def validate_doctor(document: object, repo_root: Path) -> dict[str, object]:
                 output_sha = _require_sha(output_sha_value, f"tests.{name}.output_sha256")
                 if not isinstance(output_path, str) or not (repo_root / output_path).is_file() or sha256(repo_root / output_path) != output_sha:
                     raise DoctorError(f"test {name} evidence output is missing or changed")
+            resource_sha_value = result.get("resource_log_sha256")
+            if resource_sha_value is not None:
+                resource_sha = _require_sha(resource_sha_value, f"tests.{name}.resource_log_sha256")
+                resource_path = result.get("resource_log")
+                if not isinstance(resource_path, str) or not (repo_root / resource_path).is_file() or sha256(repo_root / resource_path) != resource_sha:
+                    raise DoctorError(f"test {name} resource log is missing or changed")
         if result.get("historical_only") is True and result["status"] == "VERIFIED":
             raise DoctorError(f"test {name} cannot promote historical evidence to current verification")
 

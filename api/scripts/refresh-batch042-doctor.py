@@ -256,6 +256,7 @@ def make_test(name: str, row: dict | None, child: dict | None = None, root: Path
         "memavailable_floor_kib": row.get("memavailable_floor_kib"),
         "swapfree_floor_kib": row.get("swapfree_floor_kib"),
         "resource_log": row.get("resource_log"),
+        "resource_log_sha256": row.get("resource_log_sha256"),
         "worker_min_memavailable_kib": row.get("worker_min_memavailable_kib"),
         "worker_min_swapfree_kib": row.get("worker_min_swapfree_kib"),
         "worker_peak_rss_kib": row.get("worker_peak_rss_kib"),

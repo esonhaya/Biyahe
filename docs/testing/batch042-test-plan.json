@@ -19,7 +19,7 @@
       "static evidence smoke",
       "synthetic corpus comparator fixtures",
       "Doctor V42 contract fixtures",
-      "portable runner fingerprint, no-clobber, and interrupted-run fixtures",
+      "portable runner fingerprint, no-clobber, interrupted-run, and packaged evidence fixtures",
       "pure PHP geometry smoke",
       "Python AST, Bash, PHP and JavaScript syntax",
       "JSON parsing and git diff --check"

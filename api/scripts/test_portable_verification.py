@@ -16,6 +16,11 @@ SPEC = importlib.util.spec_from_file_location("batch042_portable_runner", SCRIPT
 assert SPEC is not None and SPEC.loader is not None
 RUNNER = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(RUNNER)
+PACKAGER_SCRIPT = Path(__file__).with_name("package-batch041-verification-kit.py")
+PACKAGER_SPEC = importlib.util.spec_from_file_location("batch042_verification_packager", PACKAGER_SCRIPT)
+assert PACKAGER_SPEC is not None and PACKAGER_SPEC.loader is not None
+PACKAGER = importlib.util.module_from_spec(PACKAGER_SPEC)
+PACKAGER_SPEC.loader.exec_module(PACKAGER)
 
 
 class PortableRunnerTests(unittest.TestCase):
@@ -89,6 +94,32 @@ class PortableRunnerTests(unittest.TestCase):
         self.assertEqual(RUNNER.select_specs(specs, None), specs)
         with self.assertRaisesRegex(ValueError, "not available in this mode"):
             RUNNER.select_specs(specs, "adapter-phpunit")
+
+    def test_packaged_doctor_evidence_is_relocated_and_hash_pinned(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            snapshot = root / "source-snapshot"
+            report_path = snapshot / "docs/reports/batch042-doctor-v42.json"
+            report_path.parent.mkdir(parents=True)
+            output = root / "original-cache/test.stdout.txt"
+            resource_log = root / "original-cache/test.resource.log"
+            output.parent.mkdir()
+            output.write_text("SUITE=PASS\n", encoding="utf-8")
+            resource_log.write_text("min_memavailable_kb=900000 min_swapfree_kb=200000\n", encoding="utf-8")
+            report = {"tests": {"preview_contract": {
+                "status": "VERIFIED", "output_path": str(output),
+                "output_sha256": PACKAGER.sha256(output), "resource_log": str(resource_log),
+                "resource_log_sha256": PACKAGER.sha256(resource_log),
+            }}}
+            report_path.write_text(json.dumps(report), encoding="utf-8")
+            bundled = PACKAGER.bundle_doctor_evidence(report_path, snapshot)
+            packaged = json.loads(report_path.read_text(encoding="utf-8"))["tests"]["preview_contract"]
+            self.assertEqual("evidence/preview_contract.stdout.txt", packaged["output_path"])
+            self.assertEqual("evidence/preview_contract.resource.log", packaged["resource_log"])
+            self.assertEqual(2, len(bundled))
+            self.assertEqual(packaged["output_sha256"], PACKAGER.sha256(snapshot / packaged["output_path"]))
+            self.assertEqual(packaged["resource_log_sha256"], PACKAGER.sha256(snapshot / packaged["resource_log"]))
+            self.assertTrue(all(item["path"].startswith("source-snapshot/evidence/") for item in bundled))
 
 
 if __name__ == "__main__":

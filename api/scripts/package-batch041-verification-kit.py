@@ -8,6 +8,7 @@ from datetime import datetime, timezone
 import hashlib
 import json
 from pathlib import Path, PurePosixPath
+import re
 import shutil
 import subprocess
 import sys
@@ -178,6 +179,8 @@ From this directory, run `bash verify-kit.sh MODE`. Available modes are:
 
 `verify-kit.sh` validates its manifest and every `SHA256SUMS` entry before invoking the runner. By default, commands use the included `source-snapshot`. Add `--repo-root CHECKOUT` to require the exact Git revision in the manifest and byte-compare every pinned source path. `--output-root DIR` selects a new evidence root; run directories are unique and existing outputs are never overwritten.
 
+The package includes checksum-verified output and resource logs referenced by the pinned Doctor report, relocated under `source-snapshot/evidence/` so report validation works without the original host cache.
+
 Run one suite with `bash verify-kit.sh --mode FRONTEND --suite commute-card`. Suite identifiers are printed by each mode and recorded in `run-status.json`; a suite unavailable in the selected mode is rejected before execution.
 
 Each run writes an atomic `run-status.json`, individual command output, source/tool/command fingerprints, resource logs for guarded work, and an evidence checksum list. Interrupted `RUNNING` records recover to `NOT_RUN`; the runner never infers PASS from partial output. Guarded suites use five samples spaced five seconds apart, the fixed 524288 KiB memory and 131072 KiB swap floors, and first-breach cancellation. No database service is started.
@@ -198,6 +201,42 @@ def sha256(path: Path) -> str:
         for block in iter(lambda: handle.read(1024 * 1024), b""):
             digest.update(block)
     return digest.hexdigest()
+
+
+def bundle_doctor_evidence(report_path: Path, snapshot_root: Path) -> list[dict[str, object]]:
+    report = json.loads(report_path.read_text(encoding="utf-8"))
+    tests = report.get("tests", {})
+    if not isinstance(tests, dict):
+        raise ValueError("Doctor V42 test evidence must be an object")
+    bundled: list[dict[str, object]] = []
+    for name, row in tests.items():
+        if not isinstance(row, dict):
+            continue
+        safe_name = re.sub(r"[^A-Za-z0-9._-]+", "-", str(name)).strip(".-") or "test"
+        for path_field, sha_field, label in (
+            ("output_path", "output_sha256", "stdout.txt"),
+            ("resource_log", "resource_log_sha256", "resource.log"),
+        ):
+            expected = row.get(sha_field)
+            if expected is None:
+                continue
+            source_value = row.get(path_field)
+            if not isinstance(source_value, str):
+                raise ValueError(f"Doctor test {name} has a hash without {path_field}")
+            source = Path(source_value)
+            if not source.is_file() or sha256(source) != expected:
+                raise ValueError(f"Doctor test {name} {path_field} evidence is missing or changed")
+            relative = PurePosixPath("evidence") / f"{safe_name}.{label}"
+            destination = snapshot_root.joinpath(*relative.parts)
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(source, destination)
+            if sha256(destination) != expected:
+                raise ValueError(f"Doctor test {name} {path_field} evidence copy changed")
+            row[path_field] = relative.as_posix()
+            bundled.append({"test": name, "kind": label, "path": f"source-snapshot/{relative.as_posix()}",
+                "sha256": expected, "size_bytes": destination.stat().st_size})
+    report_path.write_text(json.dumps(report, indent=2, ensure_ascii=False, sort_keys=True) + "\n", encoding="utf-8")
+    return bundled
 
 
 def main(argv=None) -> int:
@@ -243,6 +282,8 @@ def main(argv=None) -> int:
             destination = snapshot_root / PurePosixPath(relative)
             destination.parent.mkdir(parents=True, exist_ok=True)
             shutil.copyfile(source, destination)
+        packaged_test_evidence = bundle_doctor_evidence(
+            snapshot_root / "docs/reports/batch042-doctor-v42.json", snapshot_root)
 
         manifest = {
             "format": "biyahe-portable-offline-verification-kit-v4",
@@ -278,7 +319,8 @@ def main(argv=None) -> int:
             "expected_stored_coverage": {"stops": 503, "stops_snappable_within_25m": 436, "places": 37, "places_snappable_within_25m": 30, "transfers_unverified": 2, "historical_corpus_cases": 10, "historical_routes_found": 9, "historical_routes_disconnected": 1},
             "resource_floors_kib": {"memavailable_minimum": 524288, "swapfree_minimum": 131072, "sustained_samples": 5, "sample_spacing_seconds": 5},
             "required_checkout_paths": FILES,
-            "included_files": [f"source-snapshot/{relative}" for relative in FILES],
+            "included_files": [f"source-snapshot/{relative}" for relative in FILES] + [item["path"] for item in packaged_test_evidence],
+            "packaged_test_evidence": packaged_test_evidence,
             "execution_claims": {"package_generation": "COMPLETED", "local_verification": "NOT_RUN_AT_PACKAGE_TIME", "real_graph_replay": "NOT_RUN", "external_host_execution": "NOT_RUN", "postgresql": "NOT_RUN", "browser": "NOT_RUN", "field_verification": "NOT_RUN", "production_activation": "NO"}
         }
         (output / "manifest.json").write_text(json.dumps(manifest, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
