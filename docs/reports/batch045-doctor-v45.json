@@ -1,0 +1,336 @@
+{
+  "assessed_at_utc": "2026-10-10T14:14:17Z",
+  "batch": 45,
+  "categories": [
+    {
+      "evidence": "No browser session or staging origin was available; no browser command or screenshot was produced.",
+      "name": "browser_checks",
+      "status": "NOT_RUN"
+    },
+    {
+      "evidence": "Existing source-aware disclosures were retained. No current UI regression suite completed.",
+      "name": "evidence_presentation",
+      "status": "IMPLEMENTED_UNTESTED"
+    },
+    {
+      "evidence": "Termux is the only available host. Docker, Podman and GitHub CLI are absent; no SSH host configuration or established remote Linux runner is available.",
+      "name": "external_host_availability",
+      "status": "BLOCKED_DEPENDENCY"
+    },
+    {
+      "evidence": "API timeouts and malformed core response rejection are implemented; the deterministic harness was blocked before launch.",
+      "name": "failure_recovery",
+      "status": "IMPLEMENTED_UNTESTED"
+    },
+    {
+      "evidence": "Two transfer locations remain physically UNVERIFIED; this batch collected no field evidence.",
+      "name": "field_safety",
+      "status": "BLOCKED_DEPENDENCY"
+    },
+    {
+      "evidence": "Typecheck, lint and production build were not run because the guarded preflight breached the fixed SwapFree floor.",
+      "name": "frontend_build",
+      "status": "BLOCKED_RESOURCE"
+    },
+    {
+      "evidence": "No isolated staging database or Linux host was available; no import was attempted.",
+      "name": "importer",
+      "status": "BLOCKED_DEPENDENCY"
+    },
+    {
+      "evidence": "No staging API was available; mocked API contract fixtures did not execute.",
+      "name": "live_api",
+      "status": "BLOCKED_DEPENDENCY"
+    },
+    {
+      "evidence": "No isolated PostgreSQL/PostGIS environment was available or started.",
+      "name": "postgis",
+      "status": "BLOCKED_DEPENDENCY"
+    },
+    {
+      "evidence": "Portable verification v6 remains present; its package verifier was not run in this batch.",
+      "name": "portable_verification",
+      "status": "IMPLEMENTED_UNTESTED"
+    },
+    {
+      "evidence": "Live graph, staging and field-safety gates remain incomplete.",
+      "name": "private_beta",
+      "status": "BLOCKED_DEPENDENCY"
+    },
+    {
+      "evidence": "No production system was contacted. Production activation remains NO.",
+      "name": "production_activation",
+      "status": "NOT_RUN"
+    },
+    {
+      "evidence": "The five-sample preflight for the API harness recorded a minimum SwapFree of 23108 KiB. No graph file was hashed or opened, and corpus execution was not attempted.",
+      "name": "real_cebu_corpus",
+      "status": "BLOCKED_RESOURCE"
+    },
+    {
+      "evidence": "20-second request deadlines cover fetch and response-body parsing; external cancellation is preserved. Runtime regressions were blocked before worker launch.",
+      "name": "request_lifecycle",
+      "status": "IMPLEMENTED_UNTESTED"
+    },
+    {
+      "evidence": "Existing manual progression and snapshot behavior were not changed; focused tests were not run in this batch.",
+      "name": "ride_mode",
+      "status": "IMPLEMENTED_UNTESTED"
+    },
+    {
+      "evidence": "Existing snapshot-v1/offline protections were not changed; focused tests were not run in this batch.",
+      "name": "saved_journeys",
+      "status": "IMPLEMENTED_UNTESTED"
+    },
+    {
+      "evidence": "No authorized, reachable external Linux staging host was available. No service was started.",
+      "name": "staging_activation",
+      "status": "BLOCKED_DEPENDENCY"
+    },
+    {
+      "evidence": "Expected graph hash is recorded; graph bytes were not accessed or hashed in this batch.",
+      "name": "graph_identity",
+      "status": "NOT_RUN"
+    },
+    {
+      "evidence": "SQLite integrity verification was not run because graph access was not resource-safe.",
+      "name": "graph_integrity",
+      "status": "NOT_RUN"
+    }
+  ],
+  "evidence": {
+    "api_failure_harness": {
+      "command_fingerprint_sha256": "beec018734d541337705f1080424cbd888965872d60b1dc5355960e61fd2dea6",
+      "command_started": false,
+      "elapsed_milliseconds": 25043,
+      "exit_code": 4,
+      "input_fingerprint_sha256": "1b282148cf1cfb817407261c024ddff152420da49073ee87cd71680b5d431830",
+      "reason": "Five-sample preflight minimum SwapFree was 23108 KiB; worker was not launched.",
+      "resource_log": "docs/reports/batch045-test-evidence/20261010T140829Z/api-failure.resource.log",
+      "status": "BLOCKED_RESOURCE"
+    },
+    "deployment": {
+      "database_contacted": false,
+      "dataset_imported": false,
+      "development_adapter_exposed": false,
+      "docker_started": false,
+      "postgresql_started": false,
+      "staging_activated": false
+    },
+    "environment": {
+      "configured_ci_runner_access": false,
+      "docker_available": false,
+      "external_host_available": false,
+      "github_cli_available": false,
+      "platform": "Termux on Android aarch64",
+      "podman_available": false,
+      "production_contacted": false,
+      "ssh_client_available": true,
+      "ssh_host_configuration_available": false
+    },
+    "graph": {
+      "accessed": false,
+      "actual_sha256": null,
+      "expected_sha256": "29d7aaf9c45a596f4065c44d13f983f4a7edeec5ac2ea41b718b1c52ca865bf8",
+      "identity_status": "NOT_RUN",
+      "integrity_status": "NOT_RUN",
+      "modified": false,
+      "pbf_rescanned": false,
+      "write_allowed": false
+    },
+    "historical_evidence_baseline": {
+      "geographic_population_sidewalk_accessibility_or_field_coverage_claimed": false,
+      "measured_graph_quality": {
+        "boundary_nodes": 944,
+        "crossing_tagged_nodes": 1510,
+        "long_edges": 26
+      },
+      "missing_measurements_converted_to_zero": false,
+      "physically_unverified_transfers": 2,
+      "revalidated_this_batch": false,
+      "source": "Batch 044 and pinned earlier evidence; stored-record scope only",
+      "stored_places": {
+        "snappable_within_25m": 30,
+        "total": 37,
+        "unsnappable": 7
+      },
+      "stored_stops": {
+        "snappable_within_25m": 436,
+        "total": 503,
+        "unsnappable": 67
+      },
+      "vehicle_only_restrictions": {
+        "omitted": 29,
+        "stored": 619,
+        "total": 648
+      }
+    },
+    "historical_untracked_reports": [
+      {
+        "path": "docs/reports/batch033-doctor-v33.json",
+        "preserved": true,
+        "sha256": "ad1c85801357a6ca12ca5516c9794d7ffd98b639d5e5d99758873e1438e4b3a3"
+      },
+      {
+        "path": "docs/reports/batch034-doctor-v34-coverage.json",
+        "preserved": true,
+        "sha256": "ba0f30ff386f0aee90e288b68b1531f7af4b15a7ad48b0285f7c087752dc8184"
+      },
+      {
+        "path": "docs/reports/batch034-doctor-v34-current.json",
+        "preserved": true,
+        "sha256": "b20338820ac816eccab23b07d9d57c72ab4976639bf96d6d5b50bbd02d40ba3f"
+      },
+      {
+        "path": "docs/reports/batch034-doctor-v34-final-evidence.json",
+        "preserved": true,
+        "sha256": "3825d69f2f03f82c090eb4f0328d03288c10deb3a78973b0fd1ac34ea8fb37c8"
+      },
+      {
+        "path": "docs/reports/batch034-doctor-v34-final.json",
+        "preserved": true,
+        "sha256": "4d5c1c19b3396a4883827d62870b351ba3d5f5cf3fdc8d2116eecdc862643ed7"
+      },
+      {
+        "path": "docs/reports/batch034-doctor-v34.json",
+        "preserved": true,
+        "sha256": "2cbee970d32eaf4d2b495563a94895b74ee566a8cb6a834d02b10f3e08b93aa4"
+      },
+      {
+        "path": "docs/reports/batch039-doctor-v39.json",
+        "preserved": true,
+        "sha256": "102785d2fe2f87349601c884b97e10d5f308c48bcdab2e7bf07b27acc67c825b"
+      }
+    ],
+    "initial_recovery_bundle": {
+      "head": "c5844d227b2f63ac1995973d5c7ef8254b92ca6c",
+      "path": "~/storage/external-1/Termux-Archive/Biyahe/Batch045-Recovery/20261010T134814Z/biyahe-batch045-initial-c5844d227b2f63ac1995973d5c7ef8254b92ca6c.bundle",
+      "sha256": "f6eaea7d9ec21dce2c94bd7bc15a2d5ac21334c77fdaaf13eed61aaace8ed114",
+      "verified": true
+    },
+    "real_cebu_corpus": {
+      "blocked": 0,
+      "case_indices_executed": [],
+      "executed": 0,
+      "expected_cases": 10,
+      "fail": 0,
+      "historical_result_only": {
+        "current_batch": false,
+        "disconnected": 1,
+        "routes_found": 9
+      },
+      "not_run": 10,
+      "pass": 0,
+      "status": "BLOCKED_RESOURCE"
+    },
+    "resource_preflight": {
+      "breach_samples": 1,
+      "cancellation": "NOT_NEEDED_COMMAND_NOT_STARTED",
+      "minimum_memavailable_kib": 783664,
+      "minimum_swapfree_kib": 23108,
+      "owned_worker_peak_rss_kib": null,
+      "owned_worker_started": false,
+      "postgresql_rss_kib": 0,
+      "process_tree_rss_cap_kib": 262144,
+      "required_memavailable_kib": 524288,
+      "required_swapfree_kib": 131072,
+      "resource_log": "docs/reports/batch045-test-evidence/20261010T140829Z/api-failure.resource.log",
+      "sample_count": 5,
+      "samples": [
+        {
+          "at_utc": "2026-10-10T14:08:47Z",
+          "diskfree_kib": 4993784,
+          "memavailable_kib": 805028,
+          "postgresql_rss_kib": 0,
+          "swapfree_kib": 235372
+        },
+        {
+          "at_utc": "2026-10-10T14:08:53Z",
+          "diskfree_kib": 4993396,
+          "memavailable_kib": 843636,
+          "postgresql_rss_kib": 0,
+          "swapfree_kib": 85504
+        },
+        {
+          "at_utc": "2026-10-10T14:08:59Z",
+          "diskfree_kib": 4992956,
+          "memavailable_kib": 894428,
+          "postgresql_rss_kib": 0,
+          "swapfree_kib": 23108
+        },
+        {
+          "at_utc": "2026-10-10T14:09:05Z",
+          "diskfree_kib": 4992708,
+          "memavailable_kib": 783664,
+          "postgresql_rss_kib": 0,
+          "swapfree_kib": 40200
+        },
+        {
+          "at_utc": "2026-10-10T14:09:11Z",
+          "diskfree_kib": 4992208,
+          "memavailable_kib": 794532,
+          "postgresql_rss_kib": 0,
+          "swapfree_kib": 39784
+        }
+      ],
+      "status": "BLOCKED_RESOURCE"
+    },
+    "static_validation": {
+      "evidence": {
+        "guard_resource_log": {
+          "path": "docs/reports/batch045-test-evidence/20261010T140829Z/api-failure.resource.log",
+          "sha256": "b488428016190839b803e3edf78b004c46f805ee06fbf47c3c5e2d2fe5fe821b"
+        },
+        "initial_static_checks": {
+          "input_fingerprint_sha256": "1b282148cf1cfb817407261c024ddff152420da49073ee87cd71680b5d431830",
+          "path": "docs/reports/batch045-test-evidence/20261010T140817Z/results.json",
+          "sha256": "9a00898733327a021d105f027f6e9de4f2f28ae5e49eef1d6a863bf887e28f39"
+        },
+        "post_source_syntax_checks": {
+          "input_fingerprint_sha256": "78e33683b2f9497483944cf6d6f98b3d46d6ebe2ab8824b6b206fc8dcefd8eb5",
+          "path": "docs/reports/batch045-test-evidence/20261010T141137Z/results.json",
+          "sha256": "c6bfc307aa3ba22458c6064a06c23bddb0557a0b84427649079f51fa00817556"
+        },
+        "staged_harness_syntax_and_diff": {
+          "input_fingerprint_sha256": "270661d6124bbc8c8296f7fd2c00153293ad3c0cd1cd11bd695518d68f6372eb",
+          "path": "docs/reports/batch045-test-evidence/20261010T141219Z/staged-diff-checks.json",
+          "sha256": "c2650f19521ba60657fc89f8cc9089f97faa26e0cc5115c732e73aa9fb370b99"
+        }
+      },
+      "scope": "TypeScript/JavaScript syntax, package JSON parse, existing guard Bash syntax and git diff checks only. No typecheck, lint, functional test, build or browser claim.",
+      "status": "PASS"
+    }
+  },
+  "evidence_fingerprints": {
+    "batch044_doctor": "38e107113027f4442b4a8c7ad4ed898ece17c7202cbff225f65ec4280916d666",
+    "guard_resource_log": "b488428016190839b803e3edf78b004c46f805ee06fbf47c3c5e2d2fe5fe821b",
+    "initial_static_checks": "9a00898733327a021d105f027f6e9de4f2f28ae5e49eef1d6a863bf887e28f39",
+    "portable_v6_manifest": "39b5241c4daf06c8a544d20b9a5fdf727aed07a94783f736e01da8168ca5254d",
+    "post_source_syntax_checks": "c6bfc307aa3ba22458c6064a06c23bddb0557a0b84427649079f51fa00817556",
+    "staged_harness_syntax_and_diff": "c2650f19521ba60657fc89f8cc9089f97faa26e0cc5115c732e73aa9fb370b99"
+  },
+  "format": "biyahe-doctor-v45-evidence-v1",
+  "release_gates": {
+    "field_safety": "BLOCKED",
+    "live_production_graph": "BLOCKED",
+    "postgresql_staging": "BLOCKED",
+    "private_beta": "BLOCKED",
+    "production_activation": "NO"
+  },
+  "source_fingerprints": {
+    "web/package.json": "37dab358a824f9b960f33001a1b14fd6f3448c19788bd4a9bd3cf185806757bb",
+    "web/scripts/api-failure-harness.mjs": "aa053a1657aa5a01b008a2da70bd3e32676ecbee69d5dcda670999b1e16805f5",
+    "web/src/lib/api.ts": "db1809e208545d31892017b46f20885cb1d063538ec3e0f16c094308446794d4",
+    "web/src/lib/fetchWithTimeout.ts": "65a29fccfaf89af6bf82736111592f3b5b32180fac8422ed2679d9e6cefd4c53"
+  },
+  "source_revision": {
+    "documentation_revision_policy": "This report is committed separately; that documentation-only commit is not represented as executable validation.",
+    "executable": "98ad3016a93f255ec88bf865fddaa9e93d060c91",
+    "note": "The executable pin contains only API timeout/contract changes. Static syntax checks do not constitute functional verification.",
+    "runtime_tested": null,
+    "static_checked": "98ad3016a93f255ec88bf865fddaa9e93d060c91"
+  },
+  "verification_tools": {
+    "api/scripts/validate-batch045-doctor.py": "4bcbfe5b2b0b5c49b5a5f93173f77e57849c9f90c29f5980722e66c6d0e717b9"
+  }
+}

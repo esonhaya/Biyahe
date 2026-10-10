@@ -1,0 +1,165 @@
+{
+  "batch": 45,
+  "branch": "main",
+  "commits": [
+    {
+      "revision": "98ad3016a93f255ec88bf865fddaa9e93d060c91",
+      "runtime_verified": false,
+      "scope": "API timeout and response-contract hardening"
+    }
+  ],
+  "delivery": {
+    "final_sd_bundle": "created after evidence commit; checksum recorded in $HOME/biyahe-batch045-report.txt",
+    "push": "NO"
+  },
+  "executable_revision": "98ad3016a93f255ec88bf865fddaa9e93d060c91",
+  "format": "biyahe-batch045-work-ledger-v1",
+  "head_before": "c5844d227b2f63ac1995973d5c7ef8254b92ca6c",
+  "recovery": {
+    "external_host": "UNAVAILABLE",
+    "historical_untracked_reports": [
+      {
+        "path": "docs/reports/batch033-doctor-v33.json",
+        "preserved": true,
+        "sha256": "ad1c85801357a6ca12ca5516c9794d7ffd98b639d5e5d99758873e1438e4b3a3"
+      },
+      {
+        "path": "docs/reports/batch034-doctor-v34-coverage.json",
+        "preserved": true,
+        "sha256": "ba0f30ff386f0aee90e288b68b1531f7af4b15a7ad48b0285f7c087752dc8184"
+      },
+      {
+        "path": "docs/reports/batch034-doctor-v34-current.json",
+        "preserved": true,
+        "sha256": "b20338820ac816eccab23b07d9d57c72ab4976639bf96d6d5b50bbd02d40ba3f"
+      },
+      {
+        "path": "docs/reports/batch034-doctor-v34-final-evidence.json",
+        "preserved": true,
+        "sha256": "3825d69f2f03f82c090eb4f0328d03288c10deb3a78973b0fd1ac34ea8fb37c8"
+      },
+      {
+        "path": "docs/reports/batch034-doctor-v34-final.json",
+        "preserved": true,
+        "sha256": "4d5c1c19b3396a4883827d62870b351ba3d5f5cf3fdc8d2116eecdc862643ed7"
+      },
+      {
+        "path": "docs/reports/batch034-doctor-v34.json",
+        "preserved": true,
+        "sha256": "2cbee970d32eaf4d2b495563a94895b74ee566a8cb6a834d02b10f3e08b93aa4"
+      },
+      {
+        "path": "docs/reports/batch039-doctor-v39.json",
+        "preserved": true,
+        "sha256": "102785d2fe2f87349601c884b97e10d5f308c48bcdab2e7bf07b27acc67c825b"
+      }
+    ],
+    "initial_sd_bundle": {
+      "head": "c5844d227b2f63ac1995973d5c7ef8254b92ca6c",
+      "path": "~/storage/external-1/Termux-Archive/Biyahe/Batch045-Recovery/20261010T134814Z/biyahe-batch045-initial-c5844d227b2f63ac1995973d5c7ef8254b92ca6c.bundle",
+      "sha256": "f6eaea7d9ec21dce2c94bd7bc15a2d5ac21334c77fdaaf13eed61aaace8ed114",
+      "verified": true
+    },
+    "tracked_tree_clean_at_start": true
+  },
+  "remaining_work": {
+    "external_host_required": [
+      "PostgreSQL/PostGIS staging",
+      "importer validation",
+      "live API smoke",
+      "frontend build/browser"
+    ],
+    "field_evidence_required": [
+      "physical transfer verification"
+    ],
+    "recommended_next": "Run the guarded API harness and focused commuter regressions on a host that maintains the fixed resource floors; then perform isolated staging and field verification.",
+    "resource_blocked": [
+      "functional frontend harnesses",
+      "typecheck",
+      "ESLint",
+      "real graph corpus"
+    ]
+  },
+  "test_evidence": {
+    "browser": "NOT_RUN",
+    "build": "NOT_RUN",
+    "doctor_contract": "docs/reports/batch045-test-evidence/20261010T141653Z/doctor-v45-contract-final.json",
+    "eslint": "NOT_RUN",
+    "final_staged_checks": "docs/reports/batch045-test-evidence/20261010T141219Z/staged-diff-checks.json",
+    "graph": "NOT_RUN",
+    "guard_log": "docs/reports/batch045-test-evidence/20261010T140829Z/api-failure.resource.log",
+    "guarded_api_harness": "BLOCKED_RESOURCE; zero cases executed",
+    "initial_static": "docs/reports/batch045-test-evidence/20261010T140817Z/results.json",
+    "json_parse": "docs/reports/batch045-test-evidence/20261010T141723Z/batch-json-parse.json",
+    "post_source_static": "docs/reports/batch045-test-evidence/20261010T141137Z/results.json",
+    "staging": "NOT_RUN",
+    "typecheck": "NOT_RUN"
+  },
+  "updated_at_utc": "2026-10-10T14:17:23Z",
+  "workstreams": {
+    "api_failure_regression": {
+      "evidence": "Guarded five-sample attempt; minimum SwapFree 23108 KiB; command not started.",
+      "status": "BLOCKED_RESOURCE"
+    },
+    "api_request_timeout": {
+      "evidence": "Added 20-second cancellation-aware deadline covering response parsing; functional fixture blocked before launch.",
+      "status": "IMPLEMENTED_UNTESTED"
+    },
+    "api_response_contracts": {
+      "evidence": "Added runtime guards for places/stops/routes, journeys/replans and Can-I-Ride; malformed payloads now take existing error paths.",
+      "status": "IMPLEMENTED_UNTESTED"
+    },
+    "browser_automation": {
+      "evidence": "No browser session or staging origin was available; no screenshot was produced.",
+      "status": "NOT_RUN"
+    },
+    "doctor_v45": {
+      "evidence": "Machine-readable statuses pin executable revision 98ad301; no runtime tests represented as PASS.",
+      "status": "VERIFIED"
+    },
+    "doctor_v45_contract": {
+      "evidence": "docs/reports/batch045-test-evidence/20261010T141653Z/doctor-v45-contract-final.json",
+      "exit_code": 0,
+      "input_fingerprint_sha256": "e523f755ff09865caa9d9a99c558fec3ecc4c5479b9d714e1e2f0bba8fd5656c",
+      "status": "VERIFIED"
+    },
+    "environment_discovery": {
+      "evidence": "Termux-only execution confirmed; no Docker/Podman, configured SSH host or authorized external CI runner was available.",
+      "status": "VERIFIED"
+    },
+    "evidence_presentation": {
+      "evidence": "No presentation changes; no current runtime execution.",
+      "status": "IMPLEMENTED_UNTESTED"
+    },
+    "frontend_build": {
+      "evidence": "No five-sample preflight cleared the fixed swap floor; build/typecheck/lint workers were not started.",
+      "status": "BLOCKED_RESOURCE"
+    },
+    "json_evidence_parse": {
+      "evidence": "docs/reports/batch045-test-evidence/20261010T141723Z/batch-json-parse.json",
+      "exit_code": 0,
+      "input_fingerprint_sha256": "1a230b80919551e26210a3ec060227ba4e89a7d7734c53ccd181e3d2399f1f9c",
+      "status": "VERIFIED"
+    },
+    "real_cebu_graph": {
+      "evidence": "No graph bytes accessed. Existing graph/corpus remain current NOT_RUN.",
+      "status": "BLOCKED_RESOURCE"
+    },
+    "ride_mode": {
+      "evidence": "Existing manual progress behavior retained; no current runtime execution.",
+      "status": "IMPLEMENTED_UNTESTED"
+    },
+    "saved_journeys": {
+      "evidence": "Existing snapshot-v1 behavior retained; no current runtime execution.",
+      "status": "IMPLEMENTED_UNTESTED"
+    },
+    "staging_postgis_importer_live_api": {
+      "evidence": "No isolated Linux staging host or database; none started.",
+      "status": "BLOCKED_DEPENDENCY"
+    },
+    "static_checks": {
+      "evidence": "Node syntax, JSON parse, existing guard Bash syntax and diff checks passed; see test evidence files.",
+      "status": "VERIFIED"
+    }
+  }
+}

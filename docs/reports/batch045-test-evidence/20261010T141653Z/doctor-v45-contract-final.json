@@ -1,0 +1,35 @@
+{
+  "command": [
+    "python3",
+    "api/scripts/validate-batch045-doctor.py"
+  ],
+  "command_fingerprint_sha256": "8e2dfed2a50234e29246e001054ed9ae30463e6ac89908c065c5535924f974d6",
+  "elapsed_milliseconds": 707.387,
+  "ended_at_utc": "2026-10-10T14:16:53.893Z",
+  "exit_code": 0,
+  "format": "biyahe-batch045-command-evidence-v1",
+  "input_fingerprint_sha256": "e523f755ff09865caa9d9a99c558fec3ecc4c5479b9d714e1e2f0bba8fd5656c",
+  "input_sha256": {
+    "api/scripts/validate-batch045-doctor.py": "4bcbfe5b2b0b5c49b5a5f93173f77e57849c9f90c29f5980722e66c6d0e717b9",
+    "docs/reports/batch033-doctor-v33.json": "ad1c85801357a6ca12ca5516c9794d7ffd98b639d5e5d99758873e1438e4b3a3",
+    "docs/reports/batch034-doctor-v34-coverage.json": "ba0f30ff386f0aee90e288b68b1531f7af4b15a7ad48b0285f7c087752dc8184",
+    "docs/reports/batch034-doctor-v34-current.json": "b20338820ac816eccab23b07d9d57c72ab4976639bf96d6d5b50bbd02d40ba3f",
+    "docs/reports/batch034-doctor-v34-final-evidence.json": "3825d69f2f03f82c090eb4f0328d03288c10deb3a78973b0fd1ac34ea8fb37c8",
+    "docs/reports/batch034-doctor-v34-final.json": "4d5c1c19b3396a4883827d62870b351ba3d5f5cf3fdc8d2116eecdc862643ed7",
+    "docs/reports/batch034-doctor-v34.json": "2cbee970d32eaf4d2b495563a94895b74ee566a8cb6a834d02b10f3e08b93aa4",
+    "docs/reports/batch039-doctor-v39.json": "102785d2fe2f87349601c884b97e10d5f308c48bcdab2e7bf07b27acc67c825b",
+    "docs/reports/batch045-doctor-v45.json": "862dcf0097c109117b1a96988e069d6a7a49dfa5175ae5e7fe6bc79aeb12a9ea",
+    "docs/reports/batch045-test-evidence/20261010T140817Z/results.json": "9a00898733327a021d105f027f6e9de4f2f28ae5e49eef1d6a863bf887e28f39",
+    "docs/reports/batch045-test-evidence/20261010T140829Z/api-failure.resource.log": "b488428016190839b803e3edf78b004c46f805ee06fbf47c3c5e2d2fe5fe821b",
+    "docs/reports/batch045-test-evidence/20261010T141137Z/results.json": "c6bfc307aa3ba22458c6064a06c23bddb0557a0b84427649079f51fa00817556",
+    "docs/reports/batch045-test-evidence/20261010T141219Z/staged-diff-checks.json": "c2650f19521ba60657fc89f8cc9089f97faa26e0cc5115c732e73aa9fb370b99",
+    "web/package.json": "37dab358a824f9b960f33001a1b14fd6f3448c19788bd4a9bd3cf185806757bb",
+    "web/scripts/api-failure-harness.mjs": "aa053a1657aa5a01b008a2da70bd3e32676ecbee69d5dcda670999b1e16805f5",
+    "web/src/lib/api.ts": "db1809e208545d31892017b46f20885cb1d063538ec3e0f16c094308446794d4",
+    "web/src/lib/fetchWithTimeout.ts": "65a29fccfaf89af6bf82736111592f3b5b32180fac8422ed2679d9e6cefd4c53"
+  },
+  "started_at_utc": "2026-10-10T14:16:53.185Z",
+  "status": "VERIFIED",
+  "stderr": "",
+  "stdout": "DOCTOR_V45_CONTRACT=PASS categories=19 corpus_cases_executed=0 historical_reports=7 source_revision=98ad3016a93f255ec88bf865fddaa9e93d060c91\n"
+}

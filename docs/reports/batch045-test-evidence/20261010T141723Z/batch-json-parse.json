@@ -1,0 +1,25 @@
+{
+  "command": [
+    "python3",
+    "-c",
+    "import json; from pathlib import Path; files=Path('docs/reports/batch045-test-evidence').rglob('*.json'); [json.loads(p.read_text()) for p in files]; json.loads(Path('docs/reports/batch045-doctor-v45.json').read_text()); json.loads(Path('docs/reports/batch045-work-ledger.json').read_text())"
+  ],
+  "elapsed_milliseconds": 180.239,
+  "ended_at_utc": "2026-10-10T14:17:23.322Z",
+  "exit_code": 0,
+  "format": "biyahe-batch045-command-evidence-v1",
+  "input_fingerprint_sha256": "1a230b80919551e26210a3ec060227ba4e89a7d7734c53ccd181e3d2399f1f9c",
+  "input_sha256": {
+    "docs/reports/batch045-doctor-v45.json": "862dcf0097c109117b1a96988e069d6a7a49dfa5175ae5e7fe6bc79aeb12a9ea",
+    "docs/reports/batch045-test-evidence/20261010T140817Z/results.json": "9a00898733327a021d105f027f6e9de4f2f28ae5e49eef1d6a863bf887e28f39",
+    "docs/reports/batch045-test-evidence/20261010T141137Z/results.json": "c6bfc307aa3ba22458c6064a06c23bddb0557a0b84427649079f51fa00817556",
+    "docs/reports/batch045-test-evidence/20261010T141219Z/staged-diff-checks.json": "c2650f19521ba60657fc89f8cc9089f97faa26e0cc5115c732e73aa9fb370b99",
+    "docs/reports/batch045-test-evidence/20261010T141608Z/doctor-v45-contract.json": "37cfdf4e1e522696c9738be97640b210c2555b6a616deb0c49d0839739578145",
+    "docs/reports/batch045-test-evidence/20261010T141653Z/doctor-v45-contract-final.json": "2d162c17cc801812e3fdeea39257275ceaec4318814375dc63b3de186e469b9e",
+    "docs/reports/batch045-work-ledger.json": "1f75e8c809525dad1df66ce8392f2b3c4ca9622542747731e88b3e2a40b9dc59"
+  },
+  "started_at_utc": "2026-10-10T14:17:23.141Z",
+  "status": "VERIFIED",
+  "stderr": "",
+  "stdout": ""
+}

@@ -1,0 +1,49 @@
+{
+  "checks": [
+    {
+      "command": [
+        "node",
+        "--check",
+        "web/scripts/api-failure-harness.mjs"
+      ],
+      "elapsed_milliseconds": 1071.172,
+      "ended_at_utc": "2026-10-10T14:12:19.941Z",
+      "exit_code": 0,
+      "input_fingerprint_sha256": "270661d6124bbc8c8296f7fd2c00153293ad3c0cd1cd11bd695518d68f6372eb",
+      "input_sha256": {
+        "web/package.json": "37dab358a824f9b960f33001a1b14fd6f3448c19788bd4a9bd3cf185806757bb",
+        "web/scripts/api-failure-harness.mjs": "aa053a1657aa5a01b008a2da70bd3e32676ecbee69d5dcda670999b1e16805f5",
+        "web/src/lib/api.ts": "db1809e208545d31892017b46f20885cb1d063538ec3e0f16c094308446794d4",
+        "web/src/lib/fetchWithTimeout.ts": "65a29fccfaf89af6bf82736111592f3b5b32180fac8422ed2679d9e6cefd4c53"
+      },
+      "started_at_utc": "2026-10-10T14:12:18.870Z",
+      "status": "PASS",
+      "stderr": "WARNING: linker: Warning: \"/data/data/com.termux/files/usr/lib/node_modules/@mmmbuto/codex-cli-termux/bin/libc++_shared.so\" unused DT entry: unknown processor-specific (type 0x70000001 arg 0x0) (ignoring)\n",
+      "stdout": ""
+    },
+    {
+      "command": [
+        "git",
+        "diff",
+        "--cached",
+        "--check"
+      ],
+      "elapsed_milliseconds": 43.399,
+      "ended_at_utc": "2026-10-10T14:12:19.985Z",
+      "exit_code": 0,
+      "input_fingerprint_sha256": "270661d6124bbc8c8296f7fd2c00153293ad3c0cd1cd11bd695518d68f6372eb",
+      "input_sha256": {
+        "web/package.json": "37dab358a824f9b960f33001a1b14fd6f3448c19788bd4a9bd3cf185806757bb",
+        "web/scripts/api-failure-harness.mjs": "aa053a1657aa5a01b008a2da70bd3e32676ecbee69d5dcda670999b1e16805f5",
+        "web/src/lib/api.ts": "db1809e208545d31892017b46f20885cb1d063538ec3e0f16c094308446794d4",
+        "web/src/lib/fetchWithTimeout.ts": "65a29fccfaf89af6bf82736111592f3b5b32180fac8422ed2679d9e6cefd4c53"
+      },
+      "started_at_utc": "2026-10-10T14:12:19.942Z",
+      "status": "PASS",
+      "stderr": "",
+      "stdout": ""
+    }
+  ],
+  "created_at_utc": "2026-10-10T14:12:19.985Z",
+  "format": "biyahe-batch045-static-check-evidence-v1"
+}

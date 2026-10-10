@@ -1,0 +1,146 @@
+{
+  "checks": [
+    {
+      "command": [
+        "node",
+        "--experimental-strip-types",
+        "--check",
+        "web/src/lib/api.ts"
+      ],
+      "elapsed_milliseconds": 1526.462,
+      "ended_at_utc": "2026-10-10T14:11:29.905Z",
+      "exit_code": 0,
+      "input_fingerprint_sha256": "78e33683b2f9497483944cf6d6f98b3d46d6ebe2ab8824b6b206fc8dcefd8eb5",
+      "input_sha256": {
+        "api/scripts/run-bounded-process.sh": "c01fad04c7508be32c980fa30f052778e69ea54fde3f8e49a3567bea530d9ad0",
+        "web/package.json": "37dab358a824f9b960f33001a1b14fd6f3448c19788bd4a9bd3cf185806757bb",
+        "web/scripts/api-failure-harness.mjs": "8dd5df7d34f0622321f73951f881f94863dc90fb1e8eaf68d4743f4c202f2f71",
+        "web/src/lib/api.ts": "db1809e208545d31892017b46f20885cb1d063538ec3e0f16c094308446794d4",
+        "web/src/lib/fetchWithTimeout.ts": "65a29fccfaf89af6bf82736111592f3b5b32180fac8422ed2679d9e6cefd4c53"
+      },
+      "started_at_utc": "2026-10-10T14:11:28.378Z",
+      "status": "PASS",
+      "stderr": "WARNING: linker: Warning: \"/data/data/com.termux/files/usr/lib/node_modules/@mmmbuto/codex-cli-termux/bin/libc++_shared.so\" unused DT entry: unknown processor-specific (type 0x70000001 arg 0x0) (ignoring)\n",
+      "stdout": ""
+    },
+    {
+      "command": [
+        "node",
+        "--experimental-strip-types",
+        "--check",
+        "web/src/lib/fetchWithTimeout.ts"
+      ],
+      "elapsed_milliseconds": 775.923,
+      "ended_at_utc": "2026-10-10T14:11:30.681Z",
+      "exit_code": 0,
+      "input_fingerprint_sha256": "78e33683b2f9497483944cf6d6f98b3d46d6ebe2ab8824b6b206fc8dcefd8eb5",
+      "input_sha256": {
+        "api/scripts/run-bounded-process.sh": "c01fad04c7508be32c980fa30f052778e69ea54fde3f8e49a3567bea530d9ad0",
+        "web/package.json": "37dab358a824f9b960f33001a1b14fd6f3448c19788bd4a9bd3cf185806757bb",
+        "web/scripts/api-failure-harness.mjs": "8dd5df7d34f0622321f73951f881f94863dc90fb1e8eaf68d4743f4c202f2f71",
+        "web/src/lib/api.ts": "db1809e208545d31892017b46f20885cb1d063538ec3e0f16c094308446794d4",
+        "web/src/lib/fetchWithTimeout.ts": "65a29fccfaf89af6bf82736111592f3b5b32180fac8422ed2679d9e6cefd4c53"
+      },
+      "started_at_utc": "2026-10-10T14:11:29.905Z",
+      "status": "PASS",
+      "stderr": "WARNING: linker: Warning: \"/data/data/com.termux/files/usr/lib/node_modules/@mmmbuto/codex-cli-termux/bin/libc++_shared.so\" unused DT entry: unknown processor-specific (type 0x70000001 arg 0x0) (ignoring)\n",
+      "stdout": ""
+    },
+    {
+      "command": [
+        "node",
+        "--check",
+        "web/scripts/api-failure-harness.mjs"
+      ],
+      "elapsed_milliseconds": 676.621,
+      "ended_at_utc": "2026-10-10T14:11:31.358Z",
+      "exit_code": 0,
+      "input_fingerprint_sha256": "78e33683b2f9497483944cf6d6f98b3d46d6ebe2ab8824b6b206fc8dcefd8eb5",
+      "input_sha256": {
+        "api/scripts/run-bounded-process.sh": "c01fad04c7508be32c980fa30f052778e69ea54fde3f8e49a3567bea530d9ad0",
+        "web/package.json": "37dab358a824f9b960f33001a1b14fd6f3448c19788bd4a9bd3cf185806757bb",
+        "web/scripts/api-failure-harness.mjs": "8dd5df7d34f0622321f73951f881f94863dc90fb1e8eaf68d4743f4c202f2f71",
+        "web/src/lib/api.ts": "db1809e208545d31892017b46f20885cb1d063538ec3e0f16c094308446794d4",
+        "web/src/lib/fetchWithTimeout.ts": "65a29fccfaf89af6bf82736111592f3b5b32180fac8422ed2679d9e6cefd4c53"
+      },
+      "started_at_utc": "2026-10-10T14:11:30.681Z",
+      "status": "PASS",
+      "stderr": "WARNING: linker: Warning: \"/data/data/com.termux/files/usr/lib/node_modules/@mmmbuto/codex-cli-termux/bin/libc++_shared.so\" unused DT entry: unknown processor-specific (type 0x70000001 arg 0x0) (ignoring)\n",
+      "stdout": ""
+    },
+    {
+      "command": [
+        "python3",
+        "-c",
+        "import json; json.load(open('web/package.json', encoding='utf-8'))"
+      ],
+      "elapsed_milliseconds": 1842.684,
+      "ended_at_utc": "2026-10-10T14:11:33.201Z",
+      "exit_code": 0,
+      "input_fingerprint_sha256": "78e33683b2f9497483944cf6d6f98b3d46d6ebe2ab8824b6b206fc8dcefd8eb5",
+      "input_sha256": {
+        "api/scripts/run-bounded-process.sh": "c01fad04c7508be32c980fa30f052778e69ea54fde3f8e49a3567bea530d9ad0",
+        "web/package.json": "37dab358a824f9b960f33001a1b14fd6f3448c19788bd4a9bd3cf185806757bb",
+        "web/scripts/api-failure-harness.mjs": "8dd5df7d34f0622321f73951f881f94863dc90fb1e8eaf68d4743f4c202f2f71",
+        "web/src/lib/api.ts": "db1809e208545d31892017b46f20885cb1d063538ec3e0f16c094308446794d4",
+        "web/src/lib/fetchWithTimeout.ts": "65a29fccfaf89af6bf82736111592f3b5b32180fac8422ed2679d9e6cefd4c53"
+      },
+      "started_at_utc": "2026-10-10T14:11:31.358Z",
+      "status": "PASS",
+      "stderr": "",
+      "stdout": ""
+    },
+    {
+      "command": [
+        "bash",
+        "-n",
+        "api/scripts/run-bounded-process.sh"
+      ],
+      "elapsed_milliseconds": 1356.559,
+      "ended_at_utc": "2026-10-10T14:11:34.557Z",
+      "exit_code": 0,
+      "input_fingerprint_sha256": "78e33683b2f9497483944cf6d6f98b3d46d6ebe2ab8824b6b206fc8dcefd8eb5",
+      "input_sha256": {
+        "api/scripts/run-bounded-process.sh": "c01fad04c7508be32c980fa30f052778e69ea54fde3f8e49a3567bea530d9ad0",
+        "web/package.json": "37dab358a824f9b960f33001a1b14fd6f3448c19788bd4a9bd3cf185806757bb",
+        "web/scripts/api-failure-harness.mjs": "8dd5df7d34f0622321f73951f881f94863dc90fb1e8eaf68d4743f4c202f2f71",
+        "web/src/lib/api.ts": "db1809e208545d31892017b46f20885cb1d063538ec3e0f16c094308446794d4",
+        "web/src/lib/fetchWithTimeout.ts": "65a29fccfaf89af6bf82736111592f3b5b32180fac8422ed2679d9e6cefd4c53"
+      },
+      "started_at_utc": "2026-10-10T14:11:33.201Z",
+      "status": "PASS",
+      "stderr": "",
+      "stdout": ""
+    },
+    {
+      "command": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "elapsed_milliseconds": 2823.225,
+      "ended_at_utc": "2026-10-10T14:11:37.381Z",
+      "exit_code": 0,
+      "input_fingerprint_sha256": "78e33683b2f9497483944cf6d6f98b3d46d6ebe2ab8824b6b206fc8dcefd8eb5",
+      "input_sha256": {
+        "api/scripts/run-bounded-process.sh": "c01fad04c7508be32c980fa30f052778e69ea54fde3f8e49a3567bea530d9ad0",
+        "web/package.json": "37dab358a824f9b960f33001a1b14fd6f3448c19788bd4a9bd3cf185806757bb",
+        "web/scripts/api-failure-harness.mjs": "8dd5df7d34f0622321f73951f881f94863dc90fb1e8eaf68d4743f4c202f2f71",
+        "web/src/lib/api.ts": "db1809e208545d31892017b46f20885cb1d063538ec3e0f16c094308446794d4",
+        "web/src/lib/fetchWithTimeout.ts": "65a29fccfaf89af6bf82736111592f3b5b32180fac8422ed2679d9e6cefd4c53"
+      },
+      "started_at_utc": "2026-10-10T14:11:34.557Z",
+      "status": "PASS",
+      "stderr": "",
+      "stdout": ""
+    }
+  ],
+  "created_at_utc": "2026-10-10T14:11:37.382Z",
+  "format": "biyahe-batch045-static-check-evidence-v1",
+  "heavy_workers_started": false,
+  "resource_observation_is_five_sample_preflight": false,
+  "resource_observation_kib": {
+    "MemAvailable": 727832,
+    "SwapFree": 36368
+  }
+}
