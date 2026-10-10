@@ -8,6 +8,7 @@ import json
 from pathlib import Path
 import tempfile
 import unittest
+from unittest import mock
 
 ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = Path(__file__).with_name("validate-batch042-doctor.py")
@@ -163,6 +164,72 @@ class DoctorV42Tests(unittest.TestCase):
             circular = REFRESH.make_test("doctor-self-check", self_referential, root=root)
             self.assertEqual("NOT_RUN", circular["status"])
             self.assertIn("self_referential_doctor_report_input", circular["evidence_invalidated"])
+
+    def test_portable_static_accepts_pinned_checkout_hash_for_relocated_doctor(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            package = root / "docs/portable-verification-v4"
+            snapshot_report = package / "source-snapshot/docs/reports/batch042-doctor-v42.json"
+            snapshot_report.parent.mkdir(parents=True)
+            original = {"tests": {"fixture": {"output_path": "/host/cache/output.txt", "output_sha256": "c" * 64}}}
+            bundled = {"tests": {"fixture": {"output_path": "evidence/fixture.stdout.txt", "output_sha256": "c" * 64}}}
+            original_bytes = (json.dumps(original, sort_keys=True) + "\n").encode()
+            snapshot_report.write_text(json.dumps(bundled, sort_keys=True) + "\n", encoding="utf-8")
+            checkout_digest = hashlib.sha256(original_bytes).hexdigest()
+            snapshot_digest = REFRESH.sha256(snapshot_report)
+            manifest = {
+                "format": "biyahe-portable-offline-verification-kit-v4", "batch": 42,
+                "repository_revision": "b" * 40, "executable_source_revision": "a" * 40,
+                "normalized_checkout_files": [{
+                    "path": "docs/reports/batch042-doctor-v42.json",
+                    "checkout_sha256": checkout_digest, "snapshot_sha256": snapshot_digest,
+                    "transformation": "doctor_evidence_path_relocation",
+                }],
+            }
+            manifest_path = package / "manifest.json"
+            manifest_path.write_text(json.dumps(manifest, sort_keys=True) + "\n", encoding="utf-8")
+            sums_path = package / "SHA256SUMS"
+            sum_rows = []
+            for artifact in (manifest_path, snapshot_report):
+                sum_rows.append(f"{REFRESH.sha256(artifact)}  {artifact.relative_to(package).as_posix()}")
+            sums_path.write_text("\n".join(sum_rows) + "\n", encoding="utf-8")
+
+            run_dir = root / "run"
+            run_dir.mkdir()
+            suite_output = run_dir / "syntax.stdout.txt"
+            suite_output.write_text("PASS\n", encoding="utf-8")
+            evidence_checksums = run_dir / "SHA256SUMS"
+            evidence_checksums.write_text(f"{REFRESH.sha256(suite_output)}  syntax.stdout.txt\n", encoding="utf-8")
+            status_path = run_dir / "run-status.json"
+            status = {
+                "mode": "STATIC", "status": "PASS", "source_revision": "b" * 40,
+                "executable_source_revision": "a" * 40,
+                "evidence_checksums": {"path": str(evidence_checksums), "sha256": REFRESH.sha256(evidence_checksums)},
+                "suites": [{
+                    "id": "syntax-and-json", "status": "PASS", "output_path": str(suite_output),
+                    "output_sha256": REFRESH.sha256(suite_output),
+                    "input_files": [{"path": "docs/reports/batch042-doctor-v42.json", "sha256": checkout_digest}],
+                }],
+            }
+            status_path.write_text(json.dumps(status) + "\n", encoding="utf-8")
+            wrapper = root / "verify.stdout.txt"
+            wrapper.write_text(
+                f"RUN_DIRECTORY={run_dir}\nMODE=STATIC\nOVERALL=PASS\nEVIDENCE={status_path}\n",
+                encoding="utf-8",
+            )
+
+            with mock.patch.object(REFRESH, "ROOT", root):
+                result = REFRESH.verify_portable_static_run(wrapper, manifest_path)
+                self.assertEqual("VERIFIED", result["status"])
+                status["source_revision"] = "d" * 40
+                status_path.write_text(json.dumps(status) + "\n", encoding="utf-8")
+                with self.assertRaisesRegex(ValueError, "not bound to this package revision"):
+                    REFRESH.verify_portable_static_run(wrapper, manifest_path)
+                status["source_revision"] = "b" * 40
+                status["suites"][0]["input_files"][0]["sha256"] = snapshot_digest
+                status_path.write_text(json.dumps(status) + "\n", encoding="utf-8")
+                with self.assertRaisesRegex(ValueError, "source fingerprint changed"):
+                    REFRESH.verify_portable_static_run(wrapper, manifest_path)
 
     def test_completed_child_remains_verified_when_parent_group_is_resource_blocked(self):
         with tempfile.TemporaryDirectory() as temporary:

@@ -137,6 +137,7 @@ def verify_portable_static_run(output_path: Path, manifest_path: Path) -> dict:
         raise ValueError("portable run-status path does not match its recorded run directory")
     run_status = json.loads(status_path.read_text(encoding="utf-8"))
     if (run_status.get("mode") != "STATIC" or run_status.get("status") != "PASS"
+        or run_status.get("source_revision") != manifest.get("repository_revision")
         or run_status.get("executable_source_revision") != manifest.get("executable_source_revision")):
         raise ValueError("portable run status is not bound to this package revision")
     suites = run_status.get("suites")
@@ -154,6 +155,21 @@ def verify_portable_static_run(output_path: Path, manifest_path: Path) -> dict:
         artifact = checksum_file.parent / relative
         if relative.startswith("/") or ".." in Path(relative).parts or not artifact.is_file() or sha256(artifact) != digest:
             raise ValueError(f"portable run evidence checksum failed: {relative}")
+    normalized_checkout_files = {}
+    for record in manifest.get("normalized_checkout_files", []):
+        relative = record.get("path")
+        checkout_digest = record.get("checkout_sha256")
+        snapshot_digest = record.get("snapshot_sha256")
+        if (not isinstance(relative, str) or relative.startswith("/") or ".." in Path(relative).parts
+            or not isinstance(checkout_digest, str) or not re.fullmatch(r"[0-9a-f]{64}", checkout_digest)
+            or not isinstance(snapshot_digest, str) or not re.fullmatch(r"[0-9a-f]{64}", snapshot_digest)
+            or record.get("transformation") != "doctor_evidence_path_relocation"
+            or relative in normalized_checkout_files):
+            raise ValueError("portable package normalized checkout metadata is invalid")
+        snapshot_path = package_root / "source-snapshot" / relative
+        if not snapshot_path.is_file() or sha256(snapshot_path) != snapshot_digest:
+            raise ValueError(f"portable package normalized snapshot changed: {relative}")
+        normalized_checkout_files[relative] = checkout_digest
     for row in suites:
         artifact = Path(row.get("output_path", ""))
         if not artifact.is_file() or sha256(artifact) != row.get("output_sha256"):
@@ -161,7 +177,12 @@ def verify_portable_static_run(output_path: Path, manifest_path: Path) -> dict:
         for item in row.get("input_files", []):
             relative = item.get("path")
             source = package_root / "source-snapshot" / str(relative)
-            if not source.is_file() or sha256(source) != item.get("sha256"):
+            expected = normalized_checkout_files.get(str(relative))
+            if expected is None:
+                if not source.is_file():
+                    raise ValueError(f"portable suite source file is missing: {relative}")
+                expected = sha256(source)
+            if expected != item.get("sha256"):
                 raise ValueError(f"portable suite source fingerprint changed: {relative}")
     input_files = [{"path": (package_root / relative).relative_to(ROOT).as_posix(), "sha256": digest}
                    for relative, digest in sorted(expected_files.items())]
