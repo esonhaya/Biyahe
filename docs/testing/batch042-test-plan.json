@@ -32,6 +32,7 @@
       "request gate",
       "debounced place search and keyboard selection",
       "Can-I-Ride presentation and UX contract",
+      "mobile search and map touch-target CSS contract",
       "validation ledger fingerprints and interruption recovery",
       "TypeScript typecheck and focused ESLint as independent suites when dependencies are installed",
       "Each mode supports --suite SUITE_ID for one-suite execution"

@@ -2,6 +2,7 @@ import { readFile } from "node:fs/promises";
 
 const files = {
   page: await readFile(new URL("../src/app/page.tsx", import.meta.url), "utf8"),
+  pageCss: await readFile(new URL("../src/app/page.module.css", import.meta.url), "utf8"),
   canIRidePresentation: await readFile(new URL("../src/lib/canIRidePresentation.ts", import.meta.url), "utf8"),
   canIRideHarness: await readFile(new URL("./can-i-ride-harness.mjs", import.meta.url), "utf8"),
   card: await readFile(new URL("../src/components/CommuteCard.tsx", import.meta.url), "utf8"),
@@ -79,6 +80,7 @@ const checks = [
   ["Can I Ride and pattern detail reject late responses", files.page.includes("canIRide(rideRouteCode, origin.id, destination.id, request.signal)") && files.page.includes("getRoutePattern(pattern.id, request.signal)")],
   ["Can I Ride keeps yes, no, unknown, direction, and API failure separate", ["YES", "YES_BUT_AFFECTED", "TEMPORARILY_UNAVAILABLE", "UNCERTAIN_DUE_TO_REPORT", "DIRECTION_DEPENDENT", "NO", "UNKNOWN"].every((status) => files.canIRidePresentation.includes(`case \"${status}\"`)) && files.canIRideHarness.includes("API_UNAVAILABLE=PASS") && files.page.includes("The Can I Ride check is unavailable right now")],
   ["search selection stays in range after options shrink", files.page.includes("selectedSuggestionIndex(activeIndex, options.length)") && files.page.includes("options[selectedIndex]") && files.searchKeyboardHarness.includes("SHRINK_CLAMP=PASS")],
+  ["mobile search and map controls meet touch-target and focus rules", /\.clearSearch\s*\{[^}]*width:\s*44px;[^}]*height:\s*44px;/s.test(files.pageCss) && files.pageCss.includes(".suggestions .suggestionRetry { align-items: flex-start; width: auto; min-height: 44px;") && files.pageCss.includes(".quickNav a { display: flex; min-height: 44px;") && files.pageCss.includes(".maplibregl-ctrl-group button) { width: 44px; height: 44px;") && files.pageCss.includes(".clearSearch:focus-visible") && files.pageCss.includes(".suggestionRetry:focus-visible")],
   ["clearing a search returns keyboard focus to its field", files.page.includes("onClear(); inputRef.current?.focus()")],
   ["filtered journey empty state has an all-options action", files.page.includes("Show all journeys") && files.page.includes('setJourneyFilter("ALL")')],
   ["instruction map action scrolls to the focused map and respects reduced motion", files.page.includes("focusInstructionOnMap") && files.page.includes("scrollIntoView({ behavior: reduceMotion ? \"auto\" : \"smooth\"")],

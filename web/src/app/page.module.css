@@ -17,7 +17,7 @@
 .suggestions small, .patternList small { color: #6d858b; font-size: .72rem; }
 .suggestionDescription { display: -webkit-box; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
 .suggestionFailure { padding-bottom: 8px; }
-.suggestions .suggestionRetry { align-items: flex-start; width: auto; margin: 0 12px; border: 1px solid #b8d2d3; border-radius: 8px; padding: 7px 10px; color: #14566d; background: #eef5f3; font-size: .76rem; font-weight: 700; }
+.suggestions .suggestionRetry { align-items: flex-start; width: auto; min-height: 44px; margin: 0 12px; border: 1px solid #b8d2d3; border-radius: 8px; padding: 7px 10px; color: #14566d; background: #eef5f3; font-size: .76rem; font-weight: 700; }
 .suggestions .suggestionRetry:hover { background: #e2efeb; }
 .searchSelection { display: -webkit-box; overflow: hidden; margin: 7px 2px 0; color: #536e74; font-size: .75rem; line-height: 1.4; overflow-wrap: anywhere; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
 .primaryButton { align-self: end; border: 0; border-radius: 10px; padding: 14px 22px; color: #fff; background: #176b87; font: inherit; font-weight: 800; cursor: pointer; }
@@ -188,7 +188,7 @@
 .connectionOnline { border-color: #8dc7ad; color: #176b68; background: #f3fbf6; }
 .connectionOffline { border-color: #e6b9ac; color: #8b5a31; background: #fff8e9; }
 .quickNav { display: flex; max-width: 100%; gap: 5px; overflow-x: auto; scrollbar-width: thin; }
-.quickNav a { border-radius: 8px; padding: 7px 8px; color: #176b87; background: #fff; font-size: .73rem; font-weight: 800; text-decoration: none; white-space: nowrap; }
+.quickNav a { display: flex; min-height: 44px; align-items: center; border-radius: 8px; padding: 7px 8px; color: #176b87; background: #fff; font-size: .73rem; font-weight: 800; text-decoration: none; white-space: nowrap; }
 .quickNav a:hover { color: #fff; background: #176b87; }
 .heroCopy { max-width: 700px; }
 .heroSubcopy { max-width: 600px; margin: -10px 0 24px; color: #5d777e; font-size: 1rem; line-height: 1.55; }
@@ -201,9 +201,11 @@
 .swapButton:hover:not(:disabled) { border-color: #176b87; background: #eef5f3; }
 .swapButton:disabled { cursor: not-allowed; opacity: .45; }
 .searchInputWrap { position: relative; }
-.clearSearch { position: absolute; top: 50%; right: 7px; width: 28px; height: 28px; transform: translateY(-50%); border: 0; border-radius: 50%; color: #5d777e; background: transparent; cursor: pointer; font-size: 1.1rem; line-height: 1; }
+.clearSearch { position: absolute; top: 50%; right: 0; display: grid; width: 44px; height: 44px; min-width: 44px; min-height: 44px; transform: translateY(-50%); place-items: center; border: 0; border-radius: 50%; color: #5d777e; background: transparent; cursor: pointer; font-size: 1.1rem; line-height: 1; }
 .clearSearch:hover { background: #eaf1ef; }
-.searchInputWrap input { padding-right: 42px; }
+.clearSearch:focus-visible, .quickNav a:focus-visible, .mapPanel :global(.mapboxgl-ctrl-group button):focus-visible, .mapPanel :global(.maplibregl-ctrl-group button):focus-visible { outline: 3px solid rgba(23, 107, 135, .55); outline-offset: 2px; }
+.suggestions .suggestionRetry:focus-visible { outline: 3px solid rgba(23, 107, 135, .55); outline-offset: 2px; }
+.searchInputWrap input { padding-right: 52px; }
 .suggestionStatus { margin: 0; padding: 11px 12px; color: #6d858b; font-size: .78rem; line-height: 1.4; }
 .suggestionActive { background: #eef5f3 !important; }
 .onboarding { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr) auto; align-items: center; gap: 18px; margin-top: 14px; border: 1px solid #d8ddd7; border-radius: 16px; padding: 14px 16px; background: #fbfcfa; }
@@ -226,5 +228,6 @@
   .topBar { display: grid; gap: 14px; }.topBarActions { justify-items: stretch; }.quickNav { width: calc(100vw - 32px); }.connectionPill { justify-self: start; }
   .heroSubcopy { margin-top: -4px; }.searchCard { grid-template-columns: 1fr; }.searchInputsRow { grid-column: 1; grid-template-columns: 1fr; }.searchFormActions { grid-column: 1; }.swapButton { justify-self: start; transform: rotate(90deg); }.searchCard .primaryButton { grid-column: 1; }
   .onboarding ol { grid-template-columns: 1fr; }.onboarding li { min-height: 36px; }.compareBar { align-items: stretch; }.compareBar span { width: 100%; }.compareBar button { flex: 1 1 110px; }
+  .mapPanel :global(.mapboxgl-ctrl-group button), .mapPanel :global(.maplibregl-ctrl-group button) { width: 44px; height: 44px; }
   .mapTextAlternative { font-size: .76rem; }.routeSearch { max-width: none; }
 }
