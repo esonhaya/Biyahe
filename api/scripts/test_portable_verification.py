@@ -4,11 +4,14 @@
 from __future__ import annotations
 
 import importlib.util
+import io
 import json
 from pathlib import Path
 import sys
 import tempfile
 import unittest
+from contextlib import redirect_stderr
+from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = Path(__file__).with_name("run-portable-verification.py")
@@ -102,6 +105,16 @@ class PortableRunnerTests(unittest.TestCase):
         self.assertEqual(RUNNER.aggregate([{"status": "PASS"}, {"status": "FAIL"}]), "FAIL")
         self.assertEqual(RUNNER.aggregate([{"status": "PASS"}, {"status": "NOT_RUN"}]), "NOT_RUN")
 
+    def test_expected_blocked_marker_inside_successful_fixture_is_not_a_suite_block(self):
+        result = RUNNER.classify_command_result(
+            0, "test_gate_refuses_bad_preflight ... ok\nBLOCKED_RESOURCE=expected fixture\n", "", False)
+        self.assertEqual(("PASS", "NOT_REQUIRED", None), result)
+
+    def test_owned_guard_refusal_is_reported_as_blocked_resource(self):
+        result = RUNNER.classify_command_result(4, "", "command_not_started=yes", True)
+        self.assertEqual("BLOCKED_RESOURCE", result[0])
+        self.assertEqual("BLOCKED", result[1])
+
     def test_individual_suite_selection_is_mode_scoped(self):
         specs = RUNNER.command_specs(ROOT, "FRONTEND", ROOT / ".temporary-run-directory")
         self.assertEqual(["commute-card"], [spec["id"] for spec in RUNNER.select_specs(specs, "commute-card")])
@@ -109,6 +122,35 @@ class PortableRunnerTests(unittest.TestCase):
             self.assertEqual([suite_id], [spec["id"] for spec in RUNNER.select_specs(specs, suite_id)])
         with self.assertRaisesRegex(ValueError, "not available in this mode"):
             RUNNER.select_specs(specs, "not-a-suite")
+
+    def test_corpus_case_selection_is_normalized_and_strict(self):
+        self.assertIsNone(RUNNER.parse_corpus_case_indices(None))
+        self.assertEqual([1, 4, 9], RUNNER.parse_corpus_case_indices("9,1,4"))
+        for value in ("", "01", "1,1", "1,", "10", "-1", "１"):
+            with self.subTest(value=value), self.assertRaises(ValueError):
+                RUNNER.parse_corpus_case_indices(value)
+        output = io.StringIO()
+        with self.assertRaises(SystemExit) as raised, patch.object(sys, "argv", [str(SCRIPT), "--mode", "STATIC", "--corpus-cases", "1"]), redirect_stderr(output):
+            RUNNER.main()
+        self.assertEqual(2, raised.exception.code)
+        self.assertIn("only with CORPUS or FULL", output.getvalue())
+
+    def test_corpus_subset_uses_guarded_read_only_runner_and_keeps_scope(self):
+        run_dir = ROOT / ".temporary-run-directory"
+        specs = RUNNER.command_specs(ROOT, "CORPUS", run_dir, [1, 4])
+        self.assertEqual(["real-cebu-corpus"], [spec["id"] for spec in specs])
+        corpus = specs[0]
+        self.assertIn("api/scripts/run-offline-corpus-verification.py", corpus["argv"])
+        self.assertEqual([1, 4], corpus["corpus_case_indices"])
+        self.assertIn("api/scripts/run-bounded-process.sh", corpus["inputs"])
+        self.assertIn("api/app/Services/Routing/OfflineWalkingCorpusSelection.php", corpus["inputs"])
+
+    def test_corpus_claim_never_promotes_a_subset_to_full_pass(self):
+        claim = RUNNER.corpus_execution_claim
+        self.assertEqual("NOT_RUN", claim(None))
+        self.assertEqual("BLOCKED_RESOURCE", claim({"status": "BLOCKED_RESOURCE"}))
+        self.assertEqual("PARTIAL_CASE_SUBSET_MATCHED", claim({"status": "PASS", "corpus_completeness": "PARTIAL"}))
+        self.assertEqual("PASS", claim({"status": "PASS", "corpus_completeness": "COMPLETE"}))
 
     def test_search_group_fingerprints_every_ux_harness_source(self):
         specs = RUNNER.command_specs(ROOT, "FRONTEND", ROOT / ".temporary-run-directory")
@@ -120,6 +162,38 @@ class PortableRunnerTests(unittest.TestCase):
             "api/app/Http/Controllers/Api/DevelopmentOfflineWalkingPreviewController.php",
         }
         self.assertTrue(required.issubset(set(group["inputs"])), sorted(required - set(group["inputs"])))
+
+    def test_static_fixture_fingerprints_cover_imported_evidence_inputs(self):
+        specs = RUNNER.command_specs(ROOT, "STATIC", ROOT / ".temporary-run-directory")
+        by_id = {spec["id"]: set(spec["inputs"]) for spec in specs}
+        self.assertIn("api/scripts/compare-offline-corpus.py", by_id["coverage-fixtures"])
+        self.assertIn("docs/reports/batch032-cebu-coverage.json", by_id["corpus-comparator-fixtures"])
+        self.assertIn("docs/reports/batch041-evidence-provenance.json", by_id["doctor-v43-contract"])
+
+    def test_toolchain_suites_fingerprint_their_full_source_and_installed_compiler(self):
+        specs = RUNNER.command_specs(ROOT, "FRONTEND", ROOT / ".temporary-run-directory")
+        by_id = {spec["id"]: set(spec["inputs"]) for spec in specs}
+        ts_sources = {path.relative_to(ROOT).as_posix() for path in (ROOT / "web/src").rglob("*")
+                      if path.is_file() and path.suffix in {".ts", ".tsx"}}
+        self.assertTrue(ts_sources.issubset(by_id["typescript"]))
+        self.assertIn("web/node_modules/.bin/tsc", by_id["typescript"])
+        self.assertIn("web/node_modules/typescript/package.json", by_id["typescript"])
+        self.assertIn("web/node_modules/.bin/eslint", by_id["eslint"])
+        self.assertIn("web/node_modules/eslint-config-next/package.json", by_id["eslint"])
+        self.assertTrue(ts_sources.issubset(set(PACKAGER.FILES)))
+        self.assertIn("web/next.config.ts", PACKAGER.FILES)
+
+    def test_doctor_validator_fingerprints_every_pinned_source(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            report = root / "docs/reports/batch043-doctor-v43.json"
+            report.parent.mkdir(parents=True)
+            report.write_text(json.dumps({"source_fingerprints": {
+                "api/a.php": "a" * 64, "web/b.tsx": "b" * 64,
+            }}), encoding="utf-8")
+            specs = RUNNER.command_specs(root, "STATIC", root / "run")
+            validator = next(spec for spec in specs if spec["id"] == "doctor-v43-report-validator")
+            self.assertTrue({"api/a.php", "web/b.tsx"}.issubset(set(validator["inputs"])))
 
     def test_packaged_doctor_evidence_is_relocated_and_hash_pinned(self):
         with tempfile.TemporaryDirectory() as temporary:

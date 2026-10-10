@@ -47,6 +47,30 @@ class BoundedProcessGuardTest extends TestCase
         }
     }
 
+    public function test_released_worker_receives_first_breach_preflight_evidence(): void
+    {
+        $fixture = $this->fixture(700000, 200000);
+
+        try {
+            $process = $this->runGuard($fixture, [
+                'BIYAHE_RESOURCE_MIN_MEMAVAILABLE_KB' => '524288',
+                'BIYAHE_RESOURCE_MIN_SWAPFREE_KB' => '131072',
+                'BIYAHE_RESOURCE_BREACH_SAMPLES' => '1',
+                'BIYAHE_RESOURCE_PREFLIGHT_SAMPLES' => '5',
+                'BIYAHE_RESOURCE_PREFLIGHT_INTERVAL_SECONDS' => '1',
+            ], [
+                'bash', '-c',
+                'printf "GUARD=%s SAMPLES=%s SPACING=%s MIN_MEM=%s MIN_SWAP=%s BREACH=%s RSS=%s\\n" "$BIYAHE_RESOURCE_GUARD_PREFLIGHT" "$BIYAHE_RESOURCE_GUARD_PREFLIGHT_SAMPLES" "$BIYAHE_RESOURCE_GUARD_PREFLIGHT_SPACING_SECONDS" "$BIYAHE_RESOURCE_GUARD_MIN_MEMAVAILABLE_KB" "$BIYAHE_RESOURCE_GUARD_MIN_SWAPFREE_KB" "$BIYAHE_RESOURCE_GUARD_BREACH_SAMPLES" "$BIYAHE_RESOURCE_GUARD_MAX_PROCESS_TREE_RSS_KB"; sleep 1.2',
+            ]);
+
+            $this->assertSame(0, $process->getExitCode(), $process->getOutput().$process->getErrorOutput());
+            $this->assertStringContainsString('GUARD=PASS SAMPLES=5 SPACING=1 MIN_MEM=700000 MIN_SWAP=200000 BREACH=1 RSS=262144', $process->getOutput());
+            $this->assertStringContainsString('resource_preflight_sample=5/5', $process->getOutput());
+        } finally {
+            $this->removeFixture($fixture['root']);
+        }
+    }
+
     public function test_resource_preflight_samples_after_a_volatile_swap_drop_and_blocks(): void
     {
         $fixture = $this->fixture(700000, 200000);

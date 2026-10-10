@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build a hash-pinned Batch042 verification kit with explicit offline test modes."""
+"""Build a hash-pinned Batch043 verification kit with bounded corpus modes."""
 
 from __future__ import annotations
 
@@ -14,19 +14,22 @@ import subprocess
 import sys
 
 ROOT = Path(__file__).resolve().parents[2]
-DEFAULT_OUTPUT = ROOT / "docs/portable-verification-v4"
+DEFAULT_OUTPUT = ROOT / "docs/portable-verification-v5"
 
 FILES = [
     "api/composer.json", "api/composer.lock", "api/app/Console/Commands/VerifyOfflineWalkingCorpus.php",
     "api/app/Http/Controllers/Api/DevelopmentOfflineWalkingPreviewController.php",
     "api/app/Services/Routing/OfflineJourneyWalkingPreview.php",
+    "api/app/Services/Routing/OfflineWalkingCorpusSelection.php",
     "api/app/Services/Routing/OfflinePedestrianGraphRouter.php",
     "api/app/Services/Routing/OfflinePedestrianRouteGeometryContract.php",
     "api/app/Services/Routing/OfflineWalkingPreviewException.php",
     "api/config/offline_walking_preview.php", "api/routes/api.php", "api/phpunit.xml",
-    "api/scripts/check-batch042-static-syntax.py", "api/scripts/compare-offline-corpus.py", "api/scripts/evidence_provenance.py",
+    "api/scripts/check-batch042-static-syntax.py", "api/scripts/check-batch043-staging-preflight.sh",
+    "api/scripts/compare-offline-corpus.py", "api/scripts/evidence_provenance.py",
     "api/scripts/offline-evidence-smoke.py", "api/scripts/package-batch041-verification-kit.py",
-    "api/scripts/run-bounded-process.sh", "api/scripts/run-portable-verification.py",
+    "api/scripts/run-bounded-process.sh", "api/scripts/run-offline-corpus-verification.py",
+    "api/scripts/test_offline_corpus_verification.py", "api/scripts/run-portable-verification.py",
     "api/scripts/test_portable_verification.py",
     "api/scripts/run-portable-verification.sh", "api/scripts/test_offline_route_geometry_contract.php",
     "api/scripts/summarize-offline-coverage.py", "api/scripts/test_compare_offline_corpus.py",
@@ -39,7 +42,9 @@ FILES = [
     "api/tests/Unit/OfflineJourneyWalkingPreviewTest.php",
     "api/tests/Unit/OfflinePedestrianGraphRouterTest.php",
     "api/tests/Unit/OfflinePedestrianRouteGeometryContractTest.php",
+    "api/tests/Unit/OfflineWalkingCorpusSelectionTest.php", "api/tests/Unit/BoundedProcessGuardTest.php",
     "docs/batch040-validation-scheduler.md", "docs/batch041-test-and-resource-plan.md",
+    "docs/deployment/batch043-external-linux-staging-runbook.md",
     "docs/offline-walking-preview-development.md",
     "docs/reports/batch031-cebu-graph-quality-and-member-review.json",
     "docs/reports/batch031-cebu-restriction-audit.json",
@@ -50,6 +55,9 @@ FILES = [
     "docs/reports/batch041-recovery-validation.json", "docs/reports/batch041-evidence-reconciliation.md",
     "docs/reports/batch042-doctor-v42.json", "docs/reports/batch042-frontend-architecture.md",
     "docs/reports/batch042-work-ledger.json", "docs/testing/batch042-test-plan.json",
+    "api/scripts/refresh-batch043-doctor.py", "api/scripts/validate-batch043-doctor.py",
+    "api/scripts/test_validate_batch043_doctor.py", "docs/reports/batch043-doctor-v43.json",
+    "docs/reports/batch043-work-ledger.json", "docs/testing/batch043-test-plan.json",
     "docs/testing/batch041-test-plan.json",
     "web/package.json", "web/package-lock.json", "web/tsconfig.json", "web/eslint.config.mjs",
     "web/scripts/can-i-ride-harness.mjs",
@@ -70,6 +78,13 @@ FILES = [
     "web/src/lib/searchKeyboard.ts",
     "web/public/sw.js", "web/public/manifest.webmanifest",
 ]
+FILES.extend(
+    path.relative_to(ROOT).as_posix()
+    for path in sorted((ROOT / "web/src").rglob("*"))
+    if path.is_file() and path.suffix in {".ts", ".tsx"}
+)
+FILES.append("web/next.config.ts")
+FILES = list(dict.fromkeys(FILES))
 
 VERIFY_SCRIPT = r'''#!/usr/bin/env bash
 set -euo pipefail
@@ -77,7 +92,8 @@ kit_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 mode=STATIC
 suite=""
 repo_root=""
-output_root="${HOME}/.cache/biyahe/batch042/portable-verification"
+output_root="${HOME}/.cache/biyahe/batch043/portable-verification"
+corpus_cases=""
 while (($#)); do
   case "$1" in
     STATIC|FRONTEND|ADAPTER|CORPUS|FULL) mode="$1"; shift ;;
@@ -85,7 +101,8 @@ while (($#)); do
     --suite) (($# >= 2)) || { printf '%s\n' 'ERROR: --suite requires a value.' >&2; exit 2; }; suite="$2"; shift 2 ;;
     --repo-root) (($# >= 2)) || { printf '%s\n' 'ERROR: --repo-root requires a path.' >&2; exit 2; }; repo_root="$2"; shift 2 ;;
     --output-root) (($# >= 2)) || { printf '%s\n' 'ERROR: --output-root requires a path.' >&2; exit 2; }; output_root="$2"; shift 2 ;;
-    --help) printf 'Usage: %s [STATIC|FRONTEND|ADAPTER|CORPUS|FULL] [--suite SUITE_ID] [--repo-root PINNED_CHECKOUT] [--output-root DIR]\n' "$0"; exit 0 ;;
+    --corpus-cases) (($# >= 2)) || { printf '%s\n' 'ERROR: --corpus-cases requires comma-separated zero-based indices.' >&2; exit 2; }; corpus_cases="$2"; shift 2 ;;
+    --help) printf 'Usage: %s [STATIC|FRONTEND|ADAPTER|CORPUS|FULL] [--suite SUITE_ID] [--corpus-cases 0,3] [--repo-root PINNED_CHECKOUT] [--output-root DIR]\n' "$0"; exit 0 ;;
     *) printf 'ERROR: unknown option: %s\n' "$1" >&2; exit 2 ;;
   esac
 done
@@ -99,7 +116,7 @@ import hashlib, json, sys
 from pathlib import Path, PurePosixPath
 root=Path(sys.argv[1]).resolve()
 manifest=json.loads((root/'manifest.json').read_text())
-if manifest.get('format') != 'biyahe-portable-offline-verification-kit-v4' or manifest.get('batch') != 42:
+if manifest.get('format') != 'biyahe-portable-offline-verification-kit-v5' or manifest.get('batch') != 43:
     raise SystemExit('ERROR: unsupported portable verification manifest')
 listed=set()
 for n,line in enumerate((root/'SHA256SUMS').read_text().splitlines(),1):
@@ -190,10 +207,11 @@ fi
 export PYTHONDONTWRITEBYTECODE=1
 runner_args=(--mode "$mode" --repo-root "$repo_root" --output-root "$output_root" --source-revision "$source_revision")
 if [[ -n "$suite" ]]; then runner_args+=(--suite "$suite"); fi
+if [[ -n "$corpus_cases" ]]; then runner_args+=(--corpus-cases "$corpus_cases"); fi
 exec python3 "$repo_root/api/scripts/run-portable-verification.py" "${runner_args[@]}"
 '''
 
-README = """# Biyahe Batch042 portable verification kit v4
+README = """# Biyahe Batch043 portable verification kit v5
 
 This kit pins repository revision `@REVISION@`. It includes the relevant source, fixtures, offline runner, and evidence reports. It excludes the SQLite graph, OSM PBF, PostgreSQL data, credentials, caches, and runtime dependencies.
 
@@ -209,11 +227,11 @@ From this directory, run `bash verify-kit.sh MODE`. Available modes are:
 | `CORPUS` | Read-only replay against the pinned Cebu SQLite graph, if it is present and its SHA256 matches |
 | `FULL` | Runs the modes in order and records blocked dependencies or resource gates per suite |
 
-`verify-kit.sh` validates its manifest and every `SHA256SUMS` entry before invoking the runner. By default, commands use the included `source-snapshot`. Add `--repo-root CHECKOUT` to require the exact Git revision in the manifest and compare the pinned checkout with the package. Doctor V42 is source-bound to the pinned commit; its evidence paths are relocated in the package, and the verifier checks that this is the only report change. `--output-root DIR` selects a new evidence root; run directories are unique and existing outputs are never overwritten.
+`verify-kit.sh` validates its manifest and every `SHA256SUMS` entry before invoking the runner. By default, commands use the included `source-snapshot`. Add `--repo-root CHECKOUT` to require the exact Git revision in the manifest and compare the pinned checkout with the package. Doctor V43 pins the executable source revision separately from later documentation/package commits. `--output-root DIR` selects a new evidence root; run directories are unique and existing outputs are never overwritten.
 
 The package includes checksum-verified output and resource logs referenced by the pinned Doctor report, relocated under `source-snapshot/evidence/` so report validation works without the original host cache.
 
-Run one suite with `bash verify-kit.sh --mode FRONTEND --suite commute-card`. Search, Can-I-Ride, UX, and ledger checks can be run separately with `--suite place-search`, `--suite search-keyboard`, `--suite can-i-ride`, `--suite ux-contract`, or `--suite validation-ledger`. Suite identifiers are printed by each mode and recorded in `run-status.json`; a suite unavailable in the selected mode is rejected before execution.
+Run one suite with `bash verify-kit.sh --mode FRONTEND --suite commute-card`. Search, Can-I-Ride, UX, and ledger checks can be run separately with `--suite place-search`, `--suite search-keyboard`, `--suite can-i-ride`, `--suite ux-contract`, or `--suite validation-ledger`. A single stored Cebu case or bounded subset can be selected with `bash verify-kit.sh --mode CORPUS --corpus-cases 0` or `--corpus-cases 0,3`. Case indices are zero-based from 0 through 9. A matching subset is reported as `PARTIAL_CASE_SUBSET_MATCHED`; only a complete ten-case match can claim full corpus PASS. Suite identifiers are printed by each mode and recorded in `run-status.json`; a suite unavailable in the selected mode is rejected before execution.
 
 Each run writes an atomic `run-status.json`, individual command output, source/tool/command fingerprints, resource logs for guarded work, and an evidence checksum list. Interrupted `RUNNING` records recover to `NOT_RUN`; the runner never infers PASS from partial output. Guarded suites use five samples spaced five seconds apart, the fixed 524288 KiB memory and 131072 KiB swap floors, and first-breach cancellation. No database service is started.
 
@@ -221,9 +239,9 @@ Each run writes an atomic `run-status.json`, individual command output, source/t
 
 Python 3, Bash, `sha256sum`, `git` (only with `--repo-root`), and the repository-defined helper tools are detected before their suites run. Node dependencies are not installed by this kit. PHP/Laravel dependencies are not bundled. Missing tools or lockfile dependencies are reported as `BLOCKED_DEPENDENCY`; a resource refusal is `BLOCKED_RESOURCE`. `FULL` is only a sequence of these statuses and does not imply every external dependency was available.
 
-The Cebu graph is expected at `~/.cache/biyahe/batch030/cebu-walk-central-visayas-20261007-v3.sqlite`, SHA256 `29d7aaf9c45a596f4065c44d13f983f4a7edeec5ac2ea41b718b1c52ca865bf8`. The runner hashes it before replay and writes a fresh corpus report. It never rebuilds or modifies the graph and never scans a PBF. A historical `9 found / 1 disconnected` result is not treated as a current replay.
+The Cebu graph is expected at `~/.cache/biyahe/batch030/cebu-walk-central-visayas-20261007-v3.sqlite`, SHA256 `29d7aaf9c45a596f4065c44d13f983f4a7edeec5ac2ea41b718b1c52ca865bf8`. For corpus mode, the owned-worker guard takes five resource samples before checking graph metadata or hashing the file. A fresh read-only SHA256 must match before Laravel opens SQLite. The graph is never rebuilt or modified and the runner never scans a PBF. A historical `9 found / 1 disconnected` result is not treated as a current replay.
 
-Browser execution, PostgreSQL staging, production graph integration, field transfer safety, private beta, and production activation remain separate evidence gates. This kit does not perform or claim them. No package installation, PostgreSQL startup, graph modification, field verification, or automatic push occurs.
+The external Linux staging runbook and passive preflight are included. They do not provision a host, connect to a database, or start PostgreSQL. Browser execution, PostgreSQL staging, production graph integration, field transfer safety, private beta, and production activation remain separate evidence gates. This kit does not perform or claim them. No package installation, PostgreSQL startup, graph modification, field verification, or automatic push occurs.
 """
 
 
@@ -239,7 +257,7 @@ def bundle_doctor_evidence(report_path: Path, snapshot_root: Path) -> list[dict[
     report = json.loads(report_path.read_text(encoding="utf-8"))
     tests = report.get("tests", {})
     if not isinstance(tests, dict):
-        raise ValueError("Doctor V42 test evidence must be an object")
+        raise ValueError("Doctor V43 test evidence must be an object")
     bundled: list[dict[str, object]] = []
     for name, row in tests.items():
         if not isinstance(row, dict):
@@ -286,15 +304,15 @@ def main(argv=None) -> int:
         revision = subprocess.check_output(["git", "-C", str(ROOT), "rev-parse", "HEAD"], text=True).strip()
         if len(revision) != 40:
             raise ValueError("Git did not return a full repository revision")
-        doctor = json.loads((ROOT / "docs/reports/batch042-doctor-v42.json").read_text(encoding="utf-8"))
+        doctor = json.loads((ROOT / "docs/reports/batch043-doctor-v43.json").read_text(encoding="utf-8"))
         executable_revision = doctor.get("source_revision", {}).get("executable")
         if not isinstance(executable_revision, str) or len(executable_revision) != 40:
-            raise ValueError("Doctor V42 must pin a full executable source revision before packaging")
+            raise ValueError("Doctor V43 must pin a full executable source revision before packaging")
         if subprocess.run(["git", "-C", str(ROOT), "merge-base", "--is-ancestor", executable_revision, revision], check=False).returncode:
-            raise ValueError("Doctor V42 executable source revision is not an ancestor of the package checkpoint")
+            raise ValueError("Doctor V43 executable source revision is not an ancestor of the package checkpoint")
         executable_fingerprints = doctor.get("source_fingerprints")
         if not isinstance(executable_fingerprints, dict) or not executable_fingerprints:
-            raise ValueError("Doctor V42 executable source fingerprints are required before packaging")
+            raise ValueError("Doctor V43 executable source fingerprints are required before packaging")
         missing_from_kit = sorted(set(executable_fingerprints) - set(FILES))
         if missing_from_kit:
             raise ValueError(f"portable kit omits executable fingerprint inputs: {', '.join(missing_from_kit)}")
@@ -315,11 +333,11 @@ def main(argv=None) -> int:
             destination.parent.mkdir(parents=True, exist_ok=True)
             shutil.copyfile(source, destination)
         packaged_test_evidence = bundle_doctor_evidence(
-            snapshot_root / "docs/reports/batch042-doctor-v42.json", snapshot_root)
+            snapshot_root / "docs/reports/batch043-doctor-v43.json", snapshot_root)
 
         manifest = {
-            "format": "biyahe-portable-offline-verification-kit-v4",
-            "batch": 42,
+            "format": "biyahe-portable-offline-verification-kit-v5",
+            "batch": 43,
             "repository_revision": revision,
             "executable_source_revision": executable_revision,
             "executable_source_fingerprints": executable_fingerprints,
@@ -327,6 +345,12 @@ def main(argv=None) -> int:
             "large_artifacts_included": False,
             "verification_modes": ["STATIC", "FRONTEND", "ADAPTER", "CORPUS", "FULL"],
             "entrypoint": "verify-kit.sh MODE",
+            "corpus_case_selection": {
+                "indices": "zero-based 0 through 9",
+                "subset_match_status": "PASS with corpus_completeness=PARTIAL; never claims complete corpus",
+                "complete_replay_required_for_full_pass": True,
+                "output_policy": "unique run directory, no-clobber output, atomic reports",
+            },
             "artifact_references": {
                 "graph": {"name": "cebu-walk-central-visayas-20261007-v3.sqlite", "sha256": "29d7aaf9c45a596f4065c44d13f983f4a7edeec5ac2ea41b718b1c52ca865bf8"},
                 "source_pbf": {"name": "central_visayas-20261007.osm.pbf", "sha256": "787cac20ecc586b754b1a464643a040566d486457c6a37bc0b11ce683bc66d4d", "needed_for_offline_verification": False},
@@ -338,7 +362,7 @@ def main(argv=None) -> int:
                 "graph_fingerprint": doctor.get("evidence", {}).get("graph", {}).get("expected_fingerprint", "UNKNOWN"),
                 "graph_fingerprint_status": doctor.get("evidence", {}).get("graph", {}).get("fingerprint_status", "UNKNOWN")
             },
-            "runtime_requirements": {"python": "Python 3.10+ standard library", "bash": "required", "git": "required only with --repo-root", "sha256sum": "required", "php_laravel": "required only for adapter PHPUnit and real graph replay", "node": "Node.js with --experimental-strip-types for TypeScript harnesses", "npm_dependencies": "preinstalled from web/package-lock.json for typecheck and ESLint", "composer_dependencies": "preinstalled from api/composer.lock for PHPUnit and corpus replay"},
+            "runtime_requirements": {"python": "Python 3.10+ standard library", "bash": "required", "git": "required only with --repo-root", "sha256sum": "required", "php_laravel": "preinstalled from api/composer.lock for adapter PHPUnit and real graph replay", "node": "Node.js 20.9+ with --experimental-strip-types for TypeScript harnesses", "npm_dependencies": "preinstalled from web/package-lock.json for typecheck and ESLint", "postgresql_postgis": "external staging only; the kit never starts or connects to PostgreSQL"},
             "verification_commands": [
                 "bash verify-kit.sh STATIC",
                 "bash verify-kit.sh FRONTEND",
@@ -350,16 +374,18 @@ def main(argv=None) -> int:
                 "bash verify-kit.sh --mode FRONTEND --suite search-keyboard",
                 "bash verify-kit.sh --mode FRONTEND --suite can-i-ride",
                 "bash verify-kit.sh --mode FRONTEND --suite ux-contract",
-                "bash verify-kit.sh --mode FRONTEND --suite validation-ledger"
+                "bash verify-kit.sh --mode FRONTEND --suite validation-ledger",
+                "bash verify-kit.sh --mode CORPUS --corpus-cases 0",
+                "bash verify-kit.sh --mode CORPUS --corpus-cases 0,3"
             ],
-            "expected_output_formats": ["biyahe-offline-evidence-smoke-v1", "biyahe-evidence-provenance-validation-v1", "biyahe-doctor-v42-validation-v1", "biyahe-portable-verification-run-v1", "biyahe-offline-walking-corpus-v1"],
+            "expected_output_formats": ["biyahe-offline-evidence-smoke-v1", "biyahe-evidence-provenance-validation-v1", "biyahe-doctor-v43-validation-v1", "biyahe-portable-verification-run-v1", "biyahe-offline-walking-corpus-v1", "biyahe-offline-corpus-comparison-v1"],
             "expected_stored_coverage": {"stops": 503, "stops_snappable_within_25m": 436, "places": 37, "places_snappable_within_25m": 30, "transfers_unverified": 2, "historical_corpus_cases": 10, "historical_routes_found": 9, "historical_routes_disconnected": 1},
             "resource_floors_kib": {"memavailable_minimum": 524288, "swapfree_minimum": 131072, "sustained_samples": 5, "sample_spacing_seconds": 5},
             "required_checkout_paths": FILES,
             "normalized_checkout_files": [{
-                "path": "docs/reports/batch042-doctor-v42.json",
-                "checkout_sha256": sha256(ROOT / "docs/reports/batch042-doctor-v42.json"),
-                "snapshot_sha256": sha256(snapshot_root / "docs/reports/batch042-doctor-v42.json"),
+                "path": "docs/reports/batch043-doctor-v43.json",
+                "checkout_sha256": sha256(ROOT / "docs/reports/batch043-doctor-v43.json"),
+                "snapshot_sha256": sha256(snapshot_root / "docs/reports/batch043-doctor-v43.json"),
                 "transformation": "doctor_evidence_path_relocation"
             }],
             "included_files": [f"source-snapshot/{relative}" for relative in FILES] + [item["path"] for item in packaged_test_evidence],

@@ -270,15 +270,6 @@ progress_file="$(printenv BIYAHE_RESOURCE_PROGRESS_FILE 2>/dev/null || true)"
 watch_db_bytes=not_configured
 watch_journal_bytes=not_configured
 watch_wal_bytes=not_configured
-initial_watch_bytes=0
-if [[ -n "$watch_file" ]]; then
-    watch_db_bytes="$(file_size_bytes "$watch_file")"
-    watch_journal_bytes="$(file_size_bytes "$watch_file-journal")"
-    watch_wal_bytes="$(file_size_bytes "$watch_file-wal")"
-    for bytes in "$watch_db_bytes" "$watch_journal_bytes" "$watch_wal_bytes"; do
-        if [[ "$bytes" =~ ^[0-9]+$ ]]; then initial_watch_bytes=$((initial_watch_bytes + bytes)); else initial_watch_bytes=unknown; break; fi
-    done
-fi
 record "operation=$operation resource_preflight=starting samples=$preflight_samples interval_seconds=$preflight_interval_seconds min_memavailable_kb=$min_mem_kb min_swapfree_kb=$min_swap_kb min_diskfree_kb=$min_disk_kb"
 preflight_block_reason=
 initial_mem=unknown
@@ -327,7 +318,25 @@ if [[ -n "$preflight_block_reason" ]]; then
     record "operation=blocked; sustained resource preflight failed reason=$preflight_block_reason command_not_started=yes"
     exit 4
 fi
+initial_watch_bytes=0
+if [[ -n "$watch_file" ]]; then
+    watch_db_bytes="$(file_size_bytes "$watch_file")"
+    watch_journal_bytes="$(file_size_bytes "$watch_file-journal")"
+    watch_wal_bytes="$(file_size_bytes "$watch_file-wal")"
+    for bytes in "$watch_db_bytes" "$watch_journal_bytes" "$watch_wal_bytes"; do
+        if [[ "$bytes" =~ ^[0-9]+$ ]]; then initial_watch_bytes=$((initial_watch_bytes + bytes)); else initial_watch_bytes=unknown; break; fi
+    done
+fi
 record "operation=$operation preflight=PASS preflight_memavailable_kb=$initial_mem cached_kb=$initial_cached sreclaimable_kb=$initial_reclaimable swapfree_kb=$initial_swap diskfree_kb=$initial_disk postgres_rss_kb=$(postgres_process_rss_kb) sqlite_bytes=$watch_db_bytes sqlite_journal_bytes=$watch_journal_bytes sqlite_wal_bytes=$watch_wal_bytes producer_consumer_progress=$(progress_sample "$progress_file") budgets_min_memavailable_kb=$min_mem_kb min_swapfree_kb=$min_swap_kb min_diskfree_kb=$min_disk_kb max_process_tree_rss_kb=$max_rss_kb"
+export BIYAHE_RESOURCE_GUARD_PREFLIGHT=PASS
+export BIYAHE_RESOURCE_GUARD_PREFLIGHT_SAMPLES="$preflight_samples"
+export BIYAHE_RESOURCE_GUARD_PREFLIGHT_SPACING_SECONDS="$preflight_interval_seconds"
+export BIYAHE_RESOURCE_GUARD_MIN_MEMAVAILABLE_KB="$minimum_preflight_mem"
+export BIYAHE_RESOURCE_GUARD_MIN_SWAPFREE_KB="$minimum_preflight_swap"
+export BIYAHE_RESOURCE_GUARD_CONFIGURED_MIN_MEMAVAILABLE_KB="$min_mem_kb"
+export BIYAHE_RESOURCE_GUARD_CONFIGURED_MIN_SWAPFREE_KB="$min_swap_kb"
+export BIYAHE_RESOURCE_GUARD_BREACH_SAMPLES="$breach_samples"
+export BIYAHE_RESOURCE_GUARD_MAX_PROCESS_TREE_RSS_KB="$max_rss_kb"
 
 [[ ! -e "$log_path.runner" ]] || { record 'operation=blocked; runner PID marker already exists'; exit 2; }
 worker_output="$log_path.worker.log"

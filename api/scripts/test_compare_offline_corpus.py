@@ -78,6 +78,19 @@ def synthetic_replay() -> dict:
     }
 
 
+def synthetic_subset(indices: list[int]) -> dict:
+    replay = synthetic_replay()
+    replay["cases"] = [replay["cases"][index] for index in indices]
+    replay["cases_total"] = len(indices)
+    replay["case_indices"] = indices
+    replay["cases_expected_total"] = 10
+    replay["complete_corpus"] = False
+    replay["status"] = "PARTIAL"
+    replay["routes_found"] = sum(case["actual_status"] == "ROUTE_FOUND" for case in replay["cases"])
+    replay["routes_unavailable"] = len(indices) - replay["routes_found"]
+    return replay
+
+
 class OfflineCorpusComparatorTests(unittest.TestCase):
     def compare(self, actual: dict) -> dict:
         return COMPARATOR.compare(EXPECTED, actual, "a" * 64, "b" * 64)
@@ -111,6 +124,37 @@ class OfflineCorpusComparatorTests(unittest.TestCase):
         result = self.compare(actual)
         self.assertEqual("FAIL", result["status"])
         self.assertFalse(result["cases"][unavailable["case_index"]]["geometry_continuous"])
+
+    def test_selected_case_match_is_passed_without_claiming_complete_corpus(self):
+        actual = synthetic_subset([1, 4])
+        result = COMPARATOR.compare(EXPECTED, actual, "a" * 64, "b" * 64, [1, 4])
+
+        self.assertEqual("PASS", result["status"])
+        self.assertEqual("PARTIAL", result["corpus_completeness"])
+        self.assertFalse(result["complete_corpus"])
+        self.assertEqual([1, 4], result["case_indices"])
+        self.assertEqual(2, result["matches"])
+        self.assertEqual(10, result["cases_expected_total"])
+
+    def test_rejects_subset_report_that_is_misrepresented_as_a_full_pass(self):
+        actual = synthetic_subset([4])
+        actual["status"] = "PASS"
+
+        with self.assertRaisesRegex(COMPARATOR.CompareError, "status must be PARTIAL"):
+            COMPARATOR.compare(EXPECTED, actual, "a" * 64, "b" * 64, [4])
+
+    def test_rejects_repeated_or_out_of_range_case_selection(self):
+        for indices in ([2, 2], [10]):
+            with self.subTest(indices=indices):
+                with self.assertRaises(COMPARATOR.CompareError):
+                    COMPARATOR.normalize_case_indices(list(indices))
+
+    def test_case_selection_cli_parser_is_strict_and_does_not_treat_empty_as_full(self):
+        self.assertIsNone(COMPARATOR.parse_case_indices(None))
+        self.assertEqual([0, 3], COMPARATOR.parse_case_indices("3,0"))
+        for value in ("", " ", "01", "1,", "1,1", "10", "-1", "１"):
+            with self.subTest(value=value), self.assertRaises(COMPARATOR.CompareError):
+                COMPARATOR.parse_case_indices(value)
 
 
 if __name__ == "__main__":

@@ -175,7 +175,7 @@ class CoverageSummaryTests(unittest.TestCase):
         self.assertEqual(result["status"], "PASS")
         self.assertEqual(result["matches"], 10)
         actual["status"] = "FAIL"
-        with self.assertRaisesRegex(COMPARE.CompareError, "complete PASS"):
+        with self.assertRaisesRegex(COMPARE.CompareError, "selected case scope"):
             COMPARE.compare(expected, actual, "a" * 64, "b" * 64)
         actual["status"] = "PASS"
         actual["graph_sha256"] = "0" * 64

@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Services\Routing\OfflineJourneyWalkingPreview;
+use App\Services\Routing\OfflineWalkingCorpusSelection;
 use App\Services\Routing\OfflineWalkingPreviewException;
 use Illuminate\Console\Command;
 use JsonException;
@@ -11,30 +12,36 @@ use Throwable;
 
 final class VerifyOfflineWalkingCorpus extends Command
 {
-    protected $signature = 'biyahe:pedestrian:verify-offline-corpus {--output= : New JSON path for deterministic replay evidence}';
+    protected $signature = 'biyahe:pedestrian:verify-offline-corpus {--output= : New JSON path for deterministic replay evidence} {--cases= : Optional comma-separated zero-based case indices, for example 0,3}';
 
     protected $description = 'Replay the ten stored Batch032 Cebu walking cases without reading the source PBF or PostgreSQL.';
 
     public function handle(OfflineJourneyWalkingPreview $preview): int
     {
         $output = (string) $this->option('output');
-        if ($output === '' || file_exists($output) || file_exists($output.'.building')) {
+        $outputDirectory = dirname($output);
+        if ($output === '' || ! is_dir($outputDirectory) || ! is_writable($outputDirectory)
+            || file_exists($output) || is_link($output) || file_exists($output.'.building') || is_link($output.'.building')) {
             $this->error('Provide a new --output path; existing files are never overwritten.');
 
             return self::FAILURE;
         }
 
         try {
-            $report = $preview->verifyStoredCorpus();
+            $caseIndices = OfflineWalkingCorpusSelection::parse($this->option('cases'));
+            $report = $preview->verifyStoredCorpus($caseIndices);
             $this->writeNewJson($output, $report);
             $this->line('CORPUS_STATUS='.$report['status']);
-            $this->line('CASES='.$report['cases_total']);
+            $this->line('CASES='.$report['cases_total'].'/'.$report['cases_expected_total']);
+            $this->line('CASE_INDICES='.implode(',', $report['case_indices']));
             $this->line('ROUTES_FOUND='.$report['routes_found']);
             $this->line('ROUTES_UNAVAILABLE='.$report['routes_unavailable']);
             $this->line('GEOMETRY_MATCHES='.$report['geometry_matches'].'/'.$report['cases_total']);
             $this->line('report: '.$output);
 
-            return $report['status'] === 'PASS' ? self::SUCCESS : self::FAILURE;
+            return in_array($report['status'], ['PASS', 'PARTIAL'], true) ? self::SUCCESS : self::FAILURE;
+        } catch (\InvalidArgumentException $exception) {
+            $this->error('invalid_corpus_selection: '.$exception->getMessage());
         } catch (OfflineWalkingPreviewException $exception) {
             $this->error($exception->reasonCode.': '.$exception->getMessage());
         } catch (Throwable $exception) {
@@ -71,9 +78,10 @@ final class VerifyOfflineWalkingCorpus extends Command
             throw $exception;
         }
         fclose($handle);
-        if (file_exists($path) || ! rename($temporary, $path)) {
+        if (! link($temporary, $path)) {
             @unlink($temporary);
             throw new RuntimeException('The corpus report could not be atomically published without overwriting a file.');
         }
+        unlink($temporary);
     }
 }

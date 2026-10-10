@@ -1,0 +1,153 @@
+{
+  "format": "biyahe-batch043-work-ledger-v1",
+  "batch": 43,
+  "started_at_utc": "2026-10-10T10:12:52Z",
+  "branch": "main",
+  "head_at_start": "19172ef20c2fff9e9a6d02d66d36b182ac6acb74",
+  "initial_tracked_worktree": "CLEAN",
+  "historical_untracked_reports": [
+    "docs/reports/batch033-doctor-v33.json",
+    "docs/reports/batch034-doctor-v34-coverage.json",
+    "docs/reports/batch034-doctor-v34-current.json",
+    "docs/reports/batch034-doctor-v34-final-evidence.json",
+    "docs/reports/batch034-doctor-v34-final.json",
+    "docs/reports/batch034-doctor-v34.json",
+    "docs/reports/batch039-doctor-v39.json"
+  ],
+  "historical_report_hashes": "SHA256 matched Batch042 pre-edit manifest at initial capture",
+  "recovery_snapshot": "$HOME/storage/external-1/Termux-Archive/Biyahe/Batch043-Recovery/20261010T1012Z",
+  "protected_graph": {
+    "path": "$HOME/.cache/biyahe/batch030/cebu-walk-central-visayas-20261007-v3.sqlite",
+    "expected_sha256": "29d7aaf9c45a596f4065c44d13f983f4a7edeec5ac2ea41b718b1c52ca865bf8",
+    "current_identity_status": "NOT_CHECKED_RESOURCE_GATE",
+    "write_allowed": false
+  },
+  "resource_policy": {
+    "memavailable_minimum_kib": 524288,
+    "swapfree_minimum_kib": 131072,
+    "preflight_samples": 5,
+    "preflight_spacing_seconds": 5,
+    "breach_samples": 1,
+    "maximum_process_tree_rss_kib": 262144,
+    "initial_observation_utc": "2026-10-10T10:19:14Z",
+    "initial_memavailable_kib": 609528,
+    "initial_swapfree_kib": 17552,
+    "graph_access_permitted": false,
+    "sampled_at_utc": [
+      "2026-10-10T10:25:26+00:00",
+      "2026-10-10T10:25:31+00:00",
+      "2026-10-10T10:25:37+00:00",
+      "2026-10-10T10:25:42+00:00",
+      "2026-10-10T10:25:47+00:00"
+    ],
+    "sampled_memavailable_kib": [
+      933108,
+      949960,
+      910456,
+      939508,
+      844184
+    ],
+    "sampled_swapfree_kib": [
+      148540,
+      142788,
+      127304,
+      152032,
+      85460
+    ],
+    "preflight_status": "BLOCKED_RESOURCE",
+    "minimum_memavailable_kib": 844184,
+    "minimum_swapfree_kib": 85460,
+    "postgresql_processes_observed": "NONE",
+    "owned_worker_rss": "NO_OWNED_WORKER_LAUNCHED",
+    "preflight_evidence": "/data/data/com.termux/files/home/.cache/biyahe/batch043/resource-preflight-20261010T-current.json"
+  },
+  "routing_diagnosis": {
+    "status": "STATIC_INSPECTION_COMPLETE",
+    "historical_corpus_worker_started": false,
+    "historical_block_reason": "five-sample resource preflight failed before worker launch",
+    "configured_nodes": 76685,
+    "configured_edges": 78225,
+    "bounded_route_limits": {
+      "maximum_snap_meters": 25,
+      "maximum_route_distance_meters": 2000,
+      "maximum_edges_per_route": 50000,
+      "maximum_visited_nodes_per_route": 20000,
+      "maximum_request_seconds": 8
+    },
+    "observed_code_costs": [
+      "one router is reused across cases within a replay",
+      "first route materializes whole-graph temporary node and edge R-trees",
+      "first route materializes a joined edge table and builds PHP union-find component maps",
+      "current portable runner hashes the graph before its owned-worker resource preflight"
+    ],
+    "performance_measurement": "BLOCKED_RESOURCE_NO_GRAPH_ACCESS",
+    "current_resource_gate": "BLOCKED_RESOURCE; minimum SwapFree 85460 KiB is below 131072 KiB; no graph hash or SQLite access occurred."
+  },
+  "workstreams": [
+    {
+      "id": "RECOVERY",
+      "status": "VERIFIED",
+      "stop_condition": "Initial SD bundle and seven report hashes verified before tracked edits."
+    },
+    {
+      "id": "ROUTING_DIAGNOSIS",
+      "status": "VERIFIED_STATIC",
+      "stop_condition": "No graph content accessed until all five preflight samples pass."
+    },
+    {
+      "id": "CORPUS_CASE_SELECTION",
+      "status": "IMPLEMENTED_UNTESTED",
+      "stop_condition": "Add bounded individual/subset execution while preserving full-corpus PASS semantics."
+    },
+    {
+      "id": "RESOURCE_GUARD_ORDER",
+      "status": "IMPLEMENTED_UNTESTED",
+      "stop_condition": "Graph hashing must occur only inside the guarded worker after preflight."
+    },
+    {
+      "id": "ROUTING_PERFORMANCE",
+      "status": "BLOCKED_RESOURCE",
+      "stop_condition": "Measure only after five spaced resource samples pass; do not infer runtime from historical results."
+    },
+    {
+      "id": "FRONTEND_REGRESSIONS",
+      "status": "IMPLEMENTED_UNTESTED_CURRENT_BATCH",
+      "stop_condition": "Reuse Batch042 evidence only when source/test fingerprints remain identical; run no worker below floors."
+    },
+    {
+      "id": "PORTABLE_V5",
+      "status": "IMPLEMENTED_IN_PROGRESS",
+      "stop_condition": "Extend the existing runner and kit with subsets, safe graph identity, no-clobber evidence, and honest status."
+    },
+    {
+      "id": "STAGING_READINESS",
+      "status": "IN_PROGRESS",
+      "stop_condition": "Document existing CI/runtime/migration/importer commands; no service, host, or database changes."
+    },
+    {
+      "id": "DOCTOR_V43",
+      "status": "NOT_STARTED",
+      "stop_condition": "Pin tested executable commit separately from documentation/evidence commits."
+    },
+    {
+      "id": "DELIVERY",
+      "status": "NOT_STARTED",
+      "stop_condition": "Clean tracked tree, preserve historical reports, verify final SD bundle and report."
+    }
+  ],
+  "test_statuses_at_recovery": {
+    "real_cebu_corpus": "BLOCKED_RESOURCE_HISTORICAL; no Batch042 graph replay worker ran",
+    "adapter_phpunit": "BLOCKED_RESOURCE_HISTORICAL",
+    "frontend_focus": "Batch042 source-bound evidence exists; current Batch043 checks not run",
+    "typescript": "BLOCKED_RESOURCE_HISTORICAL",
+    "eslint": "BLOCKED_RESOURCE_HISTORICAL",
+    "browser": "NOT_RUN_HISTORICAL"
+  },
+  "stop_conditions": [
+    "Never begin graph hash, SQLite query, or replay unless all five resource samples pass.",
+    "Never exceed the existing 262144 KiB process-tree cap or change configured floors.",
+    "After a first-sample breach, cancel the owned group and do not retry the same command in this batch.",
+    "Do not claim the historical 9/1 case result as a current pass.",
+    "Finish only after all independent low-resource workstreams are reviewed and classified."
+  ]
+}

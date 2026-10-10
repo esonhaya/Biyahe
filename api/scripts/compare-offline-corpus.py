@@ -9,6 +9,7 @@ import json
 import math
 import os
 from pathlib import Path
+import re
 import sys
 
 EXPECTED_REPORT_SHA256 = "6caf101177904bee6fda1b12cab9c5cda36ddaf7ecc08b0d9778c0517123c81b"
@@ -113,7 +114,28 @@ def validate_path_evidence(actual_case, expected_route, found):
             and geometry == expected_route.get("geometry"))
 
 
-def compare(expected, actual, expected_sha, actual_sha):
+def normalize_case_indices(indices):
+    if indices is None:
+        return list(range(10))
+    if not isinstance(indices, list) or not indices:
+        raise CompareError("case selection must contain one or more zero-based indices")
+    if any(not isinstance(index, int) or isinstance(index, bool) or not 0 <= index < 10 for index in indices):
+        raise CompareError("case selection indices must be integers from 0 through 9")
+    if len(set(indices)) != len(indices):
+        raise CompareError("case selection indices must not be repeated")
+    return sorted(indices)
+
+
+def parse_case_indices(value):
+    if value is None:
+        return None
+    parts = value.split(",")
+    if any(re.fullmatch(r"(?:0|[1-9][0-9]*)", part, flags=re.ASCII) is None for part in parts):
+        raise CompareError("--case-indices must be comma-separated zero-based indices from 0 through 9")
+    return normalize_case_indices([int(part) for part in parts])
+
+
+def compare(expected, actual, expected_sha, actual_sha, selected_case_indices=None):
     if not isinstance(expected, dict) or not isinstance(actual, dict):
         raise CompareError("expected and actual replay reports must be JSON objects")
     if expected.get("format") != "biyahe-cebu-offline-coverage-v1" or expected.get("complete") is not True:
@@ -130,16 +152,26 @@ def compare(expected, actual, expected_sha, actual_sha):
             raise CompareError(f"actual replay {key} differs from the pinned identity")
     if actual.get("graph_format") != "biyahe-pedestrian-sqlite-v3" or actual.get("graph_schema_version") != 3:
         raise CompareError("actual replay graph schema is unsupported")
-    if actual.get("status") != "PASS":
-        raise CompareError("actual replay does not report a complete PASS")
     expected_cases = expected.get("journey_corpus", {}).get("cases")
     actual_cases = actual.get("cases")
-    if not isinstance(expected_cases, list) or len(expected_cases) != 10 or not isinstance(actual_cases, list) or len(actual_cases) != 10:
-        raise CompareError("expected and actual reports must each contain ten indexed cases")
-    if actual.get("cases_total") != 10 or actual.get("maximum_snap_distance_meters") != 25:
+    case_indices = normalize_case_indices(selected_case_indices)
+    complete_corpus = case_indices == list(range(10))
+    if not isinstance(expected_cases, list) or len(expected_cases) != 10 or not isinstance(actual_cases, list):
+        raise CompareError("expected report must contain ten indexed cases and actual cases must be a list")
+    expected_status = "PASS" if complete_corpus else "PARTIAL"
+    if actual.get("status") != expected_status:
+        raise CompareError(f"actual replay status must be {expected_status} for the selected case scope")
+    if actual.get("cases_total") != len(case_indices) or len(actual_cases) != len(case_indices):
+        raise CompareError("actual case count does not match the selected case scope")
+    if actual.get("maximum_snap_distance_meters") != 25:
         raise CompareError("actual replay case count or snap policy is missing or unsupported")
+    if actual.get("case_indices", case_indices) != case_indices:
+        raise CompareError("actual replay case indices differ from the requested selection")
+    if actual.get("cases_expected_total", 10) != 10 or actual.get("complete_corpus", complete_corpus) is not complete_corpus:
+        raise CompareError("actual replay completeness metadata differs from the selected scope")
     results = []
-    for index, (expected_case, actual_case) in enumerate(zip(expected_cases, actual_cases)):
+    for index, actual_case in zip(case_indices, actual_cases):
+        expected_case = expected_cases[index]
         if not isinstance(expected_case, dict) or not isinstance(actual_case, dict):
             raise CompareError(f"expected or actual corpus case is not an object at {index}")
         if actual_case.get("case_index") != index:
@@ -192,7 +224,8 @@ def compare(expected, actual, expected_sha, actual_sha):
             "match": matches,
         })
     actual_case_keys = [row.get("case_key") for row in actual_cases]
-    if any(not isinstance(key, str) or not key for key in actual_case_keys) or len(set(actual_case_keys)) != 10:
+    if (any(not isinstance(key, str) or not key for key in actual_case_keys)
+        or len(set(actual_case_keys)) != len(case_indices)):
         raise CompareError("actual case keys are missing or duplicated")
     actual_found = sum(row.get("actual_status") == "ROUTE_FOUND" for row in actual_cases)
     actual_unavailable = sum(row.get("actual_status") == "ROUTE_UNAVAILABLE" for row in actual_cases)
@@ -201,6 +234,10 @@ def compare(expected, actual, expected_sha, actual_sha):
     return {
         "format": "biyahe-offline-corpus-comparison-v1",
         "status": "PASS" if all(row["match"] for row in results) else "FAIL",
+        "corpus_completeness": "COMPLETE" if complete_corpus else "PARTIAL",
+        "complete_corpus": complete_corpus,
+        "case_indices": case_indices,
+        "cases_expected_total": 10,
         "source_sha256": EXPECTED_SOURCE_SHA256,
         "graph_sha256": EXPECTED_GRAPH_SHA256,
         "graph_fingerprint": EXPECTED_GRAPH_FINGERPRINT,
@@ -247,6 +284,7 @@ def main(argv=None):
     parser.add_argument("--actual", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--expected-sha256", default=EXPECTED_REPORT_SHA256)
+    parser.add_argument("--case-indices", help="optional comma-separated zero-based indices, for example 0,3")
     args = parser.parse_args(argv)
     try:
         expected_bytes, expected = read_pinned(args.expected)
@@ -257,10 +295,11 @@ def main(argv=None):
             raise CompareError("expected coverage report SHA-256 does not match the pinned evidence")
         if not isinstance(actual, dict):
             raise CompareError("actual replay report must be a JSON object")
-        result = compare(expected, actual, expected_sha, actual_sha)
+        result = compare(expected, actual, expected_sha, actual_sha, parse_case_indices(args.case_indices))
         write_new(args.output, result)
         print(f"CORPUS_COMPARISON={result['status']}")
         print(f"MATCHES={result['matches']}/{result['cases_total']}")
+        print(f"CORPUS_COMPLETENESS={result['corpus_completeness']}")
         print(f"REPORT={args.output}")
         return 0 if result["status"] == "PASS" else 1
     except (OSError, json.JSONDecodeError, CompareError) as error:

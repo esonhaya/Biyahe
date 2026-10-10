@@ -95,20 +95,26 @@ final class OfflineJourneyWalkingPreview
     }
 
     /** Replays only the already stored Batch032 cases; it never opens or scans the source PBF. */
-    public function verifyStoredCorpus(): array
+    public function verifyStoredCorpus(?array $requestedCaseIndices = null): array
     {
+        $requestedCaseIndices = OfflineWalkingCorpusSelection::normalize($requestedCaseIndices);
         $resourcePreflight = $this->requireResourceHeadroom();
         $report = $this->verifiedReport();
         $router = $this->verifiedRouter($report);
         $cases = $report['journey_corpus']['cases'] ?? null;
-        if (! is_array($cases) || count($cases) !== 10) {
+        if (! is_array($cases) || count($cases) !== OfflineWalkingCorpusSelection::CASE_COUNT) {
             throw new OfflineWalkingPreviewException('graph_unavailable', 'The pinned Cebu route corpus is missing or incomplete.');
         }
 
         $results = [];
         $startedAt = hrtime(true);
         $graphMetadata = $router->metadata();
-        foreach ($cases as $caseIndex => $case) {
+        $caseIndices = $requestedCaseIndices ?? array_keys($cases);
+        foreach ($caseIndices as $caseIndex) {
+            $case = $cases[$caseIndex] ?? null;
+            if (! is_array($case)) {
+                throw new OfflineWalkingPreviewException('graph_unavailable', 'A requested Cebu corpus case is missing from the pinned report.');
+            }
             $caseId = (string) ($case['case_id'] ?? '');
             $origin = $case['source_records']['origin']['coordinates'] ?? null;
             $destination = $case['source_records']['destination']['coordinates'] ?? null;
@@ -212,9 +218,11 @@ final class OfflineJourneyWalkingPreview
             && $case['edge_identity_matches'] && $case['snapped_endpoints_match']
             && $case['geometry_continuous'])) === count($results);
 
+        $completeCorpus = OfflineWalkingCorpusSelection::isComplete($requestedCaseIndices);
+
         return [
             'format' => 'biyahe-offline-walking-corpus-v1',
-            'status' => $passed ? 'PASS' : 'FAIL',
+            'status' => $passed ? ($completeCorpus ? 'PASS' : 'PARTIAL') : 'FAIL',
             'source_sha256' => (string) $this->setting('source_sha256'),
             'source_sha256_recomputed' => false,
             'graph_sha256' => (string) $this->setting('graph_sha256'),
@@ -224,6 +232,9 @@ final class OfflineJourneyWalkingPreview
             'resource_preflight' => $resourcePreflight,
             'maximum_snap_distance_meters' => (float) $this->setting('maximum_snap_distance_meters'),
             'cases_total' => count($results),
+            'cases_expected_total' => count($cases),
+            'case_indices' => $caseIndices,
+            'complete_corpus' => $completeCorpus,
             'routes_found' => count(array_filter($results, static fn (array $case): bool => $case['actual_status'] === 'ROUTE_FOUND')),
             'routes_unavailable' => count(array_filter($results, static fn (array $case): bool => $case['actual_status'] === 'ROUTE_UNAVAILABLE')),
             'status_matches' => count(array_filter($results, static fn (array $case): bool => $case['status_matches'])),

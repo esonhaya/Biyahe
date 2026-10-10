@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Bounded syntax and JSON checks for the Batch042 evidence source set."""
+"""Bounded syntax and JSON checks for the Batch043 evidence source set."""
 
 from __future__ import annotations
 
@@ -21,6 +21,8 @@ def main() -> int:
 
     python_paths = [
         "api/scripts/run-portable-verification.py",
+        "api/scripts/run-offline-corpus-verification.py",
+        "api/scripts/test_offline_corpus_verification.py",
         "api/scripts/check-batch042-static-syntax.py",
         "api/scripts/package-batch041-verification-kit.py",
         "api/scripts/refresh-batch042-doctor.py",
@@ -30,6 +32,9 @@ def main() -> int:
         "api/scripts/validate-batch041-doctor.py",
         "api/scripts/validate-batch042-doctor.py",
         "api/scripts/test_validate_batch042_doctor.py",
+        "api/scripts/refresh-batch043-doctor.py",
+        "api/scripts/validate-batch043-doctor.py",
+        "api/scripts/test_validate_batch043_doctor.py",
     ]
     for relative in python_paths:
         path = root / relative
@@ -41,7 +46,7 @@ def main() -> int:
         except (OSError, SyntaxError, UnicodeError) as error:
             errors.append(f"PYTHON {relative}: {error}")
 
-    for relative in ["api/scripts/run-bounded-process.sh", "api/scripts/run-portable-verification.sh"]:
+    for relative in ["api/scripts/run-bounded-process.sh", "api/scripts/run-portable-verification.sh", "api/scripts/check-batch043-staging-preflight.sh"]:
         path = root / relative
         if not path.is_file() or shutil.which("bash") is None:
             continue
@@ -53,9 +58,13 @@ def main() -> int:
     for relative in [
         "api/scripts/test_offline_route_geometry_contract.php",
         "api/app/Services/Routing/OfflineJourneyWalkingPreview.php",
+        "api/app/Services/Routing/OfflineWalkingCorpusSelection.php",
         "api/app/Services/Routing/OfflinePedestrianGraphRouter.php",
         "api/app/Services/Routing/OfflinePedestrianRouteGeometryContract.php",
         "api/app/Http/Controllers/Api/DevelopmentOfflineWalkingPreviewController.php",
+        "api/app/Console/Commands/VerifyOfflineWalkingCorpus.php",
+        "api/tests/Unit/OfflineWalkingCorpusSelectionTest.php",
+        "api/tests/Unit/BoundedProcessGuardTest.php",
     ]:
         path = root / relative
         if not path.is_file() or shutil.which("php") is None:
@@ -95,6 +104,9 @@ def main() -> int:
         "docs/reports/batch042-doctor-v42.json",
         "docs/reports/batch042-work-ledger.json",
         "docs/testing/batch042-test-plan.json",
+        "docs/reports/batch043-doctor-v43.json",
+        "docs/reports/batch043-work-ledger.json",
+        "docs/testing/batch043-test-plan.json",
     ]
     for relative in json_paths:
         path = root / relative
