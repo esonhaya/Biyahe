@@ -1,0 +1,65 @@
+=== BASELINE ===
+HEAD_BEFORE=a51c0e7cce1a69926a1762d89b4bda16b975560d
+HEAD_AFTER=5abe08dd3d6643ec2854f36acb21812c458b8d13
+WORKTREE=CLEAN
+RECOVERED_WORK=Batch025 report/checkpoint and Batch024 backup; no prior Batch026 work existed.
+
+=== EXECUTION ===
+ELAPSED_TIME=~00:35; the 4–6 hour target was not reached.
+PHASES_COMPLETE=P0 resume; P1 product audit; selected UX work and focused source checks; importer/Doctor static improvements.
+PHASES_PARTIAL=P2–P11 UX source work (real device/screen-reader checks remain); P12 planner inspection; P17 beta review; P18 focused validation only.
+PHASES_BLOCKED=P13 PostgreSQL start; P14 real OSM stream; graph activation/release/matrix; full frontend typecheck.
+RESOURCE_STOPS=One PostgreSQL preflight blocked before start (MemAvailable 774452 KiB < 786432 KiB floor). OSM proof/import not attempted due previous ~745 MiB Osmium RSS and prior interruption. Typecheck skipped after previous termination near 609 MiB available.
+COMMITS_CREATED=6
+
+=== PRODUCT ===
+HOME=Existing destination-first/recent/favorite flow reused; favorite places can fill To.
+SEARCH=Request cancellation, stale-result rejection, safe suggestion index, clear-field focus return.
+RESULTS=Cancel slow planning; loading announcement; actionable transfer-filter empty state; no travel time/fare added.
+DETAIL=Instruction selection focuses map and respects reduced motion; saved snapshot age shown.
+MAP=Instruction/pattern actions scroll to map; text alternative retained; no physical-device check.
+RIDE_MODE=End confirmation and local-progress age/current-service reminder; foreground/manual model retained.
+NEARBY=Location/API failure links to place search.
+ROUTE_EXPLORER=Pattern request cancellation, local loading/error/retry, one-tap no-match reset.
+OFFLINE=Relative saved journey age; Field Mode labels stale mission snapshots; queued/rejected/received drafts show claim context and review state.
+PULSE=Explicit loading/failure and retry; stale requests cannot clear newer results.
+FIELD_MODE=Per-draft sync status; mission submission blocked while session drafts remain; no automatic evidence promotion.
+ACCESSIBILITY=Keyboard focus return, status announcements, reduced-motion map scroll, accessible action names; static checks only.
+
+=== BACKEND ===
+PLANNER=UNCHANGED; existing request-local caches and two-transfer bound inspected; no live graph for safe optimization/equivalence proof.
+DATABASE=PostgreSQL stopped; one guarded normal-start preflight blocked, no retry or live mutation. Exit cause remains unknown.
+GRAPH=BLOCKED; no active graph validated or activated.
+IMPORTER=Rejects missing referenced nodes before publishing; checksum, duplicate-ID, missing-reference and interruption fixtures.
+DOCTOR_V26=Static mode avoids database contact; PASS=6 WARN=1 FAIL=0 BLOCKED=5, exit 2 expected. Live DB/PostGIS/graph/field/release checks remain BLOCKED.
+FIELD_PLANS=No live revalidation or persistence; no real observations created.
+
+=== VALIDATION ===
+BACKEND_TESTS=PASS: database guards 6 tests/20 assertions; importer 3/11; Doctor static feature 1/13; isolated synthetic VERIFIED guard 1/2. Changed PHP lint PASS.
+FRONTEND_HARNESSES=PASS: request gate; UX 42 contracts; Ride Mode; commute cards; personal commute; Pulse/replan; disruptions; Field Mode.
+TYPECHECK=NOT_RUN_RESOURCE_GUARD (latest MemAvailable 688116 KiB; SwapFree 9992 KiB; prior check terminated near 609 MiB available).
+LINT=Changed-file ESLint PASS; full lint not run.
+BUILD=NOT_RUN_RESOURCE_GUARD; no production build.
+DATABASE_GUARDS=PASS (6 tests/20 assertions; tests use isolated SQLite memory).
+TRUST_FIXTURE=PASS (1 test/2 assertions); no production synthetic evidence.
+DOCTOR=Static checks PASS/WARN/BLOCKED as above; live Doctor not run.
+RELEASE_CHECK=NOT_RUN_DATABASE_AND_GRAPH_BLOCKED.
+
+=== READINESS ===
+PRIVATE_BETA=BLOCKED pending healthy PostgreSQL, verified staging, active source-backed graph, live release checks and device QA.
+BLOCKERS=PostgreSQL exit cause unknown; active pedestrian graph missing; real PBF stream/import not run; full typecheck and physical-device accessibility QA not run.
+NEXT=When Android resources/process state are stable, inspect PostgreSQL exit evidence and use the normal observer once if preflight permits. Then verify staging/backup and prove a bounded real-PBF stream before any import. Do not run the 47-pair audit while graph is missing.
+
+=== COMMITS ===
+800cf48 Batch 026: improve commuter recovery and field UX
+6e81499 Batch 026: add static recovery diagnostics
+c297225 Batch 026: clarify route explorer recovery
+2ce400e Batch 026: show saved journey snapshot age
+b72e980 Batch 026: expose field draft sync state
+5abe08d Batch 026: label Ride Mode progress age
+HEAD_FINAL=5abe08dd3d6643ec2854f36acb21812c458b8d13
+WORKTREE=CLEAN
+PUSH=NO
+
+CLIPBOARD_COPY=SET_EXIT_0; READBACK=EMPTY (Termux clipboard read returned 0 bytes, including for a static probe).
+=== BATCH 026 COMPLETE ===

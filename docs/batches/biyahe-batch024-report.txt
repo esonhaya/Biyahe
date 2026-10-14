@@ -1,0 +1,64 @@
+=== BASELINE ===
+HEAD_BEFORE=44a3243bd11ee745569aa18da90e9ca04c861915
+HEAD_AFTER=8a71e10ab28d1656fa1add34712e6e8ba60a002b
+WORKTREE=CLEAN
+
+=== POSTGRESQL ===
+CONTROL_STATE_BEFORE=in production after unclean stop; this alone is not corruption evidence.
+STARTUP_ATTEMPT=ONE normal project-configured pg_ctl start at 2026-10-08 19:16:30 Asia/Manila.
+STARTUP_RESULT=Normal crash recovery completed; PostgreSQL 18.6/PostGIS 3.6.4 ready at 19:16:31. It later stopped unexpectedly; final pg_ctl status is no server.
+ACTUAL_ERROR_IF_ANY=No startup corruption/PANIC error. Probe logs include default database u0_a664 missing and read-only probe column source_file missing; later connection refused without a shutdown/error log. Stop cause unknown.
+DATABASE_READABLE=Temporarily yes; 17 migrations, latest 2026_10_08_000002_allow_scoped_field_claim_variants.
+SURVIVING_TRANSPORT_ROWS=cities=1, places=37, aliases=47, stops=503, routes=32, patterns=61, pattern_stops=1124, transfers=2, fares=22, provenance=9.
+BACKUP_CREATED=~/.cache/biyahe/batch024/verified-20261008/biyahe.dump (431 KiB, SHA256 e55af400fde88d0a3434b194e0625e204eb0a2726374eabb8286c152b11a4a92); globals.sql SHA256 add8d8b7220ec02873ad95d610392c5d1b5b0e65aadd711dc8905cc59ea50af5.
+BACKUP_VERIFIED=pg_restore --list passed (492 TOC entries); restored with --single-transaction into new biyahe_batch024_restore_test; checked counts, migrations and PostGIS version matched source.
+STAGING_READY=Restore verified; database service is currently down. No production DB mutation beyond normal startup recovery/checkpoint.
+
+=== MEMORY ===
+MEMORY_AVAILABLE_BEFORE=~851 MiB before PostgreSQL startup; ~879 MiB before stream probe; swap free ~143 MiB then.
+PEAK_RSS=469320 KiB measured on the stopped complete_ways tiny extraction probe; new SQLite stream path peak not measured.
+LOW_MEMORY_PIPELINE=Committed XMLReader-to-SQLite preparation; SQLite cache 16 MiB, bounded in-scope node IDs, complete way references, 20 MB output cap, checksum verification, atomic no-clobber output. Synthetic tests only; real PBF behavior remains unproven.
+SMALL_AREA_TEST=Synthetic fixture selected scoped segments, retained outside way refs, imported 2 nodes/1 edge in SQLite, and rejected test_only output before activation. Real-source tiny output not completed.
+IMPORT_ATTEMPT=No production or staging graph import.
+RESOURCE_STOP_REASON=Graph work gated because PostgreSQL stopped. One real PBF stream probe was interrupted early after detecting a source URL filename typo; it produced no JSON and no peak measurement. The earlier complete_ways probe was stopped at RSS/MemAvailable safety thresholds; no retry.
+
+=== GRAPH RECOVERY ===
+SOURCE=OpenStreetMap.fr Central Visayas extract, https://download.openstreetmap.fr/extracts/asia/philippines/central_visayas.osm.pbf, ODbL-1.0, © OpenStreetMap contributors.
+SOURCE_DATE=2026-10-07T01:00:21Z replication snapshot (sequence 7318108).
+SOURCE_HASH=Local central_visayas.osm.pbf, 28,757,299 bytes; MD5 6531fa7af52b5565f13bfa68acff7a37; SHA256 787cac20ecc586b754b1a464643a040566d486457c6a37bc0b11ce683bc66d4d.
+RECOVERY_METHOD=Ordinary PostgreSQL crash recovery; no file repair. Added a disk-backed streaming preparation path, tested only with synthetic XML.
+EXACT_RESTORE=No historical graph restored; original PBF hash unavailable and live graph tables were empty.
+STAGING_VALIDATION=Isolated DB restore matched checked surviving transport/migration/PostGIS data; graph validation unavailable because graph rows=0 and service stopped.
+GRAPH_ID=None; no staged or active graph created.
+NODES=0 live graph nodes.
+EDGES=0 live graph edges.
+STOPS_CONNECTABLE=Not evaluated; historical reference 429/499 only.
+PLACES_CONNECTABLE=Not evaluated; historical reference 28/34 only.
+ACTIVE_GRAPH=None.
+ROLLBACK=No live activation. Existing SQLite importer rollback/idempotency tests passed; no production rows changed.
+PROVENANCE=Source URL/date/license/hash recorded in docs; stream command verifies local MD5/SHA256 and source URL filename. Real PBF output not generated.
+
+=== FIELD MISSIONS ===
+DRAFT_MISSIONS=2 Batch 023 drafts / 30 claims (18 UNKNOWN, 12 UNVERIFIED).
+CLAIMS_REVALIDATED=0; live mission/claim/evidence/session/observation/trace counts were all zero during the readable window.
+MISSIONS_PERSISTED=0; draft claims were unsupported by surviving live records.
+REAL_OBSERVATIONS_CREATED=0.
+
+=== VALIDATION ===
+DATABASE_GUARDS=PASS, 6 tests / 20 assertions (isolated database safety unit suite).
+IMPORT_TESTS=PASS, PedestrianRoutingTest 14 passed / 1 skipped / 113 assertions; includes stream equivalence, incomplete stream, rollback and idempotency coverage.
+PLANNER=NOT_RUN; graph unavailable.
+DOCTOR_V24=NOT_RUN; PostgreSQL unavailable.
+RELEASE_CHECK=NOT_RUN; PostgreSQL unavailable.
+MATRIX_47=NOT_RUN; graph missing.
+PHP_LINT=PASS on 5 changed PHP files; git diff --check PASS.
+
+=== OUTCOME ===
+RECOVERY_STATUS=PARTIAL_BACKUP_VERIFIED_DATABASE_STOPPED_GRAPH_BLOCKED.
+BLOCKERS=PostgreSQL exited unexpectedly with unknown cause; graph absent; regional PBF stream/import not completed; field plans unsupported by current claims.
+NEXT=Diagnose the external PostgreSQL stop cause; then make one observed normal start, verify staging readability, run the documented tiny PBF stream with matching URL/path under memory monitoring, and continue only if storage, memory and DB health pass.
+COMMITS=8a71e10ab28d1656fa1add34712e6e8ba60a002b (feat: add disk-backed OSM stream preparation).
+HEAD_FINAL=8a71e10ab28d1656fa1add34712e6e8ba60a002b
+WORKTREE=CLEAN
+PUSH=NO
+CLIPBOARD_COPY=PASS

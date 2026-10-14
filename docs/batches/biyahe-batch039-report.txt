@@ -1,0 +1,66 @@
+=== BIYAHE BATCH 039 ===
+HEAD_BEFORE=6de4e7dbf2710eb6c587dca3a7697d6938e7a8b7
+HEAD_AFTER=6de4e7dbf2710eb6c587dca3a7697d6938e7a8b7
+WORKTREE=DIRTY; intentional Batch039 edits remain uncommitted; six historical Doctor reports preserved
+COMMITS=NONE; implementation not committed because functional regression tests were blocked before launch
+ELAPSED_TIME=Approximately 20 minutes of active work; no idle waiting or runtime padding
+
+=== WORKSTREAM A — RECOVERY ===
+BASELINE=Expected HEAD and main branch confirmed; 13 commits ahead of origin/main; tracked work was clean before Batch039 edits
+BACKUP=$HOME/storage/external-1/Termux-Archive/Biyahe/Batch039-Recovery/20261009T144140Z; tracked/staged patches, metadata, working-file hashes, and all untracked files archived; all 11 snapshot files and archive contents verified
+UNRELATED_WORK=Six historical Doctor reports retained and included in the snapshot; no other project or database modified
+
+=== WORKSTREAM B — VALIDATION ===
+LEDGER=Implemented evidence-file SHA-256 binding and RUNNING/interruption precedence; harness authored but not executed
+JS_TESTS=BLOCKED before worker launch by SwapFree floor; zero regression cases executed
+PHP_TESTS=BLOCKED; adapter PHPUnit test not executed; PHP syntax checks passed
+TYPECHECK=TypeScript parser syntax PASS for api.ts only; full TypeScript typecheck NOT RUN
+LINT=PHP syntax PASS for changed PHP files; JavaScript module syntax PASS; Bash syntax PASS; JSON parsing PASS; git diff --check PASS; ESLint NOT RUN
+RESOURCE_GUARD=ENFORCED; 3 spaced samples: minimum MemAvailable 563344 KiB (floor 524288), minimum SwapFree 29752 KiB (floor 131072); test worker not started; PostgreSQL RSS 0
+
+=== WORKSTREAM C — WALKING ===
+GRAPH_ADAPTER=Implemented opt-in local development API adapter reusing OfflinePedestrianGraphRouter; production journey API remains unchanged
+SOURCE_BINDING=Pins graph SHA-256, graph fingerprint, coverage evidence SHA-256, source SHA-256/snapshot and restriction capability; graph hash reverified this turn; PBF was not located or rehashed this turn
+SNAPPING=25 m maximum with no virtual anchors; approximate endpoint snap distances are separate from displayed graph geometry
+DIRECTIONALITY=Uses existing directed graph router; implementation syntax checked, route behavior not executed this turn
+GEOMETRY=Only source graph geometry is returned/drawn; unavailable paths clear geometry; no straight-line walking fallback; connector distance is labeled approximate; duration is an estimate only
+TRANSFER_WALKING=Preview applies to existing walking legs; both transfer locations remain UNVERIFIED; no transfer replay executed
+REAL_CEBU_CASES=Hash-pinned replay command added for the stored ten-case SQLite corpus; NOT RUN due resource guard; baseline 9 found / 1 disconnected carried forward, not revalidated
+FAILURE_REASONS=Explicit graph_unavailable, source_mismatch, unsupported_routing_capability, resource_budget_exceeded, invalid_endpoint, snap_unavailable, endpoint_out_of_scope, component_disconnected, and path_unavailable handling
+
+=== WORKSTREAM D — PRODUCT ===
+JOURNEY_UI=Development-only preview action updates selected journey/detail card/map; ranking and transit legs remain unchanged; stale requests are cancelled and preview journeys cannot be saved
+MAP=Existing selected-journey map handoff reused; only graph geometry is shown; unavailable geometry stays absent; functional map test NOT RUN
+RIDE_MODE=Preview snapshot/version is disclosed and changing journey version requires an intentional switch; regression test NOT RUN
+SAVED_JOURNEYS=Existing v1 storage retained; local preview cannot be saved; reopen/staleness tests NOT RUN
+OFFLINE_BEHAVIOR=Local graph preview only; requires local API opt-in and the pinned SQLite graph; this does not make the complete planner available offline
+
+=== WORKSTREAM E — MOBILE ===
+MOBILE_LAYOUT=Existing responsive components reused; 320/360/390 px browser review NOT RUN
+ACCESSIBILITY=Existing semantic controls retained; keyboard/screen-reader interaction NOT RUN
+BROWSER_TESTS=NOT RUN
+
+=== READINESS ===
+DOCTOR_V39=Machine-readable report created and JSON parsed; overall BLOCKED with separate evidence statuses
+OFFLINE_GRAPH=Graph SHA-256 PASS; SQLite integrity was not rerun; prior structural validation carried forward
+LOCAL_WALKING_INTEGRATION=IMPLEMENTED, FUNCTIONALLY UNVERIFIED; local development preview only
+LIVE_API_INTEGRATION=NO; production journey API unchanged
+REAL_POSTGRESQL_STAGING=BLOCKED; no PostgreSQL process started or contacted
+FIELD_SAFETY=BLOCKED; no field evidence; both transfer locations remain UNVERIFIED
+PRIVATE_BETA=BLOCKED
+PRODUCTION_ACTIVATION=NO
+
+=== SAFETY ===
+SOURCE_GRAPH_UNCHANGED=Graph hash rechecked and matches pinned SHA-256; PBF hash remains the previously recorded identity and was not recomputed; no graph, PBF, or backup writes performed
+FABRICATED_GEOMETRY=NO
+SD_GIT_BUNDLE=Reused existing Batch038 bundle at $HOME/storage/external-1/Termux-Archive/Biyahe/Project-Archives/biyahe-batch038-20261009.bundle; advertises exact current HEAD; SHA-256 df7291c879d13113864a29bb74a7e93575fccd16baba558c03f6a9b6e4ee739d
+PUSH=NO
+
+=== NEXT ===
+REMAINING_BLOCKERS=SwapFree below the existing floor prevented functional suites; run adapter, ledger, journey, Ride Mode and corpus tests only after sustained resource headroom; full typecheck/browser validation and live graph integration remain outstanding
+RECOMMENDED_BATCH040=Run the focused guarded regression suites once resources meet both floors, fix any measured failures, perform browser map/card review, then commit verified work; keep PostgreSQL staging and field safety blocked
+
+CLIPBOARD=SET_ATTEMPTED_UNVERIFIED
+REPORT_PATH=$HOME/biyahe-batch039-report.txt
+
+=== END BATCH 039 ===

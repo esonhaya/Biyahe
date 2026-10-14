@@ -1,0 +1,99 @@
+=== BIYAHE BATCH 040 ===
+HEAD_BEFORE=6de4e7dbf2710eb6c587dca3a7697d6938e7a8b7
+HEAD_AFTER=60c82e8e9f101f25b409dcff8fd18293a47faad9
+START_TIME=2026-10-09T15:30:19Z
+END_TIME=2026-10-09T16:27:51Z
+ELAPSED_WALL_TIME=00:57:32
+ACTIVE_TIME=NOT_MEASURED
+WORKTREE=Tracked tree clean; 7 pre-existing untracked Doctor JSON reports preserved.
+COMMITS=2d1641d Add source-bound offline walking preview and diagnostics; 422a17d Publish corpus comparisons without clobbering outputs; ca0ee8f Tighten local walking preview response semantics; 90ca1d7 Report source-backed Cebu coverage by component and trust; b723f78 Add bounded coordinate-cell coverage signals; 6f669ba Package pinned Batch040 offline verification kit; 60c82e8 Record Batch040 evidence and delivery checkpoint.
+
+=== RECOVERY ===
+BATCH039_RECOVERED=YES; intentional changes preserved and committed with Batch040 work.
+RECOVERY_ARCHIVE=Batch039: ~/storage/external-1/Termux-Archive/Biyahe/Batch039-Recovery/20261009T144140Z; Batch040 pre-edit snapshot: ~/storage/external-1/Termux-Archive/Biyahe/Batch040-Recovery/20261009T153110Z.
+HISTORICAL_REPORTS=Six historical Doctor reports plus the untracked Batch039 Doctor V39 report preserved (7 total); originals remain in the repository worktree and copies are on SD.
+
+=== WORKSTREAMS ===
+WALKING_ADAPTER=Implemented opt-in loopback/local development endpoint; pins graph, schema, coverage report and restriction capability; validates endpoints/geometry/distance provenance; bounded to 25 m snapping, route limits and cooperative deadline. Functional tests BLOCKED.
+JOURNEY_PREVIEW=Selected-journey binding, stale-request abort/inert responses, retry/remove behavior and preview-save rejection implemented. No reranking or production API substitution. Final identity changes lack functional rerun.
+COVERAGE_DIAGNOSTICS=VERIFIED carried-forward Batch032 report summary; no SQLite/PBF read. 503/503 stop and 37/37 place coordinate ranges valid; 436/503 stops and 30/37 places snappable; 433 stops in largest component, 3 in smaller components; 49 stop and 17 place coordinate cells, zero low-snap candidate cells at the declared threshold. City ID 6 grouping is not geographic proof.
+OFFLINE_CORPUS=Ten-case replay command and strict result comparator implemented, including case identity, reason, distance, component, geometry continuity/direction, edge identity and snap checks. Batch040 replay NOT RUN.
+RIDE_MODE=Manual step validation and version identity improvements implemented; final progression harness NOT RUN.
+SAVED_JOURNEYS=Existing v1 snapshot retained; local preview excluded from save/parse. Full reopening regression NOT RUN.
+MAP_MOBILE=Existing MapLibre geometry filtering and selected-journey integration reused. No browser, viewport, keyboard or screen-reader verification.
+VALIDATION_LEDGER=Fingerprint/evidence-bound PASS reuse and single owned-worker scheduling retained; fixed resource floors remain 512 MiB MemAvailable and 128 MiB SwapFree. Ledger harness passed in the first guarded run; process-guard PHPUnit was not rerun after its fixture correction.
+PORTABLE_LINUX_KIT=Committed kit with 35 source snapshot files, artifact hashes, clean-room instructions and SHA256SUMS. Static kit check passed against pinned code revision b723f78653d76e1796f2980e7a414b29782ae01b. No external host run.
+TEST_INFRASTRUCTURE=Second guarded worker group was cancelled cleanly on swap-floor breach; parent shell survived. Unrelated-process survival was not independently retested in that gate.
+
+=== TESTS ===
+PHP_SYNTAX=PASS for modified adapter, router and focused test PHP files.
+JS_SYNTAX=PASS via node --check after the frontend identity edits.
+BASH_SYNTAX=PASS for regression runner, owned-process guard and portable verifier.
+JSON=PASS for Doctor, work ledger, coverage diagnostics, manifest and kit validation.
+TYPECHECK=NOT_RUN; full TypeScript check unavailable.
+LINT=PHP Pint NOT RUN after final router changes; ESLint NOT RUN.
+ADAPTER_TESTS=BLOCKED; initial fixture issue was corrected, but no rerun after the resource guard stopped the suite.
+CORPUS_TESTS=BLOCKED_NOT_REACHED; no Batch040 real graph replay.
+JOURNEY_TESTS=Offline preview helper harness PASS in guarded run before final identity edit; commute-card aggregate-distance expectation corrected (200 m expected vs 420 m measured across two walking legs), not rerun.
+RIDE_MODE_TESTS=Module-resolution issue corrected; final harness not rerun.
+SAVED_JOURNEY_TESTS=NOT_RUN_TO_COMPLETION.
+BROWSER_TESTS=NOT_RUN.
+RESOURCE_GUARD=Fixed floors unchanged. Second gate preflight minimum SwapFree 174652 KiB and MemAvailable 903400 KiB; worker minimum SwapFree 99276 KiB (below 131072 KiB floor), minimum MemAvailable 808092 KiB, peak worker-tree RSS 61368 KiB, PostgreSQL RSS 0. First gate peak worker-tree RSS was 161612 KiB. Owned worker group cancellation COMPLETE; no repeated test attempt.
+
+=== REAL DATA ===
+GRAPH_SHA256=29d7aaf9c45a596f4065c44d13f983f4a7edeec5ac2ea41b718b1c52ca865bf8
+GRAPH_UNCHANGED=YES; same SHA-256 verified at preflight and after implementation. SQLite integrity_check NOT RUN under resource guard.
+SOURCE_PBF_SHA256=787cac20ecc586b754b1a464643a040566d486457c6a37bc0b11ce683bc66d4d (baseline retained; PBF not rescanned or rehashed this batch).
+STOP_COVERAGE=503/503 stored coordinates passed numeric/range checks; 436/503 snappable within 25 m; 433 largest-component and 3 smaller-component stops; 67 unsnappable.
+PLACE_COVERAGE=37/37 stored coordinates passed numeric/range checks; 30/37 snappable; 7 unsnappable.
+TRANSFER_STATUS=2 graph-connected; both UNVERIFIED for physical transfer safety.
+OFFLINE_CORPUS=Historical evidence is 9 routes found and 1 disconnected; current Batch040 replay NOT RUN.
+RESTRICTION_EVIDENCE=Pinned coverage report records 619 vehicle-only relations; Batch039 narrative records 648. Unreconciled. Quality summary also conflicts with detailed evidence: 0 vs 26 long edges, 0 vs 944 boundary nodes, 0 vs 1510 crossing-tagged nodes.
+GRID_COVERAGE=49 stop and 17 place record cells at 0.01 degree; no cell met the threshold of at least 3 records and under 50% snapped. This describes stored records only, not empty-area, population, sidewalk or service coverage.
+FABRICATED_GEOMETRY=NO
+
+=== READINESS ===
+DOCTOR_V40=Evidence-separated report committed at docs/reports/batch040-doctor-v40.json; static/package and carried-forward diagnostics verified, graph routing integration functional tests blocked.
+OFFLINE_GRAPH=WARN; final hash matches, but SQLite integrity_check was not run this batch.
+LOCAL_GRAPH_ADAPTER=IMPLEMENTED; FUNCTIONAL_VALIDATION_BLOCKED.
+LIVE_API_INTEGRATION=BLOCKED_NOT_CONNECTED; adapter remains opt-in and development-only.
+REAL_POSTGRESQL_STAGING=BLOCKED_NOT_ATTEMPTED; no cluster started.
+FIELD_SAFETY=BLOCKED_NO_FIELD_EVIDENCE.
+PRIVATE_BETA=BLOCKED.
+PRODUCTION_ACTIVATION=NO.
+
+=== SAFETY ===
+POSTGRESQL=NOT_STARTED_OR_CONTACTED.
+PBF=NOT_RESCANNED.
+GRAPH_REBUILD=NO.
+SOURCE_GRAPH_UNCHANGED=YES.
+UNRELATED_WORK=Preserved; six historical reports and Batch039 Doctor report remain untracked and unchanged.
+PUSH=NO.
+
+=== DELIVERY ===
+COMMIT_DETAILS=7 commits after expected HEAD; six implementation/diagnostic/package commits plus one evidence checkpoint commit.
+SD_DELIVERY=/data/data/com.termux/files/home/storage/external-1/Termux-Archive/Biyahe/Batch040-Delivery/20261009T162357Z
+SD_GIT_BUNDLE=biyahe-batch040-final-head.bundle; SHA256 9f49b6ea5527c07114d45433cacbae227516439dfcfc0d8ccef64d97c68cd086; git bundle verify PASS; contains final HEAD 60c82e8e9f101f25b409dcff8fd18293a47faad9.
+SD_REPORT_ARCHIVE=preserved-historical-doctor-reports.tar.gz; 7 reports; SHA256 fd4b661b2de482f9963b1b51c1a9becae327420862653b1d0263e3055df0c757; archive contents compared byte-for-byte with originals.
+SD_CHECKSUMS=43 entries verified; top-level manifest SHA256 bd8389b87e561f13548e7770dbf72c809eb695e0808c326e867ad98bc9eec920.
+PORTABLE_KIT_COPY=39 files including its SHA256SUMS; all package file hashes verified on SD.
+UNCOMMITTED_WORK=No tracked changes; seven preserved Doctor reports remain untracked. No source patch needed.
+PUSH=NO.
+
+=== WORK QUEUE AUDIT ===
+VERIFIED_TASKS=Recovery snapshots; six commits of implementation/diagnostics/package plus evidence commit; PHP/JS/Bash/JSON syntax; git diff checks; carried-forward coverage summary; final graph SHA check; kit checksums/source-copy verification; SD Git bundle and report archive verification.
+IMPLEMENTED_UNTESTED_TASKS=Adapter unit suite after fixes; final preview identity behavior; Ride Mode and saved snapshot final harnesses; comparator/coverage synthetic fixtures; complete frontend regression suite.
+RESOURCE_BLOCKED_TASKS=PHPUnit and frontend regression continuation, graph integrity_check, real ten-case graph replay; minimum SwapFree breached the fixed floor and no retry was made.
+EXTERNAL_HOST_TASKS=Run pinned portable kit, real graph replay, full functional/type/lint/browser validation, and separately authorized disposable PostgreSQL staging/parity.
+FIELD_DEPENDENT_TASKS=Transfer interchange, boarding/access, crossing and pedestrian safety evidence; private beta remains blocked.
+REMAINING_LOCAL_WORK=No independent low-risk implementation queue remained. Functional checks require sustained resource headroom or the pinned external Linux workflow.
+
+=== NEXT ===
+RECOMMENDED_BATCH041=On a stable Linux host, verify the pinned portable kit and graph artifact, run adapter/coverage/corpus/frontend suites, collect real route parity evidence, and keep PostgreSQL staging disposable/inactive. Reconcile restriction and graph-quality report counts; obtain field evidence before beta.
+REMAINING_BLOCKERS=Swap volatility; unexecuted functional suites and real graph replay; SQLite integrity_check not rerun; 619/648 restriction count discrepancy; historical quality-summary discrepancies; no field verification; no isolated PostgreSQL staging or route parity.
+
+CLIPBOARD=SET_ATTEMPTED_UNVERIFIED
+CLIPBOARD_DETAIL=termux-clipboard-set exited 0; termux-clipboard-get returned 0 bytes, so byte-for-byte verification failed.
+REPORT_PATH=$HOME/biyahe-batch040-report.txt
+
+=== END BATCH 040 ===

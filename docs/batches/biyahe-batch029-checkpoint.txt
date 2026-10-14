@@ -1,0 +1,65 @@
+BIYAHE BATCH 029 CHECKPOINT
+Updated: 2026-10-08
+
+PHASE 0 — RESUME
+- HEAD: edc2b6f785490c565712eb37045fc7febeac378b; branch main; worktree clean at start.
+- Batch028 report/checkpoint reviewed. SQLite offline graph staging and tests already exist; no rebuild planned.
+- Verified PBF is present (28,757,299 bytes); SHA-256 matches 787cac20ecc586b7541b464643a040566d486457c6a37bc0b11ce683bc66d4d.
+- PostgreSQL remains stopped; no startup attempted.
+- Initial sampled resources: MemAvailable 997,512 KiB; SwapFree 444,036 KiB; disk free about 4.5 GiB.
+
+PHASE 1 — OSMIUM LINKER FORENSICS COMPLETE
+- Installed packages: osmium-tool 1.19.1, libc++ 30, aarch64; candidates match installed packages.
+- Osmium is an aarch64 Android ELF using libc++_shared.so with RUNPATH $PREFIX/lib.
+- Shell LD_LIBRARY_PATH points first to Codex CLI node_modules/.../bin and that bundled libc++_shared.so lacks _ZNSt6__ndk113__hash_memoryEPKvm.
+- Termux $PREFIX/lib/libc++_shared.so exports the required symbol; `env -u LD_LIBRARY_PATH osmium --version` and explicit `LD_LIBRARY_PATH=$PREFIX/lib osmium --version/help` pass.
+- Evidence supports inherited incompatible runtime search path, not stale package/NDK mismatch. No package changes or shared-library copying.
+
+CURRENT
+- Phase 2 runtime repair: use an isolated Termux library path in project wrappers, then validate an actual PBF read.
+- Resources re-sampled before wrapper work: MemAvailable 877,996 KiB; SwapFree 39,128 KiB; disk free 4,786,344 KiB. Swap is low but not used as a standalone rejection; resource runner remains required.
+- No PBF processing or PostgreSQL activity has occurred in Batch029.
+
+PHASE 2 — LINKER REPAIR COMPLETE; SOURCE HASH INPUT CORRECTED
+- Project Osmium invocations now run through api/scripts/osmium-runtime.sh, which sets LD_LIBRARY_PATH exactly to $PREFIX/lib and discards the conflicting inherited path. The updater and both streaming wrappers use it.
+- Focused wrapper unit test PASS (1 test / 2 assertions); Doctor static readiness test PASS (1 / 20 assertions); changed PHP lint, shell syntax and diff check PASS.
+- The hash string passed in the Batch029 prompt is 63 characters and invalid as SHA-256. Existing docs/pedestrian-routing.md and the local sidecar identify the verified source; local sha256sum is 787cac20ecc586b754b1a464643a040566d486457c6a37bc0b11ce683bc66d4d (64 chars), MD5 6531fa7af52b5565f13bfa68acff7a37 also matches sidecar. Use only that computed/documented digest.
+- First runner attempt exited 2 at SHA argument validation before launching Osmium; peak worker RSS 0, no stream or graph work occurred. Its log is retained at ~/.cache/biyahe/batch029/real-source-stream.log.
+- Next safe action: one guarded full-source streaming graph attempt with the canonical 64-character SHA, new log/PID paths; no PostgreSQL process.
+
+PHASE 4 — REAL PBF STREAM ATTEMPT
+- With the canonical 64-character local SHA and absolute source path, Osmium 1.19.1 parsed the actual Central Visayas PBF until the existing 100,000 in-scope node cap rejected the source. The producer did not exit cleanly; no graph artifact was published.
+- Guard log: ~/.cache/biyahe/batch029/real-source-stream-attempt-3.log. Peak process-tree RSS 111,304 KiB; minimum MemAvailable 745,408 KiB; minimum disk free 4,717,432 KiB. No resource stop. PostgreSQL remained stopped.
+- The failed partial SQLite checkpoint is 38 MiB, PRAGMA integrity_check=ok, metadata state=SOURCE_INCOMPLETE/input_complete=false; 1.2M source node rows were parsed before the scope cap tripped. It has no way/relation phase and is not a graph artifact. Preserve for diagnostics; validators/importers reject it.
+
+PHASE 5 — LOW-MEMORY SCOPE ADJUSTMENT
+- Added a distinct offline-only in-scope node cap defaulting to 200,000, hard-clamped at 500,000. Existing JSON/import limits stay unchanged. Reason: one real stream proved the source exceeds the legacy 100,000 node cap at about 111 MiB RSS, while storage is disk-backed. Existing source-node absolute cap remains 10M, candidate references remain under the existing input cap, and the external RSS/memory/disk guard remains active.
+- Focused offline graph fixtures PASS (9 tests / 41 assertions), including separation and rejection of the offline cap; Doctor static test PASS (1 / 20 assertions); lint/shell syntax/diff checks PASS.
+- Next: commit the runtime/cap milestone, then one fresh guarded source run to a new output path. Do not reuse or publish the SOURCE_INCOMPLETE checkpoint.
+
+PHASE 6 — RESOURCE STOP
+- The one final walkable-way-filtered source run remained active at 06:31, with Osmium PID 5364 and wrapper PID 5301. Peak observed process-tree RSS was 101,404 KiB; MemAvailable minimum was 395,760 KiB, about 2.5 MiB above the configured 393,216 KiB stop floor. Current MemAvailable had recovered to 786,152 KiB, but SwapFree was 25,864 KiB and process execution remained ongoing.
+- Per resource policy, stop the wrapper gracefully at this near-floor excursion. Preserve the .building checkpoint; no final artifact is accepted. Next: verify producer/consumer exit, SQLite checkpoint state, and validator rejection; do not restart the real stream in this batch.
+
+PHASE 6 — FINAL STATUS
+- Final filtered run was manually stopped by SIGTERM to the wrapper at 06:31 after sampled MemAvailable reached 395,760 KiB against a 393,216 KiB floor. Wrapper exited 143 through its cleanup trap. No clean Osmium producer exit was observed; PostgreSQL stayed stopped.
+- Final .building metadata: state=INGESTING, input_complete=false, last committed source_nodes=3,175,000, scope_nodes=339,933, source_ways=0, relations=0, candidate_ways=0. Final graph file does not exist. The .building file and its journal remain outside Git and are not valid artifacts.
+- Resource measurements across runs: peak process-tree RSS 112,752 KiB; minimum MemAvailable 395,760 KiB; SwapFree sampled at 25,864 KiB near stop; runner minimum disk free 4,257,520 KiB. No Android LMKD evidence.
+
+PHASE 12 — VALIDATION COMPLETE
+- Osmium wrapper unit: 1/2 PASS.
+- Offline graph fixtures: 9/42 PASS.
+- Offline graph import: 3/17 PASS.
+- Database safety: 6/20 PASS.
+- Pedestrian routing: 17/124 PASS, 1 PostGIS-only skip.
+- Batch020 field operations: 4/29 PASS; FieldSurveyWorkflow: 11/132 PASS; ClaimScopedTrust: 3/7 PASS.
+- Targeted Doctor static test: 1/20 PASS. Direct Doctor V29 static: 10 PASS / 3 WARN / 6 BLOCKED / 0 FAIL, exit 2 expected because live DB/graph checks are unavailable.
+- Changed PHP lint, shell syntax, git diff checks PASS. Frontend unchanged; no frontend checks/build, release check, or 47-pair audit run.
+
+PHASE 13 — COMMITS/FINAL
+- Commits: 94dc74c (runtime isolation + bounded offline scope), d9eda06 (filter offline source indexing to pedestrian ways).
+- HEAD: d9eda061fd687d24d3a332124fce26419d729902; branch main; worktree clean; no push.
+- PostgreSQL exit cause remains UNKNOWN from prior logs; no startup attempted in Batch029. Existing Batch024 backup manifest records restore PASS; no new backup or DB mutation.
+- Field plans remain drafts (2 missions / 30 claims); no live revalidation or persistence, no observations created.
+- User supplied and Batch028 report hash variant is 63 hex and invalid. Actual local SHA-256, matching repository source documentation and matching local MD5 sidecar, is 787cac20ecc586b754b1a464643a040566d486457c6a37bc0b11ce683bc66d4d.
+- Next safe action: do not resume this SOURCE_INCOMPLETE work file as a graph. On a resource-stable host/device, use a new output path and the documented bounded wrapper with the verified local source, canonical SHA-256 above, Osmium runtime helper, and explicit 500,000 offline scope ceiling. Require a clean producer exit and full validator PASS before any database staging.

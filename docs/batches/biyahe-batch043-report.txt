@@ -1,0 +1,86 @@
+=== BIYAHE BATCH 043 ===
+HEAD_BEFORE=19172ef20c2fff9e9a6d02d66d36b182ac6acb74
+HEAD_AFTER=ea5f678da09c1425a19ef34f0ea739769a2bf3ae
+START_TIME=2026-10-10T10:12:52Z
+END_TIME=2026-10-10T11:09:51Z
+ELAPSED_WALL_TIME=00:56:59
+ACTIVE_TIME=NOT_MEASURED
+WORKTREE=TRACKED_CLEAN; seven historical untracked Doctor reports preserved byte-for-byte
+COMMITS=
+  3fdd79b94b0e6cb4da06a7ecb853a4ff50173504 Batch 043: guarded corpus replay tooling and staging runbook
+  158a1033900c56654765b136fe211748583713a9 Batch 043: support no-clobber report publication on Termux
+  dad74a31898c1c96235e14b94ef8b4a69e31287f Batch 043: verify no-clobber corpus report publication
+  c15d4e09f7c361385bbe3f224f2c4c57742ad81e Batch 043: record Doctor V43 and verification ledger
+  a35a9dcf02c5fb2bf1dcd6cf24cf7b78a2eac9cf Batch 043: deliver portable verification kit v5
+  ea5f678da09c1425a19ef34f0ea739769a2bf3ae Batch 043: record portable v5 package verification
+
+=== REAL ROUTING ===
+GRAPH_SHA256=EXPECTED 29d7aaf9c45a596f4065c44d13f983f4a7edeec5ac2ea41b718b1c52ca865bf8; ACTUAL NOT_CHECKED_THIS_BATCH (resource gate refused before graph metadata/hash access)
+GRAPH_INTEGRITY=BLOCKED_RESOURCE; SQLite not accessed
+CORPUS_CASES_EXECUTED=0
+CORPUS_CASES_PASS=0
+CORPUS_CASES_FAIL=0
+CORPUS_CASES_BLOCKED=1 (selected case 0; worker not started)
+CORPUS_CASES_NOT_SELECTED=9
+CORPUS_STATUS=BLOCKED_RESOURCE; historical 9 routes / 1 disconnected is not a current result
+ADAPTER_REAL_GRAPH=BLOCKED_RESOURCE; no real graph request or Laravel route replay
+DIRECTED_GEOMETRY=PHP geometry contract smoke PASS (7 cases); real Cebu directed geometry NOT_RUN
+PERFORMANCE_BEFORE_AFTER=NOT_MEASURED; no graph queries or routing timing were collected because the resource gate blocked graph access
+ROUTING_CHANGES=Added bounded case/subset selection and moved graph metadata/hash access behind the 5-sample gate; no graph or path semantics changed
+
+=== FRONTEND ===
+PREVIEW_INTEGRATION=Current harness BLOCKED_RESOURCE; existing source contract and state-machine changes are packaged, but no current frontend run was launched
+RIDE_MODE=BLOCKED_RESOURCE (current harness not run)
+SAVED_JOURNEYS=BLOCKED_RESOURCE (current harness not run)
+SEARCH=BLOCKED_RESOURCE (current harnesses not run)
+CAN_I_RIDE=BLOCKED_RESOURCE (current harness not run)
+TYPECHECK=BLOCKED_RESOURCE; not run after resource preflight failed
+ESLINT=BLOCKED_RESOURCE; not run after resource preflight failed
+BROWSER=NOT_RUN; browser executables were not available; no visual verification claimed
+
+=== INFRASTRUCTURE ===
+PORTABLE_V5=PASS package generation; manifest and all 133 SHA256 entries verified by verify-kit.sh; packaged corpus-verification-contract 4/4 PASS in 1.370 s. Full STATIC mode, external host, ADAPTER, FRONTEND, CORPUS and FULL modes were not run as complete modes.
+STAGING_RUNBOOK=IMPLEMENTED; reproducible external Linux PostgreSQL/PostGIS setup, migration/import order, safe smoke checks, access controls, backups and rollback documented
+STAGING_SCRIPTS=Shell syntax PASS; passive local preflight BLOCKED_DEPENDENCY (Composer unavailable and staging environment variables absent); no service or database action
+POSTGRESQL=NOT_STARTED; staging BLOCKED_DEPENDENCY
+PRODUCTION_DEPLOYMENT=NOT_PERFORMED
+
+=== EVIDENCE ===
+DOCTOR_V43=VALIDATED at 2026-10-10T11:03:45Z; 19 independent categories; 59 source fingerprints; executable/tested revision dad74a31898c1c96235e14b94ef8b4a69e31287f. Later commits are documentation, evidence, and kit delivery. At Doctor assessment, portable v5 was IMPLEMENTED_UNTESTED; the independent package verification above completed afterward.
+SOURCE_FINGERPRINTS=59 source files pinned to executable revision dad74a31898c1c96235e14b94ef8b4a69e31287f
+STOP_COVERAGE=503 stored stops; 436 within 25 m; 67 unsnappable. Stored-record scope only; no population/geographic/sidewalk/field coverage claim.
+PLACE_COVERAGE=37 stored places; 30 within 25 m; 7 unsnappable. Stored-record scope only.
+TRANSFER_VERIFICATION=0 of 2 physically verified; field safety BLOCKED_DEPENDENCY
+RESTRICTIONS=648 vehicle-only source classifications = 619 stored + 29 omitted
+GRAPH_QUALITY=Historical measured diagnostics: 26 long edges, 944 boundary nodes, 1510 crossing-tagged nodes. Unmeasured legacy defaults remain unknown, not zero facts.
+FARES_ETA_ACCESS=Unknown values remain unknown; no fare, ETA, boarding access, crossing safety, or field evidence was created.
+VALIDATION_HISTORY=Coverage fixture’s first run failed on a stale expected diagnostic; assertion was corrected and the rerun passed. A standalone SHA256 command from the repository root failed because it used kit-relative paths; the kit verifier then checked all 133 entries from the correct root. Both incidents are recorded in the ledger.
+
+=== RESOURCES ===
+PREFLIGHT=BLOCKED_RESOURCE. Initial observation 2026-10-10T10:19:14Z: MemAvailable 609528 KiB, SwapFree 17552 KiB. Earlier five-sample baseline minima: MemAvailable 844184 KiB, SwapFree 85460 KiB (blocked). Guarded corpus preflight 2026-10-10T10:37:49Z–10:38:13Z: 5 samples; minima MemAvailable 824604 KiB, SwapFree 116124 KiB (blocked by swap floor).
+PEAK_RSS=NOT_OBSERVED; owned worker was never started after guard refusal; RSS and worker swap N/A
+MINIMUM_SWAPFREE=17552 KiB observed during batch; latest guarded graph preflight minimum 116124 KiB; fixed floor 131072 KiB
+CANCELLATIONS=BIYAHE_RESOURCE_BREACH_SAMPLES=1 configured and honored; guard exit 4 / command_not_started=yes; cancellation NOT_NEEDED; no unrelated process was terminated
+POSTGRESQL_RSS=0 observed; PostgreSQL never started
+RESOURCE_CAP=262144 KiB process-tree RSS cap retained; memory floor 524288 KiB retained
+
+=== DELIVERY ===
+FINAL_HEAD=ea5f678da09c1425a19ef34f0ea739769a2bf3ae
+SD_GIT_BUNDLE=$HOME/storage/external-1/Termux-Archive/Biyahe/Batch043-Recovery/20261010T110724Z/biyahe-batch043-final-ea5f678da09c1425a19ef34f0ea739769a2bf3ae.bundle
+BUNDLE_SHA256=5b1fa34db9482481a4a15f6f9dd41107cc0f4cf9649d3040ba0eed99e7a54aef
+SD_RECOVERY_ARCHIVE=$HOME/storage/external-1/Termux-Archive/Biyahe/Batch043-Recovery/20261010T110724Z/biyahe-batch043-recovery-evidence.tar.gz
+SD_RECOVERY_ARCHIVE_SHA256=8bb6bda1afcddfe39ca35e4ed5e638e93e1acc04688ce067d11c5ce9736098e7
+SD_VERIFICATION=git bundle verify PASS; final HEAD present on refs/heads/main and HEAD; bundle sidecar PASS; recovery archive 36 evidence files hash-checked and tar-readable; archive sidecar PASS; initial recovery bundle retained
+PUSH=NO
+
+=== REMAINING WORK ===
+VERIFIED=Guard-before-graph ordering; bounded corpus selection/comparator contracts; Doctor V43 validation; source provenance and stored-record coverage fixtures; geometry smoke; corpus report no-clobber writer; portable runner contracts; v5 package checksum inventory and one packaged static suite; Python AST (12), JSON (2), Bash/PHP/Node syntax checks and git diff --check; SD bundle/archive and seven historical report hashes.
+IMPLEMENTED_UNTESTED=Real-graph adapter behavior; full v5 mode matrix; resource cancellation under a launched worker; external staging execution; current frontend regressions and visual map/mobile behavior.
+RESOURCE_BLOCKED=Current graph identity/integrity and all 10 Cebu replay cases; real-graph adapter; current preview/Ride Mode/saved journey/search/Can-I-Ride harnesses; TypeScript; ESLint; full guarded syntax suite.
+EXTERNAL_HOST_REQUIRED=Linux staging with Composer/Laravel dependencies, PostgreSQL/PostGIS, dataset/importer, health/API smoke, frontend build and real browser verification.
+FIELD_EVIDENCE_REQUIRED=Physical verification for both transfer locations and any field safety/accessibility claims.
+NEXT_BATCH=Take five spaced resource samples; only after every floor passes verify pinned graph SHA and read-only integrity, run one bounded case under the owned-worker guard, then expand incrementally if headroom remains. Complete guarded frontend/adapter checks and external staging separately; keep production and private beta blocked pending evidence.
+
+CLIPBOARD=SET_ATTEMPTED_UNVERIFIED
+REPORT_PATH=$HOME/biyahe-batch043-report.txt
+=== END BIYAHE BATCH 043 ===

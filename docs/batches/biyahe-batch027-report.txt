@@ -1,0 +1,52 @@
+=== BASELINE ===
+HEAD_BEFORE=5abe08dd3d6643ec2854f36acb21812c458b8d13
+HEAD_AFTER=d6974d2d5aa27e5e8cfedbc7120ac2ce61fac68e
+WORKTREE=CLEAN; branch main; 29 commits ahead of origin; no push
+
+=== RECOVERY ===
+POSTGRESQL=One normal start completed WAL recovery and stayed ready during a 20-second observation; it later exited during a read-only query. Current pg_ctl status: no server running. No restart loop.
+EXIT_EVIDENCE=UNKNOWN; logs have no shutdown-complete, PANIC, or recorded signal evidence. Cause not established.
+BACKUP=Existing Batch 024 dump SHA-256 verified as e55af400fde88d0a3434b194e0625e204eb0a2726374eabb8286c152b11a4a92; prior isolated restore verification recorded; backup unchanged.
+DATABASE_READ_ONLY=Before exit: 1 city, 37 places, 47 aliases, 503 stops, 32 routes, 61 patterns, 1,124 pattern-stops, 2 transfers, 22 fares; pedestrian dataset/node/edge rows=0; field missions/claims/observations/sessions/traces=0. No DB writes or migrations.
+RESOURCE_GUARDS=PASS; operation-specific configurable memory/disk/RSS budgets, descendant RSS monitoring, advisory swap, and bounded graceful cancellation. PG guard 3/17 assertions and process guard 3/19 passed.
+REAL_PBF_PROOF=BLOCKED_RESOURCE after 85 seconds: MemAvailable fell to 367,468 KiB for two samples below the 393,216 KiB floor; producer stopped; incomplete XML rejected; no partial artifact retained. Peak process-tree RSS 99,996 KiB.
+GRAPH_STAGING=NOT_PREPARED; database did not remain healthy and tiny source proof did not complete.
+GRAPH_ACTIVE=NO; last read-only counts showed no pedestrian graph. Stop/place connectivity not measured.
+FIELD_MISSIONS=NOT REVALIDATED OR PERSISTED; two prior draft plans/30 claims remain drafts; live DB previously had zero mission/claim records. REAL_OBSERVATIONS=0.
+
+=== OSM ===
+SOURCE=https://download.openstreetmap.fr/extracts/asia/philippines/central_visayas.osm.pbf
+SOURCE_DATE=2026-10-07T01:00:21Z
+SOURCE_SIZE=28,757,299 bytes
+SOURCE_HASH=SHA-256 787cac20ecc586b754b1a464643a040566d486457c6a37bc0b11ce683bc66d4d
+PIPELINE=One bounded Carbon Market proof via Osmium cat/FIFO/XMLReader/SQLite; no complete_ways extraction or graph import. Guard cancelled producer; parser rejected incomplete stream; no stream completeness result.
+MEMORY=OSM peak RSS 99,996 KiB; minimum MemAvailable during guarded proof 367,468 KiB; disk stayed above 4.8 GiB. Typecheck peak RSS 334,324 KiB with Node heap capped at 512 MiB.
+
+=== INTEGRATION ===
+SEARCH=PASS; stale/abort-insensitive autocomplete results rejected, short-query clearing and network retry covered.
+SEARCH_TO_RIDE_MODE=PASS on isolated direct/1-transfer/2-transfer fixtures; detail boarding/alighting guidance maps to the selected ride geometry and preserves uncertainty.
+SAVED_OFFLINE=PASS; snapshot reopens without API and excludes raw GPS.
+NEARBY=PASS; unsupported/denied/empty/network/cancel/late-response cases tested; location remains request-only.
+ROUTE_EXPLORER=Static contracts pass; live route planning/readiness remains blocked by missing graph/database.
+FIELD_WORKFLOW=PASS focused client outbox and backend review/idempotency fixtures; campaign replay preserves reviewed/collected claim state. No observation was created in live data.
+ACCESSIBILITY=Keyboard wrap/clamp behavior tested; UX harness has 44 source contracts for semantics, focus, safe-area, reduced-motion and errors. No browser, device, screen-reader or physical viewport validation.
+
+=== VALIDATION ===
+BACKEND=PASS; Field Operations 4 tests/29 assertions; Doctor status tests 2/18; changed PHP lint PASS.
+IMPORTER=PASS fixtures; stream completeness 5/31 plus activation/rollback/idempotency 4/24 assertions.
+DATABASE_GUARDS=PASS; database/resource guard suite 12 tests/56 assertions.
+FRONTEND=PASS; place-search, nearby, keyboard, Ride Mode, commute-card/offline, Field Mode, Personal Commute, and UX harnesses (44 checks).
+TYPECHECK=PASS; one full run, Node heap capped at 512 MiB.
+FRONTEND_LINT=PASS; changed source and harness files.
+DOCTOR_V27=Static PASS=8 WARN=1 FAIL=0 BLOCKED=6; exit 2 is expected for unavailable live checks. Live Doctor not run because PostgreSQL is down.
+RELEASE_CHECK=BLOCKED_NOT_RUN_DATABASE_UNAVAILABLE_AND_GRAPH_MISSING
+MATRIX_47=NOT_RUN_GRAPH_MISSING
+FRONTEND_BUILD=NOT_RUN_NOT_REQUIRED
+
+=== OUTCOME ===
+ELAPSED_TIME=NOT_TRACKED
+COMMITS=79ba214 Bound PostgreSQL resource observation; 3518ddf Guard bounded OSM streaming by live resources; 098df90 Harden commuter search and nearby flows; d6974d2 Harden Doctor graph and field planning readiness
+BLOCKERS=Unexplained PostgreSQL exit; real-PBF proof stopped by measured memory guard; no staging or active graph; field drafts could not be revalidated live.
+NEXT=Collect accessible PostgreSQL/Termux lifecycle evidence without restarting; develop a lower-memory real-PBF proof and rerun only in a safe resource window; then stage, validate, back up, and activate before live planner/release checks.
+PUSH=NO
+CLIPBOARD_COPY=CLIPBOARD_UNVERIFIED

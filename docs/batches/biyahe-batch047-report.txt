@@ -1,0 +1,72 @@
+=== BIYAHE BATCH 047 ===
+HEAD_BEFORE=6e199f33deed7397996241b1867c420f757ec6ae
+HEAD_AFTER=8904668f2f86ecd6d069b28b106f6fa1515fffa6
+START_TIME=2026-10-10T17:18:32Z (2026-10-11T01:18:32+08:00 Asia/Manila)
+END_TIME=2026-10-10T17:41:59Z (2026-10-11T01:41:59+08:00 Asia/Manila)
+ELAPSED_WALL_TIME=00:23:27
+WORKTREE=TRACKED_CLEAN; seven historical untracked Doctor reports preserved byte-for-byte
+COMMITS=793e04e22e428804111d91f60842ad9e753bd2d5, 8904668f2f86ecd6d069b28b106f6fa1515fffa6
+
+=== BACKUP RECOVERY ===
+LATEST_HEAD_BACKED_UP=YES; full history, refs/heads/main at final HEAD 8904668f2f86ecd6d069b28b106f6fa1515fffa6
+BACKUP_TYPE=Full Git bundle; verified pre-change checkpoint plus verified final checkpoint
+BACKUP_PATH=$HOME/storage/external-1/Termux-Archive/Biyahe/Batch047-Recovery/commit-8904668/biyahe-batch047-final-8904668.bundle
+BACKUP_SHA256=581601d5a111a925a1e2d58fdb65795047f13c61b7a352239ff383f55f5da351
+RESTORE_VERIFICATION=git bundle verify PASS; complete history and final main ref PASS; fresh clone restore NOT_RUN. Restore with: git clone <bundle-path> <new-directory>.
+INITIAL_BACKUP=$HOME/storage/external-1/Termux-Archive/Biyahe/Batch047-Recovery/20261010T172654Z/biyahe-batch047-initial-6e199f33deed7397996241b1867c420f757ec6ae.bundle SHA256=b939d081d10eec729b02a87a8098a721abc09485332acc0c42b21c8b8f777d74; contains starting HEAD only, not later commits.
+
+=== RESOURCE RECOVERY ===
+LIGHTWEIGHT_TEST_POLICY=Implemented strict operation allowlist around existing owned-process-group guard. Light profile: MemAvailable floor 524288 KiB, SwapFree reserve 32768 KiB, RSS cap 131072 KiB, three 1-second preflight samples, 60-second timeout, first-breach cancellation. Heavy limits remain unchanged.
+HEAVY_GUARD_UNCHANGED=YES; MemAvailable >=524288 KiB, SwapFree >=131072 KiB, process-tree RSS <=262144 KiB.
+MEMORY_MEASUREMENTS=Start MemAvailable 943844 KiB; minimum observed 757652 KiB. Latest 989708 KiB. Battery observed 24% then 35%, charging AC, health GOOD; temperature 36.8 C then 36.9 C; thermal_zone0 37.0 C. tmux 3.7c present, no session; no new session created.
+SWAP_MEASUREMENTS=Start SwapFree 535872 KiB; minimum observation 2252 KiB during a blocked preflight; minimum during an active worker 26120 KiB. Latest 63800 KiB. Low-resource runs used the separate light reserve; heavy work was not launched below its floor.
+WORKER_RSS=API fixture 103620 KiB; commute-card fixture 99444 KiB; Ride Mode fixture 87248 KiB; request-gate canceled worker 78360 KiB; final-wrapper commute invocation 56864 KiB; final bundle worker 3856 KiB. PostgreSQL RSS=0.
+CANCELLATIONS=2 owned workers canceled at first swap breach: request-gate at 26120 KiB and final-wrapper commute fixture at 29644 KiB. Both process groups stopped; no unrelated process targeted. No cancellation escalation.
+
+=== FUNCTIONAL VALIDATION ===
+API_FAILURE_TESTS=PASS, synthetic/no network. Inner command: node --experimental-strip-types scripts/api-failure-harness.mjs; exit 0, 2.043 s, peak RSS 103620 KiB, min MemAvailable 947236 KiB, min SwapFree 128040 KiB. Assertions: place/direct/transfer/empty contracts, partial rejection, source identity, HTTP diagnostics, malformed JSON, header/body timeout, caller cancellation, timer/listener cleanup. Executed with a temporary measured runner later removed; source fingerprints are in Doctor V47 and cache evidence.
+SAVED_JOURNEY_TESTS=PASS within the synthetic commute-card fixture: snapshot validation, offline reopening, corrupt storage preservation, no preview persistence, no API requests or GPS persistence. Exit 0, 1.798 s, peak RSS 99444 KiB, min MemAvailable 932612 KiB, min SwapFree 129736 KiB.
+JOURNEY_SELECTION_TESTS=BLOCKED_RESOURCE for request-gate fixture; worker exit -15 / harness exit 125 after first-breach cancellation, 1.644 s, peak RSS 78360 KiB, min MemAvailable 870308 KiB, min SwapFree 26120 KiB. No retry. Place search, keyboard selection, Can-I-Ride and full origin/destination sequencing fixtures=NOT_RUN.
+RIDE_MODE_TESTS=PASS, synthetic/no network. Inner command: node --experimental-strip-types scripts/ride-mode-harness.mjs; exit 0, 1.911 s, peak RSS 87248 KiB, min MemAvailable 852976 KiB, min SwapFree 35428 KiB. Manual direct/transfer progression, stale evidence rejection, conservative off-route behavior, no raw GPS persistence, corrupt-session write guard, uncertainty retention.
+COMMUTE_CARD_TESTS=PASS in the earlier measured run with synthetic direct/one-transfer/two-transfer fixtures, 30 instructions, evidence disclosures, geometry failure behavior and safe share text. A later checked-in-wrapper attempt started but the guard canceled on first breach at SwapFree 29644 KiB (wrapper exit 6, 9 s); assertions printed before cancellation are NOT counted as PASS for that invocation.
+STATIC_CHECKS=PASS: bash -n api/scripts/run-lightweight-check.sh; bash -n api/scripts/create-batch047-bundle.sh; bash -n api/scripts/run-bounded-process.sh; python3 -m json.tool docs/reports/batch047-doctor-v47.json; git diff --check; git diff --cached --check. The checked-in API wrapper preflight was BLOCKED_RESOURCE before worker start (min MemAvailable 804664 KiB, min SwapFree 2252 KiB, exit 4).
+FAILED_TESTS=NONE
+BLOCKED_TESTS=request-gate fixture; checked-in API wrapper preflight; checked-in commute-card wrapper execution. Each is explicitly BLOCKED_RESOURCE, not PASS. TypeScript build, lint, PHP checks, browser automation, graph replay and database checks were NOT_RUN.
+DOCTOR_V46=Reviewed; its API and snapshot changes were included in the current application fixture scope.
+DOCTOR_V47=docs/reports/batch047-doctor-v47.json; committed at 8904668; pins application source revision 6e199f33deed7397996241b1867c420f757ec6ae and executable tooling revision 793e04e22e428804111d91f60842ad9e753bd2d5.
+
+=== APPLICATION CHANGES ===
+API=No new application source change this batch. Inspected timeout/body parsing, cancellation, response/source validation and HTTP errors; accumulated synthetic API fixtures passed.
+SEARCH=No new search source change. Request-gate fixture blocked; search and Can-I-Ride harnesses not run.
+JOURNEYS=No planner/ranking changes. Inspected selected journey and retry handling; no new defect was demonstrated. Search sequencing remains unverified.
+OFFLINE=No snapshot format change. Synthetic save/reopen/corrupt-data fixtures passed; no preview persistence and no backend request while offline.
+RIDE_MODE=No new app source change. Manual transition fixtures passed; no GPS or automatic arrival claim.
+MOBILE_UX=Source inspection only; no new defect fixed. Browser/visual verification NOT_RUN.
+PERFORMANCE=No speedup claimed. Existing commute harness reported instruction generation 61.82 ms in one synthetic run; this is not a benchmark.
+
+=== EVIDENCE AND READINESS ===
+DOCTOR_V47=See docs/reports/batch047-doctor-v47.json; application source revision and verification-tool revision are pinned separately.
+REAL_CEBU_CORPUS=NOT_RUN; historical ten-case 9-found/1-disconnected result remains historical only.
+GRAPH_STATUS=NOT_ACCESSED; no SQLite graph read, rebuild, modification or PBF rescan.
+STORED_RECORD_EVIDENCE=Historical only: 503 stops / 436 within 25 m; 37 places / 30 within 25 m; 648 vehicle-only classifications = 619 stored + 29 omitted; graph diagnostics 26 long edges, 944 boundary nodes, 1510 crossing-tagged nodes.
+FIELD_VERIFICATION=Two transfer locations remain physically UNVERIFIED. Unknown fare, ETA, boarding, accessibility, crossings and missing geometry remain unknown.
+PRIVATE_BETA=BLOCKED
+PRODUCTION_ACTIVATION=NO
+
+=== DELIVERY ===
+FINAL_HEAD=8904668f2f86ecd6d069b28b106f6fa1515fffa6
+FINAL_BACKUP=$HOME/storage/external-1/Termux-Archive/Biyahe/Batch047-Recovery/commit-8904668/biyahe-batch047-final-8904668.bundle
+SD_VERIFICATION=PASS; sidecar SHA256 verified from bundle directory; git bundle verify PASS; complete history; refs/heads/main equals final HEAD; 1912312 bytes.
+PUSH=NO
+PROGRESS_LEDGER=$HOME/biyahe-batch047-progress.txt
+
+=== NEXT WORK ===
+VERIFIED=API timeout/response fixtures; saved snapshot and commute-card synthetic fixtures; Ride Mode fixtures; wrapper cancellation behavior; source/static checks; initial and final Git bundles; seven historical report hashes.
+IMPLEMENTED_UNTESTED=Checked-in fixture runner successful PASS path remains unverified; its commute fixture was cancelled by the guard. The bundle operation using the same wrapper/helper did PASS under guard.
+REMAINING_DEFECTS=No new app defect demonstrated. Search/request sequencing coverage remains incomplete; checked-in wrapper functional test was resource-cancelled after output.
+TERMUX_FEASIBLE_NEXT_BATCH=Run search keyboard/place-search/Can-I-Ride fixtures individually when the existing guard preflight passes; continue pure app tests and snapshot/Ride Mode work without database or browser services.
+EXTERNAL_VALIDATION_DEFERRED=Real Cebu graph/corpus, PostgreSQL staging, TypeScript build/lint if resource-gated, browser/mobile visual checks and field transfer verification.
+
+CLIPBOARD=SET_ATTEMPTED_UNVERIFIED
+REPORT_PATH=/data/data/com.termux/files/home/biyahe-batch047-report.txt
+=== END BIYAHE BATCH 047 ===

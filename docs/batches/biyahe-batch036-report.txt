@@ -1,0 +1,65 @@
+=== BIYAHE BATCH 036 ===
+HEAD_BEFORE=90a40fc4b348f0974e7381d5250146917106930c
+HEAD_AFTER=a72632d9581ad7d28cb2b2d030d34b7b5b2d6794
+WORKTREE=DIRTY; six pre-existing untracked Batch033/034 Doctor reports preserved
+COMMITS=ac68cae, 8fc554f, a72632d
+ELAPSED_TIME=approximately 40 minutes
+
+=== CONSOLIDATION ===
+BATCH033_035_PRESERVED=YES; recovered importer, checkpoint, resource-guard and routing work committed
+RECOVERY_BACKUP=SD snapshot 20261009T110100Z; tracked/untracked archives and SHA256SUMS verified
+FILES_REVIEWED=42 changed paths from expected HEAD
+DEFECTS_FIXED=portable builder now excludes external restriction audit from Git cleanliness paths while still validating its source and content
+UNRESOLVED_CODE_GAPS=fixture suite not run; no real import, staged route parity or field evidence
+
+=== VALIDATION ===
+PHP_LINT=PASS
+BASH_SYNTAX=PASS
+JSON_VALIDATION=PASS; 24 report JSON files parsed
+OFFLINE_ROUTER_TESTS=existing Batch032 evidence: 10 cases, 9 routes found, 1 disconnected; not rerun in Batch036
+IMPORTER_TESTS=BLOCKED; guard preflight stopped before PHPUnit launch
+CHECKPOINT_TESTS=BLOCKED; same resource preflight
+CANCELLATION_TESTS=Batch035 saved probe evidence PASS; not rerun in Batch036
+RESOURCE_GUARD=PASS; blocked test launch when SwapFree sample was 75796 KiB, below 131072 KiB floor
+DOCTOR_V36=STATIC REPORT PASS; overall release gate BLOCKED
+
+=== PORTABLE STAGING ===
+PACKAGE_PATH=~/storage/external-1/Termux-Archive/Biyahe/Portable-Staging-v1/20261009T110322Z
+MANIFEST_SHA256=8c6c10c50271c76627cd5b85ab5e93896fe32da61b32e2d6ef8b5bf73486d69a
+GRAPH_INCLUDED=YES; SHA256=29d7aaf9c45a596f4065c44d13f983f4a7edeec5ac2ea41b718b1c52ca865bf8
+BACKUP_INCLUDED=YES; SHA256=e55af400fde88d0a3434b194e0625e204eb0a2726374eabb8286c152b11a4a92
+SOURCE_HASH=787cac20ecc586b754b1a464643a040566d486457c6a37bc0b11ce683bc66d4d
+PACKAGE_FILES=17 verified; source PBF, SQLite graph, PostgreSQL dump and restriction audit included
+DRY_RUN=PASS; package verified twice at build, then verified with report; CLI, no-clobber, corrupt-hash rejection and missing-Python failure checks passed
+UNSAFE_TARGET_REJECTION=package destination no-clobber PASS; production database targeting was not exercised
+REAL_HOST_EXECUTION=NOT_RUN
+
+=== READINESS ===
+OFFLINE_GRAPH=PASS; 76685 nodes, 78225 edges, 432 walkable components, snapshot-bound
+OFFLINE_ROUTING=PASS from saved real Cebu corpus; 9/10 routes, one disconnected
+STOP_COVERAGE=WARN; 436/503 within 25 m, 67 snap unavailable; 433 largest-component and 3 smaller-component snaps
+PLACE_COVERAGE=WARN; 30/37 within 25 m, 7 snap unavailable
+TRANSFERS=WARN; 2 graph-connected, both UNVERIFIED
+IMPORTER_IMPLEMENTATION=WARN; lint and static Doctor pass, fixture tests blocked
+PORTABLE_PACKAGE=PASS; static verification only
+REAL_POSTGRESQL_STAGING=BLOCKED; not attempted on phone
+ROUTE_PARITY=BLOCKED; no staged graph
+FIELD_VERIFICATION=BLOCKED
+PRIVATE_BETA=BLOCKED
+PRODUCTION_ACTIVATION=NO
+
+=== GIT SAFETY ===
+COMMITTED_CHANGES=three commits listed above
+REMAINING_UNCOMMITTED=six pre-existing historical Doctor reports preserved
+SD_GIT_BUNDLE=~/storage/external-1/Termux-Archive/Biyahe/Project-Archives/biyahe-batch036-20261009T110648Z.bundle
+BUNDLE_VERIFICATION=PASS; full history through a72632d; source/destination SHA256 e8ff8ef1bae6ca96e2dafe3e025c959fd54976a4fde1e7659055c7b7c10ac555 matches
+PUSH=NO
+
+=== NEXT ===
+REMAINING_BLOCKERS=guarded PHPUnit fixtures; isolated Linux PostgreSQL staging; real staged/offline route parity; transfer and field verification
+RECOMMENDED_BATCH037=run the packaged workflow on a separate compatible Linux host, retain inactive staging evidence, then complete field review
+
+CLIPBOARD=SET_ATTEMPTED_UNVERIFIED
+REPORT_PATH=~/biyahe-batch036-report.txt
+
+=== END BATCH 036 ===

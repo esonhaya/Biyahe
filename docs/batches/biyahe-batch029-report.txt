@@ -1,0 +1,70 @@
+BIYAHE — BATCH 029 REPORT
+
+=== BASELINE ===
+HEAD_BEFORE=edc2b6f785490c565712eb37045fc7febeac378b
+HEAD_AFTER=d9eda061fd687d24d3a332124fce26419d729902
+WORKTREE=CLEAN
+RECOVERED_WORK=Batch028 SQLite offline graph stager, validator, importer and safety guards resumed unchanged; no existing code work restarted.
+
+=== OSMIUM ===
+LINKER_ROOT_CAUSE=Inherited LD_LIBRARY_PATH selected Codex CLI's bundled libc++_shared.so, which lacks _ZNSt6__ndk113__hash_memoryEPKvm. Termux $PREFIX/lib exports it; package/runtime mismatch not supported by evidence.
+PACKAGE_VERSION=osmium-tool 1.19.1 aarch64; libc++ package 30; candidates matched installed versions.
+RUNTIME_VERSION=osmium 1.19.1 / libosmium 2.23.1; packaged binary built with NDK r30.
+REPAIR_ACTION=No package changes. Added api/scripts/osmium-runtime.sh to isolate calls to $PREFIX/lib; all three producer/updater scripts use it.
+OSMIUM_VERSION_TEST=PASS; osmium --help PASS with the isolated runtime.
+REAL_PBF_READ_TEST=PARTIAL_RESOURCE_STOP. Real PBF parsing began; final checkpoint reached 3,175,000 source nodes / 339,933 in-scope nodes, with zero committed ways or relations. Wrapper was stopped before clean producer exit (status 143).
+FALLBACK_READER=Not used; packaged Osmium worked with the supported Termux runtime path.
+
+=== RESOURCES ===
+HEAVY_PARALLELISM=0
+PEAK_RSS=112,752 KiB across monitored runs; final filtered run 101,404 KiB.
+MIN_MEMAVAILABLE=395,760 KiB; final run stopped about 2.5 MiB above the 393,216 KiB guard floor.
+MIN_SWAPFREE=25,864 KiB observed near stop; not used as a standalone readiness rule.
+DISK_FREE=4,257,520 KiB minimum in the runner log; final cache filesystem remained above 4 GiB free.
+RESOURCE_STOPS=Manual SIGTERM to wrapper at near-floor MemAvailable; cleanup trap exited 143. No evidence of Android LMKD.
+
+=== REAL GRAPH ===
+SOURCE=https://download.openstreetmap.fr/extracts/asia/philippines/central_visayas.osm.pbf; snapshot 2026-10-07T01:00:21Z; ODbL-1.0 attribution retained.
+SOURCE_HASH=787cac20ecc586b754b1a464643a040566d486457c6a37bc0b11ce683bc66d4d (64-hex local SHA-256; matching MD5 sidecar).
+SOURCE_HASH_NOTE=The pasted expected hash and Batch028 report variant were 63 hex and invalid; the digest above matches the local file and repository source documentation.
+SOURCE_COMPLETE=NO; producer did not exit cleanly.
+SQLITE_ARTIFACT=Only ignored .building checkpoints exist; final filtered checkpoint is ~99 MiB, state=INGESTING, input_complete=false. No final .sqlite was published.
+GRAPH_COMPLETE=NO; GRAPH_ID=NONE; graph nodes/edges/components=NOT_AVAILABLE.
+ROUTING_READY=NO; no complete artifact to assess.
+VALIDATOR=Real partial file not validated or accepted. Synthetic incomplete/checkpoint rejection fixtures pass.
+GRAPH_FINGERPRINT=NOT_GENERATED.
+
+=== DATABASE ===
+POSTGRESQL_EXIT_EVIDENCE=UNKNOWN. Prior logs show unclean recovery then readiness, without PANIC, signal or exit cause. No restart attempted.
+BACKUP=Existing Batch024 manifest records isolated restore PASS; no new backup/restore in Batch029.
+IMPORT_CONTRACT=Focused SQLite staging import tests PASS; inserts remain inactive, bounded, idempotent and rollback-safe.
+STAGING=NOT_RUN; PostgreSQL remained stopped.
+ACTIVATION=NOT_RUN; no database writes or graph activation.
+
+=== PRODUCT ===
+PLANNER=Focused pedestrian routing tests 17 PASS / 124 assertions; 1 PostGIS-only skip. Live planning remains unavailable without an active graph.
+FIELD_MISSIONS=2 prior draft missions / 30 draft claims remain drafts and were not live-revalidated. No persistence or promotion; real observations created=0.
+DOCTOR_V29=Static 10 PASS / 3 WARN / 6 BLOCKED / 0 FAIL; exit 2 expected with PostgreSQL stopped. Osmium executable PASS; real-source proof WARN; offline artifact WARN.
+
+=== VALIDATION ===
+GRAPH_FIXTURES=9 PASS / 42 assertions, including offline-only scope cap, pedestrian filtering, interruption and deterministic graph behavior.
+IMPORTER=3 PASS / 17 assertions.
+DATABASE_GUARDS=6 PASS / 20 assertions.
+OSMIUM_WRAPPER=1 PASS / 2 assertions.
+FIELD=Batch020 operations 4 PASS / 29 assertions; survey workflow 11 PASS / 132 assertions; claim-scoped trust 3 PASS / 7 assertions.
+DOCTOR_TEST=Targeted static test 1 PASS / 20 assertions; direct Doctor V29 static result above.
+LINT=Changed PHP lint, Bash syntax and git diff checks PASS.
+FRONTEND=Not changed; frontend tests/typecheck/build not run.
+RELEASE_CHECK=NOT_RUN; no healthy database or active graph.
+MATRIX_47=NOT_RUN; graph not active.
+
+=== OUTCOME ===
+ELAPSED_TIME=Approximately 35 minutes from first monitored source run.
+COMMITS=94dc74c Isolate Osmium runtime and bound offline scope; d9eda06 Filter offline staging to pedestrian ways.
+RECOVERY_STATUS=PARTIAL; runtime issue fixed and offline pipeline improved, but real source stream was stopped near the resource floor before completeness.
+BLOCKERS=No completed offline graph; PostgreSQL remains stopped with unknown exit cause. Three incomplete source checkpoints were retained outside Git.
+NEXT=On a resource-stable host/device, use a new output path (do not resume SOURCE_INCOMPLETE as a graph), canonical SHA-256 above, Osmium runtime helper and bounded process runner. Require clean producer exit plus full offline validation before staging.
+HEAD_FINAL=d9eda061fd687d24d3a332124fce26419d729902
+WORKTREE=CLEAN
+PUSH=NO
+CLIPBOARD_COPY=CLIPBOARD_UNVERIFIED

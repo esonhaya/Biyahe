@@ -1,0 +1,60 @@
+BIYAHE — BATCH 022 LITE REPORT
+DATE=2026-10-08 Asia/Manila
+
+=== BASELINE ===
+HEAD_BEFORE=04548d574734f7fa690f16dfd77ac1865c46b37c
+HEAD_AFTER=45d64634ab641fa712d2d67eaffdba337b21d7b8
+WORKTREE=CLEAN; main ahead of origin/main by 16 commits
+RECOVERED_EXISTING_WORK=YES; recovered the ignored Batch 022 phase-01 checkpoint and its staged database findings; preserved the clean starting worktree
+
+=== RESOURCE SAFETY ===
+HEAVY_PARALLELISM=0
+OSM_IMPORT=NOT_RUN
+FULL_MATRIX=NOT_RUN_MISSING_GRAPH
+FRONTEND_BUILDS=0; BUILD_NOT_RUN_RESOURCE_GUARD (921 MiB available)
+TERMUX_INTERRUPTION_CAUSE=UNKNOWN; resource/process pressure is possible but not confirmed; no Android OOM evidence was available
+
+=== DATABASE ===
+GRAPH=BLOCKED; active pedestrian graph is missing (active_count=0)
+FIELD_MISSIONS=BLOCKED; archives and prior staging audit show 0 missions, claims, evidence claims, observations, and survey sessions; historic 4 missions/92 claims were not recovered or recreated
+RECOVERY_METHOD=READ_ONLY artifact review only; PG18.6/PostGIS dump manifests inspected and row counts extracted; all local dumps lack graph/field rows; no restore/import was attempted; PostgreSQL remained stopped and unmodified
+DATABASE_GUARDS=PASS; tests now reject non-disposable default databases before test traits; SQLite :memory: or clearly named test/testing DB only; DB_URL overrides are checked
+RELEASE_READINESS=RELEASE_BLOCKED_MISSING_GRAPH
+
+=== UX ===
+SEARCH=PASS; selected place context no longer shows a false empty state; suggestions distinguish city/category/description/active alias; request failures have separate copy
+JOURNEY_CARDS=Batch 021 comparisons and factual alternatives retained; commute-card harness PASS
+MAP=instruction-to-map focus and text alternative retained; map overlays respect bottom safe-area insets
+RIDE_MODE=manual step guidance retained; harness PASS; live GPS is not persisted
+OFFLINE=saved journey snapshot and Field Mode outbox/idempotency harnesses PASS
+NEARBY=existing mapped-candidate and explicit-location wording retained
+ACCESSIBILITY=UX contract 19/19; combobox/listbox and selected context improved; physical screen-reader/device QA not run
+
+=== PERFORMANCE ===
+TRANSFER_BOTTLENECK=prior measured case 5.23 s total, 4.18 s in transfer expansion
+OPTIMIZATION=PLANNER_UNCHANGED; existing request-local caches and conservative two-transfer rank bound are present
+FOCUSED_EQUIVALENCE=NOT_RUN; missing graph prevents a representative proof; no safe additional optimization was established
+
+=== VALIDATION ===
+BACKEND=PASS; Batch 021 VERIFIED fixture + Batch 020 Field Operations 5/5 (40 assertions); PHP lint PASS
+FRONTEND_HARNESSES=PASS; UX, commute cards, personal commute, Ride Mode, Field Mode, disruptions, pulse/replan
+FRONTEND_TYPECHECK=PASS (exit 0; 640 MiB Node heap cap)
+FRONTEND_LINT=PASS (exit 0)
+DATABASE_GUARD_TESTS=PASS; 4/4
+OFFLINE_TRUST=PASS focused; API fetch uses cache:no-store, service worker excludes /api, GPS persistence checks=0, synthetic production evidence=0
+DOCTOR=SKIPPED_DATABASE_STOPPED
+RELEASE_CHECK=SKIPPED_DATABASE_STOPPED; readiness remains RELEASE_BLOCKED_MISSING_GRAPH
+FRONTEND_BUILD=BUILD_NOT_RUN_RESOURCE_GUARD
+
+=== READINESS ===
+STATUS=PARTIAL_COMMITTED; UX and test safety work committed; database recovery/release readiness blocked
+BLOCKERS=No verified local graph/field backup; active graph absent; no device/browser QA
+NEXT=Use an authoritative graph/field backup or a sanctioned recovery batch, then reassess release readiness; no OSM import or 47-pair audit in this batch
+
+=== COMMIT ===
+COMMIT=45d64634ab641fa712d2d67eaffdba337b21d7b8 feat: improve search clarity and database test safety
+PUSH=NO
+CLIPBOARD_COPY=PASS
+CLIPBOARD_SET_EXIT=0
+
+=== BATCH 022 LITE COMPLETE ===

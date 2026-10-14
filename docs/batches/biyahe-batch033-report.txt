@@ -1,0 +1,71 @@
+=== BIYAHE BATCH 033 ===
+HEAD_BEFORE=90a40fc4b348f0974e7381d5250146917106930c
+HEAD_AFTER=90a40fc4b348f0974e7381d5250146917106930c
+WORKTREE=Batch033 changes uncommitted; initial worktree was clean; no unrelated edits observed
+COMMITS=NONE; not committed because the final importer idempotency and route-parity gates remain unverified
+ELAPSED_TIME=About 25 minutes of recorded work (02:45–03:10 UTC); preflight began before the first saved log
+
+=== ROOT CAUSE ===
+IMPORT_FAILURE_CAUSE=Batch032 hit the SwapFree guard after 13 seconds; the underlying swap consumer remains UNKNOWN
+EVIDENCE=Batch032 minimum SwapFree 15,292 KiB with MemAvailable 973,548 KiB and PHP process-tree peak RSS 101,708 KiB; PostgreSQL RSS was not measured and no rows remained after its full transaction rolled back
+MEMORY_BOTTLENECK=No whole-table hydration found: the prior importer already inserted 100-node/40-edge batches, but wrapped the graph in one full transaction. Batch033 still saw global swap decline with moderate PHP and PostgreSQL RSS; this does not identify the external/background consumer
+FIX=SQLite cursor streaming, deterministic 100-node/40-edge committed transactions, per-batch progress metadata, inactive import states, owned-dataset restart, exact SQLite-to-PostgreSQL comparison, bounded resource logging, and corrected Termux PostgreSQL RSS matching
+
+=== IMPORT ===
+STREAMING_IMPLEMENTED=YES; read-only ordered SQLite cursors; source verifier uses 500-row comparisons
+BATCH_SIZE=100 nodes / 40 edges; exact verification in 500-row chunks
+IMPORT_STATE_MACHINE=PENDING -> IMPORTING -> STAGED_INACTIVE -> VALIDATED; failures are inactive. An abrupt stop leaves the last committed progress; a verified matching retry deletes only its own rows and replays from the source beginning
+ISOLATED_CLUSTER=Fresh Batch033 PGDATA under ~/.cache/biyahe/batch033-isolated-20261009/data; loopback 127.0.0.1:56433; shut down cleanly after the attempt
+RESTORE=PASS in isolated cluster; Batch024 counts 503 stops / 37 places / 2 transfers; migrations reported nothing pending
+STAGING=BLOCKED; last committed progress 30,000/76,685 nodes and 0/78,225 edges. Database metadata was not queried after shutdown; no complete graph was published
+IMPORTED_NODES=30,000 last committed; previous controlled failure had exactly 100 rows
+IMPORTED_EDGES=0
+DURATION=About 159 seconds for the guarded workflow; node phase reported 80.529 seconds through batch 300
+PEAK_RSS=PHP process tree 93,596 KiB; PHP import callback peak 78,324 KiB. A PostgreSQL process-list snapshot summed to 105,324 KiB; a later 14-second sampler window peaked at 71,324 KiB. Aggregate RSS may count shared pages more than once; no continuous PostgreSQL peak was captured
+MIN_MEMAVAILABLE=814,060 KiB
+MIN_SWAPFREE=66,652 KiB; configured stop floor 131,072 KiB
+DISK_GROWTH=Exact PGDATA growth not measured. Home free space fell from 5,334,064 KiB at preflight to a 5,290,316 KiB minimum (-43,748 KiB) during the run
+
+=== INTEGRITY ===
+GRAPH_HASH=29d7aaf9c45a596f4065c44d13f983f4a7edeec5ac2ea41b718b1c52ca865bf8; verified and unchanged
+PBF_HASH=787cac20ecc586b754b1a464643a040566d486457c6a37bc0b11ce683bc66d4d; internal and SD copies matched; importer reverified source checksum
+BACKUP_HASH=e55af400fde88d0a3434b194e0625e204eb0a2726374eabb8286c152b11a4a92; verified and restored read-only into isolated PG
+RESTRICTION_CAPABILITY=Batch031 snapshot inventory: 648 vehicle-only relations; 0 pedestrian-applicable or ambiguous; restriction readiness remains snapshot-bound
+GEOMETRY=Exact endpoint comparison is implemented and passed on the synthetic first-import fixture; real PostgreSQL retry stopped before edges, so real edge geometry comparison is incomplete
+DIRECTIONALITY=Preserved and compared by importer code; no complete real edge set was available to verify
+SOURCE_RESCAN=No Osmium/PBF decode or graph rebuild; checksum verification ran as required
+
+=== REAL SAFETY ===
+ROLLBACK=PASS on real artifact in isolated PostgreSQL: injected failure at the second 100-node batch rolled that transaction back; query showed inactive FAILED dataset, routing_ready=false, 100 nodes, 0 edges
+IDEMPOTENCY=NOT RUN against a completed real artifact
+INTERRUPTION_RECOVERY=PARTIAL: matching retry restarted at node batch 1 and committed through batch 300; swap guard stopped it before completion
+PARTIAL_VISIBILITY=PASS for controlled failure; dataset inactive and routing_ready=false; ordinary routing selects active datasets and diagnostic staging requires VALIDATED
+CONFLICT_REJECTION=Fixture coverage only; no real conflicting-artifact attempt
+PRODUCTION_UNTOUCHED=YES; only the fresh Batch033 cluster was started; it is now shut down
+ACTIVATION=NO
+
+=== ROUTE PARITY ===
+CASES=0 staged cases; parity command not run because staging never reached VALIDATED
+MATCHES=0
+MISMATCHES=NOT_APPLICABLE
+DISTANCE_PARITY=NOT_RUN
+GEOMETRY_PARITY=NOT_RUN
+REASON_CODE_PARITY=NOT_RUN
+OFFLINE_CORPUS=Batch032 baseline remains 10 cases, 9 found / 1 disconnected; P50 61 ms, P95 482.013 ms
+COVERAGE=25 m snap policy: 436/503 stops and 30/37 places snappable; 67 stops and 7 places remain unsnappable. Two transfers are graph-connected but remain UNVERIFIED
+
+=== VALIDATION ===
+TESTS=Earlier focused suites passed 15/15 (110 assertions) and 32/32 (155 assertions) before the final comparison/RSS changes. Post-comparison importer run had 8 passes and one test-helper TypeError; helper was fixed, but rerun was refused at SwapFree 113,664 KiB below its 131,072 KiB floor. New RSS matcher regression passed 1/1 (4 assertions). PHP lint, Bash syntax, JSON parsing, and git diff --check passed
+DOCTOR_V33=BLOCKED; latest static report: docs/reports/batch033-doctor-v33-final.json; no PostgreSQL connection from Doctor
+PRIVATE_BETA=BLOCKED; import completeness, idempotency, full interruption recovery, route parity, and field safety remain gates
+GIT_BUNDLE=NOT_CREATED
+PUSH=NO
+
+=== NEXT ===
+REMAINING_BLOCKERS=Complete the real graph import; query its final state; verify identical re-import, artifact conflict rejection, and offline/staged parity; collect field evidence before any beta
+RECOMMENDED_BATCH034=Recheck the stopped isolated PGDATA and current resource margins before reuse. On a host/device with sustained swap headroom, replay the same hash-bound SQLite artifact under the 128 MiB swap guard with one breach sample, then run idempotency, parity, and final Doctor. Do not rebuild or activate the graph
+
+CLIPBOARD=SET_ATTEMPTED_UNVERIFIED
+REPORT_PATH=/data/data/com.termux/files/home/biyahe-batch033-report.txt
+
+=== END BATCH 033 ===

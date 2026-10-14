@@ -1,0 +1,44 @@
+BIYAHE BATCH 030 CHECKPOINT
+DATE=2026-10-09 Asia/Manila
+STATE=COMPLETE; report/clipboard finalization remains
+HEAD_EXPECTED=d9eda061fd687d24d3a332124fce26419d729902
+HEAD_BEFORE_RESUMED_WORK=c3e1656a9e7a88a61dab886c6e991f23964446f5
+HEAD_LATEST=f12fa0739551ec25251027d136fec342b4e18509
+BRANCH=main; prior Batch030 commits 2f2ac81 and c3e1656 preserved; no push
+WORKTREE=clean after f12fa07
+RECOVERED_WORK=Resumed the existing source-verified v2 way-index checkpoint; migrated it transactionally to v3; preserved prior commits and the completed way index.
+
+SOURCE=/data/data/com.termux/files/home/Biyahe/api/.runtime/recovery-osm-verified-20261007/central_visayas.osm.pbf
+SOURCE_SIZE=28,757,299 bytes
+SOURCE_SHA256=787cac20ecc586b754b1a464643a040566d486457c6a37bc0b11ce683bc66d4d (verified twice; Doctor also verified SHA-256/MD5)
+SOURCE_SNAPSHOT=2026-10-07T01:00:21Z
+OSMIUM=1.19.1 through api/scripts/osmium-runtime.sh; inherited Codex LD_LIBRARY_PATH isolated
+POSTGRESQL=Stopped/not present; startup not attempted
+
+ARCHITECTURE=Pass A streams the complete PBF, stores only in-scope coordinates and all candidate way refs in SQLite, then selects ways by a disk-backed adjacent-node join. Pass B streams the full PBF again, resolves only required IDs through SQLite, retains out-of-bounds referenced coordinates, and records ordered pedestrian-restriction relation members. Pass C builds deterministic edges. Pass D validates, fingerprints, and atomically publishes.
+RESUMABILITY=Durable verified checkpoints: way_index, reference_resolution, graph_build. Each records source hash/snapshot, schema and phase IDs, completion, counts, fingerprints. No byte-offset resume. Incomplete parser/producer streams never count complete. Reference and graph retries preserve completed earlier phases.
+MEMORY=SQLite cache 8 MiB, temp_store=FILE, delete journal, synchronous FULL, bounded transactions; no source-wide in-memory ID set/getid. Runner samples process-tree RSS, MemAvailable, Cached, SReclaimable, SwapFree, disk and SQLite growth.
+RESTRICTIONS=619 pedestrian-relevant turn restriction relations / 1,862 ordered members recorded. Router does not enforce turn/nested/conditional restrictions; validator reports routing_ready=false and importer rejects. Conditional access ways, including directional conditionals, are excluded.
+
+REAL_REFERENCE_PASS=PASS, 142 sec, clean Osmium producer and parser exits, 77,991/77,991 required nodes, source_complete=YES. Way index retained: 3,231,975 source nodes, 376,877 in scope, 569,150 ways, 20,379 candidates, 3,059 relations, 102,361 way refs.
+REFERENCE_RESOURCES=Peak process-tree RSS 129,936 KiB; min MemAvailable 880,520 KiB; min SwapFree 368,512 KiB; min disk free 4,017,292 KiB. Min Cached 875,636 KiB; min SReclaimable 112,760 KiB. No guard stop. Outer monitor omitted the nested SQLite watch path; manual DB snapshots were 25,776,128 B at ~44 sec, 26,636,288 B at ~83 sec, final source checkpoint 27,332,608 B.
+REAL_GRAPH_BUILD=PASS, about 101 sec, clean wrapper exit; SQLite grew to 41,013,248 B, peak journal 2,015,576 B. Peak process-tree RSS 88,604 KiB; min MemAvailable 933,612 KiB; min SwapFree 616,628 KiB; min disk free 4,001,964 KiB. No guard stop.
+GRAPH_ARTIFACT=/data/data/com.termux/files/home/.cache/biyahe/batch030/cebu-walk-central-visayas-20261007-v3.sqlite (ignored cache; not committed)
+GRAPH_SHA256=29d7aaf9c45a596f4065c44d13f983f4a7edeec5ac2ea41b718b1c52ca865bf8
+GRAPH_FINGERPRINT=a0d9f1cb8289cf1f9bde3905d1ad8a57124ee41120153b4efc1f5b31e4c03ecd
+GRAPH_STATE=COMPLETE; source-complete=YES; artifact_ready=YES; routing_ready=NO; nodes=76,685; edges=78,225; total components=2,754
+GRAPH_QUALITY=432 walkable components; largest 70,401 nodes; 2,322 isolated nodes all blocked barriers, zero isolated walkable nodes. Max edge 867 m; 26 edges >250 m. 944 nodes within 0.0005 degrees of coverage boundary; 1,510 crossing-tagged nodes. No corrections invented.
+VALIDATION=Independent real-source validator PASS structurally (WARN for routing limitations); SQLite integrity_check=ok; source identity, phase fingerprints, references, endpoint/access/direction/geometry, components, and content fingerprint verified.
+
+PHASES_COMPLETE=0-11,13-19; phase 12 importer contract/tests complete, live PostgreSQL staging intentionally not attempted.
+PHASES_PARTIAL=No isolated PostgreSQL staging import; conditional/turn restriction semantics not implemented; no production activation.
+PHASES_BLOCKED=Live pedestrian routing, private beta, and activation blocked by routing_ready=false and absent PostgreSQL staging review.
+RESOURCE_STOPS=No stop in the new guarded stream or graph build. Earlier getid-based reference attempt was incomplete, observed peak RSS 1,671,392 KiB and minimum MemAvailable 246,904 KiB; not repeated unchanged.
+TESTS=OfflinePedestrianGraphTest 18/18, 95 assertions; OfflinePedestrianGraphImportTest 4/4, 23 assertions; BiyaheDoctorTest 9/9, 54 assertions; BoundedProcessGuardTest 3/3, 24 assertions; DatabaseTestSafetyTest 6/6, 20 assertions; PedestrianRoutingTest 17 passed, 1 skipped, 124 assertions; OsmiumRuntimeWrapperTest 1/1, 2 assertions.
+STATIC_DOCTOR=Final graph: PASS=11 WARN=3 FAIL=0 BLOCKED=6, expected exit 2 because static mode leaves DB checks blocked and graph is not routing-ready. Source-complete checkpoint separately reported PASS before graph build.
+RECOVERY=docs/offline-pedestrian-graph-staging.md has Termux, safe resume, validation/transfer, isolated staging, rollback/activation prerequisites, and laptop fallback instructions.
+LATEST_COMMIT=f12fa07 Add durable offline pedestrian graph checkpoints
+NEXT_SAFE=Implement and validate turn-restriction semantics (or a source-backed exclusion strategy), review disconnected walkable components and long edges, then use a disposable isolated PostgreSQL staging DB only when available. Do not activate this artifact.
+FINAL_REPORT=/data/data/com.termux/files/home/biyahe-batch030-report.txt (78 lines; saved outside repository)
+CLIPBOARD=CLIPBOARD_UNVERIFIED; termux-clipboard-set returned success, but termux-clipboard-get returned 0 bytes on readback.
+FINAL_STATE=Artifact complete and independently validated; code committed; repository worktree clean; PostgreSQL stopped; no push.

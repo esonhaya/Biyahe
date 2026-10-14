@@ -1,0 +1,80 @@
+=== BIYAHE BATCH 035 ===
+HEAD_BEFORE=90a40fc4b348f0974e7381d5250146917106930c
+HEAD_AFTER=90a40fc4b348f0974e7381d5250146917106930c
+WORKTREE=DIRTY; Batch033/034 work preserved with Batch035 changes and reports; no commit made
+COMMITS=NONE; branch remains 8 commits ahead of origin/main
+ELAPSED_TIME=~15 minutes; approximate from first saved Batch035 evidence (exact turn start not captured)
+
+=== RECOVERY ===
+BATCH033_034_PRESERVED=YES; original uncommitted work retained
+BACKUP_VERIFIED=YES; Batch034 recovery patch f6696628cee8411127674e6fa1ac609d273b65e7c7de8a2e4535b7bdea4cb5b6 and archive 5bfdd9ec5c41537e3005692beb1b05aa7e55937006bf8993d8871c1c0df5379b verified; Batch035 SD recovery directory /data/data/com.termux/files/home/storage/external-1/Termux-Archive/Biyahe/Batch035-Recovery/20261009T082004Z has tracked patch, untracked archive and manifest hash-checked
+SOURCE_SHA256=787cac20ecc586b754b1a464643a040566d486457c6a37bc0b11ce683bc66d4d (verified at preflight; no PBF rescan)
+GRAPH_SHA256=29d7aaf9c45a596f4065c44d13f983f4a7edeec5ac2ea41b718b1c52ca865bf8 (verified at preflight; artifact not modified)
+POSTGRESQL_BACKUP_SHA256=e55af400fde88d0a3434b194e0625e204eb0a2726374eabb8286c152b11a4a92 (verified at preflight; backup not modified)
+
+=== RESOURCE GUARD ===
+WORKER_CANCELLATION=PASS; controlled synthetic resource breach exercised TERM then bounded KILL, without exhausting system swap
+DESCENDANT_CANCELLATION=PASS; worker and child exited; child absent afterward
+PARENT_SURVIVAL=PASS; wrapper parent shell wrote its post-wait sentinel
+UNRELATED_PROCESS_SURVIVAL=PASS; unrelated sibling remained alive until test cleanup
+RESOURCE_STABILITY=BLOCKED; three spaced actual samples failed the existing 131072 KiB SwapFree floor; guarded command was not started
+MIN_SWAPFREE=22316 KiB observed; required floor 131072 KiB
+MIN_MEMAVAILABLE=714876 KiB observed; memory floor 524288 KiB passed
+KNOWN_SWAP_CONTRIBUTORS=Visible Codex launcher/descendant group VmSwap summed 283492–291288 KiB across samples; this is observed, not proven as the sole cause; no PHP/PostgreSQL process was visible
+UNKNOWN_CONTRIBUTORS=Android/system and other-app consumers remain unknown; process visibility and /proc/vmstat, PSI and cgroup counters were unavailable
+
+=== POSTGRESQL ===
+ISOLATED_CLUSTER_IDENTITY=PASS; read-only PGDATA path, PostgreSQL 18, system ID 7694494303197720087, port 56433, private socket and owner verified; state shut down
+CLUSTER_STARTED=NO; resource gate blocked startup
+RESTORED_STOPS=NOT_QUERIED
+RESTORED_PLACES=NOT_QUERIED
+RESTORED_TRANSFERS=NOT_QUERIED
+STARTING_NODES=NOT_QUERIED
+STARTING_EDGES=NOT_QUERIED
+CHECKPOINT_STATUS=NOT_QUERIED; prior Batch033 30000-node/0-edge observation remains untrusted
+LEGACY_CHECKPOINT_MIGRATION=NOT_ATTEMPTED; compatibility not established
+
+=== REAL IMPORT ===
+ATTEMPTED=NO; sustained preflight blocked before worker launch
+RESUMED_OR_RESTARTED=NONE
+FINAL_NODES=NOT_QUERIED
+FINAL_EDGES=NOT_QUERIED
+IMPORT_STATE=NOT_QUERIED
+RESOURCE_GUARD_BREACH=PRE-FLIGHT BLOCK; worker command not started
+PEAK_RSS=NOT_MEASURED; no importer or PostgreSQL process ran
+DURATION=0
+SOURCE_PARITY=NOT_RUN
+GEOMETRY_PARITY=NOT_RUN
+DIRECTIONALITY=NOT_RUN
+
+=== SAFETY ===
+ROLLBACK=NOT_RETESTED; prior Batch033 controlled rollback evidence was not revalidated against current database state
+IDEMPOTENCY=NOT_RUN
+CONFLICT_REJECTION=NOT_RUN
+PARTIAL_VISIBILITY=NOT_QUERIED; no assumption made about persisted rows
+ORIGINAL_CLUSTER_UNTOUCHED=YES; it was not started or modified
+PRODUCTION_ACTIVATION=NO
+
+=== ROUTE PARITY ===
+CASES=0 staged; Batch032 offline baseline remains 10 real cases (9 routes found, 1 disconnected)
+MATCHES=NOT_MEASURED
+MISMATCHES=NOT_MEASURED
+DISTANCE_PARITY=NOT_MEASURED
+GEOMETRY_PARITY=NOT_MEASURED
+REASON_CODE_PARITY=NOT_MEASURED
+
+=== VALIDATION ===
+TESTS=Controlled shell cancellation probe PASS; 20 changed PHP files linted PASS; Bash syntax PASS; git diff --check PASS; evidence JSON parsed PASS; PHPUnit not run because SwapFree was below the safety floor
+DOCTOR_V35=BLOCKED; static report generated at docs/reports/batch035-doctor-v35.json; cancellation and cluster identity PASS, resource stability/import/checkpoint/parity/field-safety BLOCKED, coverage and transfer WARN
+PRIVATE_BETA=BLOCKED; no verified real staging or field safety evidence
+GIT_BUNDLE=VERIFIED on SD; SHA256 b1a0b48d8e547cc688ed9264139ae5ac67a0e59bd26c4a45a807ffd635a1a971; contains committed history only, uncommitted work is in patch/archive
+PUSH=NO
+
+=== NEXT ===
+REMAINING_BLOCKERS=SwapFree below 131072 KiB and volatile; current isolated database/checkpoint state unqueried; legacy checkpoint compatibility unknown; formal PHPUnit and real import/idempotency/conflict/route parity unverified; 67 stops and 7 places remain unsnappable at 25 m; two transfers remain UNVERIFIED; field safety evidence absent
+RECOMMENDED_BATCH036=Wait for sustained resource headroom; inspect isolated state read-only under the guard; validate exact committed prefix before any continuation; run focused tests before one guarded import attempt
+
+CLIPBOARD=SET_ATTEMPTED_UNVERIFIED
+REPORT_PATH=/data/data/com.termux/files/home/biyahe-batch035-report.txt
+
+=== END BATCH 035 ===

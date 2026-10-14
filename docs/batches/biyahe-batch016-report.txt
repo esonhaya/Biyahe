@@ -1,0 +1,122 @@
+=== BIYAHE — BATCH 016: CEBU DAILY COMMUTER V1 ===
+=== BASELINE ===
+HEAD_BEFORE=bf8db9b9a717398d7d3cbda5b353dcbd5200a178
+HEAD_AFTER=5ff1bb6acf887effd1d7eb982b2b1ff0a14df540
+WORKTREE_STATE=CLEAN
+UNRELATED_WORK_PRESERVED=YES
+POSTGRES_VERSION=18.6 Android aarch64
+POSTGIS_VERSION=3.6.4
+MIGRATION_STATE=Batch 014 applied; no new migration/data mutation
+UNSUPPORTED_VERIFIED_CLAIMS=0
+
+=== NETWORK ===
+PLACES_BEFORE=22 PLACES_AFTER=22
+ALIASES_BEFORE=30 ALIASES_AFTER=30
+STOPS_BEFORE=48 STOPS_AFTER=48
+ROUTES_BEFORE=8 ROUTES_AFTER=8
+PATTERNS_BEFORE=16 PATTERNS_AFTER=16
+PATTERN_STOPS_BEFORE=86 PATTERN_STOPS_AFTER=86
+TRANSFERS_BEFORE=2 TRANSFERS_AFTER=2
+PRODUCTION_SOURCES_ADDED=0 (no new fact promoted without reviewed evidence)
+RELEASE_OD_PAIRS=12 ROUTABLE=10 DIRECT=6 ONE_TRANSFER=8 TWO_TRANSFER=6 UNSUPPORTED=2
+VERIFIED_JOURNEYS=0 MIXED_JOURNEYS=79 UNVERIFIED_JOURNEYS=0
+TOP_REMAINING_NETWORK_GAPS=Banilad→Colon NO_NEARBY_BOARDING; Labangon→IT Park NO_WALKABLE_ACCESS
+CORRIDOR_AUDIT=STRONG Colon/Carbon, Fuente/Jones, Capitol/Escario, Ayala/Business Park, IT Park/Lahug, Mabolo, SM/North, Guadalupe, Pardo/south; PARTIAL Banilad, Talamban, Labangon
+
+=== EVIDENCE ===
+CLAIMS_IMPROVED=0 PATTERN_SERVICE_IMPROVED=0 PATTERN_SEQUENCE_IMPROVED=0
+BOARDING_PRECISION_IMPROVED=0 ALIGHTING_PRECISION_IMPROVED=0
+SIGNBOARD_CUES_ADDED=0 DRIVER_INSTRUCTIONS_ADDED=0 TRANSFERS_VERIFIED=0
+CURRENT_FARES_VERIFIED=0 UNSUPPORTED_VERIFIED_CLAIMS=0 OPEN_EVIDENCE_CONFLICTS=0
+EVIDENCE_LIMIT=47 production stops remain UNKNOWN boarding precision; no unsafe promotion made
+
+=== PEDESTRIAN ===
+ACTIVE_DATASET=osm-cebu-walk-07555e8a0e284772e2c16120c1d66075
+NODES=43720 EDGES=45104 STOPS_CONNECTABLE=46/48 PLACES_CONNECTABLE=17/22
+OSM_REIMPORT=0
+
+=== SEARCH / PERSONAL COMMUTE ===
+SEARCH_V2=PASS canonical/alias normalized ranking with city context in suggestions
+AMBIGUITY_HANDLING=PASS bounded matching; city/alias context exposed
+RECENT_SEARCHES=PASS local-only, max 8, validated/versioned
+FAVORITE_PLACES=PASS explicit user labels, local-only, max 12
+FAVORITE_COMMUTES=PASS local-only, max 12; fresh online planning
+QUICK_COMMUTE=PASS recent/favorite shortcuts; offline state is honest
+LOCAL_ONLY_PRIVACY=PASS; no account or server commute history
+
+=== JOURNEY QUALITY ===
+OPTION_DIVERSITY=PASS existing route/pattern/transfer dedupe and ranking
+DUPLICATE_JOURNEYS=0 SUSPICIOUS_JOURNEYS=0
+TWO_TRANSFER_QUALITY=PASS bounded matrix and Doctor loop/direction checks
+JOURNEY_EXPLANATIONS=PASS factual transfer/walking/trust/disruption reasons
+COMPARISON=PASS shared Commute Card dimensions
+NO_ROUTE_SEMANTICS=PASS coverage/access/temporary-unavailable distinctions preserved
+
+=== COMMUTE CARD / RIDE ===
+COMMUTE_CARD_V2=PASS shared instruction transformer retained
+LANDMARK_GUIDANCE=structured data only; no new landmark fabricated
+DRIVER_PHRASE=supported phrases only; none added this batch
+SHARE_V2=PASS bounded text; no GPS, coordinates, IDs, or admin metadata
+RIDE_MODE_V2=PASS foreground/manual progression retained
+STOP_PROGRESS=PASS deterministic production-shaped harness coverage
+GPS_BOUNDARY=FOREGROUND_ONLY AUTOMATIC_BOARDING=0 AUTOMATIC_ALIGHTING=0 ETA=0
+
+=== CAN I RIDE / PULSE ===
+CAN_I_RIDE_V2=PASS human reason codes added and shown in UI
+CAN_I_RIDE_REASON_CODES=PASS direction/service/access/advisory explanations
+PULSE_V2=PASS existing operational summary and no-false-normal semantics
+FALSE_NORMAL_CLAIMS=0 DISRUPTION_REPLAN=PASS explicit existing-planner replan
+
+=== MOBILE / ACCESSIBILITY ===
+MOBILE_AUDIT=PASS narrow-screen personal tools and active-ride resume integration
+ACCESSIBILITY_AUDIT=PARTIAL semantic controls/labels and keyboard-safe actions; no automated axe run
+LOADING_STATES=PASS OFFLINE_STATES=PASS ERROR_STATES=PASS
+
+=== PRIVACY / SECURITY ===
+RAW_GPS_SERVER_PERSISTENCE=0 BACKGROUND_GEOLOCATION=0
+RECENTS_LOCAL_ONLY=YES FAVORITES_LOCAL_ONLY=YES PUBLIC_REPORT_LOCATION_POLICY=EXPLICIT_ONLY
+SECURITY_AUDIT=PASS validated local schemas/bounds and preserved API/admin protections
+
+=== PERFORMANCE ===
+SEARCH_MS=NOT_SEPARATELY_MEASURED
+DIRECT_PLANNER_MS_BEFORE=16424.63 representative API-style Colon→Ayala request
+DIRECT_PLANNER_MS_AFTER=8165.15 same request with request-scoped cache
+ONE_TRANSFER_MS_BEFORE=NOT_SEPARATELY_MEASURED
+ONE_TRANSFER_MS_AFTER=9431.85 Fuente→Talamban shaped request (2 one-transfer, 6 two-transfer results)
+TWO_TRANSFER_MS_BEFORE=NOT_SEPARATELY_MEASURED
+TWO_TRANSFER_MS_AFTER=2093.50 IT Park→SM request (3 two-transfer results)
+PLANNER_BOTTLENECK_FOUND=repeated pattern/trust loading across planner branches
+PLANNER_OPTIMIZATION=bounded request-scoped JourneyPlanningContext; route shape unchanged
+PULSE_MS=NOT_SEPARATELY_MEASURED CAN_I_RIDE_MS=NOT_SEPARATELY_MEASURED QUERY_REGRESSION=NONE_OBSERVED
+
+=== TRUST / CONTAMINATION ===
+TRUST_LEAKAGE=0 PRECISION_LEAKAGE=0 FARE_FABRICATION=0
+INSTRUCTION_FABRICATION=0 WALKABILITY_FABRICATION=0 SYNTHETIC_PRODUCTION_ROWS=0
+REAL_FIELD_OBSERVATIONS=0 PRODUCTION_FACTS_PROMOTED_FROM_SYNTHETIC_DATA=0
+
+=== VALIDATION ===
+DATASET_TESTS=PASS live graph integrity and provenance checks
+SEARCH_TESTS=PASS existing API path plus city-context UI integration
+PLANNER_TESTS=PASS 15 tests/357 assertions; disruption suite 14 tests/63 assertions
+RELEASE_MATRIX=PASS bounded 12-pair real PostGIS audit
+CAN_I_RIDE_TESTS=PASS COMMUTE_CARD_TESTS=PASS PERSONAL_COMMUTE_TESTS=PASS
+OFFLINE_TESTS=PASS RIDE_MODE_TESTS=PASS PULSE_TESTS=PASS SECURITY_TESTS=PASS
+DOCTOR_V16=PASS live PostGIS: 146 PASS, 5 WARN, 0 FAIL, 0 BLOCKED
+BACKEND_REGRESSION=PASS FRONTEND_TYPECHECK=PASS FRONTEND_LINT=PASS FRONTEND_BUILD=PASS
+
+=== RELEASE ===
+CORE_A_TO_B_READINESS=PASS_WITH_KNOWN_GAPS
+COMMUTE_CARD_READINESS=PASS RIDE_MODE_READINESS=PASS OFFLINE_READINESS=PASS
+DISRUPTION_READINESS=PASS CEBU_DAILY_USE_READINESS=PASS_WITH_KNOWN_GAPS
+V1_RELEASE_READINESS=PASS_WITH_KNOWN_GAPS
+MILESTONE_STATUS=PASS_WITH_KNOWN_GAPS; honest network/evidence limitations remain
+
+=== COMMIT ===
+COMMIT=5ff1bb6acf887effd1d7eb982b2b1ff0a14df540 feat: deliver Cebu daily commuter v1
+
+=== CHECKPOINT ===
+NEXT=Collect defensible evidence for high-impact UNKNOWN boarding points and partial corridors; do not auto-promote facts.
+
+CLIPBOARD_COPY=PASS
+CLIPBOARD_REPORT_PATH=/data/data/com.termux/files/home/biyahe-batch016-report.txt
+=== BATCH 016 COMPLETE ===

@@ -1,0 +1,33 @@
+BIYAHE BATCH 025 CHECKPOINT — FINAL
+DATE=2026-10-08 Asia/Manila
+REPOSITORY=/data/data/com.termux/files/home/Biyahe
+HEAD=a51c0e7cce1a69926a1762d89b4bda16b975560d
+BRANCH=main; WORKTREE=CLEAN; 19 commits ahead of origin/main; PUSH=NO.
+RESUMED=Batch024 report/checkpoint, verified backup, and synthetic-tested streaming implementation recovered. No prior Batch025 checkpoint existed.
+
+PHASE STATUS
+P0=COMPLETE. Baseline HEAD was 8a71e10ab28d1656fa1add34712e6e8ba60a002b; no unrelated changes.
+P1=PARTIAL. PG logs show ordinary recovery/readiness at 2026-10-08 19:16:31 PST and later no shutdown/PANIC/exit record. Dead PID 23976 remains in postmaster.pid. Targeted Android logs gave no process-kill evidence. Cause INSUFFICIENT_EVIDENCE, not corruption.
+P2=BLOCKED_RESOURCE. No Batch025 startup; latest pg_ctl status says no server. Latest MemAvailable 883724 KiB, SwapFree 57800 KiB; startup needs configured 870400/262144 KiB and stale PID is left for normal PG handling. Observer guard tests did not start PG.
+P3=PRIOR_BATCH024_VERIFIED. Backup hash e55af400fde88d0a3434b194e0625e204eb0a2726374eabb8286c152b11a4a92 matches; pg_restore --list and isolated restore were verified in B024. No fresh B025 backup because DB did not start and no live mutation occurred.
+P4=BLOCKED_RESOURCE. Local PBF hash rechecked: 787cac20ecc586b754b1a464643a040566d486457c6a37bc0b11ce683bc66d4d; size 28,757,299 bytes; snapshot 2026-10-07T01:00:21Z. No real PBF stream or conversion ran.
+P5=PARTIAL. Legacy updater no longer uses tags-filter/complete_ways; it streams Osmium XML to the SQLite-backed preparer, checks URL filename/checksums/PBF timestamp, adds disk and memory/swap preflight, and prepares before migrations. bash -n, ShellCheck and safety probes pass. Full updater not executed.
+P6_7=BLOCKED. No staged/active graph, connectivity, rollback, Doctor, release check, or 47-pair audit.
+P8=BLOCKED. Batch023's 2 drafts/30 claims (18 UNKNOWN, 12 UNVERIFIED) remain unsupported; no B025 persistence, observations=0.
+P9_10=PARTIAL. Direct/one-/two-transfer, trust, and pedestrian fixtures pass; no performance optimization or before/after benchmark without a graph.
+P11=PARTIAL. Origin/destination autocomplete retry added; UX harness passes. No device/screen-reader test.
+P12=PARTIAL. PostgreSQL observer and Termux guidance added; no actual process-lifetime observation because service stayed stopped.
+P13=NOT_DONE. Doctor V25 extension not implemented; live database unavailable.
+
+RESOURCE / VALIDATION
+HEAVY_PARALLELISM=0; OSM_IMPORT=NOT_RUN; FULL_MATRIX_RUNS=0; FRONTEND_BUILDS=0.
+PEAK_RSS=331828 KiB focused ESLint. tsc reached 322868 KiB RSS; stopped at MemAvailable 609228 KiB / SwapFree 3528 KiB. Latest MemAvailable=883724 KiB, SwapFree=57800 KiB, disk free=4912840 KiB.
+BACKEND=PASS: 31 tests, 30 passed, 1 skipped, 471 assertions. DatabaseTestSafetyTest=PASS, 6 tests/20 assertions.
+FRONTEND_UX=PASS, 24 checks. FRONTEND_LINT=PASS for changed page.tsx and UX harness with 256 MiB Node heap.
+FRONTEND_TYPECHECK=RESOURCE_STOPPED, not PASS. PHP lint not applicable (no PHP file changed). bash -n, ShellCheck, git diff --check PASS.
+
+COMMIT=a51c0e7 Batch 025: harden recovery diagnostics and search retry.
+NEXT_SAFE=Wait until available RAM >=850 MiB and free swap >=256 MiB; use observe-postgres.sh --start once and allow ordinary recovery. If healthy, create/verify a fresh backup, then run one tiny real-PBF stream with live RSS/resource monitoring. Stage/import only after both pass.
+REPORT=/data/data/com.termux/files/home/biyahe-batch025-report.txt; 86 lines, 5542 bytes.
+CLIPBOARD_COPY=PASS; final termux-clipboard-set pipeline exit=0.
+FINAL_HEAD=a51c0e7cce1a69926a1762d89b4bda16b975560d; WORKTREE=CLEAN; PUSH=NO.

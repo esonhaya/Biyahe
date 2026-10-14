@@ -1,0 +1,84 @@
+=== RECOVERY ===
+REPOSITORY=/data/data/com.termux/files/home/Biyahe
+BRANCH=main
+HEAD_ON_RECOVERY=243b35a73dc75667e09927508bdb6dc6d83cc296
+HEAD_FINAL=04548d574734f7fa690f16dfd77ac1865c46b37c
+WORKTREE_STATE=CLEAN; main is ahead of origin/main by 15 commits; no staged/unstaged/untracked files
+UNRELATED_WORK_PRESERVED=YES; no unrelated tracked work was present; ignored runtime/checkpoints/build output were not staged
+INTERRUPTED_GIT_OPERATION=NONE; no worktree or Git lock; proven-stale Postgres socket/lock was explicitly renamed, not deleted
+RECOVERED_WITHOUT_RESTART=YES; reused the recovered Batch 021 files and existing worktree; no new worktree or Batch 021 restart
+TERMUX_FAILURE_CAUSE=SUSPECTED
+TERMUX_FAILURE_NOTE=The prior session log ends during osmium extract with a zero-byte partial artifact; Android resource/process pressure is suspected, not OS-confirmed.
+DATABASE_STATE=PostGIS was readable with 34 places, 499 stops, 30 routes, 58 patterns, 1124 pattern-stops, and 2 transfers; active graph=0 and Batch 020 field rows=0 after the prior session's production-named migrate:fresh plus transport-only reimport. No restore/import/rebuild was attempted.
+
+=== PROGRESS ===
+COMPLETE=Recovery inspection; source-level UX/product audit; competitor documentation; recovered implementation; PWA/static contract; isolated VERIFIED trust fixture; production-database test guard; focused validation; coherent commit.
+PARTIAL=Map/device UX verification; screen-reader/WCAG verification; production release readiness; planner final-matrix verification under the current database state.
+NOT_STARTED=Real-device install/viewport/screen-reader tests; sanctioned recovery of the missing graph and Batch 020 field state; a new measured planner optimization.
+FAILED=Production release check and Doctor V21 deployment-readiness subcheck because the current database has no active pedestrian graph; no Batch 021 code test failed.
+UNKNOWN=Exact Android termination cause; availability of an external database backup; physical visual usability.
+
+=== COMPETITOR RESEARCH ===
+APPS_REVIEWED=Google Maps; Moovit; Citymapper; Transit; Sakay.ph
+RESEARCH_DOC=[docs/competitor-ux-audit.md](/data/data/com.termux/files/home/Biyahe/docs/competitor-ux-audit.md); sources rechecked 2026-10-08: [Google Maps](https://support.google.com/maps/answer/10271256?hl=en-uk), [Moovit](https://support.moovitapp.com/hc/en-us/articles/212011605-Plan-a-Trip-Get-Directions), [Citymapper](https://citymapper.com/news/1196/offline-support), [Transit](https://help.transitapp.com/article/93-how-to-use-transit), [Sakay.ph](https://github.com/sakayph/sakayph)
+PATTERNS_ADOPTED=Destination-first planning; factual comparison; local saved snapshots; focused manual Ride Mode; explicit offline boundaries; text alternatives; focus/touch/reduced-motion protections.
+
+=== UX ===
+HOME=COMPLETE_IMPLEMENTED; static/typecheck/lint/build verified; visual device QA unavailable.
+SEARCH=COMPLETE_IMPLEMENTED_AND_CONTRACT_VERIFIED; accessible combobox, keyboard selection, debounce, stale-response guard, clear/swap, empty/loading states.
+JOURNEY_RESULTS=COMPLETE_IMPLEMENTED; factual filters, route chips, ranking reasons, trust language; commute-card harness passed.
+JOURNEY_DETAIL=COMPLETE_IMPLEMENTED; shared commute card, walking-estimate warning, saved/offline wording; harness passed.
+MAP=PARTIAL; lower-noise labels, route-focused fitting, map error copy, role=img/text guide implemented; no browser gesture/viewport test.
+RIDE_MODE=COMPLETE_IMPLEMENTED_AND_HARNESS_VERIFIED; foreground/manual boundary preserved and current action is announced.
+NEARBY=COMPLETE_IMPLEMENTED; mapped-candidate and boarding precision language made explicit; no browser test.
+ROUTE_EXPLORER=COMPLETE_IMPLEMENTED; bounded route search and commuter-facing trust labels.
+ACCESSIBILITY=PARTIAL; static UX contract=13/13, focus/touch/motion/safe-area source protections pass; Android/iOS screen-reader and WCAG audit unavailable.
+RESPONSIVE=PARTIAL; mobile layout/safe-area CSS and production build pass; real narrow-viewport capture unavailable.
+
+=== OFFLINE / PWA ===
+OFFLINE=COMPLETE_STATIC; local saved journeys/field drafts and explicit offline limitations are covered by harnesses; browser offline reload not run.
+SAVED_JOURNEYS=COMPLETE_AND_HARNESS_VERIFIED; local schema/bounded storage/share behavior passed.
+FIELD_MODE=COMPLETE_AND_HARNESS_VERIFIED; bounded mission/draft/outbox/sync boundary preserved; current production field rows are absent.
+SERVICE_WORKER=COMPLETE_STATIC; versioned shell, conservative static-asset cache, no API/non-GET caching; manifest/harness/build pass.
+
+=== PLANNER ===
+OPTIMIZATION=COMPLETE_INHERITED_FROM_BATCH020; Batch 021 changed no core planner source and introduced no planner regression.
+BEFORE_MS=19418.77
+AFTER_MS=13632.07
+SEMANTIC_EQUIVALENCE=PASS_IN_BATCH020; Batch 018 scale/equivalence safeguards passed and core planner files are unchanged in Batch 021.
+FULL_MATRIX=NOT_RERUN_INVALIDATED; stored Batch 020 checkpoint was 47/47, 0 failed, but fingerprint 90f49ed197aa21f0f154c602954d8cc583b7a2e714af7c6d37354813f9262be9 differs from current a161fccd4984dfb4a84d0a8a63072182c4190c20fdabc5fdb189bb06eaa0a6f9 because active_graph=0.
+SUSPICIOUS=0_IN_STORED_BATCH020_MATRIX; CURRENT=UNKNOWN_WITHOUT_ACTIVE_GRAPH.
+
+=== TRUST ===
+VERIFIED_TEST_FIXTURE=PASS; Batch021TrustFixtureTest 2/2, 19 assertions on SQLite and 2/2, 19 assertions on isolated PostGIS test database; production rows were not written.
+REAL_VERIFIED_JOURNEYS=0
+UNSUPPORTED_VERIFIED_CLAIMS=0
+SYNTHETIC_PRODUCTION_ROWS=0; current production field missions/observations/claims, synthetic disruptions, and synthetic reports all count zero.
+
+=== VALIDATION ===
+GIT_INTEGRITY=PASS; diff check clean, no Git locks, commit contains exactly 21 intended files.
+DATABASE_POSTGIS=PASS_CONNECTION_ONLY; PostgreSQL 18.6/PostGIS 3.6.4 reachable during validation; release readiness remains blocked by active_graph=0.
+MIGRATIONS=PASS; all 17 recorded migrations ran in the inspected PostGIS database.
+BACKEND=PASS_FOCUSED; SQLite focused suite 49/49, 552 assertions; isolated PostGIS transport suite 5/5, 47 assertions; production-named PostGIS suite safely skipped 5/5.
+FRONTEND_TYPECHECK=PASS
+FRONTEND_LINT=PASS
+FRONTEND_BUILD=PASS; one final bounded 300-second build completed with exit 0 after successful compile, TypeScript, static pages, and trace collection.
+BROWSER_TESTS=UNAVAILABLE_NOT_RUN; no browser binary or Playwright/Puppeteer package exists in the environment.
+DOCTOR_V21=FAIL; 180 PASS, 12 WARN, 1 FAIL, 0 BLOCKED; the failure is deployment readiness caused by the missing active graph.
+RELEASE_CHECK=FAIL; application/database/PostGIS/schema/migrations/trust/frontend checks pass, active graph check fails with active_count=0.
+
+=== COMMIT ===
+COMMITS_CREATED=1
+HEAD_FINAL=04548d574734f7fa690f16dfd77ac1865c46b37c
+WORKTREE_STATE=CLEAN; never pushed.
+
+=== READINESS ===
+BATCH021_STATUS=PARTIAL_COMMITTED; recovered product implementation and deterministic tests are committed, but production release readiness is not claimable with the current persisted database and unavailable device/browser QA.
+REMAINING_GAPS=Recover the sanctioned PostGIS graph/Batch 020 field state from backup or approved source without an ad hoc reimport; then rerun Doctor, release check, and the resumable 47-pair audit under a matching fingerprint; perform real-device visual, install, offline, map, and screen-reader checks.
+NEXT=Obtain/restore an authoritative database state, verify its fingerprint, run one final bounded release ladder, and only then reassess Batch 021 readiness.
+
+CLIPBOARD_COPY=PASS
+CLIPBOARD_SET_EXIT=0
+CLIPBOARD_REPORT_PATH=/data/data/com.termux/files/home/biyahe-batch021-recovery-report.txt
+
+=== BATCH 021 RECOVERY COMPLETE ===

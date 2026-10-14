@@ -1,0 +1,86 @@
+=== BASELINE ===
+HEAD_BEFORE=8a71e10ab28d1656fa1add34712e6e8ba60a002b
+HEAD_AFTER=a51c0e7cce1a69926a1762d89b4bda16b975560d
+WORKTREE=CLEAN; branch main is 19 commits ahead of origin/main.
+RECOVERED_WORK=Recovered Batch024 report/checkpoint, verified backup, and existing synthetic-tested stream pipeline. No Batch025 checkpoint existed.
+
+=== POSTGRESQL ===
+STARTUP=NOT_ATTEMPTED_RESOURCE_GUARD. Latest pg_ctl says no server; free swap was 57 MiB (256 MiB required). No repeat startup.
+OBSERVATION_DURATION=No live-server observation. Read-only observer guard probes completed in about 1 second each.
+EXIT_CAUSE=INSUFFICIENT_EVIDENCE. No shutdown/PANIC/exit entry after prior readiness; Android logs showed no kill evidence. Do not infer corruption or LMKD.
+LOG_EVIDENCE=PostgreSQL 18.6 completed normal recovery and was ready at 2026-10-08 19:16:31 Asia/Manila; later no server. Stale postmaster.pid PID 23976 is absent. No PostgreSQL files were modified.
+DATABASE_HEALTH=Currently unreadable because server is stopped. Last B024 live counts: cities 1, places 37, aliases 47, stops 503, routes 32, patterns 61, pattern-stops 1124, transfers 2, fares 22, provenance 9; graph/field tables were empty.
+BACKUP_VERIFIED=YES, prior B024 dump SHA-256 e55af400fde88d0a3434b194e0625e204eb0a2726374eabb8286c152b11a4a92; archive listing and isolated restore were verified in B024. No new backup created.
+STAGING_HEALTH=Prior isolated restore verified; not rechecked live in B025.
+
+=== RESOURCE SAFETY ===
+HEAVY_PARALLELISM=0
+PEAK_RSS=331828 KiB (focused ESLint). tsc used 322868 KiB RSS before it was stopped.
+MEMORY_AVAILABLE_MIN=609228 KiB; SWAP_FREE_MIN=3528 KiB during tsc. Latest: 883724 KiB available, 57800 KiB swap free.
+DISK_FREE_MIN=4912840 KiB latest observed; no large artifact was produced.
+OSM_SOURCE_SIZE=28757299 bytes; verified local hash rechecked.
+OSM_IMPORT=NOT_RUN; FRONTEND_BUILDS=0; FULL_MATRIX_RUNS=0.
+RESOURCE_STOPS=PostgreSQL and real PBF stream were blocked by swap/resource guard. Typecheck stopped cleanly at the safety floor.
+INTERRUPTION_CAUSE=Unknown; this session had no Termux interruption.
+
+=== OSM STREAM ===
+SOURCE=https://download.openstreetmap.fr/extracts/asia/philippines/central_visayas.osm.pbf; ODbL-1.0, © OpenStreetMap contributors; snapshot 2026-10-07T01:00:21Z.
+HASH=787cac20ecc586b754b1a464643a040566d486457c6a37bc0b11ce683bc66d4d.
+REAL_PBF_TINY_TEST=NOT_RUN_RESOURCE_GUARD.
+XML_CONVERSION=NOT_RUN; STREAM_OUTPUT=NONE; STREAM_COMPLETENESS=NOT_PROVEN.
+MEMORY_PROFILE=No B025 Osmium process. Earlier B024 complete_ways probe reached 469320 KiB RSS and was not repeated.
+
+=== GRAPH ===
+GRAPH_ID=NONE; NODES=0; EDGES=0 in last B024 live read; not revalidated in B025.
+STOPS_CONNECTABLE=NOT_EVALUATED; PLACES_CONNECTABLE=NOT_EVALUATED.
+STAGING_VALIDATION=NOT_RUN; ACTIVE_GRAPH=NONE per last live read; ACTIVATED=NO; ROLLBACK=NOT_TESTED.
+PROVENANCE=Updated the staging updater to use direct Osmium XML streaming into the disk-backed preparer. Added source URL/name, checksum, PBF timestamp, disk and memory/swap checks. Full updater was not run.
+
+=== FIELD ===
+MISSIONS=2 Batch023 drafts / 30 draft claims (18 UNKNOWN, 12 UNVERIFIED); not revalidated against live DB in B025.
+CLAIMS=0 newly persisted; no observations, survey sessions, or evidence created.
+REAL_OBSERVATIONS=0
+PROVENANCE=No claim of historical restoration; no new provenance records.
+
+=== UX ===
+SEARCH=Added retry for failed origin/destination autocomplete using existing abortable requests.
+RESULTS=No change.
+DETAIL=No change.
+MAP=No change.
+RIDE_MODE=No change; no background location changes.
+NEARBY=No change.
+OFFLINE=No change.
+ACCESSIBILITY=24-check static UX harness passes; device and screen-reader testing not run.
+
+=== PLANNER ===
+FOCUSED_CORRECTNESS=PASS: direct, reverse, one-transfer, two-transfer, trust and pedestrian fixtures included in focused suite.
+OPTIMIZATION=NONE; graph unavailable for representative performance profiling.
+BEFORE_MS=NOT_MEASURED; AFTER_MS=NOT_MEASURED.
+MATRIX_47=NOT_RUN; no active graph.
+SUSPICIOUS_JOURNEYS=NOT_AUDITED.
+
+=== VALIDATION ===
+BACKEND=PASS: 30 passed, 1 skipped, 471 assertions. Database safety guards: 6 passed, 20 assertions.
+DATABASE_GUARDS=PASS.
+IMPORTER=PASS on synthetic fixture tests only; real PBF/import not run.
+FIELD_MODE=NOT_RUN; OFFLINE=NOT_RUN; SYNTHETIC_VERIFIED=NOT_RUN.
+DOCTOR_V25=NOT_IMPLEMENTED/NOT_RUN; database unavailable.
+RELEASE_CHECK=NOT_RUN; database and graph unavailable.
+FRONTEND_UX=PASS, 24 checks.
+FRONTEND_TYPECHECK=RESOURCE_STOPPED; tsc stopped at 609 MiB available RAM and 3.5 MiB free swap. Not a PASS.
+FRONTEND_LINT=PASS for changed page.tsx and UX harness (256 MiB Node heap).
+FRONTEND_BUILD=NOT_RUN per low-resource/no-build policy.
+SHELL=PASS: bash -n, ShellCheck, observer safety-gate probes, git diff --check.
+
+=== READINESS ===
+RECOVERY=PARTIAL; backup remains verified, PostgreSQL stopped, graph missing.
+PRIVATE_BETA=BLOCKED.
+BLOCKERS=Unknown PostgreSQL exit cause; insufficient swap; no real PBF proof or graph; Doctor V25 not implemented; frontend typecheck resource-stopped.
+NEXT=When MemAvailable >=850 MiB and SwapFree >=256 MiB, run one monitored normal PG startup with api/scripts/observe-postgres.sh --start. If healthy, create/verify a fresh backup, run one tiny real-PBF stream with live resource monitoring, then consider isolated staging import.
+
+=== COMMITS ===
+COMMITS=a51c0e7 Batch 025: harden recovery diagnostics and search retry.
+HEAD_FINAL=a51c0e7cce1a69926a1762d89b4bda16b975560d
+WORKTREE=CLEAN
+PUSH=NO
+CLIPBOARD_COPY=PASS

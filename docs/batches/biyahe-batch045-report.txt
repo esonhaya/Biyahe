@@ -1,0 +1,67 @@
+=== BIYAHE BATCH 045 ===
+HEAD_BEFORE=c5844d227b2f63ac1995973d5c7ef8254b92ca6c
+HEAD_AFTER=0ba6e004f838f2345cff6297994ab86499fa6a30
+START_TIME=2026-10-10T13:48:14Z
+END_TIME=2026-10-10T14:21:56Z
+ELAPSED_WALL_TIME=00:33:42
+WORKTREE=TRACKED_CLEAN; seven historical Doctor reports remain untracked and byte-identical
+COMMITS=98ad3016a93f255ec88bf865fddaa9e93d060c91 (API timeout/response-contract hardening); cef3070ff629dad5e1418c15afee5b17af1e3d09 (Doctor V45 and recovery evidence); 0ba6e004f838f2345cff6297994ab86499fa6a30 (SD bundle resource-block evidence)
+
+=== ENVIRONMENT ===
+EXTERNAL_HOST=UNAVAILABLE; Termux on Android aarch64 only; Docker, Podman and GitHub CLI unavailable; no configured SSH host or established remote Linux runner
+STAGING_ACTIVATION=BLOCKED_DEPENDENCY; no services started
+POSTGRESQL=NOT_STARTED; observed PostgreSQL RSS 0 KiB
+POSTGIS=BLOCKED_DEPENDENCY; no staging database available
+DATA_IMPORT=NOT_RUN
+
+=== REAL VALIDATION ===
+GRAPH_SHA256=EXPECTED 29d7aaf9c45a596f4065c44d13f983f4a7edeec5ac2ea41b718b1c52ca865bf8; actual NOT_HASHED, graph not accessed
+GRAPH_INTEGRITY=NOT_RUN
+CEBU_CORPUS=BLOCKED_RESOURCE; 0/10 executed, 10 not run; graph was not opened; historical 9 found/1 disconnected is not a current result
+LIVE_API=BLOCKED_DEPENDENCY; no staging API available
+FRONTEND_BUILD=BLOCKED_RESOURCE; typecheck, ESLint and build not run because guarded preflight failed the SwapFree floor
+BROWSER_TESTS=NOT_RUN; no browser environment or staging origin
+
+=== APPLICATION ===
+REQUEST_LIFECYCLE=IMPLEMENTED_UNTESTED; added 20-second API request deadline through body parsing and preserved caller cancellation; runtime harness did not start
+SAVED_JOURNEYS=IMPLEMENTED_UNTESTED; existing snapshot-v1/offline behavior preserved, focused suite not run
+RIDE_MODE=IMPLEMENTED_UNTESTED; existing manual progression preserved, focused suite not run
+EVIDENCE_PRESENTATION=IMPLEMENTED_UNTESTED; existing source-aware disclosures retained, current UI regression suite did not complete
+API_FAILURE_RECOVERY=IMPLEMENTED_UNTESTED; core response-shape validation added; deterministic harness blocked before launch
+PERFORMANCE=NOT_MEASURED; no performance claim
+
+=== VERIFICATION ===
+LOW_RESOURCE_TESTS=PASS for TypeScript/JavaScript syntax, package JSON parsing, resource-guard Bash syntax, and git diff checks only; no functional suite, typecheck, lint or build passed
+PORTABLE_KIT=IMPLEMENTED_UNTESTED; existing portable verification v6 retained, package verifier not run this batch
+DOCTOR_V45=VERIFIED for report contract validation only; 19 categories; executable source pinned to 98ad3016a93f255ec88bf865fddaa9e93d060c91; release readiness remains blocked
+SOURCE_FINGERPRINTS=web/src/lib/api.ts db1809e208545d31892017b46f20885cb1d063538ec3e0f16c094308446794d4; web/src/lib/fetchWithTimeout.ts 65a29fccfaf89af6bf82736111592f3b5b32180fac8422ed2679d9e6cefd4c53; web/scripts/api-failure-harness.mjs aa053a1657aa5a01b008a2da70bd3e32676ecbee69d5dcda670999b1e16805f5; web/package.json 37dab358a824f9b960f33001a1b14fd6f3448c19788bd4a9bd3cf185806757bb
+
+=== RESOURCES ===
+PREFLIGHT=Five spaced API-harness samples; minimum MemAvailable 783664 KiB; minimum SwapFree 23108 KiB (required 131072); worker not launched. Two later guarded bundle preflights also blocked before Git started.
+MINIMUM_MEMORY=671628 KiB across recorded guarded preflights (floor 524288 KiB)
+MINIMUM_SWAP=23108 KiB across recorded guarded preflights (floor 131072 KiB)
+WORKER_CANCELLATIONS=NONE; blocked commands never started, so cancellation was not needed; no unrelated process terminated
+
+=== READINESS ===
+FIELD_SAFETY=BLOCKED; two transfer locations remain physically UNVERIFIED
+PRIVATE_BETA=BLOCKED
+PRODUCTION_ACTIVATION=NO
+
+=== DELIVERY ===
+FINAL_HEAD=0ba6e004f838f2345cff6297994ab86499fa6a30
+GIT_BUNDLE=BLOCKED_RESOURCE; final bundle was not created after two failed guarded preflights; verified initial recovery bundle retained at ~/storage/external-1/Termux-Archive/Biyahe/Batch045-Recovery/20261010T134814Z/biyahe-batch045-initial-c5844d227b2f63ac1995973d5c7ef8254b92ca6c.bundle
+BUNDLE_SHA256=Final bundle NOT_CREATED; initial recovery bundle f6eaea7d9ec21dce2c94bd7bc15a2d5ac21334c77fdaaf13eed61aaace8ed114
+SD_VERIFICATION=Initial bundle complete-history verification PASS and SHA256 rechecked; final bundle BLOCKED_RESOURCE
+PUSH=NO
+
+=== REMAINING WORK ===
+VERIFIED=Static syntax/JSON/Bash/diff checks; Doctor V45 contract (19 categories); initial recovery bundle verification; seven historical report hashes; tracked tree clean
+IMPLEMENTED_UNTESTED=API timeout and response-shape hardening with deterministic harness; existing saved-journey, Ride Mode and evidence behavior
+RESOURCE_BLOCKED=API functional harness; frontend typecheck/ESLint/build; final SD Git bundle
+EXTERNAL_HOST_REQUIRED=Staging activation, PostGIS/importer checks, live API smoke tests, full browser suite, current real graph integrity and ten-case corpus execution
+FIELD_EVIDENCE_REQUIRED=Physical verification of two transfer locations and any field safety claims
+NEXT_BATCH=Run blocked frontend/API checks and create the final SD bundle when resource floors pass; run staging and graph validation on an actually available isolated Linux host; collect field evidence separately
+
+CLIPBOARD=VERIFIED
+REPORT_PATH=$HOME/biyahe-batch045-report.txt
+=== END BIYAHE BATCH 045 ===

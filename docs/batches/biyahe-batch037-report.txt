@@ -1,0 +1,67 @@
+=== BIYAHE BATCH 037 ===
+HEAD_BEFORE=a72632d9581ad7d28cb2b2d030d34b7b5b2d6794
+HEAD_AFTER=bcf99301a631ced8210f487003446769cacd898a
+WORKTREE=Tracked tree clean; six pre-existing historical Doctor reports remain untracked and preserved
+COMMITS=bcf9930 Improve commuter journey evidence and map clarity
+ELAPSED_TIME=Approximately 30 minutes (estimated; start time was not captured)
+
+=== PRODUCT AUDIT ===
+EXISTING_FEATURES_REUSED=One journey API and planner; direct/1-transfer/2-transfer results; CommuteCard step model; MapLibre; saved snapshots; Ride Mode
+DUPLICATION_AVOIDED=No second planner, persistence format, or route engine added
+MAIN_UX_GAPS_FOUND=Origin appeared after destination and was called optional; mixed route/straight-line walking distances shared one label; compact results repeated long steps; map points lacked uncertainty labels
+
+=== IMPLEMENTATION ===
+JOURNEY_CONTRACT=Existing Journey/CommuteCard contract retained; walking evidence now separates graph distance, approximate access, straight-line estimate, missing distance, and missing geometry
+RESULT_CARDS=Compact ride rows show route/direction, boarding and get-off areas, fare, transfers, walking evidence, and uncertainty; full detail remains in selected journey
+STEP_BY_STEP=Existing ordered detail supports direct, one-transfer, and two-transfer journeys; compact cards link into it
+WALKING_GUIDANCE=Estimate-only geometry is never used as a walking route; missing mapped geometry is explained; no straight-line route is drawn
+MAP_PRESENTATION=Origin-first flow; selected result indication; boarding/get-off/transfer labels state uncertainty; missing line geometry is disclosed; OSM attribution retained
+ROUTE_COMPARISON=Existing ride-count filters retained with aria-pressed state and 44px minimum targets; cards expose walking and fare evidence
+FAILURE_STATES=Existing API reasons and uncertainty wording reused; missing path/distance/geometry stays distinct
+MOBILE_UX=Origin-first narrow-screen stack, compact cards, visible selection, larger comparison targets; browser rendering not tested
+SAVED_JOURNEYS=Existing snapshot provenance/storage retained; stale snapshot wording and behavior unchanged
+
+=== REAL DATA ===
+GRAPH_HASH=29d7aaf9c45a596f4065c44d13f983f4a7edeec5ac2ea41b718b1c52ca865bf8 (Batch036 baseline; not rehashed this batch)
+OFFLINE_CASES=10 baseline cases carried forward; not rerun against graph
+SUCCESSFUL_CASES=9 baseline
+DISCONNECTED_CASES=1 baseline, correctly unavailable
+STOP_COVERAGE=436/503 snappable within 25 m; 433 on largest component; 3 on smaller components
+PLACE_COVERAGE=30/37 snappable
+TRANSFER_VERIFICATION=2 graph-connected transfers; both remain UNVERIFIED
+FABRICATED_GEOMETRY=NO
+
+=== VALIDATION ===
+PHP_TESTS=NOT RUN (frontend-only changes)
+JSON_VALIDATION=NOT RUN; static JSON was reviewed but not parsed under the swap guard
+JS_TESTS=commute-card harness PASS before final wording-only adjustment; no rerun below resource floor
+TYPECHECK=NOT RUN
+LINT=NOT RUN
+MOBILE_RENDERING=NOT RUN; no browser-level test
+MAP_TESTS=Pure helper fixtures PASS before final wording-only adjustment; MapLibre/browser not tested
+SAVED_JOURNEY_TESTS=Focused harness PASS
+RESOURCE_GUARD=Remaining JS/UX/type/lint/browser checks stopped after SwapFree reached 42,016 KiB; configured floor 131,072 KiB
+DOCTOR_V37=Created docs/reports/batch037-doctor-v37.json; parser check not run; statuses distinguish implemented, tested, not tested, and blocked; overall gate BLOCKED
+
+=== READINESS ===
+OFFLINE_EXPERIENCE=Presentation improvements implemented for existing journey results and saved snapshots; no new local SQLite planner
+LIVE_API_INTEGRATION=Existing journey response UI reused; live integration of the separate verified graph remains unproven
+REAL_POSTGRESQL_STAGING=BLOCKED; no cluster started or contacted
+FIELD_SAFETY=BLOCKED; no new field evidence
+PRIVATE_BETA=BLOCKED
+PRODUCTION_ACTIVATION=NO
+
+=== GIT SAFETY ===
+UNRELATED_WORK_PRESERVED=Six historical untracked Doctor reports unchanged; no other projects touched
+SD_BACKUP=Not created; SwapFree remained volatile and below the 131,072 KiB floor during bundle preflight
+GIT_BUNDLE=Not created; prior SD bundles left untouched
+PUSH=NO
+
+=== NEXT ===
+REMAINING_BLOCKERS=Typecheck, UX harness, lint and browser rendering; real staged graph integration/parity; transfer and field verification
+RECOMMENDED_BATCH038=Resume focused frontend validation only after sustained swap headroom; validate mobile/browser states; keep graph staging and beta blocked until real evidence
+
+CLIPBOARD=SET_ATTEMPTED_UNVERIFIED (setter attempted; getter returns 0 bytes)
+REPORT_PATH=~/biyahe-batch037-report.txt
+
+=== END BATCH 037 ===

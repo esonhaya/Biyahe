@@ -1,0 +1,139 @@
+=== BIYAHE BATCH 042 ===
+
+HEAD_BEFORE=41d3798e8b7a7646dcc3270b6a6869d83db0cfd9
+HEAD_AFTER=19172ef20c2fff9e9a6d02d66d36b182ac6acb74
+START_TIME=2026-10-10T00:56:56Z
+END_TIME=2026-10-10T04:58:09Z
+ELAPSED_WALL_TIME=4h 1m 13s
+ACTIVE_TIME=NOT_MEASURED
+WORKTREE=TRACKED_CLEAN; seven historical untracked Doctor reports remain unchanged
+COMMITS=
+aa929e7ef0902680911cb451baea8421a647dc19
+ac48e3856e26cb322ad79c7d7b5ddf1d14fb549c
+39417b17ac9447dd2d1866682ed57e37c8e7fc0b
+3eecb655a69f0740e75d0f137c0f8b9e50dd12d6
+4ac5e74b182c91b847295979090cee76283e4e0c
+31a8b202787f4e0d447183c6581185370699313e
+4306f450232ea4528521d69a79c782fd12263106
+db843f7acd191f7803793989ab7fd27a74860839
+3be8af5fe6b1606d95e28cafaf0cae0da047f568
+eae272fe90e4320f129dd4349f644cbc91bd108b
+1015874d95e3d6dc93241cbe3a7ad5645e62dcd5
+1f6709c47d27525e23aca490872bf1c89b35a23d
+29df41bc768c22d8074970577f5fa67009093c0d
+1d249f41c389436e36930abeec4ddc503e52492c
+18d757a19b894881beb45ce490e9d1b5f4e7adfb
+2ba2c2af406e6fd121894773f8d75048555510d5
+049cf77225b522fe272baa6166400c5262b59f52
+e182af10b822361698b1b5343b5805b8004f9c39
+2fba3141170cc3406c532623a433257610ff726e
+a91dabe1996f5809d25ebd6b57cfd4bab024a493
+45f52b3153515e8113552f149acc7b42a3825ca6
+e56417da752f5bd254c96af907d55d43806ae199
+19172ef20c2fff9e9a6d02d66d36b182ac6acb74
+
+=== RECOVERY ===
+BASELINE=main at the expected starting HEAD; tracked worktree was clean before work
+HISTORICAL_REPORTS=7 preserved; all seven SHA256 values match the pre-edit SD recovery snapshot
+SD_RECOVERY=Initial snapshot verified at /data/data/com.termux/files/home/storage/external-1/Termux-Archive/Biyahe/Batch042-Recovery/20261010T005738Z; final recovery directory is /data/data/com.termux/files/home/storage/external-1/Termux-Archive/Biyahe/Batch042-Recovery-Final-20261010T0453Z
+PREVIOUS_BATCH041=Recovered existing Batch041 work and preserved it; no batch restart or source reset
+
+=== FRONTEND ===
+ARCHITECTURE=Home page owns origin, destination, planner requests, journey list and selected identity; LatestPlaceSearch owns debounce/abort/generation; RequestGate owns independent planner, pattern, Can-I-Ride and replan lifetimes; CommuteCard requests development-only walking preview; MapView receives selected journey geometry; savedJourneys.ts stores snapshot-v1 local data; RideMode stores manual progress by journey version.
+PREVIEW_STATE_MACHINE=VERIFIED; DISABLED/IDLE/LOADING/AVAILABLE/PARTIAL/UNAVAILABLE/STALE/ERROR; current-identity checks, cancellation, source mismatch, retry, removal and unmount cleanup covered by deterministic harnesses.
+JOURNEY_RESULTS=VERIFIED by focused commute-card fixtures; unknown fare/distance, missing boarding/alighting evidence, stale source, transfer disclosure, disconnected/missing walking data and partial previews retain source-aware labels. Planner ranking unchanged.
+MAP_GEOMETRY=PHP geometry contract smoke PASS 7/7; commute-card map assertions pass for graph-only geometry, missing geometry and connector separation. Frontend map/mobile UX harness BLOCKED_RESOURCE; browser visuals NOT_RUN. No connector polyline is fabricated.
+RIDE_MODE=VERIFIED; manual step advancement/correction, invalid steps, prerequisites, version switching, restart and local snapshot behavior covered; no GPS or arrival verification implied.
+SAVED_JOURNEYS=VERIFIED; snapshot-v1, reopen, stale evidence, malformed/corrupt data and development-preview save prohibition covered; offline local reopening retained.
+SEARCH=VERIFIED; place-search cancellation and keyboard-selection child results are source-matched PASS; parent group later hit a resource breach and was cancelled before its remaining ledger child.
+CAN_I_RIDE=VERIFIED; standalone current harness PASS with nine yes/no/unknown, direction, affected-route, unavailable, disclosure and stale-response checks.
+MOBILE_ACCESSIBILITY=IMPLEMENTED_UNTESTED; static inspection found responsive single-column search/cards, visible focus styles and 44 px controls. No 320/360/390 px browser run or screenshot was performed.
+
+=== TESTS ===
+PREVIEW_TESTS=PASS; state and component-request harnesses verified current journey identity, cancellation, stale response rejection and preview removal.
+COMMUTE_CARD_TESTS=PASS; 19 focused presentation/snapshot assertions, including missing evidence and preview exclusion.
+MAP_TESTS=PARTIAL; graph geometry/fail-closed assertions PASS; full UX/map contract BLOCKED_RESOURCE; browser interaction NOT_RUN.
+RIDE_MODE_TESTS=PASS; current manual progress/version behavior.
+SAVED_JOURNEY_TESTS=PASS; snapshot-v1 and corruption/preview persistence checks.
+SEARCH_TESTS=PASS; place search and search keyboard child outputs verified against their source fingerprints.
+CAN_I_RIDE_TESTS=PASS; 9 focused checks.
+PROVENANCE=PASS 6 fixtures; 648 restrictions reconcile as 619 stored + 29 omitted.
+COVERAGE=PASS 11 fixtures; stored-record counts only.
+GEOMETRY_SMOKE=PASS 7 contract checks.
+CORPUS_COMPARATOR=PASS 4 contract fixtures.
+DOCTOR_CONTRACT=PASS 15 unit tests; report validator PASS, 17 categories and 24 test records.
+PORTABLE_STATIC=PASS 11/11 suites; exact checkout-bound run 2026-10-10T04:46:14Z–2026-10-10T04:46:34Z.
+ADAPTER_PHPUNIT=BLOCKED_RESOURCE; five-sample preflight did not start the PHPUnit worker.
+REAL_CEBU_CORPUS=BLOCKED_RESOURCE; five-sample preflight failed at sample 1 (SwapFree 59924 KiB); replay command did not start.
+JOURNEY_PREVIEW=PASS; state transition and request harnesses source-matched.
+RIDE_MODE=PASS; focused harness.
+SAVED_JOURNEYS=PASS; snapshot-v1 focused harness.
+SEARCH=PASS; child harnesses source-matched; grouped worker later cancelled on SwapFree breach.
+CAN_I_RIDE=PASS; standalone harness.
+TYPECHECK=BLOCKED_RESOURCE; grouped worker cancelled when process-tree RSS reached 291600 KiB above the 262144 KiB cap; no retry.
+ESLINT=BLOCKED_RESOURCE; preflight refused worker start; no retry.
+PHP_SYNTAX=PASS; 5 syntax checks.
+PHP_FORMATTING=NOT_RUN_NOT_APPLICABLE; no live PHP source files changed in Batch 042; Pint dependency is present.
+JAVASCRIPT_SYNTAX=PASS; 11 syntax checks.
+BASH_SYNTAX=PASS; 2 checks.
+PYTHON_SYNTAX=PASS; 10 syntax/AST checks.
+JSON_PARSING=PASS; 6 checks plus final Doctor/ledger parses.
+GIT_DIFF_CHECK=PASS; raw worker evidence logs retained byte-for-byte with scoped whitespace attributes.
+BROWSER_TESTS=NOT_RUN; no browser automation environment was available.
+
+=== REAL DATA ===
+GRAPH_SHA256=29d7aaf9c45a596f4065c44d13f983f4a7edeec5ac2ea41b718b1c52ca865bf8
+GRAPH_IDENTITY=VERIFIED by read-only SHA256 at 2026-10-10T04:47:15Z; 41013248 bytes; graph unchanged.
+GRAPH_INTEGRITY=NOT_RUN; no SQLite integrity check or route replay.
+CORPUS_REPLAY=BLOCKED_RESOURCE; historical 9 routes found / 1 disconnected remains historical only and is not claimed as a current PASS.
+STOP_COVERAGE=VERIFIED stored records: 503 total, 436 snappable within 25 m, 67 unsnappable; no geographic, population, sidewalk or field-coverage claim.
+PLACE_COVERAGE=VERIFIED stored records: 37 total, 30 snappable, 7 unsnappable; no broader coverage claim.
+TRANSFER_VERIFICATION=BLOCKED_DEPENDENCY; two transfer records remain unverified for physical interchange safety.
+
+=== RESOURCES ===
+PREFLIGHT_SAMPLES=Floors held at MemAvailable >=524288 KiB and SwapFree >=131072 KiB; guarded preflight used 5 samples spaced 5 seconds apart. Search: 03:40:42 913116/146204; 03:42:38 911796/146692; 03:44:47 906972/146772; 03:50:49 1029612/241516; 03:50:55 947864/209988. Can-I-Ride: 04:31:16 862104/255448; 04:31:22 857316/271140; 04:31:28 879240/276068; 04:31:33 822504/296700; 04:31:39 818196/296996. UX: 04:31:51 746816/183564; 04:31:56 845816/160412; 04:32:02 842048/160996; 04:32:07 830884/129320; 04:32:13 863196/181720. Cebu corpus: 04:32:47 746720/59924; 04:32:53 755096/101248; 04:32:58 760628/139776; 04:33:04 772592/144656; 04:33:10 779572/146264. Each pair is MemAvailable/SwapFree KiB.
+WORKER_MINIMUMS=Configured floors unchanged at 524288/131072 KiB; first-breach cancellation setting was 1 sample; max process-tree RSS 262144 KiB.
+WORKER_PEAK_RSS=preview contract 74152 KiB; Ride Mode 76960 KiB; commute card 73396 KiB; partial search group 68304 KiB; Can-I-Ride 60592 KiB. Search group minimum SwapFree 113960 KiB, then the owned process group and descendants were cancelled completely. Typecheck/lint process tree exceeded the RSS cap and was cancelled. No unrelated process was terminated.
+CANCELLATION=Owned worker groups only; cancellation completed on breached workers; no repeated resource-blocked retries.
+POSTGRESQL_RSS=0 observed for monitored workers; PostgreSQL was never started or contacted.
+FINAL_POINT=2026-10-10T04:55:30Z MemAvailable 1030668 KiB; SwapFree 334916 KiB (observation only; no worker launched from this single sample).
+
+=== EVIDENCE ===
+VALIDATION_LEDGER=VERIFIED; per-input/tool/command fingerprints, checksummed outputs, atomic writes and interruption recovery; RUNNING recovers to NOT_RUN and blocked/failed results do not reuse stale PASS.
+PORTABLE_KIT=VERIFIED v4; manifest SHA256 ea8f2f0695f02e2a8fddc1a39f572004aa2878163216d82e8d3e416a281521d5; SHA256SUMS SHA256 0ecdb4233dbb38c305e1d2d018a741111eda7698e0fe8a75a8f30561c2768243; repository snapshot a91dabe; executable source 2fba314; no external-host execution claimed.
+DOCTOR_V42=PASS_STATIC_DOCTOR_CONTRACT; executable/tested revision 2fba3141170cc3406c532623a433257610ff726e; 17 categories, 77 source fingerprints and 24 report test records. Report: /data/data/com.termux/files/home/Biyahe/docs/reports/batch042-doctor-v42.json.
+SOURCE_FINGERPRINTS=77 Doctor source hashes; portable run records per-suite inputs, command/tool versions and output checksums; normalized Doctor paths are bound to both source and package hashes.
+EVIDENCE_RECONCILIATION=648=619+29; graph-quality measured values 26 long edges, 944 boundary nodes and 1510 crossing-tagged nodes; unmeasured legacy defaults were not converted to zero facts.
+
+=== READINESS ===
+LIVE_API_INTEGRATION=BLOCKED
+POSTGRESQL_STAGING=BLOCKED
+FIELD_SAFETY=BLOCKED; two transfers lack field verification.
+PRIVATE_BETA=BLOCKED
+PRODUCTION_ACTIVATION=NO
+
+=== DELIVERY ===
+FINAL_HEAD=19172ef20c2fff9e9a6d02d66d36b182ac6acb74
+EXECUTABLE_SOURCE_REVISION=2fba3141170cc3406c532623a433257610ff726e; later commits are documentation/evidence delivery only.
+GIT_BUNDLE=/data/data/com.termux/files/home/storage/external-1/Termux-Archive/Biyahe/biyahe-batch042-final-19172ef20c2fff9e9a6d02d66d36b182ac6acb74.bundle
+BUNDLE_SHA256=48e136fc73f4a7c739d0be61cacfc4f22d5660a2983c45b523cd3f7f6751851a
+RECOVERY_ARCHIVE=/data/data/com.termux/files/home/storage/external-1/Termux-Archive/Biyahe/Batch042-Recovery-Final-20261010T0453Z
+RECOVERY_ARCHIVE_TAR=/data/data/com.termux/files/home/storage/external-1/Termux-Archive/Biyahe/biyahe-batch042-recovery-19172ef20c2fff9e9a6d02d66d36b182ac6acb74.tar.gz
+RECOVERY_ARCHIVE_MANIFEST=ARCHIVE-FILES.sha256 (generated after adding this report)
+SD_VERIFICATION=VERIFIED; initial and final bundles verified, final bundle includes refs/heads/main at 19172ef20c2fff9e9a6d02d66d36b182ac6acb74; final recovery directory package hashes and seven historical report hashes match.
+PUSH=NO
+
+=== REMAINING WORK ===
+VERIFIED_TASKS=preview state/request identity; commute-card and snapshot-v1; Ride Mode; search and Can-I-Ride; provenance/coverage/geometry/comparator fixtures; validation ledger; Doctor V42; portable v4 STATIC.
+IMPLEMENTED_UNTESTED_TASKS=browser viewport/accessibility interaction; live adapter route integration beyond pure geometry contract.
+RESOURCE_BLOCKED=UX contract; adapter PHPUnit; real Cebu corpus replay; TypeScript; ESLint. PHP formatting was not applicable because no live PHP source changed.
+EXTERNAL_HOST_REQUIRED=live production graph/API integration; PostgreSQL staging; browser automation for 320/360/390 px and keyboard/touch visual verification.
+FIELD_EVIDENCE_REQUIRED=physical boarding/alighting and transfer checks; sidewalk/crossing observations; both stored transfers remain unverified.
+NEXT_BATCH=Run the blocked local suites only after fresh five-sample guards pass; perform browser viewport checks on an available browser host; stage PostgreSQL and production graph on a controlled external host; verify the two transfers in the field before beta review.
+
+CLIPBOARD=SET_ATTEMPTED_UNVERIFIED
+CLIPBOARD_READBACK=termux-clipboard-get returned 0 bytes; byte comparison did not match.
+CLIPBOARD_FALLBACK=cat ~/biyahe-batch042-report.txt
+REPORT_PATH=/data/data/com.termux/files/home/biyahe-batch042-report.txt
+
+=== END BATCH 042 ===

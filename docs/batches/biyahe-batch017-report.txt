@@ -1,0 +1,150 @@
+BIYAHE — BATCH 017
+METRO CEBU NETWORK EXPANSION V2
+=== BASELINE ===
+HEAD_BEFORE=5ff1bb6acf887effd1d7eb982b2b1ff0a14df540
+HEAD_AFTER=dbe1eca8500a4049dc2c3f25b6b1cdcd178f3110
+WORKTREE_STATE=CLEAN
+UNRELATED_WORK_PRESERVED=YES
+POSTGRES_VERSION=18.6
+POSTGIS_VERSION=3.6 USE_GEOS=1 USE_PROJ=1
+MIGRATION_STATE=UNCHANGED; existing Batch 014 schema intact
+=== NETWORK EXPANSION ===
+PLACES_BEFORE=22
+PLACES_AFTER=34
+ALIASES_BEFORE=30
+ALIASES_AFTER=43 production active
+STOPS_BEFORE=48
+STOPS_AFTER=499
+ROUTES_BEFORE=8
+ROUTES_AFTER=30
+PATTERNS_BEFORE=16
+PATTERNS_AFTER=58
+PATTERN_STOPS_BEFORE=86 production
+PATTERN_STOPS_AFTER=1115 production
+TRANSFERS_BEFORE=2
+TRANSFERS_AFTER=2
+VEHICLE_TYPES=JEEPNEY; no unsupported vehicle types added
+PLACES_ADDED=12
+PRODUCTION_SOURCES_ADDED=1
+DATASETS_ADDED=1 versioned atlas
+=== SOURCES ===
+SOURCE_INDEX=https://wiki.openstreetmap.org/wiki/Public_transportation_in_Metro_Cebu
+SOURCES_REVIEWED=1 new OSM registry source; 46 explicit relation candidates
+RELATIONS_LOADED=42; unusable/incomplete relations skipped
+TIER1_SOURCES=0
+TIER2_SOURCES=0
+TIER3_SOURCES=1 OSM structured/open data
+TIER4_SOURCES=0
+SOURCES_ACCEPTED=1
+SOURCES_REJECTED=0
+RESEARCH_DIMINISHING_RETURNS=YES; no current official route-stop dataset found
+=== EVIDENCE ===
+ROUTE_IDENTITIES_ADDED=22 mapped OSM identities, UNVERIFIED service
+PATTERN_SERVICE_CLAIMS=42 UNVERIFIED
+SEQUENCE_CLAIMS=1029 UNVERIFIED
+BOARDING_CLAIMS=1029 UNVERIFIED
+ALIGHTING_CLAIMS=1029 UNVERIFIED
+SIGNBOARD_CUES=0
+DRIVER_INSTRUCTIONS=0
+TRANSFER_CLAIMS=0
+FARE_CLAIMS=0
+UNSUPPORTED_VERIFIED_CLAIMS=0
+OPEN_CONFLICTS=0 new
+=== PRECISION ===
+BOARDING_EXACT_BEFORE=0
+BOARDING_EXACT_AFTER=0
+BOARDING_AREA_BEFORE=1
+BOARDING_AREA_AFTER=1
+BOARDING_APPROXIMATE_BEFORE=0
+BOARDING_APPROXIMATE_AFTER=0
+BOARDING_UNKNOWN_BEFORE=47
+BOARDING_UNKNOWN_AFTER=498
+ALIGHTING_PRECISION_SUMMARY=UNKNOWN/unchanged; new associations remain unverified
+=== PEDESTRIAN ===
+ACTIVE_DATASET=osm-cebu-walk-07555e8a0e284772e2c16120c1d66075
+NODES=43720
+EDGES=45104
+STOPS_CONNECTABLE=46/48 preserved
+PLACES_CONNECTABLE=17/22 preserved
+NEW_STOPS_CONNECTABLE=328/451 within existing 25m snap policy (not full route proof)
+NEW_STOPS_UNCONNECTABLE=123 snap-policy gaps retained honestly
+OSM_REIMPORT=NO
+=== COVERAGE MATRIX ===
+CORRIDOR_MATRIX=12/12 mapped corridors classified STRONG by route-touch coverage; service evidence remains UNVERIFIED
+MATRIX_DEFINED=47 explicit O/D pairs
+MATRIX_EXECUTED=1 real PostGIS pair (Colon → Ayala)
+ROUTABLE=1 DIRECT=0 ONE_TRANSFER=1 TWO_TRANSFER=0 UNSUPPORTED=0
+NO_NEARBY_BOARDING=0 NO_WALKABLE_ACCESS=0
+VERIFIED_JOURNEYS=0 MIXED_JOURNEYS=10 UNVERIFIED_JOURNEYS=0
+NEWLY_ROUTABLE_VS_BATCH016=not fully comparable; expanded matrix interrupted by Termux resource termination
+REGRESSED_VS_BATCH016=0 observed in completed smoke
+=== PRODUCT ===
+SEARCH=expanded places/aliases flow through existing search
+ROUTE_EXPLORER=existing route directory/detail plus bounded nearby discovery
+PATTERN_DETAIL=existing direction/ordered-stop surface reused
+NEARBY_ROUTES=real PostGIS endpoint and one-shot foreground UI PASS
+NEARBY_GPS_POLICY=explicit permission; no persistence/background watcher
+COMMUTE_CARD=shared transformer preserved
+CAN_I_RIDE=live Doctor smoke PASS; new routes use shared path
+RIDE_MODE=existing shared journey model preserved
+PULSE=existing advisory integration preserved
+FAVORITES_SAVED=existing local-only flow preserved
+=== PERFORMANCE ===
+DIRECT_MS=not isolated in completed pair; TWO_TRANSFER_MS=not observed in one-pair smoke
+ONE_TRANSFER_MS=33592 aggregate one-pair expanded planner sample
+NEARBY_MS=~2800ms HTTP smoke including app startup; not SLA benchmark
+ROUTE_DETAIL_MS=not isolated
+CAN_I_RIDE_MS=not isolated
+PULSE_MS=not isolated
+PLANNER_CANDIDATES=263; ROUTES_COMPUTED=17; ROUTE_CACHE_HITS=246
+PLANNER_QUERY_COUNT=not captured
+BOTTLENECKS_FIXED=scalar frontier-token membership check; state bounds unchanged
+PERFORMANCE_VS_BATCH016=expanded sample slower than prior ~8.2s; known scale gap, no candidate dropping
+=== SAFETY ===
+TRUST_LEAKAGE=0
+PRECISION_LEAKAGE=0
+FARE_FABRICATION=0
+INSTRUCTION_FABRICATION=0
+TRANSFER_FABRICATION=0
+WALKABILITY_FABRICATION=0
+RAW_GPS_SERVER_PERSISTENCE=0
+BACKGROUND_GEOLOCATION=0
+SYNTHETIC_PRODUCTION_ROWS=0
+REAL_FIELD_OBSERVATIONS=0
+=== VALIDATION ===
+DATASET_VALIDATION=PASS; 638 valid, 0 rejected
+IMPORT_DRY_RUN=PASS
+IMPORT_IDEMPOTENCY=PASS; 0 imported, 0 updated, 1667 skipped
+NETWORK_INTEGRITY=PASS; invalid route geometry=0
+EVIDENCE_INTEGRITY=PASS; unsupported VERIFIED=0
+SEARCH_TESTS=PASS focused existing backend coverage
+ROUTE_EXPLORER_TESTS=PASS live HTTP/PostGIS nearby smoke
+NEARBY_TESTS=PASS live controller and HTTP smoke
+PLANNER_TESTS=PASS one-pair live smoke; suspicious journeys=0
+OD_MATRIX=1/47 completed; larger run stopped by Termux resource limit
+CAN_I_RIDE_TESTS=PASS live Doctor smoke
+COMMUTE_CARD_TESTS=PASS harness
+RIDE_MODE_TESTS=PASS harness
+PULSE_TESTS=PASS harness
+SECURITY_TESTS=PASS focused validation/Doctor privacy boundaries
+DOCTOR_V17=PASS live PostGIS; 154 PASS, 6 WARN, 0 FAIL, 0 BLOCKED
+BACKEND_REGRESSION=40 selected tests passed; targeted Doctor repair 5/5 passed
+FRONTEND_TYPECHECK=PASS
+FRONTEND_LINT=PASS
+FRONTEND_BUILD=PASS
+=== READINESS ===
+CEBU_CITY_COVERAGE=MATERIAL_EXPANSION; 30 routes/58 patterns mapped
+METRO_CEBU_COVERAGE=PARTIAL; OSM atlas is not service verification
+BOARDING_GUIDANCE_READINESS=PARTIAL; 498 production stops remain UNKNOWN
+ROUTE_EXPLORER_READINESS=PASS_WITH_KNOWN_GAPS
+NEARBY_READINESS=PASS_WITH_POSTGIS_AND_FOREGROUND_LOCATION
+PLANNER_SCALE_READINESS=PASS_WITH_KNOWN_PERFORMANCE_GAP
+DAILY_USE_READINESS=PASS_WITH_KNOWN_GAPS
+MILESTONE_STATUS=PASS_WITH_KNOWN_GAPS
+=== COMMIT ===
+COMMIT=dbe1eca feat: expand Metro Cebu route atlas
+=== CHECKPOINT ===
+NEXT=review highest-impact service/sequence/boarding evidence; run the full 47-pair matrix on a longer-lived PostgreSQL session; never promote OSM geometry into transport verification.
+CLIPBOARD_COPY=PASS
+CLIPBOARD_REPORT_PATH=/data/data/com.termux/files/home/biyahe-batch017-report.txt
+=== BATCH 017 COMPLETE ===

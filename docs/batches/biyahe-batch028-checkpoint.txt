@@ -1,0 +1,45 @@
+BIYAHE BATCH 028 CHECKPOINT — FINAL
+Updated: 2026-10-08
+
+BASELINE/FINAL
+HEAD_BEFORE=d6974d2d5aa27e5e8cfedbc7120ac2ce61fac68e
+HEAD_AFTER=edc2b6f785490c565712eb37045fc7febeac378b
+BRANCH=main
+WORKTREE=CLEAN
+COMMIT=edc2b6f Add offline SQLite pedestrian graph staging
+PUSH=NO
+
+COMPLETED
+- Resumed from Batch027 clean HEAD after reviewing its report/checkpoint. No existing Batch028 work was restarted.
+- Added a PostgreSQL-free SQLite graph staging path with complete-way references, shared access/direction rules, bounded transactions/page cache, source SHA-256/MD5/URL/timestamp/version/bounds provenance, relation restriction warnings, topology/content validation, deterministic fingerprint, producer-exit gating, checkpoint resume, and atomic no-clobber publication.
+- Added offline validate/stage commands and a bounded producer wrapper. The DB importer revalidates the artifact, enforces exact isolated staging identity, writes bounded chunks in one rollback-safe transaction, leaves datasets inactive, and never changes transport/field records.
+- Doctor V28 static reports the offline tooling and can validate a supplied offline artifact without PostgreSQL.
+- Added synthetic source/index/graph, interruption/restart, source mismatch, geometry, topology, tamper, inactive graph, database rollback, and Doctor integration tests.
+- Documented exact recovery design and limitations in docs/offline-pedestrian-graph-staging.md.
+
+BLOCKED/NOT RUN
+- PostgreSQL is stopped. Logs show multiple unclean shutdown recoveries followed by readiness, but no signal, shutdown-complete, PANIC, or exit-cause evidence. No start/restart attempted.
+- Verified PBF exists and hash matches, but Osmium cannot launch: unresolved `_ZNSt6__ndk113__hash_memoryEPKvm`. No alternate PBF reader is installed. No real PBF proof, regional XML conversion, graph import, staging DB, or activation was performed.
+- No real graph artifact/counts exist. No field mission/claim/observation was written; prior drafts remain unverified drafts.
+
+RESOURCE OBSERVATION
+- Baseline MemAvailable ~944,168 KiB; final observed 932,296 KiB. Baseline SwapFree ~298,216 KiB; final 117,016 KiB. Final Cached ~859,544 KiB; final free disk ~4,818,348 KiB.
+- No Batch028 streaming process ran; Batch028 peak process-tree RSS and minimum memory during streaming were not measured. Batch027's guarded tiny attempt remains the historical peak ~99,996 KiB / minimum MemAvailable ~367,468 KiB.
+
+VALIDATION
+- Offline graph + import suites: 11 tests, 53 assertions PASS (latest import suite: 3 tests/17 assertions).
+- PedestrianRoutingTest: 17 passed, 124 assertions; 1 PostGIS-only skip.
+- Doctor tests: 7 passed/36 assertions, plus offline artifact static integration 1 passed/3 assertions.
+- DatabaseTestSafetyTest: 6 passed/20 assertions.
+- Field planning dry-run: 1 passed/27 assertions. Reviewed-claim replay: 1 passed/8 assertions.
+- PHP lint, shell syntax, cached/working diff whitespace checks PASS.
+- Doctor V28 static: 9 PASS, 2 WARN, 6 BLOCKED, 0 FAIL; exit 2 expected because live database/graph checks are unavailable.
+- Frontend unchanged; no frontend tests/typecheck/build run. Live Doctor/release check and 47-pair audit not run.
+
+NEXT SAFE ACTION
+Repair the supported Osmium runtime, verify its actual version, then run the documented PBF stream once under the bounded process monitor. Do not activate until the real-source offline artifact passes validation and a healthy PostgreSQL staging database plus current backup are available.
+
+REPORT/CLOSURE
+- Final report saved to ~/biyahe-batch028-report.txt.
+- Termux clipboard setter exit status=0; clipboard readback was empty (0 bytes), so CLIPBOARD_COPY=CLIPBOARD_UNVERIFIED.
+- Commit edc2b6f785490c565712eb37045fc7febeac378b; repository remains clean; nothing pushed.

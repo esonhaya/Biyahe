@@ -1,0 +1,70 @@
+=== BIYAHE BATCH 038 ===
+HEAD_BEFORE=bcf99301a631ced8210f487003446769cacd898a
+HEAD_AFTER=6de4e7dbf2710eb6c587dca3a7697d6938e7a8b7
+WORKTREE=TRACKED_CLEAN; six historical untracked Doctor reports preserved
+COMMITS=6de4e7d Improve journey evidence and manual Ride Mode progress
+ELAPSED_TIME=NOT_INSTRUMENTED
+
+=== PRODUCT AUDIT ===
+EXISTING_FEATURES_REUSED=Origin-first debounced search with cancellation/keyboard/retry; direct and transfer planning; selected journey map; comparison filters; saved snapshot v1; Ride Mode; Can-I-Ride.
+DUPLICATION_AVOIDED=No second planner, search database, saved-journey format, or Can-I-Ride engine.
+MAIN_GAPS=Route evidence was mixed into planner ranking copy; Ride Mode could not review a previous manual step; local validation results had no fingerprint-bound reuse ledger.
+
+=== IMPLEMENTATION ===
+JOURNEY_DISCOVERY=Existing search flow reviewed and reused; no new search engine.
+RESULT_HIERARCHY=Existing compact boarding/get-off summaries retained; cards now disclose route structure, source fields, evidence, and limitations.
+ROUTE_EXPLANATIONS=Added deterministic presentation-only helper; planner ranking unchanged; directions, walking geometry, unknown fare, stale records, warnings, and transfer limitations surfaced from existing journey data.
+WALKING_LEGS=Straight-line distance labeled context only; approximate connectors and missing geometry disclosed; no path geometry fabricated.
+MAP_LIST_SYNC=Existing selected journey and instruction-to-map coordination retained; no MapLibre behavior changed.
+RIDE_MODE=Added Review previous step for supported manual progress corrections; boarding-area confirmation now requires a started walking step; local progress disclaimer shown.
+SAVED_JOURNEYS=Existing v1 snapshot persistence retained without migration.
+OFFLINE_UX=Existing saved snapshot disclosure retained; fresh planning remains API-dependent and local graph live integration is not claimed.
+CAN_I_RIDE=Existing API-backed yes/no/unknown flow retained; no second route engine.
+MOBILE_ACCESSIBILITY=Native evidence disclosure uses a 44px minimum summary target; browser/device rendering not tested.
+VALIDATION_LEDGER=Added dependency-free local ledger at ~/.cache/biyahe/validation-ledger/batch038.json by default; SHA-256 source/config fingerprints, tool version, status, result, evidence path, resource outcome, fail-closed parsing, atomic rename; BLOCKED/FAIL cannot reuse an older PASS.
+
+=== TESTS ===
+SEARCH_TESTS=NOT_RUN; existing search implementation reused.
+RESULT_TESTS=New deterministic explanation assertions added to commute-card harness; NOT_RUN.
+WALKING_TESTS=New straight-line, geometry, stale-evidence, and transfer-limitation assertions added; NOT_RUN.
+MAP_TESTS=NOT_RUN; no browser test.
+RIDE_MODE_TESTS=New manual back-step and boarding-state assertions added; NOT_RUN.
+SAVED_JOURNEY_TESTS=NOT_RUN.
+OFFLINE_TESTS=NOT_RUN.
+CAN_I_RIDE_TESTS=NOT_RUN.
+TYPECHECK=NOT_RUN_RESOURCE_GUARD.
+LINT=NOT_RUN_RESOURCE_GUARD.
+BROWSER_TESTS=NOT_RUN.
+RESOURCE_GUARD=Tests were not launched: SwapFree was observed as low as 4648 KiB, then 149092 KiB, then 541756 KiB; configured floor is 131072 KiB. Latest sample after bundle: SwapFree 520544 KiB, MemAvailable 953196 KiB. git diff --check PASS.
+
+=== REAL DATA ===
+GRAPH_HASH=29d7aaf9c45a596f4065c44d13f983f4a7edeec5ac2ea41b718b1c52ca865bf8 (carried-forward baseline; not rehashed this batch)
+OFFLINE_CORPUS=10 baseline cases: 9 routes found, 1 disconnected; not rerun.
+STOP_COVERAGE=436/503 snappable within 25 m; 67 unsnappable; baseline not recomputed.
+PLACE_COVERAGE=30/37 snappable; 7 unsnappable; baseline not recomputed.
+TRANSFER_VERIFICATION=Two graph-connected transfers; both remain UNVERIFIED.
+FABRICATED_GEOMETRY=NO
+
+=== READINESS ===
+DOCTOR_V38=docs/reports/batch038-doctor-v38.json; overall BLOCKED; new feature tests and browser checks marked not run.
+OFFLINE_EXPERIENCE=Journey evidence disclosure and manual Ride Mode correction implemented; UI execution not verified in browser.
+LIVE_GRAPH_INTEGRATION=UNPROVEN; separate SQLite graph is not declared live-integrated.
+REAL_POSTGRESQL_STAGING=BLOCKED; no PostgreSQL cluster contacted or started.
+FIELD_SAFETY=BLOCKED; no new field observations.
+PRIVATE_BETA=BLOCKED.
+PRODUCTION_ACTIVATION=NO.
+
+=== GIT SAFETY ===
+UNRELATED_WORK_PRESERVED=YES; six historical Doctor reports remain untracked and untouched.
+SD_BACKUP=Verified new Git bundle; no source/database artifacts copied.
+GIT_BUNDLE=/data/data/com.termux/files/home/storage/external-1/Termux-Archive/Biyahe/Project-Archives/biyahe-batch038-20261009.bundle; git bundle verify PASS; SHA256 df7291c879d13113864a29bb74a7e93575fccd16baba558c03f6a9b6e4ee739d.
+PUSH=NO.
+
+=== NEXT ===
+REMAINING_BLOCKERS=Run focused harnesses, TypeScript, lint, and browser checks after sustained SwapFree above the 131072 KiB floor; live graph integration, real PostgreSQL staging/parity, and field verification remain open.
+RECOMMENDED_BATCH039=Resource-safe execution of new/existing UX harnesses, typecheck and browser checks; address concrete failures before expanding product scope.
+
+CLIPBOARD=SET_ATTEMPTED_UNVERIFIED
+REPORT_PATH=/data/data/com.termux/files/home/biyahe-batch038-report.txt
+
+=== END BATCH 038 ===

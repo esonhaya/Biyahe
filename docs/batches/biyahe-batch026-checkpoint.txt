@@ -1,0 +1,47 @@
+BIYAHE BATCH 026 CHECKPOINT — FINAL
+DATE=2026-10-08 Asia/Manila
+REPOSITORY=/data/data/com.termux/files/home/Biyahe
+HEAD_BEFORE=a51c0e7cce1a69926a1762d89b4bda16b975560d
+HEAD_CURRENT=5abe08dd3d6643ec2854f36acb21812c458b8d13
+BRANCH=main; WORKTREE=CLEAN; PUSH=NO.
+ELAPSED_TIME_APPROX=00:35 (useful engineering, not a 4–6 hour elapsed session).
+
+RECOVERY
+- Recovered Batch025 report/checkpoint and Batch024 dump; no existing Batch026 work existed.
+- PostgreSQL was stopped. `pg_controldata` reported `in production`; earlier logs show successful crash recovery/readiness, with no evidence identifying the later exit cause. Corruption is not established.
+- One normal-start observer preflight blocked before issuing `pg_ctl start`: MemAvailable 774452 KiB was below configured 786432 KiB floor; SwapFree 241464 KiB, disk free 5017468 KiB. No retry or live mutation.
+- Batch024 backup `~/.cache/biyahe/batch024/verified-20261008/biyahe.dump` SHA256 e55af400fde88d0a3434b194e0625e204eb0a2726374eabb8286c152b11a4a92 matches; `pg_restore --list` PASS and prior isolated restore test is recorded. The local backup manifest verifies the same hash and recorded restore status.
+- Verified Central Visayas PBF is 28,757,299 bytes, SHA256 787cac20ecc586b754b1a464643a040566d486457c6a37bc0b11ce683bc66d4d, snapshot 2026-10-07T01:00:21Z. No PBF stream/import attempted: historical Osmium RSS ~745 MiB and prior interruption leave insufficient safe margin. No graph activation or full planner matrix.
+
+PHASES
+- P0 RESUME complete; initial worktree clean at expected HEAD.
+- P1 PRODUCT AUDIT complete; `docs/batch026-product-gap-audit.md` has 24 ranked opportunities with done/follow-up and device-validation distinctions.
+- P2–11 UX source work complete for selected high-value gaps: request cancellation/stale-response protection, search keyboard/focus handling, favorite destination shortcut, actionable filters, Pulse retry/status, map focus/reduced motion, Nearby fallback, local route-pattern retry/error, saved snapshot age, Ride Mode progress age/end confirmation, Field Mode stale-cache and per-draft sync/rejection/receipt context. Mission submission blocks while drafts remain; evidence stays review-only.
+- P12 PLANNER unchanged: existing request-local caches and two-transfer rank bound were inspected; no active graph/PostGIS case permits new optimization/equivalence proof.
+- P13 DATABASE blocked after the single guarded startup preflight; no retries.
+- P14 OSM BLOCKED_RESOURCE/not attempted. Avoid the failed `complete_ways` approach.
+- P15 IMPORTER resilience: missing node references rejected before publish; focused fixtures cover missing refs, duplicate node IDs, source checksum mismatch and interruption.
+- P16 DOCTOR V26 static implemented: avoids database connection and reports live DB/PostGIS/graph/field/release checks BLOCKED while running source checks.
+- P17 PRIVATE BETA: checklist reviewed; no deployment. Live recovery, release checks and device QA remain.
+- P18 VALIDATION: diff check PASS; changed PHP lint PASS; database guard tests PASS (6/20); importer focused tests PASS (3/11); Doctor feature PASS (1/13); isolated synthetic VERIFIED guard PASS (1/2). Frontend focused harnesses PASS: request gate, UX (42 contracts), Ride Mode, commute cards, personal commute, Pulse/replan, disruption, Field Mode. Targeted changed-file ESLint PASS. Static Doctor: PASS=6 WARN=1 FAIL=0 BLOCKED=5, exit 2 expected.
+- Full frontend typecheck NOT RUN (prior typecheck terminated near 609 MiB MemAvailable with Node RSS ~323 MiB; latest sample 688116 KiB and 9992 KiB swap free). Production build NOT RUN. No physical-device/browser or screen-reader QA.
+- OSM import=NOT RUN; FULL_MATRIX=NOT RUN; frontend builds=0.
+
+RESOURCE / NEXT SAFE ACTION
+- Observer log: `api/.runtime/postgres-observation-20261008T124357Z-12510.log`.
+- Latest sample: MemAvailable=688116 KiB, SwapFree=9992 KiB, disk free=4872372 KiB. No large process running. These are snapshots, not an OOM diagnosis.
+- `osmium` direct binary linker failed; project wrapper resolves Termux libraries and reports Osmium 1.19.1. No extraction ran.
+- Keep graph/release BLOCKED. In a later session, after Android process/memory conditions are stable, inspect PostgreSQL exit evidence and use the normal observer once if preflight permits. Then revalidate backup/staging, prove a lower-memory real-PBF stream, and only continue to import/activation if every gate passes. Never run the 47-pair matrix while the graph is missing.
+
+COMMITS
+800cf48 Batch 026: improve commuter recovery and field UX
+6e81499 Batch 026: add static recovery diagnostics
+c297225 Batch 026: clarify route explorer recovery
+2ce400e Batch 026: show saved journey snapshot age
+b72e980 Batch 026: expose field draft sync state
+5abe08d Batch 026: label Ride Mode progress age
+
+FINAL REPORT
+- Saved to `~/biyahe-batch026-report.txt`.
+- `cat ~/biyahe-batch026-report.txt | termux-clipboard-set` returned exit 0.
+- `termux-clipboard-get` returned 0 bytes; content could not be read back in this session, including with a static clipboard probe. The report itself is printed in the final response.

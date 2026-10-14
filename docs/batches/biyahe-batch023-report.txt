@@ -1,0 +1,88 @@
+=== BASELINE ===
+HEAD_BEFORE=45d64634ab641fa712d2d67eaffdba337b21d7b8
+HEAD_AFTER=44a3243bd11ee745569aa18da90e9ca04c861915
+WORKTREE=CLEAN
+RESUMED_WORK=Batch 022 was already committed; resumed from the existing Batch 023 checkpoint without restarting completed work.
+
+=== RESOURCE SAFETY ===
+HEAVY_PARALLELISM=0
+PEAK_MEMORY_IF_KNOWN=Osmium reached ~745 MiB RSS; available memory fell from 817 MiB to 288 MiB in six seconds.
+OSM_SOURCE_SIZE=28,757,299 bytes; existing verified PBF reused; no new download.
+OSM_IMPORT=NOT_RUN; bounded regional filter safely stopped; zero-byte partial removed.
+FRONTEND_BUILDS=0; BUILD_NOT_RUN_RESOURCE_GUARD.
+FULL_MATRIX_RUNS=0.
+INTERRUPTION_CAUSE=Prior Termux exits unexplained; resource pressure possible but unconfirmed.
+
+=== GRAPH RECOVERY ===
+SOURCE=https://download.openstreetmap.fr/extracts/asia/philippines/central_visayas.osm.pbf
+SOURCE_DATE=PBF replication 2026-10-07T01:00:21Z, sequence 7318108; latest object 2026-10-07T00:02:08Z.
+SOURCE_HASH=MD5 6531fa7af52b5565f13bfa68acff7a37; SHA-256 787cac20ecc586b754b1a464643a040566d486457c6a37bc0b11ce683bc66d4d.
+RECOVERY_METHOD=No import. Historical source MD5 a3d5d3fb3666005f018b078bd3a7981d is unavailable locally; a newer legitimate OSMFR snapshot was documented.
+EXACT_RESTORE=NO.
+STAGING_VALIDATION=NOT_RUN; no staged graph or current-state backup.
+GRAPH_ID=NOT_VERIFIED; new import would receive a new graph identity.
+NODES=NOT_MEASURED.
+EDGES=NOT_MEASURED.
+STOPS_CONNECTABLE=NOT_MEASURED.
+PLACES_CONNECTABLE=NOT_MEASURED.
+ACTIVE_GRAPH=NOT_VERIFIED; prior inspected local archives contained zero graph rows; live DB was not queried.
+DATABASE_FINGERPRINT=Local PG18 system identifier 7692908489789027408; stopped cluster control state=in production; pg_control SHA-256 bd85224b771e3098657c9d8a41eca802263d4c0625852beff0d574236353367d; no live query or write.
+ROLLBACK=No activation or database write occurred.
+PROVENANCE=ODbL-1.0, © OpenStreetMap contributors; source bounds 120.5055069,6.221537,126.678755,14.6246966; Cebu bounds 123.860,10.282,123.935,10.381. Importer/filter recipe documented.
+
+=== FIELD MISSIONS ===
+MISSION_COUNT=2 in a new draft; historical 4 missions/92 claims were not recovered.
+CLAIMS_COVERED=30/30 current dry-run claims assigned once; 18 UNKNOWN, 12 UNVERIFIED.
+REGENERATED_OR_RESTORED=New draft only, not written to DB; requires live revalidation.
+REAL_OBSERVATIONS=0 created.
+UNKNOWN_CLAIMS=18; 12 additional claims remain UNVERIFIED.
+
+=== UX ===
+HOME=Existing destination-first flow, recents, and saved shortcuts reused.
+SEARCH=Existing ambiguity and selected-place flow retained.
+JOURNEY_RESULTS=Existing comparison/trust wording reused; no invented ETA or fare added.
+JOURNEY_DETAIL=Existing boarding, transfer, and alighting guidance retained.
+MAP=Existing selected-journey map and text alternatives retained.
+RIDE_MODE=Existing manual foreground flow retained; harness confirms no raw GPS persistence.
+NEARBY=Clears stale candidates during a new lookup and shows distinct loading/failure feedback.
+ROUTE_EXPLORER=Separates network fetch failure from empty results and offers online retry.
+SAVED_OFFLINE=Existing snapshots/shortcuts retained; saved-journey harness passes.
+PULSE=Existing provenance/freshness handling retained; disruption and Pulse harnesses pass.
+ACCESSIBILITY=UX contract harness PASS (23 checks); actual screen-reader testing not performed.
+RESPONSIVE=Static contracts only; no real-device or viewport inspection performed.
+
+=== PLANNER ===
+OPTIMIZATION=No planner code change; existing request-local caches, indexing, dominance, and 0–2 transfer behavior retained.
+FOCUSED_EQUIVALENCE=NOT_RUN; no safe completeness-preserving optimization proven.
+HEAVY_CASE_BEFORE_MS=Historical profile 5.23 s total, 4.18 s transfer expansion.
+HEAVY_CASE_AFTER_MS=NOT_MEASURED.
+MATRIX_47=NOT_RUN_GRAPH_UNAVAILABLE.
+SUSPICIOUS_JOURNEYS=NOT_AUDITED_LIVE_DB_UNAVAILABLE.
+
+=== VALIDATION ===
+BACKEND=PASS: graph importer/recovery 6/6 (41 assertions); isolated verified fixture 1/1 (9); offline field import/synthetic rejection 2/2 (27); focused Doctor 1/1.
+DATABASE_GUARDS=PASS: 6/6 (20 assertions); production names with test suffix rejected; updater refusal exits before file creation/networking.
+GRAPH_IMPORTER=PASS: invalid WGS84 and source-URL mismatch leave no graph rows; rollback, incomplete import, and idempotency checks pass.
+FIELD_MODE=PASS: frontend outbox harness; backend idempotency/review checks pass in isolated SQLite.
+OFFLINE=PASS: commute snapshot/personal commute harnesses; API no-store and service-worker API exclusion checked.
+SYNTHETIC_VERIFIED=PASS: fixture ran in isolated SQLite test database; no production evidence created.
+DOCTOR_V23=Focused SQLite test PASS; live Doctor skipped because PostgreSQL is stopped and unsafe to start without recovery.
+RELEASE_CHECK=NOT_RUN_DATABASE_UNHEALTHY.
+FRONTEND_TYPECHECK=PASS, 512 MiB Node heap.
+FRONTEND_LINT=PASS, full ESLint run, 512 MiB Node heap; focused changed-file lint also passes.
+FRONTEND_BUILD=BUILD_NOT_RUN_RESOURCE_GUARD.
+
+=== READINESS ===
+GRAPH_READINESS=BLOCKED_RESOURCE_AND_NO_VERIFIED_STAGING_BACKUP.
+FIELD_READINESS=DRAFT_ONLY; live claims unavailable for revalidation.
+UX_READINESS=Targeted source-level improvements complete; device validation remains.
+PRIVATE_BETA_READINESS=NOT_READY.
+BLOCKERS=Stopped PostgreSQL cluster reports state “in production”; no verified current-state backup/staging restore; active graph unavailable; bounded OSM filter exceeds safe memory; live Doctor/release checks and device validation remain.
+NEXT=Obtain and verify a current backup; restore to disposable staging; when memory is sufficient, run the documented bounded extraction, validate graph/connectivity/provenance, then perform scoped activation and live release checks.
+
+=== COMMITS ===
+COMMITS=44a3243bd11ee745569aa18da90e9ca04c861915 — Batch 023: harden recovery and commuter UX
+HEAD_FINAL=44a3243bd11ee745569aa18da90e9ca04c861915
+WORKTREE=CLEAN
+PUSH=NO
+CLIPBOARD_COPY=PASS

@@ -1,0 +1,40 @@
+BIYAHE BATCH 022 LITE CHECKPOINT
+DATE=2026-10-08 Asia/Manila
+REPOSITORY=/data/data/com.termux/files/home/Biyahe
+BRANCH=main
+HEAD=04548d574734f7fa690f16dfd77ac1865c46b37c
+WORKTREE=clean at start; no Batch 022 tracked changes found
+RECOVERED_EXISTING_WORK=YES; reused ~/.cache/biyahe/batch022/checkpoint-20261008-phase01-forensics.md and its staged read-only findings
+PHASE_01=COMPLETE; exact baseline, clean worktree, hidden dump/source artifacts, stopped PostgreSQL state, and previous clone audit recovered
+PHASE_02=BLOCKED; surviving custom-format dumps are compatible PostgreSQL 18.6/PostGIS archives but each has 0 pedestrian datasets/nodes/edges and 0 field missions/claims/observations; archived read-only staging counts also show no historic rows to restore. No authoritative graph/field backup found. Local OSM sources include 28.7 MB Central Visayas PBF and 607.9 MB Philippines PBF, but graph import/extraction is disallowed in this batch. Production PostgreSQL was not started or modified.
+POSTGRES=stopped on initial inspection; no active server process at recheck
+GRAPH=missing; historical active graph osm-cebu-walk-206ae627151f11ef01222a379c3adde9 not present in local archives
+FIELD=0 missions, 0 mission claims, 0 evidence claims, 0 observations, 0 survey sessions in archives; no synthetic/derived field rows written
+DATABASE_SAFETY=not yet audited
+UX=not yet audited this batch; existing Batch 021 UX work recovered from baseline
+PERFORMANCE=not yet audited this batch; no 47-pair audit run
+TESTS=none run
+FILES_CHANGED=none tracked
+NEXT=Audit database guards and focused UX/performance/offline source; implement only targeted, bounded changes
+
+PHASE_03=IMPLEMENTED_PENDING_TEST; audited RefreshDatabase/DatabaseMigrations setup path and Composer/scripts; added a shared pre-trait guard requiring SQLite :memory: or an explicitly named test/testing database, including DB_URL target parsing; added focused guard cases. No protected database was connected or modified.
+PHASE_04=IMPLEMENTED_PENDING_FRONTEND_CHECKS; search suggestions now distinguish selected locations from empty results, show city/category/description/active alias, report request failures separately, keep listbox semantics valid, bound suggestion height, and keep map overlays clear of bottom safe areas. Existing Batch 021 journey comparison, boarding/transfer instructions, map/list focus, Ride Mode, offline, Nearby, and route terminology were retained.
+PHASE_05=COMPLETE; reused docs/competitor-ux-audit.md; no new competitor research or copied data/design.
+PHASE_06=ASSESSED_NO_PLANNER_CHANGE; prior measured case was 5.23s total with 4.18s transfer expansion; request-local caches and conservative two-transfer rank bound already exist. Missing active graph prevents representative equivalence proof; 47-pair audit not run.
+PHASE_07=SOURCE_REVIEW_COMPLETE_PENDING_FOCUSED_CHECKS; existing SQLite-only VERIFIED fixture, saved snapshot schema, Field Mode explicit outbox/idempotency, client fetch cache:no-store, service-worker /api exclusion, foreground-only GPS handling, and zero persisted synthetic field rows identified.
+FILES_CHANGED=api/tests/TestCase.php; api/tests/Support/DatabaseTestSafety.php; api/tests/Unit/DatabaseTestSafetyTest.php; web/src/app/page.tsx; web/src/app/page.module.css; web/src/app/globals.css; web/scripts/ux-contract-harness.mjs
+TESTS=none run yet
+
+PHASE_03=COMPLETE; guard tests 4/4 passed; the Batch 021 trust and Batch 020 field tests also exercised the shared base-test setup on isolated SQLite memory.
+PHASE_04=COMPLETE_SOURCE_IMPLEMENTATION; frontend source harness 19/19 passed; selected-place description, separate search failure state, bounded suggestions, and safe-area map overlays are covered.
+PHASE_07=COMPLETE_FOCUSED_CHECKS; commute/snapshot harness, personal commute harness, Ride Mode harness, Field Mode harness, disruptions harness, pulse/replan harness all passed; verified fixture and field/idempotency backend tests passed; API fetch no-store + service-worker API exclusion confirmed; GPS persistence checks report zero.
+PHASE_08=CHECKPOINT_SAVED; this file is outside tracked source.
+PHASE_09=PARTIAL_COMPLETE; git diff check PASS; changed PHP lint PASS; focused backend 5/5 (40 assertions); database guards 4/4; frontend harnesses all PASS; typecheck PASS (640 MB heap cap); frontend lint PASS. Doctor/release check skipped because PostgreSQL is stopped and graph is missing. Build skipped with BUILD_NOT_RUN_RESOURCE_GUARD (available RAM 921 MiB). Full matrix and OSM import NOT_RUN.
+CURRENT_HEAD=04548d574734f7fa690f16dfd77ac1865c46b37c
+COMMIT=PENDING
+PHASE_10=COMPLETE; committed coherent passing work locally, never pushed.
+HEAD_AFTER=45d64634ab641fa712d2d67eaffdba337b21d7b8
+WORKTREE_AFTER=CLEAN; main is 16 commits ahead of origin/main
+COMMIT=45d64634ab641fa712d2d67eaffdba337b21d7b8 (feat: improve search clarity and database test safety)
+REPORT=/data/data/com.termux/files/home/biyahe-batch022-report.txt (being written/copied after checkpoint)
+NEXT_SAFE_ACTION=Recover only from an authoritative graph/field backup or a sanctioned new data recovery batch; then recheck compatibility and release readiness. Do not run an OSM import or 47-pair matrix while graph is absent.

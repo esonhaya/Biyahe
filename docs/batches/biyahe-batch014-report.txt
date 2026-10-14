@@ -1,0 +1,105 @@
+BIYAHE — BATCH 014
+LIVE COMMUTE AWARENESS
+DISRUPTIONS + SERVICE ADVISORIES + COMMUTER REPORTS
+
+=== STATUS ===
+HEAD_BEFORE=4a8830f7d1958139a362cf01e748bfa93abe36b0
+HEAD_AFTER=8a02885c94eb53baff7649e3ef001d9fbc3be939
+WORKTREE_STATE=CLEAN
+UNRELATED_WORK_PRESERVED=YES
+COMMIT=8a02885c94eb53baff7649e3ef001d9fbc3be939
+
+=== DISRUPTION MODEL ===
+DISRUPTION_MODEL=PASS; temporary overlay with relational entity impacts
+DISRUPTION_CATEGORIES=SERVICE_SUSPENDED,SERVICE_REDUCED,REROUTED,STOP_UNAVAILABLE,BOARDING_AREA_UNAVAILABLE,ROAD_CLOSURE,FLOODING,EVENT,TRAFFIC_DISRUPTION,TRANSFER_UNAVAILABLE,OTHER
+DISRUPTION_LIFECYCLE=DRAFT,SCHEDULED,ACTIVE,RESOLVED,EXPIRED,REJECTED; time-derived expiry
+DISRUPTION_SEVERITY=INFO,MINOR,MAJOR,CRITICAL
+TEMPORARY_CANONICAL_SEPARATION=PASS; no route/pattern/stop/fare/evidence mutation
+ENTITY_IMPACT=Route,RoutePattern,Stop,Place,Transfer joins; bounded matching
+GEOGRAPHIC_IMPACT=PASS; optional SRID 4326 PostGIS geometry and viewport filter
+PROVENANCE=Required for active advisories; source/reviewer/check metadata
+EXPIRY=PASS; ended advisories excluded from public API/planner
+CONFLICT_HANDLING=PASS; open conflicts/public signals remain uncertain
+ADMIN_WORKFLOW=PASS; Filament create/edit/schedule/activate/resolve/reject and report moderation
+PUBLIC_API=PASS; active advisory GET/detail plus bounded rate-limited report POST
+
+=== JOURNEY IMPACT ===
+JOURNEY_IMPACT_ENGINE=PASS; route/pattern/stop/place/transfer matching
+WARNING_ONLY_POLICY=Reviewed overlays remain eligible with impact/ranking penalty; public reports always warning-only
+HARD_CLOSURE_POLICY=Reviewed provenance-backed MAJOR/CRITICAL trusted closure categories only; open conflicts excluded
+UNREVIEWED_REPORT_HARD_BLOCKS=0
+PLANNER_INTEGRATION=PASS; affected journeys decorated, hard closures removed temporarily
+RANKING_INTEGRATION=trust > operational impact > transfers > walking > stop burden
+NO_ROUTE_SEMANTICS=TEMPORARILY_UNAVAILABLE for all hard-closed candidates
+CAN_I_RIDE_INTEGRATION=PASS; YES_BUT_AFFECTED/UNCERTAIN_DUE_TO_REPORT/TEMPORARILY_UNAVAILABLE
+COMMUTE_CARD_INTEGRATION=PASS; warnings placed beside affected actions
+RIDE_MODE_INTEGRATION=PASS; bounded manual advisory refresh, session preserved
+SAVED_JOURNEY_INTEGRATION=PASS; saved advisory is a stale snapshot offline
+OFFLINE_BEHAVIOR=Instructions/manual Ride Mode remain usable; current disruption status unknown offline
+MAP_INTEGRATION=PASS; MapLibre advisory geometry/entity points and severity labels
+
+=== PUBLIC REPORTS ===
+PUBLIC_REPORTING=PASS; no account or continuous location tracking
+REPORT_CATEGORIES=ROUTE_NOT_SEEN,SERVICE_STOPPED,REROUTE,STOP_BLOCKED,FLOODING,ROAD_CLOSURE,TRANSFER_PROBLEM,FARE_OBSERVATION,OTHER
+REPORT_RATE_LIMIT=5/minute per hashed IP+user-agent key
+REPORT_DUPLICATE_CONTROL=PASS; bounded time/entity/description suppression
+REPORT_LOCATION_PRIVACY=PASS; only explicitly submitted point, no Ride Mode history
+REPORT_REVIEW=SUBMITTED -> UNDER_REVIEW -> ACCEPTED_AS_SIGNAL/REJECTED/DUPLICATE/EXPIRED
+REPORT_CORROBORATION=PASS; same-category agreement and conflicting accepted signals separated
+REPORT_TO_ADVISORY_PROMOTION=Explicit reviewed admin action with audit row; warning-only PUBLIC_REPORT source
+AUTOMATIC_CANONICAL_PROMOTION=0
+FARE_REPORT_POLICY=Signal only; cannot become a service advisory or canonical fare
+NEGATIVE_EVIDENCE_POLICY=ROUTE_NOT_SEEN is weak operational signal, never automatic suspension
+
+=== REFERENCE / PERFORMANCE ===
+AYALA_12L_SYNTHETIC_ADVISORY=PASS; real 12L journey warning, canonical route unchanged
+12L_CANONICAL_TRUST_AFTER=MIXED
+AYALA_PRECISION_AFTER=BOARDING_AREA
+JOURNEYS_CHECKED=Instrumented per bounded planner candidate batch
+ACTIVE_ADVISORIES=0 persistent local default-DB rows; synthetic fixtures only
+IMPACT_MATCHES=Covered by route/pattern/stop/transfer/place fixture paths
+DISRUPTION_QUERIES=1 eager active-advisory collection per planner request
+DISRUPTION_MATCH_TIME=Exposed in journey meta; bounded focused tests pass
+PLANNER_RUNTIME_DELTA=No repeat planner run; separate production benchmark not claimed
+EVIDENCE_REPORT=Not rerun; no evidence mutation required
+
+=== TRUST / SAFETY ===
+UNSUPPORTED_VERIFIED_CLAIMS=0
+REAL_FIELD_OBSERVATIONS_CREATED=0
+SYNTHETIC_PRODUCTION_PROMOTIONS=0
+RAW_GPS_PERSISTENCE=0
+TRUST_LEAKAGE=NONE
+PRECISION_LEAKAGE=NONE
+FARE_FABRICATION=NONE
+DISRUPTION_CANONICAL_LEAKAGE=NONE
+UNREVIEWED_REPORT_OPERATIONAL_LEAKAGE=NONE
+
+=== VALIDATION ===
+DOCTOR_V14=PASS; 5 tests/14 assertions, SQLite integrity harness
+DISRUPTION_TESTS=PASS; 6 tests/34 assertions
+PLANNER_TESTS=PASS; JourneyApiTest 7 tests/213 assertions, Can I Ride included
+REPORT_TESTS=PASS; sanitization, duplicate, review, conflict, promotion
+MODERATION_TESTS=PASS; explicit promotion/rejection lifecycle
+COMMUTE_CARD_REGRESSION=PASS; direct/one-transfer/two-transfer harness
+RIDE_MODE_REGRESSION=PASS; existing foreground/manual/GPS boundary harness
+OFFLINE_REGRESSION=PASS; saved snapshot/manual sequence, core backend requests 0
+FIELD_SURVEY_REGRESSION=Preserved; Doctor passed, no field data changed
+PEDESTRIAN_REGRESSION=Preserved; active graph/OSM data untouched
+FRONTEND_TYPECHECK=PASS
+FRONTEND_LINT=PASS
+FRONTEND_BUILD=PASS
+SCHEMA_MIGRATION=Committed; local default SQLite still has migration pending and was not mutated
+POSTGIS_LIVE_VALIDATION=Not run; live graph/database intentionally untouched
+
+=== READINESS ===
+DISRUPTION_READINESS=CODE_READY_AFTER_MIGRATION
+PUBLIC_REPORT_READINESS=MODERATED_ONLY; no automatic authority
+DAILY_USE_READINESS=READY_AFTER_APPLYING_MIGRATION_AND_CONFIGURING_TRUSTED_SOURCES
+MILESTONE_STATUS=COMPLETE_AND_COMMITTED
+NEXT=Apply migrations on the configured deployment, create reviewed provenance-backed advisories, then run live PostGIS/admin smoke checks.
+
+=== CLIPBOARD ===
+CLIPBOARD_COPY=PASS
+CLIPBOARD_REPORT_PATH=/data/data/com.termux/files/home/biyahe-batch014-report.txt
+
+=== BATCH 014 COMPLETE ===

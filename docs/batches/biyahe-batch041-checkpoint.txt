@@ -1,0 +1,16 @@
+BIYAHE BATCH 041 CHECKPOINT — FINAL
+Started UTC: 2026-10-09T18:20:46Z
+Ended UTC: 2026-10-09T18:48:07Z
+Elapsed wall time: 00:27:21; active time not instrumented.
+HEAD before: 60c82e8e9f101f25b409dcff8fd18293a47faad9 (main).
+HEAD final: 08ca129ea14911eb02b4ea022b916bb081033ca1 (main).
+Tracked worktree clean; seven historical untracked Doctor JSON reports remain byte-identical to the SD recovery archive.
+Five commits: 122a717 evidence/geometry; 3ec11b5 Doctor/resource plan/package builder; ef9ce22 portable kit; a63230a report/ledger; 08ca129 pure PHP geometry smoke.
+Graph SHA256 unchanged: 29d7aaf9c45a596f4065c44d13f983f4a7edeec5ac2ea41b718b1c52ca865bf8. PBF not opened/rescanned.
+Evidence: 648 source relations = 619 graph stored + 29 source-only. Detailed quality audit = 26 long edges, 944 boundary nodes, 1510 crossing-tagged nodes; prior zeros were unmeasured defaults.
+Validation: 27 lightweight Python fixtures; six PHP syntax checks; seven pure PHP geometry-contract cases; static Doctor V41 and portable no-database smoke pass.
+Resource gate: MemAvailable 936048/979420/923316 KiB; SwapFree 137020/129792/130244 KiB at 5s intervals; two swap samples below 131072 KiB. PHP/Node integration tests and graph replay not launched.
+No PostgreSQL, graph replay, PBF scan, browser, field verification, activation, or push.
+SD delivery: ~/storage/external-1/Termux-Archive/Biyahe/Batch041-Delivery/20261009T184249Z; final bundle SHA256 0f408ef53c2a90bc1e7cff93c10ea9b9255bc7e7073a825a7dc4d6739cf07a3f; portable kit checksums pass.
+Final report: ~/biyahe-batch041-report.txt. Clipboard setter succeeded; readback returned zero bytes; CLIPBOARD=SET_ATTEMPTED_UNVERIFIED.
+Next: run functional adapter and real corpus suites only after all three spaced resource samples meet both existing floors; external PostgreSQL parity and field safety remain separate gates.

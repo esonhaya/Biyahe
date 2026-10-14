@@ -1,0 +1,64 @@
+=== BIYAHE BATCH 044 ===
+HEAD_BEFORE=ea5f678da09c1425a19ef34f0ea739769a2bf3ae
+HEAD_AFTER=c5844d227b2f63ac1995973d5c7ef8254b92ca6c
+START_TIME=2026-10-10T11:44:24Z
+END_TIME=2026-10-10T12:43:14Z
+ELAPSED_WALL_TIME=00:58:50 (wall clock; active time not instrumented)
+WORKTREE=TRACKED_CLEAN; seven historical untracked Doctor reports preserved byte-for-byte
+COMMITS=b5a7bbf feat: add isolated Linux staging and verification workflows; 0697cca docs: record Batch 044 staging verification evidence; 000e002 docs: publish Batch 044 portable verification v6; c5844d2 docs: record portable v6 package verification
+
+=== DEPLOYMENT FOUNDATION ===
+STAGING_ARCHITECTURE=IMPLEMENTED_UNTESTED. Laravel API, Next.js, PostGIS 16/PostGIS 3.5, and loopback-only Nginx gateway are defined in deploy/staging/compose.yaml. Services use an internal network, persistent database volume, pinned runtime tags, and explicit resource limits. Docker build/start was not run on Termux.
+COMPOSE_CONFIGURATION=PASS_STATIC. YAML parsed and structural assertions passed; database has no host port, gateway binds to loopback, and development walking preview is disabled.
+ENVIRONMENT_SAFETY=VERIFIED. Example config contains no credentials; app/database secrets are file-injected; host allowlist and CORS are constrained. Static validator passed 29 checks; PHP secret-config contract passed 5 assertions.
+DATABASE_BOOTSTRAP=IMPLEMENTED_UNTESTED. Inspection/preflight is the default; start, DB initialization, migrations, import, restore, and shutdown require explicit confirmation. Import hashes and backup checks are pinned. No database was contacted.
+POSTGIS=IMPLEMENTED_UNTESTED. PostGIS 16/3.5 image and extension checks are configured; no PostGIS service or extension was started/verified.
+API_HEALTH=IMPLEMENTED_UNTESTED. Existing health/readiness endpoints are wired into the staging plan; no live Laravel service was started.
+API_SMOKE=VERIFIED_CONTRACT_ONLY. Mock contract suite passed, including failure/shape and development-adapter restriction behavior. Live health/search/Can-I-Ride/journey smoke tests were NOT_RUN.
+
+=== VALIDATION ===
+PORTABLE_V6=VERIFIED. docs/portable-verification-v6 contains 167 checksum entries and 164 included files (5.0 MiB); manifest and all hashes passed. Cross-check against repository checkpoint 0697cca passed STATIC/staging-config-validation (exit 0, 666.73 ms, input SHA256 655d542f462970a09f04aeb1e48e9b697deb0c9f94b1358412edc6f683925575). Executable source is pinned to b5a7bbf.
+EXTERNAL_CORPUS_WORKFLOW=IMPLEMENTED_UNTESTED. V6 supports explicit graph path, read-only integrity, bounded cases, source fingerprints, and no-clobber evidence. Actual graph execution was NOT_RUN.
+REAL_CEBU_CORPUS=NOT_RUN. Current cases executed=0/10; pass=0, fail=0, blocked=0, not_run=10. Historical 9 found / 1 disconnected is not a current result. Graph file was not accessed or hashed.
+FRONTEND_BUILD_WORKFLOW=IMPLEMENTED_UNTESTED. External Linux typecheck/lint/build workflow is prepared. Local frontend resource preflight blocked before a test worker launched; no typecheck, ESLint, or production build command ran.
+BROWSER_WORKFLOW=IMPLEMENTED_UNTESTED. Pinned Playwright spec/workflow covers 320/360/390 px. Browser execution=NOT_RUN because no browser or staging origin is available.
+CI=IMPLEMENTED_UNTESTED. Scoped PR checks and manual external graph/browser workflows were added; YAML parsed locally. No remote CI was triggered.
+LOCAL_TESTS=PASS for 8 individual post-commit contract suites: staging-config-validation, staging-config-contract, staging-smoke-contract, staging-db-init-sql-contract, staging-secret-config-contract, doctor-v44-contract, portable-runner-contract, corpus-verification-contract. Each exited 0 against executable revision b5a7bbf; exact commands, fingerprints, runtimes, and stdout hashes are in docs/reports/batch044-doctor-v44.json and docs/reports/batch044-test-evidence/. Static syntax PASS: Python 28, Bash 5, PHP 14, JavaScript 13, JSON 13, git diff --check PASS. The final kit checksum/cross-check passed. An earlier unittest-by-path invocation failed to resolve an import; direct script invocation passed 11 tests and the corrected result is recorded in the test plan.
+
+=== APPLICATION ===
+COMMUTER_RELIABILITY_FIXES=NONE. No frontend defect was established, so planner and commuter-facing application logic were not changed. The selected frontend suite was blocked before worker launch by the fixed resource gate.
+REGRESSION_TESTS=Deployment, smoke, SQL renderer, secret config, Doctor, portable runner, and corpus contract fixtures PASS as listed above. Frontend journey/search/Ride Mode/saved-journey regression suites were NOT_RUN after resource preflight refusal.
+EVIDENCE_DISCLOSURE=648 vehicle-only classifications reconcile as 619 stored + 29 omitted. Historical measured diagnostics are 26 long edges, 944 boundary nodes, and 1510 crossing-tagged nodes; unmeasured legacy defaults were not treated as zero facts. Stored-record coverage only: stops 503 total / 436 snappable within 25 m / 67 unsnappable; places 37 / 30 / 7. These are not geographic, population, sidewalk, or field coverage. Two transfer locations remain physically UNVERIFIED. Unknown fares, ETAs, boarding access, crossings, and route geometry remain unknown unless supported by source evidence.
+
+=== READINESS ===
+DOCTOR_V44=VERIFIED static evidence contract; 17 categories, 94 source fingerprints, 8 test records; executable/tested revision b5a7bbf94413d89654bb706c6cab2eb26fb9f26d. Final documentation/package commits are separately identified and contain no tested executable changes.
+LIVE_GRAPH=NOT_RUN (expected SHA256 pinned as 29d7aaf9c45a596f4065c44d13f983f4a7edeec5ac2ea41b718b1c52ca865bf8; actual SHA256 not observed).
+POSTGRESQL_STAGING=BLOCKED_DEPENDENCY; no external staging host was available, and PostgreSQL was not started.
+FIELD_SAFETY=BLOCKED_DEPENDENCY; two transfer locations remain physically unverified.
+PRIVATE_BETA=BLOCKED.
+PRODUCTION_ACTIVATION=NO.
+
+=== RESOURCES ===
+MEMORY=Five spaced preflight samples, UTC: 12:19:33 562192 KiB; 12:19:41 606000 KiB; 12:19:47 527644 KiB; 12:19:54 543972 KiB; 12:20:00 458064 KiB. Required minimum 524288 KiB; minimum observed 458064 KiB.
+SWAP=Five samples, UTC order as above: 40 KiB; 14440 KiB; 42212 KiB; 24784 KiB; 8704 KiB. Required minimum 131072 KiB; minimum observed 40 KiB. The guard used the fixed floors, 262144 KiB process-tree RSS cap, and first-breach policy.
+BLOCKED_WORKERS=Frontend search-and-can-i-ride preflight BLOCKED_RESOURCE (guard command exit 4, elapsed 34 s); sample 5 breached memory and swap floors; test command_not_started=yes. Typecheck/lint/build were not launched. Graph replay, Docker, and PostgreSQL were not attempted.
+CANCELLATIONS=NOT_NEEDED_COMMAND_NOT_STARTED; no owned test worker or descendants were launched/cancelled. No unrelated process was terminated. PostgreSQL RSS was 0 in all samples and no PostgreSQL process was started. Owned worker peak RSS=NOT_MEASURED because no worker launched.
+
+=== DELIVERY ===
+FINAL_HEAD=c5844d227b2f63ac1995973d5c7ef8254b92ca6c (main; tracked worktree clean)
+GIT_BUNDLE=$HOME/storage/external-1/Termux-Archive/Biyahe/Batch044-Final/20261010T124122Z/biyahe-batch044-final-c5844d227b2f63ac1995973d5c7ef8254b92ca6c.bundle
+BUNDLE_SHA256=f6eaea7d9ec21dce2c94bd7bc15a2d5ac21334c77fdaaf13eed61aaace8ed114
+SD_VERIFICATION=PASS. git bundle verify reports complete history; refs/heads/main and HEAD both equal final HEAD; SHA256 sidecar verification passed. Initial recovery bundle was also verified.
+PUSH=NO
+
+=== REMAINING WORK ===
+VERIFIED=Staging safety/config contracts; API smoke framework contracts; Doctor V44; V6 manifest/checksums and local config cross-check; low-resource syntax and JSON checks; historical report preservation; final SD bundle.
+IMPLEMENTED_UNTESTED=Compose image builds/startup; database bootstrap/migrations/import against staging; live API smoke; frontend build and browser workflow; external-host CI jobs; full staging integration.
+RESOURCE_BLOCKED=Frontend test/typecheck/lint/build execution was not started after the five-sample gate breached. Do not retry on this device while floors fail.
+EXTERNAL_HOST_REQUIRED=Linux x86_64 staging host for Docker/PostGIS image build, isolated service startup, migrations/import dry run and approved staging execution, live API smoke, browser checks, and ten-case graph replay.
+FIELD_EVIDENCE_REQUIRED=Physical verification of both transfer locations and independent boarding/alighting/accessibility evidence. No field claims were made.
+NEXT_BATCH=Run the documented staging and portable V6 workflows on an isolated external Linux host with stable resource headroom; capture live API, browser, and per-case graph evidence. Keep private beta blocked until field-safety evidence is independently reviewed.
+
+CLIPBOARD=SET_ATTEMPTED_UNVERIFIED
+REPORT_PATH=/data/data/com.termux/files/home/biyahe-batch044-report.txt
+=== END BIYAHE BATCH 044 ===

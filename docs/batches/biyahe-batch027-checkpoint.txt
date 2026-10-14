@@ -1,0 +1,115 @@
+BIYAHE BATCH 027 CHECKPOINT
+PHASE 0 — BASELINE
+Status: complete
+HEAD: 5abe08dd3d6643ec2854f36acb21812c458b8d13
+Branch: main
+Worktree: clean at inspection
+Recovered work: Batch 026 committed; no Batch 027 checkpoint/work found before this file.
+Prior database evidence: Batch 026 did not start PostgreSQL because fixed MemAvailable floor was narrowly missed. No demonstrated corruption or termination cause.
+Backup: Batch 024 logical dump previously verified; current checksum recheck pending.
+PBF: verified local Central Visayas PBF from 2026-10-07; prior full extraction high-RSS, no full extraction permitted.
+Current resources at baseline: MemAvailable 617132 KiB; SwapFree 40340 KiB; disk free about 4.9 GiB; no large process.
+Completed: baseline/report/checkpoint inspection.
+Partial: resource guard audit, PostgreSQL observation decision, importer review.
+Blocked: not yet determined.
+Tests: none in Batch 027 yet.
+Next safe action: inspect guard and observer implementation, then verify backup checksum and logs read-only.
+
+PHASE 2 — RESOURCE GUARDS
+Status: complete and committed
+Commit: 79ba214d4b87fa6e6d423a6e4866ebb3a7d9fccb
+Completed: operation-specific PostgreSQL startup and observation budgets; configured hard floors; low swap is logged and advisory by default; process-tree RSS is measured; repeated observation breaches request one bounded pg_ctl fast shutdown; startup capture cleanup and no-retry behavior retained.
+Tests: bash -n observe-postgres.sh; php -l PostgresResourceGuardTest.php; focused PHPUnit 3 tests / 17 assertions PASS (includes reject, low-swap accept + RSS shutdown, failed-start cleanup).
+Next safe action: verify backup SHA and current resources, then one normal PostgreSQL start with 20-second observation if preflight permits.
+HEAD=79ba214d4b87fa6e6d423a6e4866ebb3a7d9fccb
+
+PHASE 3 — POSTGRESQL AND BACKUP
+Status: startup/observation complete; database read-only checks complete
+Commit at phase: 79ba214d4b87fa6e6d423a6e4866ebb3a7d9fccb
+Current PostgreSQL: one normal pg_ctl startup succeeded after automatic WAL recovery; observer retained readiness across 20 seconds; process tree RSS samples ~18,188–72,408 KiB; MemAvailable samples ~632,664–825,772 KiB; SwapFree reached 2,820 KiB without a stop; disk remained ~4.86 GiB free.
+Prior exit evidence: 2026-10-08 server log records successful recovery/start at 15:44 and another unclean restart at 19:16; the 19:16 recovery also reached ready. No shutdown record, signal, parent/session evidence, or Android kill evidence identifies the cause. Current `pg_ctl` start completed normally.
+Backup: SHA-256 verified as e55af400fde88d0a3434b194e0625e204eb0a2726374eabb8286c152b11a4a92; prior restore-verification manifest/TOC retained.
+Read-only `biyahe` DB: PostgreSQL reachable, 17 migrations; 1 city, 37 places, 47 aliases, 503 stops, 32 routes, 61 patterns, 1124 pattern stops, 2 transfers, 22 fares. Pedestrian dataset/node/edge rows=0; mission/mission-claim/evidence-claim/observation/survey-session/trace rows=0. No DB writes, migrations, or active graph changes performed.
+Next safe action: verify PBF provenance and assess one bounded real-source streaming proof; no graph import until that proof and staging safety pass.
+
+PHASE 4 — REAL PBF AND STREAM GUARD
+Status: guarded real-source attempt stopped safely; no prepared artifact
+Source: verified central_visayas.osm.pbf, 28,757,299 bytes, SHA-256 787cac20ecc586b754b1a464643a040566d486457c6a37bc0b11ce683bc66d4d, MD5 6531fa7af52b5565f13bfa68acff7a37, replication timestamp 2026-10-07T01:00:21Z, Osmium 1.19.1. Osmium requires Termux PREFIX/lib first in LD_LIBRARY_PATH.
+Pipeline: sequential Osmium cat -> XMLReader -> disk-backed SQLite; bounded Carbon Market area centered on existing canonical place coordinate 10.2920131,123.8999261. No complete_ways filter/extract.
+Observed: 85 seconds; peak process-tree RSS 99,996 KiB; disk remained >4.8 GiB free. MemAvailable reached 367,468 KiB for two consecutive samples against 393,216 KiB runtime floor. Watchdog SIGTERM'd only the Osmium producer; importer rejected incomplete XML; worker returned nonzero; no JSON output, FIFO, SQLite index, or temporary JSON remained. No second real-source attempt.
+Fixtures: streaming parser 5 tests / 31 assertions PASS; bounded runner 3 tests / 19 assertions PASS; database safety 6 tests / 20 assertions PASS. PostgreSQL resource guard 3/17 PASS.
+Next safe action: maintain current resource stop; continue frontend/integration and Doctor work. A later retry requires a stable resource window above the configured floor; do not stage/import this incomplete stream.
+
+PHASE 4 — STREAM GUARD CODE
+Status: complete and committed
+Commit: 3518ddf8b8dc2989dcb4bc5f9619369db8618c13
+Completed: added a process-tree RSS/memory/disk watchdog, private process group, producer-only SIGTERM cancellation, bounded timeout, fallback stop, and cleanup. The graph updater now uses operation-specific budgets, does not gate on low swap alone, and runs the SQLite/XML parser through the monitored FIFO worker. PostgreSQL RSS monitor now treats a missing root process sample as unavailable instead of reporting zero.
+Tests: PHP/shell syntax and diff check PASS; real-source runner exercised cancellation and cleanup. No import/migration occurred.
+Next safe action: audit existing UX harnesses and Doctor static checks; database remains unavailable and graph absent.
+HEAD=3518ddf8b8dc2989dcb4bc5f9619369db8618c13
+
+PHASE 5 — POSTGRESQL FOLLOW-UP
+Status: blocked for further live checks; no restart attempted
+Evidence: after the single observed normal start and read-only table counts, PostgreSQL stopped responding during a read-only place-coordinate query. The log ended after `ready to accept connections` without shutdown-complete, PANIC, or recorded signal. `pg_ctl status` found no server and a stale PID. Cause is unknown; no evidence distinguishes shell/session lifecycle from external process termination. The database was not mutated. No restart loop or second start.
+Backup: existing Batch 024 dump SHA-256 still matches its recorded value; prior isolated restore verification retained.
+Next safe action: continue with source-only tests and frontend integration while database is unavailable.
+
+PHASE 6 — TINY REAL PBF
+Status: BLOCKED_RESOURCE after one guarded attempt
+Evidence: verified source hash matched; bounded Carbon Market stream ran through Osmium cat/FIFO/XMLReader/SQLite. At 85s, measured process-tree RSS was 99,996 KiB and MemAvailable crossed 393,216 KiB for the second consecutive sample. Watchdog stopped the producer; importer rejected incomplete XML; no partial output/index/FIFO was retained. No retry. Osmium complete_ways was not used.
+Fixtures: stream parser 5/31 PASS; process watchdog 3/19 PASS, including cancellation/unwind/no-partial-output.
+Graph: no staging graph; no activation; no DB import.
+Next safe action: use source-level/importer fixtures; a real proof requires a calmer resource window or a different conversion route tested first in fixtures.
+
+PHASE 7 — INTEGRATION/DOCTOR
+Status: in progress
+Completed: established Browser/React test harnesses available; identified autocomplete short-query invalidation as a likely stale-result gap; Doctor static mode already exists and currently labels V26.
+Partial: implement production-used autocomplete cancellation and regression coverage; broaden static Doctor to V27.
+Blocked: real UI automation/device/screen-reader checks unavailable; live Doctor/release check blocked by stopped database; no active pedestrian graph.
+HEAD: 3518ddf8b8dc2989dcb4bc5f9619369db8618c13
+Resources after recovery tasks: MemAvailable 785,052 KiB; disk free ~4.87 GiB; no large processes.
+Next safe action: implement and exercise the search cancellation regression, then integration flow harness.
+
+PHASE 7 — SEARCH, NEARBY, JOURNEY HANDOFFS
+Status: complete; ready for coherent commit
+Completed: replaced numeric autocomplete counters with production-used latest-query controllers; query edits, short-query clearing, and selection synchronously invalidate/abort in-flight work, while late abort-insensitive results are discarded. Extracted tested keyboard wrap/clamp logic used by SearchField. Nearby lookup now has distinct unsupported/denied/unavailable/empty/error/cancelled outcomes, aborts API work on unmount, rejects late responses, and retains location only in request flow. Journey detail instructions are checked against the exact selected journey's map geometry and Ride Mode board/ride/alight guidance.
+Tests: place-search harness PASS (short query, old response, new response, network recovery); keyboard harness PASS (wrap, shrink, empty); Nearby harness PASS (permission, empty, network, location/API cancellation and late response); Ride Mode harness PASS with direct/1/2 transfer plus detail/map/ride handoff; commute-card harness PASS including saved snapshot reopen without API and no GPS; UX contract harness PASS 44 checks; Field Mode and Personal Commute harnesses PASS.
+Typecheck: one full `tsc --noEmit` run PASS with Node heap capped at 512 MiB. Changed-source and changed-harness ESLint PASS after removing redundant effect state updates. No browser/device/screen-reader validation.
+Next safe action: commit frontend integration changes, then commit Doctor/field-planning protections.
+
+PHASE 8 — DOCTOR V27 / FIELD REPLAY SAFETY
+Status: complete; tests passing
+Completed: Doctor banner advanced to V27. Static mode checks resource guard and frontend behavior integration while keeping live graph/field/release checks BLOCKED. Live graph readiness distinguishes DB/schema unavailable (BLOCKED), no active graph (WARN), invalid active graph (FAIL), and only a provenance/count/scope/topology/PostGIS/routing-smoke validated graph (PASS). Field campaign replay no longer resets or retargets claims with submitted/reviewed status or existing observations; OPEN uncollected claims remain refreshable while preserving status, stable ID, and mission link.
+Tests: Doctor graph-status/static-focused tests 2 tests / 18 assertions PASS; field operations 4 tests / 29 assertions PASS including replay state preservation and zero observations; database/resource guards 12 tests / 56 assertions PASS; importer stream/recovery fixtures 5 tests / 31 assertions PASS.
+Live Doctor/release check: blocked; PostgreSQL exited again and graph is absent. No live records were written.
+
+PHASE 9 — VALIDATION
+Status: completed, with live-only checks blocked
+PASS: final `git diff --check`; PHP lint for changed Doctor/field files; focused Doctor graph-state/static tests (2/18); field campaign/operations tests (4/29); resource/database guard tests (12/56); OSM stream/recovery fixtures (5/31); place-search, Nearby, search-keyboard, Ride Mode, commute-card, Field Mode, Personal Commute, and UX harnesses (44 UX checks); one bounded full web typecheck; changed-file ESLint.
+Doctor V27 static: source checks PASS=8, WARN=1, FAIL=0, BLOCKED=6; exit 2 is expected because live DB/graph/release and physical-device checks remain BLOCKED/WARN. Static mode did not access PostgreSQL.
+NOT RUN: live Doctor, release check, 47-pair matrix (no active graph), production build (not needed for this bounded batch), browser/device/screen-reader validation.
+
+PHASE 10 — FINAL REVIEW
+Completed: search invalidation, Nearby cancellation/late response, instruction-to-map/Ride Mode handoff, campaign replay review-state safety, V27 static/live graph status distinctions.
+Blocked: PostgreSQL process exit cause is unknown; no shutdown/PANIC/signal evidence. Tiny real PBF stream stopped at its configured memory guard; incomplete output rejected. No graph staging/activation or live mission updates.
+Safety: no production database writes, migrations, graph imports, observations, or claims created. Existing verified backup left unchanged; SHA-256 matches. No OSM complete_ways extraction, push, production build, or full matrix.
+
+PHASE 11 — COMMITS
+Complete; coherent passing commits:
+79ba214 Bound PostgreSQL resource observation
+3518ddf Guard bounded OSM streaming by live resources
+098df90 Harden commuter search and nearby flows
+d6974d2 Harden Doctor graph and field planning readiness
+HEAD: d6974d2d5aa27e5e8cfedbc7120ac2ce61fac68e
+Branch main; worktree clean; ahead of origin by 29; no push.
+
+PHASE 12 — REPORT
+Pending: save ~/biyahe-batch027-report.txt, attempt Termux clipboard copy/readback, then record clipboard status and final state.
+
+FINAL ACCEPTANCE ADDENDUM
+- Rechecked `pg_ctl status` once without starting PostgreSQL: no server running; no postgres process found. No restart.
+- Added and ran importer activation/rollback/idempotency fixtures: 4 tests / 24 assertions PASS, covering previous-active-graph preservation, incomplete graph non-reactivation, idempotent bounded import, and merge retry.
+- Final HEAD remains d6974d2d5aa27e5e8cfedbc7120ac2ce61fac68e; branch main; worktree clean.
+- All acceptance criteria with safe available evidence are satisfied. PostgreSQL cause, stable live database, and real-PBF proof remain genuine blockers; staging/activation and live readiness cannot proceed.
+- Import activation/rollback and idempotency fixtures passed: 4 tests / 24 assertions.
+- Report saved at ~/biyahe-batch027-report.txt. Clipboard setter returned 0 twice; clipboard getter returned an empty 0-byte file both times. Final report status: CLIPBOARD_UNVERIFIED; full report is printed in the final response.

@@ -1,0 +1,56 @@
+=== BIYAHE BATCH 046 ===
+HEAD_BEFORE=0ba6e004f838f2345cff6297994ab86499fa6a30
+HEAD_AFTER=6e199f33deed7397996241b1867c420f757ec6ae
+START_TIME=2026-10-10T15:06:31Z
+END_TIME=2026-10-10T15:24:18Z
+ELAPSED_WALL_TIME=00:17:47
+WORKTREE=TRACKED_CLEAN; seven historical untracked Doctor reports preserved byte-for-byte
+COMMITS=18878a355afde49c2f2eb29a525f49e263478e2e (implementation); 6e199f33deed7397996241b1867c420f757ec6ae (Doctor V46 documentation)
+
+=== APPLICATION ===
+API_TIMEOUT_AND_CANCELLATION=IMPLEMENTED_UNTESTED; existing 20 s timeout remains active through body parsing and caller abort is distinguished; deterministic fake-timer/body-timeout/listener-cleanup fixtures added, but functional execution was resource-blocked.
+RESPONSE_VALIDATION=IMPLEMENTED_UNTESTED; HTTP status/path diagnostics, malformed JSON handling, requested place identity, journey/leg completeness, geometry bounds and nested disruption shape are checked. Node harness import uses explicit TypeScript extension with no-emission TS config support.
+JOURNEY_SELECTION=NOT_RUN; existing LatestPlaceSearch and RequestGate generation/cancellation logic inspected; no additional defect was demonstrated.
+SAVED_JOURNEYS=IMPLEMENTED_UNTESTED; snapshot-v1 rejects wrapper/journey ID mismatch and duplicate IDs for writes, keeps duplicate records readable and read-only, and uses distinct saved-card keys. Synthetic fixtures added; not executed.
+RIDE_MODE=NOT_RUN; existing manual state transitions inspected; no source change, GPS claim, or arrival verification added.
+EVIDENCE_PRESENTATION=NOT_RUN; existing unknown fare/ETA, approximate walking, missing geometry and unverified transfer disclosures inspected; no new evidence claims.
+MOBILE_UX=NOT_RUN; no browser or visual verification. Saved-card duplicate-key collision addressed in source.
+
+=== VERIFICATION ===
+FUNCTIONAL_TESTS=BLOCKED_RESOURCE; node --experimental-strip-types web/scripts/api-failure-harness.mjs was submitted through the owned-worker guard; five-sample preflight failed, exit 4, worker not started. commute-card functional harness not run after this gate failure.
+STATIC_TESTS=PASS; exit 0 for node --experimental-strip-types --check on api.ts, fetchWithTimeout.ts and savedJourneys.ts; node --check on api-failure-harness.mjs and commute-card-harness.mjs; python3 -m json.tool on web/package.json and web/tsconfig.json; git diff --check. These are syntax/JSON/diff checks, not functional tests. Doctor JSON also parsed successfully.
+FAILED_TESTS=NONE_EXECUTED; no functional assertions ran, so no functional pass or fail is claimed.
+BLOCKED_TESTS=API_FAILURE_HARNESS (BLOCKED_RESOURCE); TypeScript typecheck, ESLint, frontend build and browser tests NOT_RUN after the measured swap-floor failure. commute-card harness NOT_RUN.
+DOCTOR_V46=docs/reports/batch046-doctor-v46.json; executable source pinned to 18878a355afde49c2f2eb29a525f49e263478e2e; source fingerprints included in the report.
+
+=== RESOURCES ===
+PREFLIGHT=Five spaced samples each before initial backup, API harness and final bundle. Lowest MemAvailable 709132 KiB; lowest SwapFree 19328 KiB. Logs: /data/data/com.termux/files/home/.cache/biyahe/batch046/20261010T150631Z/initial-backup.log; /data/data/com.termux/files/home/.cache/biyahe/batch046/20261010T151556Z/api-failure.log; /data/data/com.termux/files/home/.cache/biyahe/batch046/20261010T1521Z-final-bundle/final-bundle.log.
+MINIMUM_MEMORY=709132 KiB observed; required floor 524288 KiB
+MINIMUM_SWAP=19328 KiB observed; required floor 131072 KiB
+CANCELLATIONS=0; no owned worker started, peak worker RSS not observed, PostgreSQL RSS 0; no unrelated process terminated. Guard accepts BIYAHE_RESOURCE_BREACH_SAMPLES=1; threshold unchanged.
+
+=== EVIDENCE ===
+REAL_CEBU_CORPUS=NOT_RUN; no current cases executed.
+GRAPH_STATUS=NOT_ACCESSED; expected graph identity remains historical only.
+FIELD_VERIFICATION=Two transfer records remain physically UNVERIFIED; no new field evidence collected.
+PRIVATE_BETA=BLOCKED
+PRODUCTION_ACTIVATION=NO
+
+=== DELIVERY ===
+FINAL_HEAD=6e199f33deed7397996241b1867c420f757ec6ae
+INITIAL_BACKUP=BLOCKED_RESOURCE; current-head backup command was not started after five-sample preflight, minimum SwapFree 32804 KiB.
+FINAL_BUNDLE=BLOCKED_RESOURCE; final guarded bundle command was not started after five-sample preflight, minimum SwapFree 74596 KiB. Intended path: /data/data/com.termux/files/home/storage/external-1/Termux-Archive/Biyahe/Batch046/20261010T1521Z/biyahe-batch046-final-6e199f33deed7397996241b1867c420f757ec6ae.bundle
+BUNDLE_SHA256=NOT_CREATED
+SD_VERIFICATION=Final Batch 046 bundle unavailable. Existing Batch 045 initial bundle remains at /data/data/com.termux/files/home/storage/external-1/Termux-Archive/Biyahe/Batch045-Recovery/20261010T134814Z/biyahe-batch045-initial-c5844d227b2f63ac1995973d5c7ef8254b92ca6c.bundle, SHA256 f6eaea7d9ec21dce2c94bd7bc15a2d5ac21334c77fdaaf13eed61aaace8ed114; it contains only the older c5844d227b2f63ac1995973d5c7ef8254b92ca6c start revision and does not contain Batch 046 commits. Seven historical Doctor hashes matched baseline.
+PUSH=NO
+
+=== NEXT WORK ===
+VERIFIED=Changed TypeScript/JavaScript syntax, package/config/Doctor JSON parsing, git diff checks, source commit and separate Doctor pin, seven historical report hashes.
+IMPLEMENTED_UNTESTED=API failure diagnostics and strict response/source validation; fake-timer timeout/cancellation fixtures; snapshot-v1 mismatch/duplicate protection; saved card key stability.
+REMAINING_DEFECTS=Functional contract assertions and TypeScript typecheck remain unverified because preflight repeatedly measured SwapFree below the fixed floor; no application failure was observed at runtime.
+TERMUX_FEASIBLE_NEXT_STEPS=When five fresh resource samples meet both floors, run the existing guarded API failure and commute-card harnesses individually, then typecheck/lint one at a time. No external host is needed for these pure tests.
+EXTERNAL_VALIDATION_DEFERRED=Real Cebu graph/corpus replay, PostgreSQL staging and live API integration remain NOT_RUN; physical transfer and field-safety evidence remains required.
+
+CLIPBOARD=SET_ATTEMPTED_UNVERIFIED
+REPORT_PATH=/data/data/com.termux/files/home/biyahe-batch046-report.txt
+=== END BIYAHE BATCH 046 ===

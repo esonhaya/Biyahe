@@ -1,0 +1,67 @@
+=== BIYAHE BATCH 048 ===
+HEAD_BEFORE=8904668f2f86ecd6d069b28b106f6fa1515fffa6
+HEAD_AFTER=de41f4daa8c88883b2cfb0156a9b71fe32227189
+START_TIME=2026-10-10T23:33:17Z / 2026-10-11T07:33:17+08:00 Asia/Manila
+END_TIME=2026-10-10T23:40:39Z / 2026-10-11T07:40:39+08:00 Asia/Manila
+ELAPSED_WALL_TIME=00:07:22
+ACTIVE_TIME=NOT_MEASURED
+WORKTREE=Tracked tree clean; seven historical untracked Doctor reports preserved byte-for-byte
+COMMITS=20afdc33025e1bee566470fe9d715517e9159ad2 (application/tests); de41f4daa8c88883b2cfb0156a9b71fe32227189 (Doctor V48)
+
+=== COMMUTER EXPERIENCE ===
+SEARCH=PASS; RequestGate, latest place search, keyboard selection, retry/current response behavior covered.
+REQUEST_GATE=PASS; superseded and cancelled requests are rejected; latest request remains current.
+JOURNEY_RESULTS=PASS; recommendation badge no longer shifts when filtering alternatives.
+JOURNEY_COMPARISON=PASS; planner recommendation and selected journey are independent identities; ranking untouched.
+WALKING_INSTRUCTIONS=PASS for local preview contracts; graph geometry only, missing geometry hidden, disconnected/failure disclosure preserved. Real graph NOT_RUN.
+RIDE_MODE=PASS focused manual progression/version/persistence fixtures; no GPS or arrival verification implied.
+SAVED_JOURNEYS=PASS focused snapshot/corrupt-storage preservation fixtures; preview persistence remains excluded.
+CAN_I_RIDE=PASS synthetic client contract and yes/no/unknown presentation fixtures; no live API.
+MOBILE_UX=Search combobox accessibility corrected and contract-tested; visual checks at 320/360/390 px NOT_RUN (no browser).
+ERROR_RECOVERY=PASS focused timeout, body timeout, caller cancellation, malformed JSON, HTTP diagnostics, source identity and partial response checks.
+
+=== FUNCTIONAL VERIFICATION ===
+SEARCH_TESTS=PASS request-gate and place-search guarded harnesses.
+REQUEST_GATE_TESTS=PASS exit 0, 8 s; evidence /data/data/com.termux/files/home/.cache/biyahe/batch048/request-gate-20261010T2334Z/.
+JOURNEY_TESTS=PASS commute-card/comparison harness, exit 0, 9 s; evidence /data/data/com.termux/files/home/.cache/biyahe/batch048/commute-cards-20261010T2338Z/.
+WALKING_TESTS=PASS preview-state and preview-presentation harnesses, each exit 0; evidence under /data/data/com.termux/files/home/.cache/biyahe/batch048/.
+RIDE_MODE_TESTS=PASS exit 0, 8 s; evidence /data/data/com.termux/files/home/.cache/biyahe/batch048/ride-mode-20261010T2341Z/.
+SAVED_JOURNEY_TESTS=PASS snapshot, corrupt-storage preservation and no-preview persistence cases in commute-card/Ride Mode harnesses.
+CAN_I_RIDE_TESTS=PASS exit 0, 7 s; evidence /data/data/com.termux/files/home/.cache/biyahe/batch048/can-i-ride-20261010T2337Z/.
+STATIC_CHECKS=PASS: git diff --check; node --check on changed MJS harnesses; bash -n on lightweight runner; Doctor JSON parse and source-fingerprint verification.
+FAILED_TESTS=0 functional failures. One initial place-search runner invocation exited before worker because its fingerprint path named nonexistent placeSearch.ts; corrected to latestPlaceSearch.ts and the single subsequent run passed.
+BLOCKED_TESTS=No worker was resource-cancelled. Full build/typecheck, browser, live API/database, and real graph corpus were NOT_RUN on Termux.
+
+=== RESOURCES ===
+LIGHTWEIGHT_RUNNER=PASS; Batch047 allowlist, 3 preflight samples, 60 s timeout, 524288 KiB MemAvailable floor, 32768 KiB SwapFree floor, 131072 KiB process-tree RSS cap, first-breach cancellation retained.
+MINIMUM_MEMORY=864768 KiB across functional workers.
+MINIMUM_SWAP=37864 KiB across functional workers (above the light-profile 32768 KiB floor).
+PEAK_WORKER_RSS=77400 KiB observed; walking-preview-state harness exited before RSS polling, so its individual peak is unavailable.
+CANCELLATIONS=0. No unrelated processes terminated; no heavy worker started.
+
+=== EVIDENCE ===
+DOCTOR_V48=VERIFIED machine-readable report at docs/reports/batch048-doctor-v48.json; executable source revision 20afdc33025e1bee566470fe9d715517e9159ad2; report commit de41f4daa8c88883b2cfb0156a9b71fe32227189.
+REAL_CEBU_CORPUS=NOT_RUN; historical ten-case results are not current verification.
+FIELD_VERIFICATION=Two transfer records remain physically UNVERIFIED; no safety, sidewalk, crossing or accessibility claim.
+PRIVATE_BETA=BLOCKED
+PRODUCTION_ACTIVATION=NO
+SOURCE_FINGERPRINTS=Pinned in Doctor V48 and per-operation manifests under /data/data/com.termux/files/home/.cache/biyahe/batch048/.
+
+=== DELIVERY ===
+FINAL_HEAD=de41f4daa8c88883b2cfb0156a9b71fe32227189 (main)
+FINAL_SD_BUNDLE=/data/data/com.termux/files/home/storage/external-1/Termux-Archive/Biyahe/Batch047-Recovery/commit-de41f4d/biyahe-batch048-final-de41f4d.bundle
+BUNDLE_SHA256=18627ef898e34ca0bb376e76550735790757cf0f7c8b22154fa11c1c3488343c
+SD_VERIFICATION=PASS; complete history; refs/heads/main and HEAD match final revision; SHA256 sidecar verified; 1,915,436 bytes.
+PUSH=NO
+PROGRESS_LEDGER=/data/data/com.termux/files/home/biyahe-batch048-progress.txt
+
+=== NEXT WORK ===
+VERIFIED=Search/request lifecycle, Can-I-Ride contract, comparison identity, offline preview contracts, Ride Mode and saved-journey fixtures; static checks and SD bundle.
+IMPLEMENTED_UNTESTED=The two UI changes have deterministic contract coverage but no real-browser rendering verification.
+REMAINING_DEFECTS=No failures in exercised fixtures. Live API/graph behavior and browser layout remain unverified.
+TERMUX_FEASIBLE_NEXT_STEPS=Continue small pure-function and state-transition regressions; preserve light profile and avoid full builds while device swap headroom is limited.
+EXTERNAL_VALIDATION_DEFERRED=Real Cebu graph replay, database/API staging and mobile browser viewport checks.
+
+CLIPBOARD=SET_ATTEMPTED_UNVERIFIED
+REPORT_PATH=/data/data/com.termux/files/home/biyahe-batch048-report.txt
+=== END BIYAHE BATCH 048 ===

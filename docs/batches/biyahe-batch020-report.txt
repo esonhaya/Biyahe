@@ -1,0 +1,148 @@
+=== BASELINE ===
+HEAD_BEFORE=69b720db5d65c71a120464be9372bcc85f143ae0
+HEAD_AFTER=243b35a73dc75667e09927508bdb6dc6d83cc296
+WORKTREE_STATE=CLEAN
+UNRELATED_WORK_PRESERVED=YES; baseline was clean and only Batch 020 files were committed
+POSTGRES_VERSION=18.6 aarch64-unknown-linux-android
+POSTGIS_VERSION=3.6.4
+MIGRATION_STATE=ALL_BATCH020_MIGRATIONS_RAN; no pending migrations
+PLACES=34 ALIASES=47 STOPS=499 ROUTES=30 PATTERNS=58 PATTERN_STOPS=1124 TRANSFERS=2
+BOARDING_UNKNOWN=498 VERIFIED_JOURNEYS=0 REAL_FIELD_OBSERVATIONS=0
+ACTIVE_GRAPH=osm-cebu-walk-206ae627151f11ef01222a379c3adde9
+UNSUPPORTED_VERIFIED_CLAIMS=0 SYNTHETIC_PRODUCTION_ROWS=0
+=== FIELD MISSIONS ===
+MISSIONS=4 MISSION_GROUPS=CARBON,CORE,SOUTH,TALAMBAN CLAIMS_COVERED=92
+MISSION_LIFECYCLE=PLANNED/IN_PROGRESS/SUBMITTED/UNDER_REVIEW/PARTIALLY_ACCEPTED/COMPLETED/CANCELLED
+STRUCTURED_CHECKLIST=PASS; claim-level prompts, route/pattern/stop/transfer targets, priority and follow-up scope
+MISSION_RESUME=PASS; bounded server snapshots plus local mission resume
+FIELD_MODE=PASS; authorized mobile-first collection mode, separate from public Ride Mode
+ROUTE_OBSERVATION=PASS; route, direction, signboard, vehicle and timestamp fields
+BOARDING_OBSERVATION=PASS; exact/area/approximate/could-not-confirm with evidence gating
+ALIGHTING_OBSERVATION=PASS; scoped structured capture
+SEQUENCE_OBSERVATION=PASS; ordered subset and scoped relations
+TRANSFER_OBSERVATION=PASS; arrival/next boarding/walk/landmark/completion fields
+FARE_OBSERVATION=PASS; observation only, never canonical fare mutation
+OPTIONAL_LOCATION=PASS; one explicit foreground point per observation only
+LOCATION_ACCURACY=PASS; stored and prevents poor accuracy becoming exact
+PHOTO_FOUNDATION=REFERENCE_METADATA_ONLY; arbitrary uploads deferred safely
+=== OFFLINE FIELD ===
+MISSION_DOWNLOAD=PASS; bounded mission/claim snapshot, no full-network cache
+LOCAL_DRAFTS=PASS; schema-versioned, validated and size-bounded
+OUTBOX=PASS; explicit local observation outbox
+IDEMPOTENCY=PASS; stable client IDs reject conflicting reuse and deduplicate retries
+SYNC=PASS; bounded online sync returns accepted/idempotent/rejected receipts
+CONFLICT_HANDLING=PASS; mission/claim and client-ID conflicts remain reviewable
+OFFLINE_MAP_POLICY=PASS; bounded coordinates/geometry only; no offline tile claim
+=== REVIEW / PROMOTION ===
+ADMIN_REVIEW=PASS; Filament mission, observation, claim and audit workflows
+CLAIM_COMPARISON=PASS; current fact, observation, evidence, conflict and proposed scope
+CORROBORATION=PASS; related observations grouped without count-only verification
+CONFLICT_REVIEW=PASS; conflicting observations remain review-required
+PROMOTION_PREVIEW=PASS; exact scoped consequences shown before mutation
+TRANSACTIONAL_PROMOTION=PASS; explicit reviewer action, scoped transaction and rollback support
+AUDIT_TRAIL=PASS; review, attach, promote and rollback actions recorded
+AUTO_PROMOTION=0
+=== PWA ===
+MANIFEST=PASS; app metadata, install fields and existing icon
+SERVICE_WORKER=PASS; versioned static-shell strategy, no API/non-GET caching
+APP_SHELL_OFFLINE=PASS; bounded shell fallback
+FIELD_MODE_OFFLINE=PASS; mission snapshots, drafts and outbox
+SAVED_JOURNEY_OFFLINE=PRESERVED
+CACHE_POLICY=PASS; STATIC cache-first, snapshots local, dynamic API network-first/no-store
+INSTALLABILITY=STANDARDS_READY; secure-context deployment required
+REAL_DEVICE_INSTALL_TEST=NOT_RUN; requires HTTPS and a physical browser/device
+=== PEDESTRIAN ===
+GRAPH_BEFORE=54939 nodes / 56659 edges
+GRAPH_AFTER=54939 nodes / 56659 edges; unchanged and integrity-valid
+STOPS_CONNECTABLE_BEFORE=429/499 STOPS_CONNECTABLE_AFTER=429/499
+STOPS_UNCONNECTABLE_BEFORE=70/499 STOPS_UNCONNECTABLE_AFTER=70/499
+PLACES_CONNECTABLE_BEFORE=28/34 PLACES_CONNECTABLE_AFTER=28/34
+SYSTEMIC_CLUSTERS_REMAINING=9 observed clusters (8 prior grouped systemic clusters)
+COORDINATES_MOVED=0 OSM_ACQUISITION=NONE; no safe graph mutation was demonstrated
+
+=== PERFORMANCE ===
+HEAVY_CASE=North-Reclamation to Pardo
+HEAVY_BEFORE_MS=19418.77 HEAVY_AFTER_MS=13632.07; measured same profile, 29.8% reduction
+ACCESS_MS=not separately isolated
+TRANSIT_MS=direct component 2891ms; transfer expansion component 10500ms
+TRANSFER_MS=10500ms dominant measured component
+WALK_MS=2160ms measured pedestrian phase
+TRUST_MS=bounded request-cache instrumentation; not separately isolated
+RANKING_MS=not separately isolated
+PEDESTRIAN_ALGORITHM=bounded Dijkstra retained; A* not adopted because transfer expansion dominated
+PEDESTRIAN_REQUESTS=14 to 11 PEDESTRIAN_COMPUTES=14 to 11
+PLANNER_CACHE=PASS; request-scoped pattern/trust/walk reuse and safe two-transfer bound
+MEDIAN_47=6417.49ms P95_47=16942.50ms MAX_47=18986.57ms
+
+=== COVERAGE ===
+PAIRS_COMPLETE=47/47 ROUTABLE=47 DIRECT=20 ONE_TRANSFER=31 TWO_TRANSFER=1
+NETWORK_WALK=24 FALLBACK_WALK=30 REGRESSED=0 SUSPICIOUS=0
+TRUSTED_JOURNEY_REFERENCES=VERIFIED 0 / MIXED 470 / UNVERIFIED 0
+TRANSFER_USAGE=EXPLICIT 0 / SHARED_STOP 312 / WALKING_PROXIMITY 0
+
+=== DEPLOYMENT ===
+HEALTH=PASS; Laravel/database/PostGIS health checks available
+READINESS=PASS; database, PostGIS, migrations, active graph and trust checks
+ENV_VALIDATION=PASS; release check requires PostgreSQL for production readiness
+POSTGIS_CHECK=PASS; SRID 4326 active graph and spatial schema
+MIGRATION_CHECK=PASS; no pending migrations
+ACTIVE_GRAPH_CHECK=PASS; one active graph, valid source/provenance and counts
+BACKUP_DOCS=PASS; provider-neutral PostgreSQL backup/restore workflow in docs/deployment.md
+HTTPS_DOCS=PASS; geolocation/PWA secure-context requirement documented
+RELEASE_CHECK_COMMAND=php artisan biyahe:release-check --json
+
+=== PRIVACY / SECURITY ===
+FIELD_AUTH=PASS; trusted operator middleware/token boundary
+FIELD_VALIDATION=PASS; bounded types, claims, timestamps, coordinates, accuracy and payloads
+MASS_ASSIGNMENT=PASS XSS=PASS; untrusted fact/notes sanitized and reviewer fields excluded
+RAW_GPS_SERVER_PERSISTENCE=0 BACKGROUND_GEOLOCATION=0
+RIDE_MODE_TO_FIELD_GPS_LEAKAGE=0 LOCAL_DRAFT_PRIVACY=PASS SENSITIVE_LOGGING=PASS
+
+=== TRUST SIMULATION ===
+BOARDING_PROMOTION=PASS; scoped synthetic test only, no production rows
+SEQUENCE_PROMOTION=IMPLEMENTED; scoped claim model preserves relation scope; no production promotion
+SERVICE_PROMOTION=IMPLEMENTED; explicit reviewer-only scoped path; no production promotion
+CONFLICT_CASE=PASS; no automatic promotion
+VERIFIED_JOURNEY_TEST_FIXTURE=NOT_CREATED; trust engine unchanged; real production VERIFIED remains 0
+REAL_PRODUCTION_PROMOTIONS=0
+
+=== VALIDATION ===
+FIELD_TESTS=PASS; focused Batch020 suite 3 tests/21 assertions
+LIVE_FIELD_POSTGIS_SMOKE=PASS; transactional mission/session/observation path rolled back cleanly
+OFFLINE_SYNC_TESTS=PASS; field harness and bounded outbox/idempotency coverage
+REVIEW_TESTS=PASS; focused suite plus full Laravel regression
+SECURITY_TESTS=PASS; validation, sanitization, auth, privacy and release checks
+PWA_TESTS=PASS; field-mode harness, manifest/service-worker static checks
+PEDESTRIAN_TESTS=PASS; real graph integrity and bounded gap analysis
+PLANNER_TESTS=PASS; semantic equivalence and final 47-pair PostGIS audit
+FULL_MATRIX=PASS; 47/47 complete, 0 failed, 0 suspicious
+ROUTE_EXPLORER_TESTS=PASS; existing bounded explorer/regression coverage
+NEARBY_TESTS=PASS; existing bounded spatial/privacy coverage
+CAN_I_RIDE_TESTS=PASS COMMUTE_CARD_TESTS=PASS RIDE_MODE_TESTS=PASS
+PULSE_TESTS=PASS DEPLOYMENT_CHECK=PASS
+DOCTOR_V20=PASS; real PostGIS: 183 PASS, 7 WARN, 0 FAIL, 0 BLOCKED
+BACKEND_REGRESSION=PASS; 103 tests, 97 passed, 6 skipped, 881 assertions
+FRONTEND_TYPECHECK=PASS FRONTEND_LINT=PASS FRONTEND_BUILD=PASS
+PHP_LINT=PASS GIT_DIFF_CHECK=PASS
+
+=== READINESS ===
+FIELD_COLLECTION_READINESS=READY_FOR_AUTHORIZED_REAL-WORLD_COLLECTION
+FIELD_REVIEW_READINESS=READY; explicit review/promotion/audit boundary
+OFFLINE_FIELD_READINESS=READY_WITH_BOUNDED_MISSION_SNAPSHOTS
+PWA_READINESS=READY_FOR_SECURE-CONTEXT_DEPLOYMENT
+PEDESTRIAN_READINESS=PASS_WITH_70_STOP_AND_6_PLACE_ACCESS_GAPS
+PLANNER_READINESS=PASS_WITH_MEASURED_TRANSFER-EXPANSION_BOTTLENECK
+DEPLOYMENT_READINESS=PASS_LOCAL_POSTGIS_RELEASE_GATE
+TRUSTED_JOURNEY_READINESS=NOT_YET; real observations are correctly absent
+DAILY_USE_READINESS=PASS_WITH_KNOWN_EVIDENCE_AND_ACCESS_GAPS
+MILESTONE_STATUS=PASS_WITH_KNOWN_GAPS
+
+=== COMMIT ===
+COMMIT=243b35a73dc75667e09927508bdb6dc6d83cc296
+
+=== CHECKPOINT ===
+NEXT=Conduct Carbon/Core/South/Talamban missions; review observations explicitly; revalidate only promoted claims.
+
+CLIPBOARD_COPY=PASS
+CLIPBOARD_REPORT_PATH=/data/data/com.termux/files/home/biyahe-batch020-report.txt
+=== BATCH 020 COMPLETE ===

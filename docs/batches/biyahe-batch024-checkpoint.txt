@@ -1,0 +1,34 @@
+BIYAHE BATCH 024 CHECKPOINT
+DATE=2026-10-08 Asia/Manila
+REPOSITORY=/data/data/com.termux/files/home/Biyahe
+HEAD=44a3243bd11ee745569aa18da90e9ca04c861915
+BRANCH=main
+WORKTREE=CLEAN at resume; no Batch024 tracked changes yet.
+BATCH023=Report and checkpoint read; Batch023 commit completed, not restarted.
+RESOURCES_START=available RAM ~851 MiB before PostgreSQL start, disk 4.8 GiB free, swap ~442 MiB free. No parallel agents/processes.
+PHASE_1=COMPLETE. PostgreSQL 18.6 data dir api/.runtime/postgres; system_id 7692908489789027408; PGDATA 131 MiB, pg_wal 81 MiB/5 segments. shared_buffers=128MB, max_wal_size=1GB, port 55432, local socket api/.runtime. Stale PID 7115 absent. Logs show prior ordinary redo/checkpoint completions, no PANIC/corruption; prior SQL errors were nonexistent names/columns. pg_controldata state before start=in production, last checkpoint=0/2232FE08. Disk/memory margins checked.
+PHASE_2=ONE_NORMAL_START_SUCCEEDED. Documented pg_ctl startup at 2026-10-08 19:16:30 PST; WAL redo finished in <1 sec, recovery checkpoint completed, server ready at 19:16:31. psql confirmed Postgres 18.6/PostGIS 3.6.4, 17 migration rows latest 2026_10_08_000002. Read-only production counts: cities=1, places=37, aliases=47, stops=503, routes=32, patterns=61, pattern-stops=1124, transfers=2, fares=22, provenance=9; graph datasets/nodes/edges=0; missions/mission claims/field claims/sessions/observations/traces=0. First optional-column query errored `source_file does not exist` inside read-only txn; no write. Later DB server disappeared (connection refused; pg_ctl no server) with no shutdown/error line after ready. Do NOT restart; actual cause unknown. Latest pg_control modified at startup checkpoint 0/2232FEB8, cluster state=in production as expected for no clean shutdown.
+PHASE_3=BACKUP_VERIFIED. Full custom dump `/data/data/com.termux/files/home/.cache/biyahe/batch024/verified-20261008/biyahe.dump`, 431 KiB, SHA256=e55af400fde88d0a3434b194e0625e204eb0a2726374eabb8286c152b11a4a92; pg_restore --list succeeded (492 TOC lines). Globals dump globals.sql 524 bytes, SHA256=add8d8b7220ec02873ad95d610392c5d1b5b0e65aadd711dc8905cc59ea50af5. Restored atomically (single transaction) into newly created isolated `biyahe_batch024_restore_test`; pg_restore exit=0; key row counts, 17 migrations/latest migration, PostGIS 3.6.4 match source exactly. DB later stopped; no production mutations. Backup is logically verified/readable; isolated restore verified.
+OSM_SOURCE=Existing local PBF at api/.runtime/recovery-osm-verified-20261007/central_visayas.osm.pbf; size 28,757,299; MD5=6531fa7af52b5565f13bfa68acff7a37; SHA256=787cac20ecc586b754b1a464643a040566d486457c6a37bc0b11ce683bc66d4d; replication timestamp 2026-10-07T01:00:21Z, sequence 7318108, latest object 2026-10-07T00:02:08Z. Historical MD5 absent. Do not rerun tags-filter.
+LOW_MEMORY_INVESTIGATION=Installed Osmium 1.19.1/libosmium 2.23.1, PHP XMLReader, SQLite CLI/PDO; pyosmium absent. Official Osmium docs say extract `simple` one pass but incomplete ways; complete_ways two passes and reference-complete, memory depends on extract/strategy. Candidate is direct tiny `osmium extract --strategy=complete_ways` (no tags-filter), guarded by live RSS/MemAvailable; then stream/filter XML via XMLReader/SQLite if suitable. No extraction run yet.
+PHASES_4_10=IN_PROGRESS. No graph import or activation, no mission writes, no observations. The previous Batch023 2-mission/30-claim draft is not revalidated; live source currently showed zero field claims/missions.
+NEXT_SAFE=Verify PBF hash; inspect project importer internals and installed Osmium help; run one tiny direct bbox extract under RSS/floor watcher. Do not restart PostgreSQL. Stage DB exists persistently but server is down.
+
+RESUME_UPDATE=2026-10-08 19:40 PST
+HEAD_BEFORE_COMMIT=44a3243bd11ee745569aa18da90e9ca04c861915
+POSTGRES_FINAL=Still stopped; pg_ctl status says no server; do not restart. No shutdown/PANIC/corruption error appeared after the 19:16:31 ready log. Stop cause remains unknown.
+PHASE_3=Verified logical archive and isolated restore remain complete. Restored DB exists but service is unavailable; no active DB mutation after backup.
+PHASE_4=Rechecked live field records during the permitted startup: missions=0, mission claims=0, evidence claims=0, sessions=0, observations=0, traces=0. Batch023's two draft missions/30 claims are not supported by current live claims; persist none. Real observations created=0.
+PHASE_5_6=Graph remains absent in live DB (datasets/nodes/edges=0); no activation, connectivity run, Doctor, release check, or matrix.
+PHASE_LOW_MEMORY=Added PreparePedestrianOsmStream: XMLReader over stdin/file; all node coordinates spilled to SQLite with 16 MiB page cache; in-scope ID set capped by existing 100,000 limit; reference-complete candidate ways; 20 MB output cap; checksum verification; output/test-only safety. A real source PBF probe began but was stopped early after noticing the source URL basename typo; no final JSON/import. The source PBF hash still matches. New code checks URL filename against the verified local file to prevent that mismatch. No PBF memory peak measured for this pipeline. An owned partial SQLite/JSON scratch from that abort was removed; historical zero-byte extract diagnostic retained.
+PHASE_7_10=Importer still performs a single transaction and existing rollback/idempotency tests remain. New test-only extracts are rejected before activation. Synthetic checks pass; actual PBF pipeline and DB recovery remain blocked.
+VALIDATION=PedestrianRoutingTest.php: 15 tests, 14 passed, 1 skipped, 113 assertions. DatabaseTestSafetyTest.php: 6 passed, 20 assertions. PHP lint passed all 5 changed PHP files; git diff --check passed. No frontend build, Doctor, release check, or 47-pair audit.
+TRACKED_CHANGES=PreparePedestrianOsmStream.php; PedestrianNetworkImporter.php; PedestrianNetworkStatus.php; BiyaheDoctor.php; PedestrianRoutingTest.php; docs/pedestrian-routing.md.
+NEXT_SAFE=Do not restart PostgreSQL in this run. Resolve why the process disappears through external service/resource diagnostics; then start once under operator observation, verify staging restore is readable, run the documented tiny test-only PBF stream with the correct source URL, and proceed to full configured extraction/import only after resource and staging gates pass.
+
+FINAL_COMMIT=8a71e10ab28d1656fa1add34712e6e8ba60a002b (feat: add disk-backed OSM stream preparation)
+HEAD_FINAL=8a71e10ab28d1656fa1add34712e6e8ba60a002b
+WORKTREE_FINAL=CLEAN; branch main is 18 commits ahead of origin/main; no push.
+REPORT_NEXT=Write ~/biyahe-batch024-report.txt, copy through termux-clipboard-set, verify exit status, then print exact report.
+REPORT=/data/data/com.termux/files/home/biyahe-batch024-report.txt
+REPORT_CLIPBOARD=PASS; termux-clipboard-set exited 0 after copying the final report contents.

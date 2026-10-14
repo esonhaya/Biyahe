@@ -1,0 +1,47 @@
+=== BASELINE ===
+HEAD_BEFORE=d6974d2d5aa27e5e8cfedbc7120ac2ce61fac68e
+HEAD_AFTER=edc2b6f785490c565712eb37045fc7febeac378b
+WORKTREE=CLEAN
+
+=== OFFLINE GRAPH ===
+ARCHITECTURE=XMLReader stream -> disk-backed SQLite source index and graph -> independent validation -> atomic publication; PostgreSQL not required.
+SQLITE_STAGING=PASS synthetic fixtures; bounded 8 MiB page cache, source batches, edge batches, resumable source-complete checkpoints.
+PBF_READER=Osmium is installed but cannot link; unresolved _ZNSt6__ndk113__hash_memoryEPKvm. No pyosmium or alternative reader found.
+REAL_SOURCE_PROOF=BLOCKED_OSMIUM_LINKER; no extraction or conversion attempted in Batch 028.
+NODES=No real graph. Synthetic fixtures only.
+EDGES=No real graph. Synthetic fixtures only.
+COMPLETENESS=Partial source/graph passes stay in .building and fail validation; producer pipeline requires clean-exit confirmation; restriction relations set routing_ready=false.
+SOURCE_HASH=787cac20ecc586b7541b464643a040566d486457c6a37bc0b11ce683bc66d4d (verified against local PBF).
+VALIDATOR=PASS synthetic provenance, SQLite integrity, source references, access directions, geometry, counts, components and graph fingerprint.
+PEAK_RSS=NOT_MEASURED_BATCH028; no real-source worker ran.
+MIN_AVAILABLE_MEMORY=Streaming minimum not measured; sampled 944168 KiB before work and 932296 KiB at final check. Final SwapFree=117016 KiB; disk free=4818348 KiB.
+
+=== DATABASE ===
+POSTGRESQL_EXIT_EVIDENCE=Cause UNKNOWN. Logs show unclean shutdown recovery followed by readiness; no PANIC, signal, shutdown-complete, or process-exit cause. No restart attempted.
+BACKUP=Batch024 dump SHA-256 matches e55af400fde88d0a3434b194e0625e204eb0a2726374eabb8286c152b11a4a92; existing manifest records isolated restore PASS. No new backup/restore run.
+IMPORT_CONTRACT=Validated SQLite import added; explicit exact isolated target, protected production names, bounded inserts, one rollback-safe transaction, inactive dataset only.
+STAGING=SQLite test fixtures PASS; PostgreSQL staging NOT_RUN.
+ACTIVATION=NOT_RUN; no live database writes or graph activation.
+
+=== PRODUCT ===
+PLANNER=Missing graph remains UNAVAILABLE with no walking geometry; existing focused test PASS. Inactive staged graph is ignored by the router.
+FIELD_MISSIONS=Prior Batch023 drafts remain drafts (2 missions / 30 claims); not live-revalidated. Planning dry-run and reviewed-claim replay tests PASS. Real observations created=0.
+DOCTOR_V28=Static mode PASS; optional offline artifact integration PASS. Live checks remain BLOCKED with PostgreSQL stopped.
+
+=== VALIDATION ===
+BACKEND=PedestrianRoutingTest 17 PASS / 124 assertions; 1 PostGIS-only skip.
+GRAPH_FIXTURES=8 PASS / 36 assertions; source mismatch, truncation, references, directions, clipping, access, restart and deterministic regeneration covered.
+IMPORTER=3 PASS / 17 assertions; inactive staging, router exclusion, idempotency and transaction rollback.
+DATABASE_GUARDS=6 PASS / 20 assertions; production target rejection included.
+FRONTEND=Not changed; frontend harnesses not run.
+TYPECHECK=Not run; no frontend changes.
+DOCTOR_AND_FIELD=Doctor tests 8 PASS / 39 assertions; static Doctor 9 PASS, 2 WARN, 6 BLOCKED, 0 FAIL (exit 2 expected). Field planning dry-run 1 PASS / 27 assertions; replay 1 PASS / 8 assertions.
+LINT_AND_DIFF=Changed PHP lint, wrapper bash syntax, and staged/working diff checks PASS.
+
+=== OUTCOME ===
+ELAPSED_TIME=NOT_TRACKED
+COMMITS=edc2b6f Add offline SQLite pedestrian graph staging
+BLOCKERS=Osmium dynamic-link failure blocks real PBF proof. PostgreSQL exit cause remains unknown; database is stopped.
+NEXT=Repair/verify the supported Osmium runtime, then run the documented producer stream once under the resource monitor. Stage only after a healthy database and verified current backup; activate only after validation and rollback review.
+PUSH=NO
+CLIPBOARD_COPY=CLIPBOARD_UNVERIFIED

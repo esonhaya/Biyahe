@@ -1,0 +1,76 @@
+=== BIYAHE BATCH 041 ===
+HEAD_BEFORE=60c82e8e9f101f25b409dcff8fd18293a47faad9
+HEAD_AFTER=08ca129ea14911eb02b4ea022b916bb081033ca1
+START_TIME=2026-10-09T18:20:46Z
+END_TIME=2026-10-09T18:48:07Z
+ELAPSED_WALL_TIME=00:27:21
+ACTIVE_TIME=NOT_INSTRUMENTED
+WORKTREE=TRACKED_CLEAN; seven historical untracked Doctor JSON reports preserved unchanged
+COMMITS=5: 122a717 evidence/route geometry; 3ec11b5 Doctor/test plan/package builder; ef9ce22 portable v2; a63230a verification ledger; 08ca129 pure PHP geometry smoke
+
+=== EVIDENCE ===
+RESTRICTION_COUNTS=648 source-level relations/classifications; 619 stored in v3 + 29 source-only (28 generic conditional-only, 1 psv-only). Batch031 classified all 648 vehicle-only for this snapshot; pedestrian-applicable=0, ambiguous=0. Denominators are distinct.
+LONG_EDGE_COUNTS=26 graph edges >250 m in detailed audit; legacy value 0 was an unmeasured default, not a measured zero.
+BOUNDARY_NODE_COUNTS=944 within 0.0005 degrees of any source bound; legacy value 0 was an unmeasured default.
+CROSSING_NODE_COUNTS=1510 nodes with nonempty crossing tag; legacy value 0 was an unmeasured default.
+PROVENANCE_REGISTRY=docs/reports/batch041-evidence-provenance.json SHA256 882fd1ae2c7ab8f2e1edab87c9122911f62c4568513bbe6c8875263958dc1bb6; six source reports and 13 claims validated.
+UNRESOLVED_CONFLICTS=0 for the four requested count discrepancies; field, route replay, and general restriction semantics remain outside these reconciliations.
+
+=== GRAPH ===
+GRAPH_HASH=29d7aaf9c45a596f4065c44d13f983f4a7edeec5ac2ea41b718b1c52ca865bf8
+SOURCE_PBF_SHA256=787cac20ecc586b754b1a464643a040566d486457c6a37bc0b11ce683bc66d4d (pinned provenance reference; not opened or rescanned this batch)
+GRAPH_UNCHANGED=YES; SHA256 matched at 2026-10-09T18:38:21Z and final pre-report check.
+COVERAGE_DIAGNOSTICS=VERIFIED against pinned Batch032 JSON only: 503 stored stops / 436 snappable within 25 m (433 on largest component, 3 on smaller components); 37 stored places / 30 snappable. This is not geographic, sidewalk, population, or field coverage.
+ADAPTER_CONTRACT=IMPLEMENTED_UNTESTED; shared contract checks source/fingerprint, coordinates, snaps, directed edge continuity, geometry/distance consistency, and failure geometry absence. Changed PHP syntax passed; PHPUnit was blocked.
+GEOMETRY_VERIFICATION=Seven standalone PHP contract cases passed (no graph/Laravel); four synthetic comparator tests passed. No current real graph route was verified.
+TEN_CASE_CORPUS=Historical pinned evidence is 9 found / 1 disconnected. Current replay BLOCKED and not run; four comparator fixtures are synthetic only.
+
+=== PRODUCT ===
+JOURNEY_PREVIEW=Existing opt-in local preview statically reviewed for loopback restriction, selected-journey identity, stale-response handling, route-change cleanup, and save exclusion; frontend functional tests BLOCKED.
+RIDE_MODE=Existing manual flow reviewed; Batch041 progression/reload tests not run.
+SAVED_JOURNEYS=Existing snapshot-v1 compatibility and preview exclusion reviewed; functional tests not run.
+MAP_MOBILE=Existing geometry filtering and map/list integration reviewed; browser, viewport, keyboard, and screen-reader checks NOT_RUN.
+
+=== VALIDATION ===
+LEDGER=Existing fingerprint/evidence binding and guarded scheduler reviewed; Batch041 Node ledger harness BLOCKED, not rerun.
+PYTHON_TESTS=27 passed across 5 lightweight suites (6 provenance, 11 coverage, 2 smoke, 4 synthetic corpus comparator, 4 Doctor contract).
+PHP_LINT=PASS on 6 changed PHP files.
+PHPUNIT=BLOCKED_NOT_LAUNCHED.
+PHP_STANDALONE_SMOKE=PASS; 7 pure geometry-contract cases; no graph read or Laravel bootstrap.
+JS_TESTS=BLOCKED_NOT_LAUNCHED.
+TYPECHECK=NOT_RUN.
+LINT=git diff --check PASS; no frontend lint run.
+BROWSER_TESTS=NOT_RUN.
+RESOURCE_GUARD=Three samples 5s apart: MemAvailable 936048/979420/923316 KiB; SwapFree 137020/129792/130244 KiB. Two SwapFree samples missed the 131072 KiB floor; no moderate/heavy tests launched.
+
+=== DELIVERY ===
+DOCTOR_V41=PASS_STATIC_DOCTOR_CONTRACT; 13 categories validated against the pinned registry. Static evidence only; real replay, PostgreSQL, field, and beta gates remain blocked.
+PORTABLE_KIT=$HOME/storage/external-1/Termux-Archive/Biyahe/Batch041-Delivery/20261009T184249Z/portable-verification-v2; 58 files, static no-database smoke PASS. Manifest SHA256 1c6ecf5568599a3ca36ec91f701151cb024c06b0dac843c2ea0c08d0ee1b56fb.
+SD_GIT_BUNDLE=$HOME/storage/external-1/Termux-Archive/Biyahe/Batch041-Delivery/20261009T184249Z/biyahe-batch041-final-08ca129.bundle; git bundle verify PASS, complete history; SHA256 0f408ef53c2a90bc1e7cff93c10ea9b9255bc7e7073a825a7dc4d6739cf07a3f. Delivery manifest SHA256 b8d0e316b4dc268d75727fa36d64b2f01b24bcc1ed6bed226a08bb1ae6533a98.
+UNRELATED_WORK=Seven historical Doctor reports hash-match the recovery archive; no other projects changed.
+PUSH=NO
+
+=== READINESS ===
+LOCAL_WALKING_ADAPTER=IMPLEMENTED_UNTESTED
+LIVE_API_INTEGRATION=BLOCKED_NOT_CONNECTED
+POSTGRESQL_STAGING=BLOCKED_NOT_RUN
+FIELD_SAFETY=BLOCKED_NO_FIELD_EVIDENCE; both transfer locations remain UNVERIFIED
+PRIVATE_BETA=BLOCKED
+PRODUCTION_ACTIVATION=NO
+
+=== WORK QUEUE ===
+VERIFIED=Recovery snapshot; four count reconciliations; six-report provenance registry; stored-record coverage validation; 27 lightweight Python fixtures; 6 PHP syntax checks; 7-case pure PHP geometry smoke; static Doctor; portable kit and final SD bundle integrity.
+IMPLEMENTED_UNTESTED=Full router/preview PHPUnit integration; existing journey preview, Ride Mode, saved journeys, map/mobile behavior, and validation-ledger harness.
+RESOURCE_BLOCKED=PHPUnit, frontend Node harnesses, actual ten-case SQLite graph replay, SQLite integrity_check, and browser interaction checks.
+EXTERNAL_HOST=PostgreSQL isolated staging and offline/staged route parity.
+FIELD_DEPENDENT=Transfer access, sidewalk/crossing safety, and boarding-area field verification.
+REMAINING_LOCAL_WORK=When three spaced resource samples meet both unchanged floors, execute adapter/preview tests and the real graph replay once; inspect evidence before any readiness change.
+
+=== NEXT ===
+RECOMMENDED_BATCH042=Run resource-gated adapter and Cebu replay on a stable device/host, then external isolated PostgreSQL staging and route parity; keep transfer and field-safety gates blocked until independently verified.
+REMAINING_BLOCKERS=Swap volatility; unexecuted PHP/JS functional suites; current real graph replay and SQLite integrity; external PostgreSQL staging/parity; field evidence.
+
+CLIPBOARD=SET_ATTEMPTED_UNVERIFIED
+REPORT_PATH=$HOME/biyahe-batch041-report.txt
+
+=== END BATCH 041 ===

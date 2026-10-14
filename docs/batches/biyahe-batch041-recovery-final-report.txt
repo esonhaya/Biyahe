@@ -1,0 +1,77 @@
+=== BIYAHE BATCH 041 RECOVERY FINAL ===
+HEAD_BEFORE=08ca129ea14911eb02b4ea022b916bb081033ca1
+HEAD_AFTER=41d3798e8b7a7646dcc3270b6a6869d83db0cfd9
+START_TIME=2026-10-09T23:47:07Z
+END_TIME=2026-10-10T00:11:11Z
+ELAPSED_WALL_TIME=00:24:04
+ACTIVE_TIME=NOT_MEASURED
+WORKTREE=TRACKED_CLEAN; seven historical untracked Doctor reports preserved byte-for-byte
+COMMITS=pre-existing since Batch040: 122a717, 3ec11b5, ef9ce22, a63230a, 08ca129; recovery: 2850683120fd04bef25d926f9d9ed5655e5ca6f0, 0bd2324cdcdbd9d5146e00a8020bb913dada572c, 90d32255c2912abc6d249d727ceb4c14265535e2, 41d3798e8b7a7646dcc3270b6a6869d83db0cfd9
+
+=== RECOVERY ===
+PREVIOUS_WORK=Recovered at expected HEAD after provenance, coverage, corpus-comparator, geometry smoke, and portable-v2 work had been recorded; earlier moderate/real-graph validation was interrupted or blocked by SwapFree. The recovery corrected a disconnected-preview test expectation and added a mixed success/disconnected regression.
+INTERRUPTION_STATE=No reset or rewrite. The initial recovery snapshot was taken before tracked changes. The source correction is pinned to 2850683; later documentation and portable-kit commits are separate.
+PRESERVED_FILES=docs/reports/batch033-doctor-v33.json; batch034-doctor-v34-coverage.json; batch034-doctor-v34-current.json; batch034-doctor-v34-final-evidence.json; batch034-doctor-v34-final.json; batch034-doctor-v34.json; batch039-doctor-v39.json (all seven baseline SHA256 checks passed)
+SD_RECOVERY=$HOME/storage/external-1/Termux-Archive/Biyahe/Batch041-Recovery/20261009T234810Z (SHA256SUMS passed; pre-edit bundle contains 08ca129); earlier recovery archive 20261009T182057Z also passed checksums.
+
+=== RESOURCES ===
+MEMORY_SAMPLES=2026-10-09T23:48:58Z:1050908 KiB; 23:49:37Z:1044400 KiB; 23:50:11Z:969164 KiB; 23:50:23Z:1108260 KiB; 23:50:57Z:1199744 KiB (all MemAvailable; all passed 524288 KiB floor)
+SWAP_SAMPLES=2026-10-09T23:48:58Z:658932 KiB; 23:49:37Z:572408 KiB; 23:50:11Z:451028 KiB; 23:50:23Z:268084 KiB; 23:50:57Z:290700 KiB (all SwapFree; all passed 131072 KiB floor)
+RESOURCE_GUARD=Existing isolated process-group guard; five preflight samples spaced five seconds apart; floors unchanged. Adapter PHPUnit peak tree RSS 154092 KiB, runtime minima MemAvailable 872920 KiB / SwapFree 368604 KiB. Corpus peak tree RSS 49984 KiB. Active monitor did not capture owned-worker VmSwap; PostgreSQL RSS remained zero.
+WORKER_CANCELLATION=Adapter worker exited normally. Corpus worker group was verified as owned and SIGTERM-canceled after live SwapFree 64988 then 27184 KiB in two one-second samples; cancellation completed without escalation (exit 143). No unrelated process was killed. Future guarded runs should set BIYAHE_RESOURCE_BREACH_SAMPLES=1; this corpus run used the guard's two-sample setting.
+
+=== TEST RESULTS ===
+PROVENANCE=PASS: CLI verified 6 sources, 13 claims, 0 unresolved; fixtures 6/6.
+COVERAGE=PASS: 11 fixtures; pinned stored-record report 503 stops (436 within 25 m, 67 unsnappable) and 37 places (30 within 25 m, 7 unsnappable).
+GEOMETRY_SMOKE=PASS: 7 deterministic pure-PHP cases; no Laravel bootstrap or graph access.
+CORPUS_COMPARATOR=PASS: 4 synthetic contract fixtures; these are not route results.
+ADAPTER_PHPUNIT=PASS: 22 tests, 75 assertions, 0 failures on guarded rerun. Initial fixture mismatch was fixed; mixed success/disconnected behavior now checks PARTIAL.
+REAL_CEBU_CORPUS=BLOCKED_RESOURCE_ABORTED: owned worker canceled; no report or route result was written. Historical 9 found / 1 disconnected is not a current replay.
+JOURNEY_PREVIEW=Backend behavior passed within the adapter PHPUnit suite. Frontend identity/cancel/retry/removal/presentation harness group was not launched after preflight SwapFree reached 18964 KiB.
+RIDE_MODE=BLOCKED_RESOURCE: frontend regression harness not run; source was statically inspected.
+SAVED_JOURNEYS=BLOCKED_RESOURCE: frontend regression harness not run; snapshot-v1 and preview exclusion were statically inspected.
+TYPECHECK=BLOCKED_RESOURCE_NOT_RUN: no TypeScript worker launched after frontend preflight failure.
+LINT=PHP syntax checks PASS; ESLint BLOCKED_RESOURCE_NOT_RUN; PHP formatting BLOCKED_RESOURCE_NOT_RUN. Python AST, JavaScript/Bash syntax, JSON parsing, and diff checks passed; no frontend build was run.
+BROWSER=NOT_RUN: no browser test executable/environment was available; viewport and visual verification were not claimed.
+
+=== INTEGRATION ===
+GRAPH_IDENTITY=VERIFIED SHA256 29d7aaf9c45a596f4065c44d13f983f4a7edeec5ac2ea41b718b1c52ca865bf8; fingerprint a0d9f1cb8289cf1f9bde3905d1ad8a57124ee41120153b4efc1f5b31e4c03ecd. SQLite was not opened or modified; no PBF rescan or graph rebuild.
+ADAPTER_STATUS=IMPLEMENTED; focused fixtures verified. Live production graph integration remains blocked.
+GEOMETRY_STATUS=Contract smoke and adapter fixtures verified; no current Cebu graph route is claimed.
+JOURNEY_PREVIEW_STATUS=Backend fixture behavior verified; frontend execution blocked by resource preflight.
+LIVE_API_STATUS=BLOCKED; no production API substitution or production activation.
+
+=== EVIDENCE ===
+RESTRICTION_RECONCILIATION=648 source vehicle-only classifications = 619 graph-stored relations + 29 omitted/source-only relations. Distinct source and graph denominators retained.
+GRAPH_QUALITY_RECONCILIATION=26 long edge segments, 944 boundary nodes, 1510 crossing-tagged nodes are historical measured audit values. Legacy zero defaults remain UNMEASURED_DEFAULT_NOT_A_COUNT.
+STOP_COVERAGE=503 stored stops; 436 snap within 25 m; 67 do not.
+PLACE_COVERAGE=37 stored places; 30 snap within 25 m; 7 do not. These are stored-record figures, not geographic, population, sidewalk, or field coverage.
+TRANSFER_VERIFICATION=Two historical transfer records remain UNVERIFIED_RECORD; graph connectivity is not field safety evidence.
+
+=== READINESS ===
+DOCTOR_V41=PASS_STATIC_DOCTOR_CONTRACT; 13 categories; assesses executable source revision 2850683120fd04bef25d926f9d9ed5655e5ca6f0. Live graph, PostgreSQL, field, private beta, and production gates remain blocked.
+POSTGRESQL=BLOCKED; service was not started or contacted.
+FIELD_SAFETY=BLOCKED_NO_FIELD_EVIDENCE.
+PRIVATE_BETA=BLOCKED.
+PRODUCTION_ACTIVATION=NO.
+
+=== DELIVERY ===
+FINAL_HEAD=41d3798e8b7a7646dcc3270b6a6869d83db0cfd9
+GIT_BUNDLE=$HOME/storage/external-1/Termux-Archive/Biyahe/Batch041-Delivery/20261010T000932Z/biyahe-batch041-recovery-41d3798.bundle
+BUNDLE_SHA256=3d0592602c96a687a9ad6c5d2fd751b17a69c231f32b6945f1614bbbe4e66acc
+SD_VERIFICATION=PASS: SHA256 sidecar matched; git bundle verify reports complete history; refs/heads/main and HEAD equal FINAL_HEAD.
+PORTABLE_KIT=docs/portable-verification-v3; 61 checksummed files, 58 pinned checkout paths, 62 total package files; local checksum/source identity/no-database static verification PASS. Pinned documentation revision 0bd2324cdcdbd9d5146e00a8020bb913dada572c. No external Linux execution.
+PUSH=NO
+
+=== REMAINING WORK ===
+VERIFIED_TASKS=Evidence provenance/reconciliation; stored-record coverage; synthetic comparator contract; pure geometry smoke; adapter/router/preview PHPUnit fixtures; Doctor V41 contract; graph SHA identity; portable v2 and v3 local static verification; SD recovery and final Git bundle.
+IMPLEMENTED_UNTESTED_TASKS=Frontend journey-preview identity/cancellation flow, Ride Mode, saved journeys, map/mobile interactions; their source was reviewed but the functional frontend group did not run.
+RESOURCE_BLOCKED_TASKS=Frontend Node harnesses; TypeScript/ESLint/PHP formatting/focused frontend build; current ten-case graph replay (aborted by resource guard, no retry).
+EXTERNAL_HOST_TASKS=Live production graph integration, PostgreSQL staging/import, production route parity, external Linux execution.
+FIELD_DEPENDENT_TASKS=Transfer safety, crossing/sidewalk/accessibility/boarding access and physical arrival evidence.
+RECOMMENDED_NEXT_BATCH=After materially improved stable swap headroom, run the frontend harness group and typecheck/lint/build one guarded group at a time, then rerun the Cebu corpus only with five passing preflight samples and first-breach cancellation. Schedule PostgreSQL staging on an isolated external Linux host and collect field evidence separately.
+CLIPBOARD=SET_ATTEMPTED_UNVERIFIED
+REPORT_PATH=$HOME/biyahe-batch041-recovery-final-report.txt
+CLIPBOARD_FALLBACK_COMMAND=cat ~/biyahe-batch041-recovery-final-report.txt
+
+=== END BATCH 041 RECOVERY FINAL ===

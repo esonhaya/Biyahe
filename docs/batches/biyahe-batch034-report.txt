@@ -1,0 +1,69 @@
+=== BIYAHE BATCH 034 ===
+HEAD_BEFORE=90a40fc4b348f0974e7381d5250146917106930c
+HEAD_AFTER=90a40fc4b348f0974e7381d5250146917106930c
+WORKTREE=DIRTY; Batch033 uncommitted changes and Batch034 changes preserved; no reset, clean, commit, or push.
+COMMITS=NONE; critical real database gates remain unverified.
+ELAPSED_TIME=Approximately 24 minutes (about 04:23Z–04:47Z, 2026-10-09).
+
+=== RECOVERY ===
+BATCH033_CHANGES_PRESERVED=YES; existing tracked edits and untracked sources/reports retained.
+UNCOMMITTED_BACKUP=VERIFIED on SD: ~/storage/external-1/Termux-Archive/Biyahe/Batch034-Recovery/20261009T044628Z; tracked patch SHA256=f6696628cee8411127674e6fa1ac609d273b65e7c7de8a2e4535b7bdea4cb5b6; untracked archive SHA256=5bfdd9ec5c41537e3005692beb1b05aa7e55937006bf8993d8871c1c0df5379b; all 21 archived untracked files read back and matched their original hashes.
+SD_BACKUP=VERIFIED; manifest SHA256=9d58dedc1b581934bc832924738072601dbafa6208317a3c7de1d1dfa60641b7; earlier Batch033 recovery snapshot also retained.
+SOURCE_HASH=VERIFIED; Central Visayas PBF SHA256=787cac20ecc586b754b1a464643a040566d486457c6a37bc0b11ce683bc66d4d.
+GRAPH_HASH=VERIFIED; Batch030 SQLite SHA256=29d7aaf9c45a596f4065c44d13f983f4a7edeec5ac2ea41b718b1c52ca865bf8.
+POSTGRESQL_BACKUP_HASH=VERIFIED; Batch024 dump SHA256=e55af400fde88d0a3434b194e0625e204eb0a2726374eabb8286c152b11a4a92.
+
+=== RESOURCE DIAGNOSIS ===
+SWAP_PRESSURE_CAUSE=GLOBAL SOURCE UNKNOWN; evidence indicates multiple visible and inaccessible contributors, not a proven PHP or PostgreSQL leak.
+EVIDENCE=During guarded tests SwapFree fell from 196272 KiB to 83380 KiB in about 2 seconds while MemAvailable stayed at 741276 KiB; PHP tree RSS peaked at 49460 KiB and PostgreSQL RSS was 0. The runner requested cancellation at the 131072 KiB floor but could not target a worker descendant; PHPUnit then completed. Later, with no visible PHP/PostgreSQL process, SwapFree was 3748 KiB at 04:43:16Z and 211160 KiB at 04:44:10Z. Visible Codex processes at 04:44 had summed VmSwap 267348 KiB and RSS 95104 KiB. Android process inventory, vmstat, PSI, and cgroup counters were inaccessible.
+PHP_PEAK_RSS=49460 KiB during focused tests; prior Batch033 importer tree peak 93596 KiB.
+POSTGRESQL_PEAK_RSS=0 during focused tests; prior Batch033 sampler window peak 71324 KiB was not continuous and shared RSS can be double-counted.
+MIN_MEMAVAILABLE=741276 KiB during Batch034 focused tests; later sample 860940 KiB.
+MIN_SWAPFREE=83380 KiB during Batch034 tests; 3748 KiB in a later no-PHP/no-PostgreSQL sample; prior Batch033 import minimum 66652 KiB.
+GUARD_BREACHES=One sampled SwapFree breach during the Batch034 focused test run. No threshold was lowered; no further test/import run was attempted.
+
+=== IMPORT ===
+CHECKPOINT_RESUME=Implemented source-bound checkpoint identity, deterministic keyset continuation, and exact committed-prefix comparison; fixture tests pass. Old Batch033 partial state uses an older checkpoint shape; default resume rejects inconsistent checkpoints and requires an explicit matching-dataset restart.
+ISOLATED_CLUSTER=Batch033 cluster was confirmed shut down at private port 56433, system ID 7694494303197720087; Batch034 did not start it. Existing cluster was not touched.
+STARTING_NODES=NOT_QUERIED in Batch034; prior Batch033 log said 30000, which was not trusted without a database query.
+STARTING_EDGES=NOT_QUERIED; prior log said 0, not re-verified.
+FINAL_NODES=NOT_QUERIED.
+FINAL_EDGES=NOT_QUERIED.
+IMPORT_STATE=NOT_QUERIED; no real import or resume attempted under volatile swap conditions.
+DURATION=NONE in Batch034.
+SOURCE_PARITY=NOT_RUN against PostgreSQL.
+GEOMETRY_PARITY=Fixture preservation tests passed; real database parity NOT_RUN.
+
+=== SAFETY ===
+ROLLBACK=Previous Batch033 controlled real rollback passed on the previous importer version; Batch034 real rollback not rerun. Fixture transaction tests passed.
+IDEMPOTENCY=Fixture/checkpoint restart tests passed; real artifact idempotency NOT_RUN.
+CONFLICT_REJECTION=Fixture tests passed; real database conflict rejection NOT_RUN.
+PARTIAL_VISIBILITY=Previous Batch033 real inactive-visibility check passed; current Batch034 real database visibility not re-tested.
+ORIGINAL_CLUSTER_UNTOUCHED=YES; no connection or start; no PostgreSQL process observed at final check.
+BATCH030_CHECKPOINTS=NOT MODIFIED. Batch033 isolated database checkpoint state was not queried.
+PRODUCTION_ACTIVATION=NO.
+
+=== ROUTING ===
+OFFLINE_CASES=10 existing real Cebu cases; 9 routes found and 1 disconnected as expected in Batch032 evidence.
+STAGED_CASES=0.
+MATCHES=NOT RUN.
+MISMATCHES=NOT RUN.
+DISTANCE_PARITY=NOT RUN.
+GEOMETRY_PARITY=NOT RUN.
+REASON_CODE_PARITY=NOT RUN.
+
+=== VALIDATION ===
+TESTS=14/14 focused tests passed, 111 assertions; runner recorded a swap-floor breach and failed to cancel its worker. No rerun. PHP lint, Bash syntax, JSON parsing, and git diff --check PASS.
+DOCTOR_V34=BLOCKED; static report docs/reports/batch034-doctor-v34-report-final.json. Source/graph/restriction/offline corpus PASS; resource readiness, current import/checkpoint, current real rollback/idempotency/conflict, parity, and field safety BLOCKED; coverage and transfer evidence WARN.
+PRIVATE_BETA=BLOCKED; 67 stops and 7 places remain unsnappable at the 25 m policy, both transfer locations remain UNVERIFIED, and field safety evidence is absent.
+GIT_BUNDLE=NOT CREATED; repository work remains uncommitted and is backed up on SD.
+PUSH=NO.
+
+=== NEXT ===
+REMAINING_BLOCKERS=SwapFree volatility and inaccessible system counters; test-runner cancellation path; isolated import state not queried; no complete real staging, real idempotency/conflict proof, or offline/staged route parity; field safety and transfer verification absent.
+RECOMMENDED_BATCH035=After several stable samples above the existing memory/swap floors, repair and verify worker-descendant cancellation; then inspect only the isolated cluster read-only. Resume only a validated checkpoint or explicitly restart the matching inactive dataset. Complete one guarded real import before parity work.
+
+CLIPBOARD=SET_ATTEMPTED_UNVERIFIED
+REPORT_PATH=~/biyahe-batch034-report.txt
+
+=== END BATCH 034 ===

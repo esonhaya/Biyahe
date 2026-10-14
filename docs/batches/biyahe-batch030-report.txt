@@ -1,0 +1,78 @@
+BIYAHE — BATCH 030 FINAL ENGINEERING REPORT
+
+=== BASELINE ===
+HEAD_EXPECTED=d9eda061fd687d24d3a332124fce26419d729902
+HEAD_BEFORE=c3e1656a9e7a88a61dab886c6e991f23964446f5
+HEAD_AFTER=f12fa0739551ec25251027d136fec342b4e18509
+WORKTREE=CLEAN
+RECOVERED_WORK=Reused the verified complete way-index phase from the retained .building checkpoint; preserved prior Batch030 commits 2f2ac81 and c3e1656.
+
+=== EXECUTION ===
+ELAPSED_TIME=About 4h12 wall-clock from the earliest preserved Batch030 operation log; active time was not separately recorded. No idle padding.
+PHASES_COMPLETE=0-11, 13-19; phase 12 importer contract and rollback tests complete.
+PHASES_PARTIAL=No live isolated PostgreSQL staging; turn-restriction semantics remain unsupported.
+PHASES_BLOCKED=Live routing, private beta, and activation are blocked by routing_ready=false and the absence of an isolated staging review.
+COMMITS=2f2ac81, c3e1656 preserved; f12fa07 adds v3 durable checkpoints and recovery tooling.
+RESOURCE_STOPS=No stop in the new guarded real-source pass or graph build. Earlier getid-based reference processing remained incomplete after observed peak RSS 1,671,392 KiB and MemAvailable 246,904 KiB; it was not repeated unchanged.
+
+=== ARCHITECTURE ===
+PIPELINE=Pass A complete PBF stream and disk-backed way/node index; Pass B complete PBF stream resolves indexed references and restriction members; Pass C deterministic graph build; Pass D source/checkpoint/topology validation and atomic no-clobber publication.
+MULTIPASS=Order-independent SQLite join selects ways after full source indexing; second full stream avoids Osmium getid's in-memory ID set and preserves required out-of-bounds coordinates.
+CHECKPOINTS=Source SHA-256/snapshot, schema/phase IDs, completion, counts, and deterministic output fingerprints for way_index, reference_resolution, graph_build.
+RESUME=Reuses only integrity/provenance-verified checkpoints; resets interrupted reference or graph phases independently. No PBF byte-offset resume; terminated streams never count complete.
+MEMORY_IMPROVEMENTS=8 MiB SQLite cache, file-backed temp storage, bounded commits, disk-backed reference/relation tables, live process-tree and host resource monitor.
+RESTRICTIONS=619 pedestrian-relevant restriction relations and 1,862 ordered members are recorded. Turn, nested, and conditional relation semantics are not enforced; relevant conditional-access ways are excluded. Validator and importer keep the graph non-routing-ready.
+
+=== REAL SOURCE ===
+SOURCE_HASH=787cac20ecc586b754b1a464643a040566d486457c6a37bc0b11ce683bc66d4d; snapshot=2026-10-07T01:00:21Z; SHA-256/MD5 and source filename verified.
+REAL_PBF_PROOF=PASS; full source way index reused and full reference stream parsed with clean producer/parser exits in 142 sec.
+SOURCE_COMPLETE=YES; producer exits=0 for both full source passes; resolved nodes=77,991/77,991; Osmium 1.19.1 runtime wrapper used.
+SOURCE_COUNTS=3,231,975 nodes; 569,150 ways; 3,059 relations; 376,877 in-scope nodes; 20,379 candidate pedestrian ways.
+PEAK_RSS=129,936 KiB reference pass; 88,604 KiB graph build.
+MIN_MEMAVAILABLE=880,520 KiB reference pass; 933,612 KiB graph build.
+MIN_SWAPFREE=368,512 KiB reference pass; 616,628 KiB graph build.
+MEMORY_FORENSICS=Reference pass minimum Cached 875,636 KiB and SReclaimable 112,760 KiB; host-memory changes cannot be attributed solely to Osmium.
+DISK_USAGE=SQLite artifact 41,013,248 B; peak journal 2,015,576 B; minimum free disk 4,001,964 KiB during graph build. Reference-pass SQLite snapshots were 25,776,128 B at ~44 sec, 26,636,288 B at ~83 sec, and 27,332,608 B at completion; its outer monitor did not inherit the SQLite watch path.
+
+=== GRAPH ===
+ARTIFACT_PATH=/data/data/com.termux/files/home/.cache/biyahe/batch030/cebu-walk-central-visayas-20261007-v3.sqlite
+ARTIFACT_SHA256=29d7aaf9c45a596f4065c44d13f983f4a7edeec5ac2ea41b718b1c52ca865bf8
+GRAPH_COMPLETE=YES; SQLite integrity_check=ok; source and all phase fingerprints verified.
+GRAPH_SCHEMA=biyahe-pedestrian-sqlite-v3
+ROUTING_READY=NO; 619 unsupported pedestrian-relevant turn restrictions.
+NODES=76,685
+EDGES=78,225
+COMPONENTS=2,754 total; 432 walkable components, largest 70,401 nodes. The other 2,322 components are isolated blocked barrier nodes; zero isolated walkable nodes.
+GRAPH_FINGERPRINT=a0d9f1cb8289cf1f9bde3905d1ad8a57124ee41120153b4efc1f5b31e4c03ecd
+VALIDATOR=PASS structurally; WARN for routing limitations. Independent real-source validator reports artifact_ready=yes, routing_ready=no.
+QUALITY_AUDIT=Max edge 867 m; 26 edges exceed 250 m; 944 nodes lie within 0.0005 degrees of the clip boundary; 1,510 nodes carry crossing tags. These are review signals, not automatic corrections or field evidence.
+
+=== DATABASE ===
+POSTGRESQL=Stopped; no process observed; startup not attempted.
+BACKUP=Untouched; no database commands or restore run.
+IMPORT_CONTRACT=Tests pass for incomplete-artifact rejection, provenance guards, bounded transactional inserts, inactive staging, idempotency, and rollback. This artifact is rejected for import while routing_ready=false.
+STAGING=NOT RUN; no isolated PostgreSQL staging database available or started.
+ACTIVATION=NO
+
+=== VALIDATION ===
+GRAPH_FIXTURES=18/18 passed; 95 assertions, including conditional access, ordering, boundaries, missing references, deterministic output, and tamper detection.
+CHECKPOINT_TESTS=Included in graph suite; corrupt/mismatched checkpoints, schema migration, interruption, and phase restart covered.
+IMPORTER=4/4 passed; 23 assertions.
+DATABASE_GUARDS=6/6 passed; 20 assertions.
+PLANNER=17 passed, 1 skipped; 124 assertions.
+OSMIUM_RUNTIME=1/1 passed; 2 assertions; bounded-process guard 3/3 passed, 24 assertions.
+DOCTOR_V30=Static final graph: PASS=11 WARN=3 FAIL=0 BLOCKED=6, expected exit 2 because database checks remain blocked and graph is not routing-ready. Separate SOURCE_COMPLETE checkpoint check reported PASS.
+LINT=Targeted Pint passed; changed PHP lint passed; Bash syntax checks passed; git diff --check passed.
+
+=== READINESS ===
+OFFLINE_GRAPH=COMPLETE, source-backed, independently validated, available in ignored cache.
+LIVE_ROUTING=BLOCKED until pedestrian turn restrictions are enforced or safely excluded and graph components are reviewed.
+PRIVATE_BETA=BLOCKED; no route-ready graph or isolated staging audit.
+BLOCKERS=Unsupported restriction relations, 432 walkable components, no PostgreSQL staging.
+NEXT=Implement and validate restriction handling; review disconnected fragments and long edges; stage only in a disposable isolated PostgreSQL database when available.
+
+=== COMMITS ===
+HEAD_FINAL=f12fa0739551ec25251027d136fec342b4e18509
+WORKTREE=CLEAN
+PUSH=NO
+CLIPBOARD_UNVERIFIED=termux-clipboard-get returned empty after termux-clipboard-set.
